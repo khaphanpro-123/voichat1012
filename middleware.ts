@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyTokenEdge } from "@/lib/verifyToken"  // dùng bản edge-safe
+import { verifyTokenEdge } from "@/lib/verifyToken"
 
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("auth-token")?.value
+  const rawToken = request.cookies.get("auth-token")?.value
+  const token = rawToken && rawToken !== "undefined" ? rawToken : null
+
   const { pathname } = request.nextUrl
 
   const protectedRoutes = ["/dashboard", "/assessment", "/profile", "/admin"]
@@ -15,10 +17,13 @@ export async function middleware(request: NextRequest) {
 
   if (isProtectedRoute) {
     if (!token) {
+      console.log("❌ No token found in cookie")
       return NextResponse.redirect(new URL("/login", request.url))
     }
+
     const payload = await verifyTokenEdge(token)
-    if (!payload) {
+    if (!payload || !(payload as any).id) {
+      console.log("❌ Invalid token payload:", payload)
       return NextResponse.redirect(new URL("/login", request.url))
     }
   }

@@ -11,7 +11,6 @@ import { toast } from "sonner";
 interface DailyLogFormProps {
   childId: string;
 }
-
 export default function DailyLogForm({ childId }: DailyLogFormProps) {
   const [form, setForm] = useState({
     mood: "Bình thường",
@@ -27,16 +26,27 @@ export default function DailyLogForm({ childId }: DailyLogFormProps) {
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Lấy token đã lưu ở sessionStorage khi login
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+      if (!token) {
+        toast.error("Bạn cần đăng nhập lại");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/daily-log", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childId, ...form }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ thêm dòng này
+        },
+        body: JSON.stringify({ ...form }),
       });
+
       if (!res.ok) throw new Error("Lỗi khi lưu nhật ký");
       toast.success("Lưu nhật ký thành công!");
       setForm({
@@ -54,6 +64,8 @@ export default function DailyLogForm({ childId }: DailyLogFormProps) {
       setLoading(false);
     }
   };
+
+
 
   return (
     <Card className="rounded-3xl shadow-lg border-none">

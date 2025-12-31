@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 
 export function LoginForm() {
@@ -15,28 +16,18 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
       });
 
-      const data = await res.json();
-      if (data.success) {
-        sessionStorage
-.setItem("token", data.token); // 🔑 Lưu token
-        sessionStorage
-.setItem("user", JSON.stringify(data.user));
-        alert("Login thành công!");
-      }
-      if (!res.ok) {
-        setError(data.message || data.error || "Đăng nhập thất bại");
-        setIsLoading(false);
+      if (result?.error) {
+        setError("Email hoặc mật khẩu không đúng");
         return;
       }
 
-
-      router.push("/dashboard");
+      router.push("/dashboard-new");
     } catch (err) {
       console.error(err);
       setError("Lỗi kết nối");
@@ -48,59 +39,51 @@ export function LoginForm() {
   return (
     <motion.form
       onSubmit={handleSubmit}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="space-y-5"
+      transition={{ duration: 0.4 }}
+      className="space-y-4"
     >
       {error && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl relative text-center text-sm"
+          className="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-center text-sm"
         >
           {error}
         </motion.div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Email
-        </label>
+        <label className="block text-sm font-medium mb-1">Email</label>
         <input
           required
           type="email"
           placeholder="you@example.com"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
           value={formData.email}
-          onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Mật khẩu
-        </label>
+        <label className="block text-sm font-medium mb-1">Mật khẩu</label>
         <input
           required
           type="password"
           placeholder="••••••••"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
           value={formData.password}
-          onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
         />
       </div>
 
       <motion.button
         type="submit"
         disabled={isLoading}
-        whileHover={{ scale: isLoading ? 1 : 1.03 }}
-        whileTap={{ scale: 0.97 }}
-        className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 shadow-md hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        whileHover={{ scale: isLoading ? 1 : 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 shadow-md hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50"
       >
         {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
       </motion.button>

@@ -26,11 +26,11 @@ export default function LoginPage() {
           <CardHeader className="text-center">
             <Link href="/" className="md:hidden inline-flex items-center space-x-2 mb-4">
               <Heart className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">AutismCare</span>
+              <span className="text-2xl font-bold text-foreground">L2-BRAIN</span>
             </Link>
             <CardTitle className="text-2xl">Đăng nhập</CardTitle>
             <CardDescription>
-              Đăng nhập để tiếp tục theo dõi sự phát triển của trẻ
+              Đăng nhập để tiếp tục học tiếng Anh
             </CardDescription>
           </CardHeader>
           <CardContent>

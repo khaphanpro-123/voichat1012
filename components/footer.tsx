@@ -1,81 +1,94 @@
 import Link from "next/link";
-import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram } from "lucide-react";
-import Image from "next/image";
+import { Mail, Phone, MapPin, Facebook, Youtube, Instagram } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="relative bg-background dark:bg-gray-950 overflow-hidden">
+    <footer className="relative bg-gray-900 text-white overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 z-0 opacity-40 dark:opacity-20">
+      <div className="absolute inset-0 z-0 opacity-20">
         <div
-          className="w-full h-full animate-gradient-slow-pulse"
+          className="w-full h-full"
           style={{
             backgroundImage:
-              "linear-gradient(25deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1))",
+              "linear-gradient(25deg, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2))",
           }}
         ></div>
       </div>
 
-      <div className="container mx-auto px-6 py-20 relative z-10">
-        {/* 3 cột */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 text-center lg:text-left items-start">
-          {/* Cột trái: Logo + social */}
-          <div className="flex flex-col items-center lg:items-start">
-            <Link href="/" className="flex items-center space-x-3 mb-6">
-              <Heart className="h-12 w-12 text-primary animate-pulse-slow" />
-              <span className="text-4xl font-extrabold text-foreground">AutismCare</span>
+      <div className="container mx-auto px-6 py-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          {/* Logo & Description */}
+          <div>
+            <Link href="/" className="flex items-center space-x-2 mb-4">
+              <span className="text-3xl">🧠</span>
+              <span className="text-2xl font-extrabold">L2-BRAIN</span>
             </Link>
-            <p className="text-xl text-muted-foreground max-w-sm mb-8">
-              Nền tảng AI đồng hành cùng gia đình trên hành trình chăm sóc trẻ tự kỷ.
+            <p className="text-gray-400 mb-6">
+              Nền tảng học tiếng Anh thông minh, giúp người Việt tự tin giao tiếp tiếng Anh.
             </p>
-            <div className="flex space-x-6 mt-2">
-              <Link href="#" aria-label="Facebook">
-                <Facebook className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />
+            <div className="flex space-x-4">
+              <Link href="#" aria-label="Facebook" className="hover:text-blue-400 transition">
+                <Facebook className="h-6 w-6" />
               </Link>
-              <Link href="#" aria-label="Twitter">
-                <Twitter className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />
+              <Link href="#" aria-label="Youtube" className="hover:text-red-500 transition">
+                <Youtube className="h-6 w-6" />
               </Link>
-              <Link href="#" aria-label="Instagram">
-                <Instagram className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors" />
+              <Link href="#" aria-label="Instagram" className="hover:text-pink-400 transition">
+                <Instagram className="h-6 w-6" />
               </Link>
             </div>
           </div>
 
-          {/* Cột giữa: Thông tin liên hệ */}
-          <div className="flex flex-col items-center lg:items-start">
-            <h3 className="text-2xl font-bold text-foreground mb-6">Thông tin liên hệ</h3>
-            <ul className="space-y-4">
-              <li className="flex items-center space-x-3">
-                <Mail className="h-6 w-6 text-primary" />
-                <span className="text-xl text-muted-foreground">support@autismcare.vn</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Phone className="h-6 w-6 text-primary" />
-                <span className="text-xl text-muted-foreground">1900 1234</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <MapPin className="h-6 w-6 text-primary" />
-                <span className="text-xl text-muted-foreground">Hà Nội, Việt Nam</span>
-              </li>
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-lg font-bold mb-4">Khóa học</h3>
+            <ul className="space-y-2 text-gray-400">
+              <li><Link href="/dashboard-new/chat" className="hover:text-white transition">Voice Chat</Link></li>
+              <li><Link href="/dashboard-new/vocabulary" className="hover:text-white transition">Học từ vựng</Link></li>
+              <li><Link href="/dashboard-new/documents" className="hover:text-white transition">Upload tài liệu</Link></li>
+              <li><Link href="/dashboard-new/pronunciation" className="hover:text-white transition">Luyện phát âm</Link></li>
             </ul>
           </div>
 
-          {/* Cột phải: Ảnh chủ sở hữu / trường */}
-          <div className="flex justify-center lg:justify-end">
-            <Image
-              src="/owner.jpg" // 👉 thay bằng ảnh thật của bạn
-              alt="Người sở hữu AutismCare"
-              width={280}
-              height={280}
-              className="rounded-2xl shadow-lg object-cover"
-            />
+          {/* Support */}
+          <div>
+            <h3 className="text-lg font-bold mb-4">Hỗ trợ</h3>
+            <ul className="space-y-2 text-gray-400">
+              <li><Link href="/settings" className="hover:text-white transition">Cài đặt API Key</Link></li>
+              <li><Link href="#" className="hover:text-white transition">Hướng dẫn sử dụng</Link></li>
+              <li><Link href="#" className="hover:text-white transition">Câu hỏi thường gặp</Link></li>
+              <li><Link href="#" className="hover:text-white transition">Chính sách bảo mật</Link></li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h3 className="text-lg font-bold mb-4">Liên hệ</h3>
+            <ul className="space-y-3 text-gray-400">
+              <li className="flex items-center space-x-3">
+                <span className="text-primary">👤</span>
+                <span>Phan Văn Kha</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Mail className="h-5 w-5 text-primary" />
+                <span>Sư phạm Tin Học</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-primary" />
+                <span>Can Tho University</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <Phone className="h-5 w-5 text-primary" />
+                <span>0356339381</span>
+              </li>
+            </ul>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-gray-300 dark:border-gray-700 mt-16 pt-8 text-center">
-          <p className="text-muted-foreground text-base opacity-80">
-            © 2024 AutismCare. Tất cả quyền được bảo lưu.
+        <div className="border-t border-gray-700 mt-12 pt-8 text-center">
+          <p className="text-gray-500 text-sm">
+            © 2024 L2-BRAIN - Phan Văn Kha | Sư phạm Tin Học - Can Tho University
           </p>
         </div>
       </div>

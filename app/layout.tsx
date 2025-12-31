@@ -9,9 +9,9 @@ import "./globals.css";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Autism Detection - Early Intervention Support",
+  title: "VietTalk - Học tiếng Anh hiệu quả",
   description:
-    "AI-powered platform for early autism detection and parent support",
+    "Nền tảng học tiếng Anh dành cho người Việt với phương pháp học tập thông minh",
   generator: "v0.app",
 };
 

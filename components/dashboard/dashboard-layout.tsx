@@ -19,7 +19,7 @@ async function logout(router: ReturnType<typeof useRouter>) {
     if (res.ok) {
       sessionStorage
 .clear()
-      router.push("/login") // chuyển hướng về trang login
+      router.push("auth/login") // chuyển hướng về trang login
     }
   } catch (error) {
     console.error("Logout failed:", error)
@@ -54,7 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex h-16 items-center justify-between px-4">
               <Link href="/" className="flex items-center space-x-2">
                 <Heart className="h-8 w-8 text-sidebar-primary" />
-                <span className="text-xl font-bold text-sidebar-foreground">AutismCare</span>
+                <span className="text-xl font-bold text-sidebar-foreground">L2-BRAIN</span>
               </Link>
               <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
                 <X className="h-5 w-5" />
@@ -86,7 +86,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex h-16 items-center px-4">
           <Link href="/" className="flex items-center space-x-2">
             <Heart className="h-8 w-8 text-sidebar-primary" />
-            <span className="text-xl font-bold text-sidebar-foreground">AutismCare</span>
+            <span className="text-xl font-bold text-sidebar-foreground">L2-BRAIN</span>
           </Link>
         </div>
         <nav className="px-4 py-4">

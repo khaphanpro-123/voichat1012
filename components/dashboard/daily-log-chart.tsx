@@ -1,20 +1,41 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-export default function DailyLogChart({ childId }: { childId: string }) {
-  const [data, setData] = useState<{date:string, sleep:number}[]>([]);
+export default function DailyLogChart() {
+  const [data, setData] = useState<{ date: string; sleep: number }[]>([]);
 
-  useEffect(()=>{
-    if (!childId) return;
-    (async()=>{
-      const res = await fetch(`/api/daily-log?childId=${childId}`);
+  useEffect(() => {
+    (async () => {
+      const token =
+        typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+      if (!token) return;
+
+      const res = await fetch(`/api/daily-log`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       if (!res.ok) return;
       const js = await res.json();
-      const items = (js.logs || []).map((l:any)=>({ date: new Date(l.date).toLocaleDateString(), sleep: l.sleepHours || 0 })).reverse();
+
+      const items = (js.logs || [])
+        .map((l: any) => ({
+          date: new Date(l.date).toLocaleDateString(),
+          sleep: l.sleepHours || 0,
+        }))
+        .reverse();
+
       setData(items);
     })();
-  },[childId]);
+  }, []);
 
   return (
     <div style={{ width: "100%", height: 260 }}>
@@ -24,7 +45,7 @@ export default function DailyLogChart({ childId }: { childId: string }) {
           <XAxis dataKey="date" />
           <YAxis />
           <Tooltip />
-          <Line type="monotone" dataKey="sleep" strokeWidth={2} />
+          <Line type="monotone" dataKey="sleep" strokeWidth={2} stroke="#3b82f6" />
         </LineChart>
       </ResponsiveContainer>
     </div>

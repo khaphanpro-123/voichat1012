@@ -128,8 +128,7 @@ export function AssessmentForm() {
         throw new Error("API lưu thất bại")
       }
     } catch (err) {
-      console.error("API lỗi, fallback lưu sessionStorage
-:", err)
+      console.error("API lỗi, fallback lưu sessionStorage", err)
 
       // fallback sessionStorage
 

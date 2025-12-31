@@ -56,10 +56,10 @@ export function FeaturesSection() {
 
         <div className="text-center mb-16 relative z-10">
           <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 leading-tight">
-            Nâng tầm chăm sóc, Vun đắp tương lai
+            Học tiếng Anh thông minh với AI
           </h2>
           <p className="text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto opacity-90">
-            Hệ thống AutismCare được xây dựng với tâm huyết, cung cấp giải pháp toàn diện để phụ huynh theo dõi, đánh giá và hỗ trợ con cái phát triển tối ưu nhất.
+            Hệ thống L2-BRAIN được xây dựng với tâm huyết, cung cấp giải pháp toàn diện để người Việt học tiếng Anh hiệu quả nhất.
           </p>
         </div>
 
@@ -97,10 +97,10 @@ export function FeaturesSection() {
               <AlertTriangle className="h-10 w-10 text-yellow-600 dark:text-yellow-400" strokeWidth={2} />
             </div>
             <div>
-              <h3 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Lưu ý quan trọng từ AutismCare</h3>
+              <h3 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Lưu ý quan trọng từ L2-BRAIN</h3>
               <p className="text-lg text-gray-700 dark:text-gray-300 max-w-4xl mx-auto">
-                Để có được <strong className="text-yellow-700 dark:text-yellow-300">đánh giá chính xác nhất</strong>, hệ thống cần{" "}
-                <strong className="text-yellow-700 dark:text-yellow-300">ít nhất 3 ngày dữ liệu</strong> từ nhật ký của trẻ. Các kết quả phân tích chỉ mang tính chất tham khảo và không thay thế cho chẩn đoán y khoa chuyên nghiệp. Luôn tham khảo ý kiến bác sĩ chuyên khoa để có hướng điều trị phù hợp nhất.
+                Để có được <strong className="text-yellow-700 dark:text-yellow-300">kết quả học tập tốt nhất</strong>, hãy{" "}
+                <strong className="text-yellow-700 dark:text-yellow-300">luyện tập đều đặn mỗi ngày</strong>. Hệ thống AI sẽ theo dõi tiến trình và đưa ra gợi ý phù hợp với trình độ của bạn.
               </p>
             </div>
           </div>

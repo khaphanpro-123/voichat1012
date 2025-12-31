@@ -1,12 +1,25 @@
-import { jwtVerify } from "jose"
+// lib/verifyToken.ts
+import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "your-secret-key")
-
+// Dùng trong Edge Runtime (middleware)
 export async function verifyTokenEdge(token: string) {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET)
-    return payload as { userId: string }
-  } catch {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const { payload } = await jwtVerify(token, secret)
+    return payload
+  } catch (e) {
+    console.error("❌ verifyTokenEdge error:", e)
     return null
+  }
+}
+
+
+// Dùng trong API Route (Node runtime)
+import jwt from "jsonwebtoken";
+export function verifyToken(token: string) {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role?: string };
+  } catch {
+    return null;
   }
 }

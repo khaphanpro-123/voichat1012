@@ -19,8 +19,8 @@ const steps = [
   },
   {
     icon: Brain,
-    title: "AI phân tích dữ liệu",
-    description: "Hệ thống AI tiên tiến của chúng tôi sẽ tự động phân tích dữ liệu để đưa ra đánh giá chính xác.",
+    title: "Phân tích dữ liệu thông minh",
+    description: "Hệ thống sẽ tự động phân tích dữ liệu để đưa ra đánh giá chính xác.",
     step: "03",
   },
   {
@@ -80,10 +80,10 @@ export default function RegisterPage() {
             <CardHeader className="text-center">
               <Link href="/" className="md:hidden inline-flex items-center space-x-2 mb-4">
                 <Heart className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold text-foreground">AutismCare</span>
+                <span className="text-2xl font-bold text-foreground">L2-BRAIN</span>
               </Link>
               <CardTitle className="text-2xl">Đăng ký tài khoản</CardTitle>
-              <CardDescription>Tạo tài khoản để bắt đầu hành trình chăm sóc trẻ</CardDescription>
+              <CardDescription>Tạo tài khoản để bắt đầu học tiếng Anh</CardDescription>
             </CardHeader>
             <CardContent className="h-full flex flex-col justify-between">
               <RegisterForm />

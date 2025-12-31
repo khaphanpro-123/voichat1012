@@ -19,7 +19,7 @@ export function useLogout() {
 .removeItem("user")
 
       // Điều hướng về login
-      router.push("/login")
+      router.push("auth/login")
     } catch (error) {
       console.error("❌ Logout error:", error)
     }

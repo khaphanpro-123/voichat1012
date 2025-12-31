@@ -108,7 +108,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-6 flex">
             {/* Sidebar */}
             <aside className="w-64 bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl hidden lg:block">
-                <h2 className="text-2xl font-extrabold mb-8 text-gray-800 dark:text-gray-100">AutismCare</h2>
+                <h2 className="text-2xl font-extrabold mb-8 text-gray-800 dark:text-gray-100">L2-BRAIN</h2>
                 <nav className="space-y-3">
                     <a href="#" className="flex items-center space-x-3 py-3 px-4 rounded-xl text-white bg-blue-600 shadow-md font-semibold transition-all duration-200 hover:bg-blue-700">
                         <BarChart2 size={20} />
@@ -151,7 +151,7 @@ export default function DashboardPage() {
                             <CardHeader>
                                 <CardTitle className="text-2xl font-bold">Tin tức & Thông báo</CardTitle>
                                 <CardDescription className="text-gray-600 dark:text-gray-400">
-                                    Cập nhật các thông tin mới nhất từ AutismCare.
+                                    Cập nhật các thông tin mới nhất từ L2-BRAIN.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>

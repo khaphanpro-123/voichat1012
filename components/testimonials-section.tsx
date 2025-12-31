@@ -1,37 +1,37 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 import { useKeenSlider } from "keen-slider/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export function TestimonialsSection() {
   const testimonials = [
     {
-      name: "Chị Nguyễn Thị Lan",
-      role: "Mẹ của bé Minh (4 tuổi)",
+      name: "Phan Văn Kha",
+      role: "Sinh viên, Cần Thơ",
       content:
-        "Nhờ có AutismCare, tôi đã phát hiện sớm các dấu hiệu và can thiệp kịp thời cho con. Giờ bé đã có tiến bộ rõ rệt.",
+        "Mình đã học tiếng Anh nhiều năm nhưng không dám nói. Với L2-BRAIN, mình có thể luyện nói bất cứ lúc nào. Sau 3 tháng, mình đã tự tin giao tiếp hơn rất nhiều!",
       rating: 5,
     },
     {
-      name: "Anh Trần Văn Hùng",
-      role: "Bố của bé An (3 tuổi)",
+      name: "Hoàng Nam",
+      role: "Nhân viên văn phòng, TP.HCM",
       content:
-        "Giao diện dễ sử dụng, các bài test không mất nhiều thời gian. Kết quả AI rất chính xác và hữu ích.",
+        "Tính năng Voice Chat thật sự tuyệt vời! AI sửa lỗi ngữ pháp rất tự nhiên, không làm mình cảm thấy xấu hổ. Giờ mình có thể họp online bằng tiếng Anh tự tin hơn.",
       rating: 5,
     },
     {
-      name: "Chị Lê Thị Mai",
-      role: "Mẹ của bé Khang (5 tuổi)",
+      name: "Thu Hà",
+      role: "Giáo viên, Đà Nẵng",
       content:
-        "Đội ngũ hỗ trợ rất tận tình. Tôi luôn nhận được tư vấn kịp thời khi có thắc mắc về sự phát triển của con.",
+        "Học từ vựng qua hình ảnh rất hiệu quả! Mình upload ảnh và AI tự động trích xuất từ vựng với nghĩa tiếng Việt. Tiết kiệm rất nhiều thời gian.",
       rating: 5,
     },
     {
-      name: "Anh Hoàng Nam",
-      role: "Phụ huynh tại Hà Nội",
+      name: "Đức Anh",
+      role: "Học sinh cấp 3, Vĩnh Long",
       content:
-        "Tôi thực sự ấn tượng với cộng đồng mà AutismCare đã xây dựng. Cảm thấy mình không còn đơn độc trên hành trình này.",
+        "App giúp mình chuẩn bị IELTS Speaking rất tốt. Mình có thể luyện nói mọi lúc mọi nơi và nhận feedback ngay lập tức.",
       rating: 5,
     },
   ];
@@ -49,7 +49,6 @@ export function TestimonialsSection() {
     },
   });
 
-  // Auto slide
   useEffect(() => {
     const interval = setInterval(() => {
       instanceRef.current?.next();
@@ -60,57 +59,58 @@ export function TestimonialsSection() {
   return (
     <section className="py-20 lg:py-32 bg-background dark:bg-gray-950 relative">
       <div className="container mx-auto px-4">
-        {/* Headline */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-extrabold text-foreground mb-4">
-            Phụ huynh nói gì về chúng tôi
+          <h2 className="text-3xl lg:text-4xl font-extrabold text-foreground mb-4">
+            Học viên nói gì về chúng tôi
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Hàng nghìn gia đình đã tin tưởng và đạt được kết quả tích cực với AutismCare.
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Hàng nghìn người Việt đã cải thiện tiếng Anh với L2-BRAIN.
           </p>
         </div>
 
-        {/* Carousel */}
         <div className="relative">
-  <div ref={sliderRef} className="keen-slider w-full overflow-hidden">
-    {testimonials.map((testimonial, index) => (
-      <div
-        key={index}
-        className="keen-slider__slide w-full max-w-full flex-shrink-0"
-      >
-        <Card className="w-full h-full border-none rounded-none shadow-none bg-green-50 dark:bg-gray-800">
-          <CardContent className="flex flex-col justify-between h-full w-full">
-            <div className="flex items-start mb-4">
-              <Quote className="h-10 w-10 text-primary/30 flex-shrink-0" />
-              <div className="flex ml-2">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-6 w-6 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
+          <div ref={sliderRef} className="keen-slider w-full overflow-hidden">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="keen-slider__slide w-full max-w-full flex-shrink-0"
+              >
+                <Card className="w-full h-full border-none rounded-2xl shadow-lg bg-white dark:bg-gray-800">
+                  <CardContent className="flex flex-col justify-between h-full w-full p-6">
+                    <div className="flex items-start mb-4">
+                      <Quote className="h-8 w-8 text-primary/30 flex-shrink-0" />
+                      <div className="flex ml-2">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="h-5 w-5 fill-yellow-400 text-yellow-400"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-foreground text-base md:text-lg mb-6 italic leading-relaxed flex-grow">
+                      &ldquo;{testimonial.content}&rdquo;
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">
+                          {testimonial.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {testimonial.role}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-            <p className="text-foreground text-lg md:text-xl mb-6 italic leading-relaxed flex-grow">
-              "{testimonial.content}"
-            </p>
-            <div>
-              <p className="font-bold text-lg text-foreground">
-                {testimonial.name}
-              </p>
-              <p className="text-base text-muted-foreground">
-                {testimonial.role}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
       </div>
-    ))}
-  </div>
-</div>
-
-
-      </div>
-    </section >
+    </section>
   );
 }

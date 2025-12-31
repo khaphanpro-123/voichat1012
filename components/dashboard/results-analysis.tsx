@@ -83,7 +83,7 @@ export function ResultsAnalysis() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center py-12">
           <Brain className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">AI đang phân tích dữ liệu...</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Đang phân tích dữ liệu...</h2>
           <p className="text-muted-foreground">Vui lòng đợi trong giây lát để nhận kết quả chi tiết</p>
         </div>
       </div>

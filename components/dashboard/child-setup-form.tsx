@@ -42,14 +42,12 @@ export function ChildSetupForm() {
       console.log("Saved child info:", data)
 
       // Nếu API thành công → chuyển dashboard
-      router.push("/dashboard")
+      router.replace("/dashboard")
     } catch (error) {
       console.error("Lỗi khi lưu thông tin:", error)
 
       // fallback: lưu sessionStorage
- để không mất dữ liệu
-      sessionStorage
-.setItem("childInfo", JSON.stringify(formData))
+      sessionStorage.setItem("childInfo", JSON.stringify(formData))
       router.push("/dashboard")
     } finally {
       setIsLoading(false)

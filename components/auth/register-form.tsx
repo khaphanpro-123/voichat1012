@@ -1,11 +1,12 @@
-"use client";
+﻿"use client";
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export function RegisterForm() {
-  const router = useRouter(); // ✅ hook phải nằm trong component
-
+  const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -15,19 +16,37 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const validatePassword = (pwd: string) => {
+    const hasMinLength = pwd.length >= 6;
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(pwd);
+    return { hasMinLength, hasSpecialChar, isValid: hasMinLength && hasSpecialChar };
+  };
+
+  const passwordValidation = validatePassword(formData.password);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
+    if (!formData.fullName.trim()) {
+      setError("Vui long nhap ho ten");
+      return;
+    }
+    if (!formData.email.includes("@")) {
+      setError("Email khong hop le");
+      return;
+    }
+    if (!passwordValidation.isValid) {
+      setError("Mat khau can toi thieu 6 ky tu va 1 ky tu dac biet");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
+      setError("Mat khau khong khop");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      // 👉 gọi API thực tế
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,24 +57,22 @@ export function RegisterForm() {
         }),
       });
 
-      const data: { user?: { name: string }; message?: string; error?: string } =
-        await res.json();
+      const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || data.error || "Đăng ký thất bại");
+        setError(data.message || "Dang ky that bai");
         return;
       }
 
-      if (data.user) {
-        console.log("User registered:", data.user);
-      }
+      const login = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
 
-      // 👉 điều hướng
-      router.replace("/auth/login");
-      // hoặc: router.push("/dashboard/setup");
-    } catch (err) {
-      console.error(err);
-      setError("Lỗi kết nối");
+      router.push(login?.ok ? "/dashboard-new" : "/auth/login");
+    } catch {
+      setError("Loi ket noi server");
     } finally {
       setIsLoading(false);
     }
@@ -64,99 +81,78 @@ export function RegisterForm() {
   return (
     <motion.form
       onSubmit={handleSubmit}
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-4"
     >
-      {/* Thông báo lỗi */}
       {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl relative text-center text-sm"
-        >
-          {error}
-        </motion.div>
+        <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>
       )}
 
-      {/* Fullname */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Họ và tên
-        </label>
+        <label className="block text-sm font-medium mb-1">Ho va ten</label>
         <input
           required
-          placeholder="Nhập họ và tên của bạn"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          placeholder="Nhap ho ten"
+          className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700"
           value={formData.fullName}
-          onChange={(e) =>
-            setFormData({ ...formData, fullName: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
         />
       </div>
 
-      {/* Email */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Email
-        </label>
+        <label className="block text-sm font-medium mb-1">Email</label>
         <input
           required
           type="email"
-          placeholder="you@example.com"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          placeholder="email@example.com"
+          className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700"
           value={formData.email}
-          onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
       </div>
 
-      {/* Password */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Mật khẩu
-        </label>
+        <label className="block text-sm font-medium mb-1">Mat khau</label>
         <input
           required
           type="password"
-          placeholder="••••••••"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          placeholder="Toi thieu 6 ky tu, 1 ky tu dac biet"
+          className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700"
           value={formData.password}
-          onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
         />
+        {formData.password && (
+          <div className="mt-2 text-xs space-y-1">
+            <div className={passwordValidation.hasMinLength ? "text-green-600" : "text-gray-400"}>
+              {passwordValidation.hasMinLength ? "V" : "O"} Toi thieu 6 ky tu
+            </div>
+            <div className={passwordValidation.hasSpecialChar ? "text-green-600" : "text-gray-400"}>
+              {passwordValidation.hasSpecialChar ? "V" : "O"} Co it nhat 1 ky tu dac biet
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Confirm Password */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Xác nhận mật khẩu
-        </label>
+        <label className="block text-sm font-medium mb-1">Xac nhan mat khau</label>
         <input
           required
           type="password"
-          placeholder="••••••••"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          placeholder="Nhap lai mat khau"
+          className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700"
           value={formData.confirmPassword}
-          onChange={(e) =>
-            setFormData({ ...formData, confirmPassword: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
         />
       </div>
 
-      {/* Submit button */}
-      <motion.button
+      <button
         type="submit"
         disabled={isLoading}
-        whileHover={{ scale: isLoading ? 1 : 1.03 }}
-        whileTap={{ scale: 0.97 }}
-        className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 shadow-md hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
       >
-        {isLoading ? "Đang tạo tài khoản..." : "Đăng ký"}
-      </motion.button>
+        {isLoading ? "Dang xu ly..." : "Dang ky"}
+      </button>
     </motion.form>
   );
 }
