@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Comprehensive System Analysis for AI Teacher Platform
 interface SystemAnalysisResult {
@@ -121,7 +119,7 @@ Hãy phân tích và trả về JSON theo format:
 QUAN TRỌNG: Chỉ trả về JSON, không kèm text khác.
 `;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {

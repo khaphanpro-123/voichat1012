@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Module-specific debug analysis
 interface ModuleAnalysisResult {
@@ -131,7 +129,7 @@ Trả về JSON theo format:
 QUAN TRỌNG: Chỉ trả về JSON, không kèm text khác.
 `;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -183,7 +181,7 @@ function generateFallbackModuleAnalysis(moduleName: string, moduleData: any): Mo
         "Thêm error handling cho Vision response"
       ],
       sample_correct_code: `
-const response = await openai.chat.completions.create({
+const response = await getOpenAI().chat.completions.create({
   model: "gpt-4o-mini",
   messages: [{
     role: "user",
@@ -225,7 +223,7 @@ const response = await openai.chat.completions.create({
         "Remove mockdata và dùng real STT"
       ],
       sample_correct_code: `
-const transcription = await openai.audio.transcriptions.create({
+const transcription = await getOpenAI().audio.transcriptions.create({
   file: audioFile,
   model: 'whisper-1',
   language: 'vi'

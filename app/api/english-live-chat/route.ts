@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 import {
   generateEnglishSLAPrompt,
   generateEnglishRecast,
@@ -11,9 +11,7 @@ import {
   DEFAULT_ENGLISH_CONFIG
 } from '@/lib/englishSLAPrompt';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -70,7 +68,7 @@ Return JSON:
 
 If no errors, return hasErrors: false with empty errors array.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are an English grammar analyzer. Return valid JSON only." },
@@ -153,7 +151,7 @@ async function generateEnglishResponse(
       { role: 'user', content: userMessage }
     ];
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages,
       temperature: 0.7,
@@ -202,7 +200,7 @@ async function transcribeAudio(audioBase64: string): Promise<{
     // Create a File-like object for OpenAI
     const audioFile = new File([audioBuffer], 'audio.webm', { type: 'audio/webm' });
     
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
       model: 'whisper-1',
       language: 'en', // Expect English input
@@ -229,7 +227,7 @@ async function generateSpeech(
   try {
     const speedMap = { slow: 0.85, normal: 1.0, fast: 1.15 };
     
-    const response = await openai.audio.speech.create({
+    const response = await getOpenAI().audio.speech.create({
       model: 'tts-1',
       voice: 'nova', // Friendly female voice
       input: text,
@@ -407,3 +405,4 @@ export async function GET() {
     levels: ["A1", "A2", "B1", "B2", "C1", "C2"]
   });
 }
+

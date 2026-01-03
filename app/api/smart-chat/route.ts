@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 import { connectToDatabase } from '@/lib/mongodb';
 import { 
   generateSLASystemPrompt, 
@@ -10,9 +10,7 @@ import {
   SLAConfig 
 } from '@/lib/slaSystemPrompt';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Default learner profile (can be customized per user)
 const DEFAULT_LEARNER_PROFILE: LearnerProfile = {
@@ -125,7 +123,7 @@ CÁC LOẠI Ý ĐỊNH:
   "needsGrammarCheck": true/false
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -204,7 +202,7 @@ Hãy phân tích:
 
 Nếu không có lỗi, trả về hasErrors: false.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -355,7 +353,7 @@ Yêu cầu:
   "isTranslated": true
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -479,7 +477,7 @@ Use this information to provide personalized responses.
       { role: 'user', content: userMessage }
     ];
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: messages,
       temperature: 0.7,
@@ -641,3 +639,4 @@ export async function GET(req: NextRequest) {
     ]
   });
 }
+

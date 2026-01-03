@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 interface FeedbackResult {
   feedback_text: string;
@@ -69,7 +67,7 @@ Nếu ASR confidence < 0.6:
 
 Tạo feedback cho alignment data trên:`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -211,3 +209,4 @@ export async function GET() {
     }
   });
 }
+

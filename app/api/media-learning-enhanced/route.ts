@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 import { connectToDatabase } from '@/lib/mongodb';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Enhanced Media Learning with Real Whisper Audio Matching System
 
@@ -171,7 +169,7 @@ Trả về JSON:
   ]
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -560,3 +558,4 @@ export async function GET() {
     }
   });
 }
+

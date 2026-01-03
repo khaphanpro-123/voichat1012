@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Standard JSON schemas for consistent frontend handling
 interface VisionJSON {
@@ -66,7 +64,7 @@ OUTPUT JSON SCHEMA (NO OTHER TEXT):
 
 Analyze the image now:`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -182,3 +180,4 @@ export async function GET() {
     }
   });
 }
+

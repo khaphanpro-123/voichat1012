@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OpenAI } from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization of OpenAI client
+function getOpenAI() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 // Production scoring interface
 interface ScoringResult {
@@ -47,7 +50,7 @@ async function scoreUserDescription(
       .replace('[IMAGE_DESCRIPTION]', imageDescription)
       .replace('[USER_DESCRIPTION]', userDescription);
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -161,7 +164,7 @@ QUAN TRỌNG:
 - Chỉ trả về JSON, không kèm text khác
 `;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {

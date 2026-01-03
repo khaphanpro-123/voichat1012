@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 import { connectToDatabase } from '@/lib/mongodb';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Enhanced Media Learning with Real Whisper Audio Matching
 
@@ -132,7 +130,7 @@ Hãy phân tích và đưa ra:
   "suggestions": ["gợi ý 1", "gợi ý 2"]
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -216,7 +214,7 @@ Analyze this image and return ONLY a JSON object with this exact format:
 
 Only describe what is truly visible, with no guessing. Use Vietnamese for the caption.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -413,7 +411,7 @@ Trả về JSON với format:
   }
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -487,7 +485,7 @@ Trả về JSON với format:
 async function transcribeAudio(audioBase64: string, contentType: string = 'general'): Promise<string> {
   try {
     // In a real implementation, you would use OpenAI Whisper API:
-    // const response = await openai.audio.transcriptions.create({
+    // const response = await getOpenAI().audio.transcriptions.create({
     //   file: audioFile,
     //   model: "whisper-1",
     //   language: "vi"
@@ -636,7 +634,7 @@ Hãy tạo:
   "summary": "Tóm tắt nội dung chính"
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -1050,3 +1048,4 @@ export async function GET() {
     }
   });
 }
+

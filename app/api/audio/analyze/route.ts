@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 interface WhisperResponse {
   text: string;
@@ -42,7 +40,7 @@ async function analyzeAudioWithWhisper(audioBase64: string, audioId: string): Pr
     const audioFile = new File([audioBuffer], `${audioId}.wav`, { type: 'audio/wav' });
     
     // Call Whisper with verbose JSON to get word-level timestamps and confidence
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
       model: 'whisper-1',
       language: 'vi', // Vietnamese

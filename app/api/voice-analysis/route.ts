@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Analyze Vietnamese audio for pronunciation and content matching
 async function analyzeVietnameseAudio(
@@ -83,7 +81,7 @@ Hãy đánh giá:
   "suggestions": ["gợi ý 1", "gợi ý 2"]
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -211,7 +209,7 @@ Hãy trích xuất:
   "summary": "tóm tắt nội dung"
 }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
@@ -375,3 +373,4 @@ export async function GET() {
     }
   });
 }
+

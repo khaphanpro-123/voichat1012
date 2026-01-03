@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 const SYSTEM_PROMPT = `Bạn là chuyên gia đánh giá phát âm tiếng Việt.
 
@@ -57,7 +55,7 @@ User (thực tế): "${text_user}"
 
 Hãy phân tích chi tiết các lỗi phát âm và đưa ra điểm số từ 0-100.`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -142,3 +140,5 @@ function levenshteinDistance(str1: string, str2: string): number {
 
   return matrix[str2.length][str1.length];
 }
+
+

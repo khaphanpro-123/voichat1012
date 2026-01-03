@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OpenAI } from 'openai';
+import { getOpenAI } from '@/lib/openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 interface ASRResult {
   transcript: string;
@@ -22,7 +20,7 @@ async function transcribeAudio(audioBase64: string): Promise<ASRResult> {
     // Create a temporary file-like object for Whisper
     const audioFile = new File([audioBuffer], 'audio.wav', { type: 'audio/wav' });
     
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
       model: 'whisper-1',
       language: 'vi', // Vietnamese
