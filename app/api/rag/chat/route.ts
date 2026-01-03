@@ -3,38 +3,61 @@ import { NextRequest, NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { CohereClient } from "cohere-ai";
 
-// ✅ Khởi tạo Pinecone client
-const pc = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
-});
+// Lazy-load clients to avoid build-time errors
+let pineconeClient: Pinecone | null = null;
+let cohereClient: CohereClient | null = null;
 
-const index = pc.index(process.env.PINECONE_INDEX!);
+function getPinecone(): Pinecone {
+  if (!pineconeClient) {
+    const apiKey = process.env.PINECONE_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing PINECONE_API_KEY environment variable");
+    }
+    pineconeClient = new Pinecone({ apiKey });
+  }
+  return pineconeClient;
+}
 
-// ✅ Khởi tạo Cohere client
-const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY!,
-});
+function getPineconeIndex() {
+  const indexName = process.env.PINECONE_INDEX;
+  if (!indexName) {
+    throw new Error("Missing PINECONE_INDEX environment variable");
+  }
+  return getPinecone().index(indexName);
+}
+
+function getCohere(): CohereClient {
+  if (!cohereClient) {
+    const token = process.env.COHERE_API_KEY;
+    if (!token) {
+      throw new Error("Missing COHERE_API_KEY environment variable");
+    }
+    cohereClient = new CohereClient({ token });
+  }
+  return cohereClient;
+}
 
 // 🔹 Tạo embedding bằng Cohere
 async function embedText(text: string): Promise<number[]> {
-  const resp: EmbedResponse = await cohere.embed({
+  const resp = await getCohere().embed({
     model: "embed-multilingual-v3.0",
     texts: [text],
     input_type: "search_document",
   });
 
-  return resp.embeddings[0];
+  return (resp.embeddings as number[][])[0];
 }
 
 // 🔹 Convert conversation từ OpenAI format → Cohere format
 function convertConversation(conv: Array<{ role: string; content: string }>) {
   return conv
-    .filter(msg => msg.role === "user" || msg.role === "assistant")
-    .map(msg => ({
-      role: msg.role === "user" ? "USER" : "CHATBOT",
+    .filter((msg) => msg.role === "user" || msg.role === "assistant")
+    .map((msg) => ({
+      role: msg.role === "user" ? ("USER" as const) : ("CHATBOT" as const),
       message: msg.content,
     }));
 }
+
 export async function POST(req: NextRequest) {
   try {
     const { message, conversation = [], userId, childId } = await req.json();
@@ -45,6 +68,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const index = getPineconeIndex();
 
     // 1) Embed câu hỏi
     const qEmb = await embedText(message);
@@ -70,7 +95,7 @@ export async function POST(req: NextRequest) {
       ...(Object.keys(filter).length > 0 ? { filter } : {}),
     });
 
-    const hits = (results.matches ?? []).map(m => m.metadata);
+    const hits = (results.matches ?? []).map((m) => m.metadata);
     const context = hits
       .map(
         (h: any, i: number) =>
@@ -88,11 +113,11 @@ Nếu không tìm thấy dữ liệu, hãy nói rõ "không có đủ dữ liệ
     const chatHistory = convertConversation(conversation);
 
     // 7) Gọi Cohere chat
-    const chatResp = await cohere.chat({
-      model: "command-r-plus", // hoặc "command-r"
+    const chatResp = await getCohere().chat({
+      model: "command-r-plus",
       message: userPrompt,
       temperature: 0.2,
-      chat_history: chatHistory,
+      chatHistory: chatHistory,
     });
 
     const answer = chatResp.text || "Xin lỗi, chưa có câu trả lời.";
@@ -110,4 +135,3 @@ Nếu không tìm thấy dữ liệu, hãy nói rõ "không có đủ dữ liệ
     );
   }
 }
-

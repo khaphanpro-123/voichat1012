@@ -2,12 +2,39 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 import { CohereClient } from "cohere-ai";
 
-const PINECONE_INDEX = process.env.PINECONE_INDEX!;
-const PINECONE_KEY = process.env.PINECONE_API_KEY!;
-const COHERE_KEY = process.env.COHERE_API_KEY!;
+// Lazy-load clients to avoid build-time errors
+let pineconeClient: Pinecone | null = null;
+let cohereClient: CohereClient | null = null;
 
-const pinecone = new Pinecone({ apiKey: PINECONE_KEY });
-const cohere = new CohereClient({ token: COHERE_KEY });
+function getPinecone(): Pinecone {
+  if (!pineconeClient) {
+    const apiKey = process.env.PINECONE_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing PINECONE_API_KEY environment variable");
+    }
+    pineconeClient = new Pinecone({ apiKey });
+  }
+  return pineconeClient;
+}
+
+function getCohere(): CohereClient {
+  if (!cohereClient) {
+    const token = process.env.COHERE_API_KEY;
+    if (!token) {
+      throw new Error("Missing COHERE_API_KEY environment variable");
+    }
+    cohereClient = new CohereClient({ token });
+  }
+  return cohereClient;
+}
+
+function getPineconeIndex() {
+  const indexName = process.env.PINECONE_INDEX;
+  if (!indexName) {
+    throw new Error("Missing PINECONE_INDEX environment variable");
+  }
+  return getPinecone().index(indexName);
+}
 
 // -----------------------------
 // 1) Hàm chunk text
@@ -37,12 +64,12 @@ function chunkText(text: string, maxLen = 800) {
 // 2) Hàm embed text (Cohere)
 // -----------------------------
 async function embedText(text: string) {
-  const resp = await cohere.embed({
+  const resp = await getCohere().embed({
     model: "embed-multilingual-v3.0",
     texts: [text],
     input_type: "search_document",
   });
-  return resp.embeddings[0];
+  return (resp.embeddings as number[][])[0];
 }
 
 // -----------------------------
@@ -57,7 +84,7 @@ export async function ingestDoc({
   text: string;
   metadata: Record<string, any>;
 }) {
-  const index = pinecone.index(PINECONE_INDEX);
+  const index = getPineconeIndex();
 
   const chunks = chunkText(text, 800);
   const vectors = [];
