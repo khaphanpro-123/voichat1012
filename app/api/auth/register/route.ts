@@ -66,10 +66,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error) {
-    console.error("Register error:", error);
+  } catch (error: any) {
+    console.error("Register error:", error?.message || error);
+    console.error("Stack:", error?.stack);
     return NextResponse.json(
-      { success: false, message: "Lỗi server, vui lòng thử lại" },
+      { 
+        success: false, 
+        message: "Lỗi server, vui lòng thử lại",
+        error: process.env.NODE_ENV === "development" ? error?.message : undefined
+      },
       { status: 500 }
     );
   }
