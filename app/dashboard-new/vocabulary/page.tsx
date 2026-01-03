@@ -307,8 +307,21 @@ export default function VocabularyPage() {
   if (status === "loading" || loading) {
     return (
       <DashboardLayout>
-        <div className="p-6 flex items-center justify-center min-h-[50vh]">
-          <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
+        <div className="p-6 flex flex-col items-center justify-center min-h-[50vh] gap-4">
+          <motion.div
+            className="text-4xl"
+            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            📚
+          </motion.div>
+          <motion.p 
+            className="text-gray-500"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            Đang tải từ vựng...
+          </motion.p>
         </div>
       </DashboardLayout>
     );

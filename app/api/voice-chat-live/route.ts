@@ -91,18 +91,7 @@ export async function POST(req: NextRequest) {
       targetSentence
     } = body;
 
-    // Get API keys
-    const keys = await getUserApiKeys(userId);
-    
-    if (!keys.openaiKey && !keys.groqKey && !keys.cohereKey) {
-      return NextResponse.json({
-        success: false,
-        message: "Chưa có API key. Vui lòng thêm Groq key (miễn phí) trong Settings.",
-        needApiKey: true,
-      }, { status: 400 });
-    }
-
-    // Start session - no AI call needed
+    // Start session - NO API key check needed, NO DB call
     if (action === "start") {
       const greetings = [
         "Hey! What's on your mind today?",
@@ -115,6 +104,40 @@ export async function POST(req: NextRequest) {
         response: greetings[Math.floor(Math.random() * greetings.length)],
         sessionId: `live_${Date.now()}`,
       });
+    }
+
+    // Check Pronunciation - NO API key needed, pure computation
+    if (action === "checkPronunciation") {
+      if (!spokenText?.trim() || !targetSentence?.trim()) {
+        return NextResponse.json({ 
+          success: false, 
+          message: "spokenText and targetSentence required" 
+        }, { status: 400 });
+      }
+
+      // Use simple scoring (no AI call - instant response!)
+      const { score, feedback } = scorePronunciation(spokenText, targetSentence);
+
+      return NextResponse.json({
+        success: true,
+        feedback,
+        pronunciationFeedback: {
+          score,
+          errors: [],
+          correctedText: targetSentence
+        }
+      });
+    }
+
+    // Only get API keys for actions that need AI
+    const keys = await getUserApiKeys(userId);
+    
+    if (!keys.openaiKey && !keys.groqKey && !keys.cohereKey) {
+      return NextResponse.json({
+        success: false,
+        message: "Chưa có API key. Vui lòng thêm Groq key (miễn phí) trong Settings.",
+        needApiKey: true,
+      }, { status: 400 });
     }
 
     // Chat - main conversation
@@ -133,29 +156,6 @@ export async function POST(req: NextRequest) {
         userMessage: message,
         provider,
         model
-      });
-    }
-
-    // Check Pronunciation - use simple scoring to save quota
-    if (action === "checkPronunciation") {
-      if (!spokenText?.trim() || !targetSentence?.trim()) {
-        return NextResponse.json({ 
-          success: false, 
-          message: "spokenText and targetSentence required" 
-        }, { status: 400 });
-      }
-
-      // Use simple scoring (no AI call - saves quota!)
-      const { score, feedback } = scorePronunciation(spokenText, targetSentence);
-
-      return NextResponse.json({
-        success: true,
-        feedback,
-        pronunciationFeedback: {
-          score,
-          errors: [],
-          correctedText: targetSentence
-        }
       });
     }
 

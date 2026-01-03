@@ -419,7 +419,7 @@ async function saveUserProgress(userId: string, sessionData: MediaSession, pronu
             matchingScore: pronunciationResults.matchingScore,
             timestamp: new Date()
           }
-        }
+        } as any
       },
       { upsert: true }
     );

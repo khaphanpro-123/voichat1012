@@ -327,7 +327,7 @@ async function analyzeVideoContent(videoBase64: string): Promise<{
     // Combine frame analyses
     const allObjects = [...new Set(simulatedFrames.flatMap(f => f.objects))];
     const allActions = [...new Set(simulatedFrames.flatMap(f => f.actions))];
-    const allEmotions = [...new Set(simulatedFrames.flatMap(f => f.emotions))];
+    const allEmotions = [...new Set(simulatedFrames.flatMap(f => f.emotions))].filter((e): e is string => !!e);
 
     const combinedAnalysis: VisionAnalysis = {
       objects: allObjects,
@@ -336,8 +336,8 @@ async function analyzeVideoContent(videoBase64: string): Promise<{
       people_description: simulatedFrames[0]?.people_description || "",
       caption: `Video mô tả: ${simulatedFrames.map(f => f.caption).join('. ')}`,
       emotions: allEmotions,
-      colors: [...new Set(simulatedFrames.flatMap(f => f.colors))],
-      text_in_image: [...new Set(simulatedFrames.flatMap(f => f.text_in_image))]
+      colors: [...new Set(simulatedFrames.flatMap(f => f.colors))].filter((c): c is string => !!c),
+      text_in_image: [...new Set(simulatedFrames.flatMap(f => f.text_in_image))].filter((t): t is string => !!t)
     };
 
     return {

@@ -5,53 +5,83 @@ interface ApiKeys {
   openaiKey: string | null;
   groqKey: string | null;
   cohereKey: string | null;
+  geminiKey?: string | null;
 }
 
-/**
- * Lấy API key của user, fallback về server key nếu user chưa setup
- * Ưu tiên: Groq (nhanh nhất, miễn phí) > OpenAI > Cohere
- */
-export async function getUserApiKeys(userId: string = 'anonymous'): Promise<ApiKeys> {
-  console.log('=== getUserApiKeys ===');
-  console.log('Looking up keys for userId:', userId);
-  
-  try {
-    await connectDB();
-    const userKeys = await UserApiKeys.findOne({ userId });
+// In-memory cache for API keys (TTL: 5 minutes)
+const keyCache = new Map<string, { keys: ApiKeys; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-    // Chỉ dùng user key nếu nó có giá trị thực (không phải empty string)
-    const userOpenaiKey = userKeys?.openaiKey && userKeys.openaiKey.length > 0 ? userKeys.openaiKey : null;
-    const userGroqKey = userKeys?.groqKey && userKeys.groqKey.length > 0 ? userKeys.groqKey : null;
-    const userCohereKey = userKeys?.cohereKey && userKeys.cohereKey.length > 0 ? userKeys.cohereKey : null;
+// Server-side keys (loaded once)
+let serverKeys: ApiKeys | null = null;
 
-    return {
-      openaiKey: userOpenaiKey || process.env.OPENAI_API_KEY || null,
-      groqKey: userGroqKey || process.env.GROQ_API_KEY || null,
-      cohereKey: userCohereKey || process.env.COHERE_API_KEY || null,
-    };
-  } catch (error) {
-    console.error('Get user API keys error:', error);
-    return {
+function getServerKeys(): ApiKeys {
+  if (!serverKeys) {
+    serverKeys = {
       openaiKey: process.env.OPENAI_API_KEY || null,
       groqKey: process.env.GROQ_API_KEY || null,
       cohereKey: process.env.COHERE_API_KEY || null,
+      geminiKey: process.env.GEMINI_API_KEY || null,
     };
   }
+  return serverKeys;
+}
+
+/**
+ * Lấy API key của user với caching
+ * Ưu tiên: Groq (nhanh nhất, miễn phí) > OpenAI > Cohere
+ */
+export async function getUserApiKeys(userId: string = "anonymous"): Promise<ApiKeys> {
+  // Fast path: return server keys for anonymous users
+  if (!userId || userId === "anonymous") {
+    return getServerKeys();
+  }
+
+  // Check cache first
+  const cached = keyCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.keys;
+  }
+
+  try {
+    await connectDB();
+    const userKeys = await UserApiKeys.findOne({ userId }).lean() as any;
+
+    const keys: ApiKeys = {
+      openaiKey: userKeys?.openaiKey || getServerKeys().openaiKey,
+      groqKey: userKeys?.groqKey || getServerKeys().groqKey,
+      cohereKey: userKeys?.cohereKey || getServerKeys().cohereKey,
+      geminiKey: userKeys?.geminiKey || getServerKeys().geminiKey,
+    };
+
+    // Cache the result
+    keyCache.set(userId, { keys, timestamp: Date.now() });
+
+    return keys;
+  } catch (error) {
+    console.error("Get user API keys error:", error);
+    return getServerKeys();
+  }
+}
+
+/**
+ * Invalidate cache for a user (call when user updates their keys)
+ */
+export function invalidateKeyCache(userId: string): void {
+  keyCache.delete(userId);
 }
 
 /**
  * Kiểm tra user có API key riêng không
  */
-export async function hasUserApiKey(userId: string, keyType: 'openai' | 'groq' | 'cohere'): Promise<boolean> {
-  try {
-    await connectDB();
-    const userKeys = await UserApiKeys.findOne({ userId });
-    
-    if (keyType === 'openai') return !!userKeys?.openaiKey;
-    if (keyType === 'groq') return !!userKeys?.groqKey;
-    if (keyType === 'cohere') return !!userKeys?.cohereKey;
-    return false;
-  } catch {
-    return false;
-  }
+export async function hasUserApiKey(
+  userId: string,
+  keyType: "openai" | "groq" | "cohere" | "gemini"
+): Promise<boolean> {
+  const keys = await getUserApiKeys(userId);
+  if (keyType === "openai") return !!keys.openaiKey;
+  if (keyType === "groq") return !!keys.groqKey;
+  if (keyType === "cohere") return !!keys.cohereKey;
+  if (keyType === "gemini") return !!keys.geminiKey;
+  return false;
 }

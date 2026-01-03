@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/db";
 import Vocabulary from "@/app/models/Vocabulary";
 import { getUserApiKeys } from "@/lib/getUserApiKey";
 import { callAI, parseJsonFromAI } from "@/lib/aiProvider";
+import { taskQueue, TASK_TYPES } from "@/lib/queue";
+import "@/lib/workers";
 
 interface Flashcard {
   id: string;
@@ -59,11 +61,7 @@ Return ONLY valid JSON array (no markdown, no code blocks):
   
   // Fallback: try to extract JSON array manually if parseJsonFromAI fails
   if (!parsed || !Array.isArray(parsed)) {
-    console.log("parseJsonFromAI failed, trying manual extraction...");
-    console.log("Raw content:", result.content?.substring(0, 500));
-    
     try {
-      // Try to find JSON array in the response
       const content = result.content || "";
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -76,15 +74,9 @@ Return ONLY valid JSON array (no markdown, no code blocks):
   
   // If still not an array, create basic flashcards from words
   if (!parsed || !Array.isArray(parsed)) {
-    console.log("Creating fallback flashcards for words:", words);
     parsed = words.map(word => ({
-      word,
-      vietnamese: "",
-      pronunciation: "",
-      partOfSpeech: "noun",
-      exampleEn: "",
-      exampleVi: "",
-      level: "intermediate"
+      word, vietnamese: "", pronunciation: "", partOfSpeech: "noun",
+      exampleEn: "", exampleVi: "", level: "intermediate"
     }));
   }
 
@@ -105,7 +97,7 @@ Return ONLY valid JSON array (no markdown, no code blocks):
 
 export async function POST(req: NextRequest) {
   try {
-    const { words, userId = "anonymous" } = await req.json();
+    const { words, userId = "anonymous", mode } = await req.json();
 
     if (!words || !Array.isArray(words) || words.length === 0) {
       return NextResponse.json(
@@ -114,7 +106,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user's API keys (including Groq)
+    // Get user's API keys
     const keys = await getUserApiKeys(userId);
 
     if (!keys.geminiKey && !keys.openaiKey && !keys.groqKey) {
@@ -124,41 +116,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("Generating flashcards for:", words, "(user:", userId, ")");
+    // ASYNC MODE: Return immediately, process in background
+    if (mode === "async") {
+      const taskId = taskQueue.enqueue(TASK_TYPES.GENERATE_FLASHCARD, {
+        words,
+        userId,
+        keys: { geminiKey: keys.geminiKey, openaiKey: keys.openaiKey, groqKey: keys.groqKey },
+      });
+
+      return NextResponse.json({
+        success: true,
+        accepted: true,
+        taskId,
+        message: "Flashcard generation started",
+        pollUrl: `/api/task-status?taskId=${taskId}`,
+      }, { status: 202 });
+    }
+
+    // SYNC MODE (default): Generate immediately
     const { flashcards, provider, model } = await generateFlashcards(words, keys);
 
-    // Save to MongoDB for user's vocabulary bank
-    try {
-      await connectDB();
-      for (const card of flashcards) {
-        await Vocabulary.findOneAndUpdate(
-          { userId, word: card.word },
-          {
-            userId,
-            word: card.word,
-            type: card.partOfSpeech,
-            meaning: card.vietnamese,
-            example: card.exampleEn,
-            exampleTranslation: card.exampleVi,
-            level: card.level,
-            // SRS defaults
-            easeFactor: 2.5,
-            interval: 1,
-            repetitions: 0,
-            nextReviewDate: new Date(),
-            timesReviewed: 0,
-            timesCorrect: 0,
-            timesIncorrect: 0,
-            isLearned: false
-          },
-          { upsert: true, new: true }
-        );
+    // Save to MongoDB in background (fire-and-forget)
+    setImmediate(async () => {
+      try {
+        await connectDB();
+        for (const card of flashcards) {
+          await Vocabulary.findOneAndUpdate(
+            { userId, word: card.word },
+            {
+              userId, word: card.word, type: card.partOfSpeech,
+              meaning: card.vietnamese, example: card.exampleEn,
+              exampleTranslation: card.exampleVi, level: card.level,
+              easeFactor: 2.5, interval: 1, repetitions: 0,
+              nextReviewDate: new Date(), timesReviewed: 0,
+              timesCorrect: 0, timesIncorrect: 0, isLearned: false
+            },
+            { upsert: true, new: true }
+          );
+        }
+      } catch (err) {
+        console.error("Background DB save error:", err);
       }
-      console.log(`Saved ${flashcards.length} words to user vocabulary bank`);
-    } catch (dbError) {
-      console.error("DB save error:", dbError);
-      // Continue even if DB fails
-    }
+    });
 
     return NextResponse.json({
       success: true,
@@ -171,10 +170,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Flashcard generation error:", error);
     const message = error instanceof Error ? error.message : "Failed";
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
 

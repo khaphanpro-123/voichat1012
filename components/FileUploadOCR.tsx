@@ -77,18 +77,15 @@ export default function FileUploadOCR() {
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [isDeletingDoc, setIsDeletingDoc] = useState<string | null>(null);
 
-  // Track user progress
-  const trackProgress = async (activity: string) => {
+  // Track user progress - FIRE-AND-FORGET (non-blocking)
+  const trackProgress = (activity: string) => {
     if (!userId) return;
-    try {
-      await fetch("/api/user-progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, activity }),
-      });
-    } catch (err) {
-      console.error("Track progress error:", err);
-    }
+    // Fire-and-forget: don't await, don't block UI
+    fetch("/api/user-progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, activity }),
+    }).catch(() => {}); // Silently ignore errors
   };
 
   // Redirect if not authenticated
@@ -385,9 +382,19 @@ export default function FileUploadOCR() {
                   </h2>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto">
                     {isLoadingDocs ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader className="w-6 h-6 animate-spin text-teal-500" />
-                        <span className="ml-2 text-gray-500">Đang tải...</span>
+                      <div className="flex flex-col items-center justify-center py-8 gap-3">
+                        <div className="flex items-end gap-1">
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <motion.div
+                              key={i}
+                              className="w-1 bg-teal-500 rounded-full"
+                              style={{ height: 20 }}
+                              animate={{ scaleY: [0.4, 1, 0.4] }}
+                              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-gray-500 text-sm">Đang tải...</span>
                       </div>
                     ) : (
                       uploadedDocuments.map((doc) => (
@@ -478,7 +485,16 @@ export default function FileUploadOCR() {
                   >
                     {isUploading ? (
                       <>
-                        <Loader className="w-5 h-5 animate-spin" />
+                        <div className="flex gap-1">
+                          {[0, 1, 2].map((i) => (
+                            <motion.div
+                              key={i}
+                              className="w-1.5 h-1.5 bg-white rounded-full"
+                              animate={{ y: [0, -4, 0], opacity: [0.5, 1, 0.5] }}
+                              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                            />
+                          ))}
+                        </div>
                         Đang xử lý...
                       </>
                     ) : (
@@ -573,7 +589,13 @@ export default function FileUploadOCR() {
                 >
                   {isGenerating ? (
                     <>
-                      <Loader className="w-5 h-5 animate-spin" />
+                      <motion.span
+                        className="text-xl"
+                        animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                      >
+                        ✨
+                      </motion.span>
                       Đang tạo flashcards...
                     </>
                   ) : (

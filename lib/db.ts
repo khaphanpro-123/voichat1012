@@ -7,20 +7,62 @@ if (!MONGO_URI) {
   throw new Error("Missing MONGO_URI");
 }
 
-let cached = (global as any)._mongoose;
+interface CachedConnection {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+let cached: CachedConnection = (global as any)._mongoose;
 if (!cached) {
   cached = (global as any)._mongoose = { conn: null, promise: null };
 }
 
-export async function connectDB() {
-  if (cached.conn) return cached.conn;
+// Optimized connection options
+const connectionOptions = {
+  dbName: process.env.MONGO_DB || undefined,
+  maxPoolSize: 10, // Connection pool
+  minPoolSize: 2,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  bufferCommands: true,
+};
+
+export async function connectDB(): Promise<typeof mongoose> {
+  // Return existing connection immediately
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  // Create new connection promise if not exists
   if (!cached.promise) {
     cached.promise = mongoose
-      .connect(MONGO_URI, {
-        dbName: process.env.MONGO_DB || undefined,
+      .connect(MONGO_URI, connectionOptions)
+      .then((m) => {
+        console.log("[DB] Connected to MongoDB");
+        return m;
       })
-      .then((m) => m);
+      .catch((err) => {
+        cached.promise = null; // Reset on error
+        throw err;
+      });
   }
-  cached.conn = await cached.promise;
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (err) {
+    cached.promise = null;
+    throw err;
+  }
+
   return cached.conn;
+}
+
+// Check if connected (non-blocking)
+export function isConnected(): boolean {
+  return mongoose.connection.readyState === 1;
+}
+
+// Pre-warm connection on module load (non-blocking)
+if (typeof window === "undefined") {
+  connectDB().catch(() => {});
 }

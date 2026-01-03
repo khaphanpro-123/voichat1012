@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -43,6 +43,37 @@ interface UserProgress {
   };
 }
 
+// Cache key for localStorage
+const PROGRESS_CACHE_KEY = "l2brain_user_progress";
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Get cached progress from localStorage
+function getCachedProgress(userId: string): UserProgress | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const cached = localStorage.getItem(`${PROGRESS_CACHE_KEY}_${userId}`);
+    if (!cached) return null;
+    const { data, timestamp } = JSON.parse(cached);
+    if (Date.now() - timestamp > CACHE_TTL) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// Save progress to localStorage
+function setCachedProgress(userId: string, data: UserProgress): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      `${PROGRESS_CACHE_KEY}_${userId}`,
+      JSON.stringify({ data, timestamp: Date.now() })
+    );
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 const learningModes = [
   {
     id: "chat",
@@ -84,13 +115,20 @@ const learningModes = [
 
 export default function DashboardHome() {
   const { data: session } = useSession();
-  const [progress, setProgress] = useState<UserProgress | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const userId = (session?.user as any)?.id;
   const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "User";
+  
+  // Initialize with cached data immediately (no loading state if cached)
+  const cachedProgress = useMemo(() => userId ? getCachedProgress(userId) : null, [userId]);
+  const [progress, setProgress] = useState<UserProgress | null>(cachedProgress);
+  const [loading, setLoading] = useState(!cachedProgress); // Only show loading if no cache
 
-  // Load user progress
+  // Pre-warm DB connection on mount (fire-and-forget)
+  useEffect(() => {
+    fetch("/api/health").catch(() => {});
+  }, []);
+
+  // Load user progress (background refresh)
   useEffect(() => {
     const loadProgress = async () => {
       if (!userId) {
@@ -103,6 +141,7 @@ export default function DashboardHome() {
         const data = await res.json();
         if (data.success) {
           setProgress(data.progress);
+          setCachedProgress(userId, data.progress); // Update cache
         }
       } catch (error) {
         console.error("Load progress error:", error);
@@ -141,8 +180,21 @@ export default function DashboardHome() {
 
   if (loading) {
     return (
-      <div className="p-6 md:p-8 max-w-7xl mx-auto flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
+      <div className="p-6 md:p-8 max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <motion.div
+          className="text-5xl"
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          🧠
+        </motion.div>
+        <motion.p 
+          className="text-gray-500"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          Đang tải dữ liệu...
+        </motion.p>
       </div>
     );
   }

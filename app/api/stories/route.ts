@@ -2,8 +2,8 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { connectDB } from "@/lib/db"
-import Story from "@/models/Story"
-import { authOptions } from "@/lib/auth"
+import Story from "@/app/models/Story"
+import { authOptions } from "@/lib/authOptions"
 
 const createStorySchema = z.object({
   mediaUrl: z.string(),

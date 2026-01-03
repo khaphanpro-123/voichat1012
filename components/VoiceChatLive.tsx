@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,7 +8,6 @@ import {
   MessageSquare, Target, Play, RotateCcw, BookOpen, Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 interface PronunciationFeedback {
   score: number;
@@ -41,7 +40,7 @@ type AppMode = "chat" | "pronunciation";
 
 export default function VoiceChatLive() {
   const { data: session } = useSession();
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<AppMode>("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isListening, setIsListening] = useState(false);
@@ -61,7 +60,6 @@ export default function VoiceChatLive() {
   const [isCheckingGrammar, setIsCheckingGrammar] = useState(false);
   const [showVocabPrompt, setShowVocabPrompt] = useState(false);
   const [isExtractingVocab, setIsExtractingVocab] = useState(false);
-  const [extractedWords, setExtractedWords] = useState<string[]>([]);
   
   // Settings
   const [level, setLevel] = useState<string>("A2");
@@ -80,54 +78,50 @@ export default function VoiceChatLive() {
   const grammarErrorsRef = useRef<Array<{ original: string; corrected: string; errorType: string; explanation: string; explanationVi?: string }>>([]);
   const pronunciationErrorsRef = useRef<Array<{ word: string; userPronunciation: string; correctPronunciation: string; feedback: string }>>([]);
 
-  // Track user progress
-  const trackProgress = async (activity: string, mistake?: { type: string; original: string; corrected: string; explanation: string }) => {
+  // Track user progress - FIRE-AND-FORGET (non-blocking)
+  const trackProgressFn = (activity: string, mistake?: { type: string; original: string; corrected: string; explanation: string }) => {
     if (userId === "anonymous") return;
     
-    try {
-      // Track activity
-      await fetch("/api/user-progress", {
-        method: "POST",
+    // Fire-and-forget: don't await, don't block UI
+    fetch("/api/user-progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, activity }),
+    }).catch(() => {}); // Silently ignore errors
+    
+    if (mistake) {
+      fetch("/api/user-progress", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, activity }),
-      });
-      
-      // Track mistake if provided
-      if (mistake) {
-        await fetch("/api/user-progress", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, mistake }),
-        });
-      }
-    } catch (err) {
-      console.error("Track progress error:", err);
+        body: JSON.stringify({ userId, mistake }),
+      }).catch(() => {});
     }
   };
 
-  // Save learning session to database
-  const saveLearningSession = async (sessionType: "voice_chat" | "pronunciation") => {
+  // Save learning session to database - FIRE-AND-FORGET
+  const saveLearningSession = (sessionType: "voice_chat" | "pronunciation") => {
     if (userId === "anonymous" || messages.length < 2) return;
     
-    try {
-      const endTime = new Date();
-      const duration = Math.round((endTime.getTime() - sessionStartTimeRef.current.getTime()) / 1000);
-      
-      // Calculate scores based on errors
-      const totalGrammarErrors = grammarErrorsRef.current.length;
-      const totalPronErrors = pronunciationErrorsRef.current.length;
-      const userMsgCount = messages.filter(m => m.role === "user").length;
-      
-      const grammarScore = userMsgCount > 0 
-        ? Math.max(0, 100 - (totalGrammarErrors / userMsgCount) * 20) 
-        : 100;
-      const pronunciationScore = userMsgCount > 0 
-        ? Math.max(0, 100 - (totalPronErrors / userMsgCount) * 20) 
-        : 100;
-      const overallScore = Math.round((grammarScore + pronunciationScore) / 2);
-      
-      // Prepare session data
-      const sessionData = {
+    const endTime = new Date();
+    const duration = Math.round((endTime.getTime() - sessionStartTimeRef.current.getTime()) / 1000);
+    
+    const totalGrammarErrors = grammarErrorsRef.current.length;
+    const totalPronErrors = pronunciationErrorsRef.current.length;
+    const userMsgCount = messages.filter(m => m.role === "user").length;
+    
+    const grammarScore = userMsgCount > 0 
+      ? Math.max(0, 100 - (totalGrammarErrors / userMsgCount) * 20) 
+      : 100;
+    const pronunciationScore = userMsgCount > 0 
+      ? Math.max(0, 100 - (totalPronErrors / userMsgCount) * 20) 
+      : 100;
+    const overallScore = Math.round((grammarScore + pronunciationScore) / 2);
+    
+    // Fire-and-forget: don't await
+    fetch("/api/learning-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         userId,
         sessionType,
         startTime: sessionStartTimeRef.current,
@@ -151,18 +145,8 @@ export default function VoiceChatLive() {
         level,
         areasToImprove: totalGrammarErrors > 0 ? ["Ngữ pháp"] : [],
         strengths: totalGrammarErrors === 0 ? ["Ngữ pháp tốt"] : []
-      };
-      
-      await fetch("/api/learning-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sessionData),
-      });
-      
-      console.log("Session saved successfully");
-    } catch (err) {
-      console.error("Save session error:", err);
-    }
+      }),
+    }).catch(() => {});
   };
 
   // Initialize Speech Recognition - Fixed duplicate issue
@@ -341,7 +325,7 @@ export default function VoiceChatLive() {
         if (autoSpeak) speak(data.response);
         
         // Track chat session
-        trackProgress("chatSession");
+        trackProgressFn("chatSession");
         
         // Track grammar mistake if any
         if (data.grammarFeedback?.hasErrors && data.grammarFeedback?.suggestion) {
@@ -354,7 +338,7 @@ export default function VoiceChatLive() {
             explanationVi: data.grammarFeedback.vietnameseHint
           });
           
-          trackProgress("chatSession", {
+          trackProgressFn("chatSession", {
             type: "grammar",
             original: text,
             corrected: data.grammarFeedback.suggestion,
@@ -405,7 +389,7 @@ export default function VoiceChatLive() {
         if (autoSpeak) speak(data.feedback);
         
         // Track pronunciation practice
-        trackProgress("pronunciationPractice");
+        trackProgressFn("pronunciationPractice");
         
         // Track pronunciation errors if any
         if (data.pronunciationFeedback?.errors?.length > 0) {
@@ -417,7 +401,7 @@ export default function VoiceChatLive() {
             feedback: data.pronunciationFeedback.errors.join(", ")
           });
           
-          trackProgress("pronunciationPractice", {
+          trackProgressFn("pronunciationPractice", {
             type: "pronunciation",
             original: spokenText,
             corrected: targetSentence,
@@ -450,7 +434,6 @@ export default function VoiceChatLive() {
     setCurrentTranscript("");
     setGrammarCheck(null);
     setShowVocabPrompt(false);
-    setExtractedWords([]);
   };
 
   // Check grammar before starting pronunciation practice
@@ -478,7 +461,7 @@ export default function VoiceChatLive() {
         // Track grammar mistakes if any
         if (data.grammarCheck.hasErrors && data.grammarCheck.errors?.length > 0) {
           for (const err of data.grammarCheck.errors) {
-            trackProgress("pronunciationPractice", {
+            trackProgressFn("pronunciationPractice", {
               type: "grammar",
               original: err.original,
               corrected: err.corrected,
@@ -528,7 +511,6 @@ export default function VoiceChatLive() {
     // Lưu cả câu như một cụm từ thay vì tách từ đơn lẻ
     // Điều này giúp người học hiểu ngữ cảnh tốt hơn
     const wordsToSave = [targetSentence.trim()];
-    setExtractedWords(wordsToSave);
     
     try {
       // Call API to generate flashcards
@@ -604,11 +586,23 @@ export default function VoiceChatLive() {
         ))}
         {isProcessing && (
           <div className="flex justify-start">
-            <div className="bg-white/10 rounded-2xl p-4">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" />
-                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+            <div className="bg-white/10 rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-1.5">
+                <motion.span 
+                  className="w-2 h-2 bg-white/70 rounded-full"
+                  animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
+                />
+                <motion.span 
+                  className="w-2 h-2 bg-white/70 rounded-full"
+                  animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
+                />
+                <motion.span 
+                  className="w-2 h-2 bg-white/70 rounded-full"
+                  animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+                />
               </div>
             </div>
           </div>
@@ -893,11 +887,23 @@ export default function VoiceChatLive() {
               </div>
             ))}
             {isProcessing && (
-              <div className="bg-white/10 rounded-2xl p-4">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" />
-                  <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                  <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+              <div className="bg-white/10 rounded-2xl px-4 py-3">
+                <div className="flex items-center gap-1.5">
+                  <motion.span 
+                    className="w-2 h-2 bg-white/70 rounded-full"
+                    animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
+                  />
+                  <motion.span 
+                    className="w-2 h-2 bg-white/70 rounded-full"
+                    animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
+                  />
+                  <motion.span 
+                    className="w-2 h-2 bg-white/70 rounded-full"
+                    animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+                  />
                 </div>
               </div>
             )}
@@ -951,18 +957,20 @@ export default function VoiceChatLive() {
         </div>
       </div>
 
-      {/* Mode Tabs */}
+      {/* Mode Tabs - Using startTransition for smooth switching */}
       <div className="flex gap-2 p-4 border-b border-white/10">
-        <button onClick={() => setMode("chat")}
+        <button onClick={() => startTransition(() => setMode("chat"))}
+          disabled={isPending}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition ${
             mode === "chat" ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white" : "bg-white/10 text-white/60 hover:bg-white/20"
-          }`}>
+          } ${isPending ? "opacity-70" : ""}`}>
           <MessageSquare className="w-5 h-5" /> Trò chuyện
         </button>
-        <button onClick={() => setMode("pronunciation")}
+        <button onClick={() => startTransition(() => setMode("pronunciation"))}
+          disabled={isPending}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition ${
             mode === "pronunciation" ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white" : "bg-white/10 text-white/60 hover:bg-white/20"
-          }`}>
+          } ${isPending ? "opacity-70" : ""}`}>
           <Target className="w-5 h-5" /> Luyện phát âm
         </button>
       </div>

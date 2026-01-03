@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const dbUser = (await User.findOne({ email })) as IUser | null;
+    const dbUser = (await User.findOne({ email })) as (IUser & { _id: any }) | null;
     if (!dbUser) {
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },

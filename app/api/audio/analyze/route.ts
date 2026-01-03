@@ -55,7 +55,7 @@ async function analyzeAudioWithWhisper(audioBase64: string, audioId: string): Pr
       word: word.word,
       start: word.start,
       end: word.end,
-      confidence: word.probability || 0.8 // Whisper doesn't always provide probability
+      confidence: (word as any).probability || 0.8 // Whisper doesn't always provide probability
     })) || [];
 
     return {

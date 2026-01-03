@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createWorker } from 'tesseract.js';
-import { v2 as cloudinary } from 'cloudinary';
-import { connectDB } from "@/lib/db";
-import Document from "@/app/models/Document";
-import mammoth from 'mammoth';
+import { taskQueue, TASK_TYPES } from "@/lib/queue";
+// Import workers to register handlers
+import "@/lib/workers";
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
+/**
+ * ASYNC OCR Upload API
+ * Returns HTTP 202 immediately, processes in background
+ * Frontend polls /api/task-status?taskId=xxx for results
+ */
 export async function POST(req: NextRequest) {
   try {
-    await connectDB();
-    
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const userId = formData.get("userId") as string || "anonymous";
+    const mode = formData.get("mode") as string; // "async" or "sync" (default sync for compatibility)
 
     if (!file) {
       return NextResponse.json(
@@ -27,65 +22,88 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert file to buffer
+    // Convert file to buffer array (serializable)
     const bytes = await file.arrayBuffer();
+    const bufferArray = Array.from(new Uint8Array(bytes));
+
+    // ASYNC MODE: Return immediately, process in background
+    if (mode === "async") {
+      const taskId = taskQueue.enqueue(TASK_TYPES.OCR_PROCESS, {
+        buffer: bufferArray,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        userId,
+      });
+
+      // Return 202 Accepted immediately
+      return NextResponse.json({
+        success: true,
+        accepted: true,
+        taskId,
+        message: "File accepted for processing",
+        pollUrl: `/api/task-status?taskId=${taskId}`,
+      }, { status: 202 });
+    }
+
+    // SYNC MODE (default): Process immediately for backward compatibility
+    // But still optimized with dynamic imports
+    const { createWorker } = await import("tesseract.js");
+    const { v2: cloudinary } = await import("cloudinary");
+    const mammoth = await import("mammoth");
+    const { connectDB } = await import("@/lib/db");
+    const Document = (await import("@/app/models/Document")).default;
+
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    await connectDB();
     const buffer = Buffer.from(bytes);
 
     // Upload to Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
+    const uploadResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        {
-          resource_type: "auto",
-          folder: "documents",
-        },
+        { resource_type: "auto", folder: "documents" },
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
         }
       ).end(buffer);
-    }) as any;
+    });
 
     let extractedText = "";
-    
-    // Extract text based on file type
-    if (file.type.startsWith('image/')) {
+
+    if (file.type.startsWith("image/")) {
       try {
-        const worker = await createWorker('vie'); // Vietnamese language
+        const worker = await createWorker("vie");
         const { data: { text } } = await worker.recognize(buffer);
         extractedText = text.trim();
         await worker.terminate();
-      } catch (ocrError) {
-        console.error("OCR Error:", ocrError);
+      } catch (err) {
         extractedText = "Text extraction failed for this image";
       }
-    } else if (file.type === 'application/pdf') {
+    } else if (file.type === "application/pdf") {
       try {
-        // Use pdf-parse-new for PDF text extraction
-        const pdfParse = require('pdf-parse-new');
+        const pdfParse = require("pdf-parse-new");
         const pdfData = await pdfParse(buffer);
-        extractedText = pdfData.text?.trim() || "";
-        
-        // If no text extracted
-        if (!extractedText) {
-          extractedText = "PDF không có text có thể trích xuất. Vui lòng thử file khác hoặc chuyển sang hình ảnh.";
-        }
-      } catch (pdfError: any) {
-        console.error("PDF Error:", pdfError);
-        extractedText = "PDF text extraction failed. Please try converting to image or DOCX.";
+        extractedText = pdfData.text?.trim() || "PDF không có text có thể trích xuất.";
+      } catch (err) {
+        extractedText = "PDF text extraction failed.";
       }
-    } else if (file.type.includes('document') || file.type.includes('wordprocessingml')) {
+    } else if (file.type.includes("document") || file.type.includes("wordprocessingml")) {
       try {
         const result = await mammoth.extractRawText({ buffer });
         extractedText = result.value.trim();
-      } catch (docError) {
-        console.error("Document Error:", docError);
+      } catch (err) {
         extractedText = "Document text extraction failed";
       }
     } else {
       extractedText = "Text extraction not supported for this file type";
     }
 
-    // Save to MongoDB
     const document = new Document({
       userId,
       fileName: file.name,
@@ -93,26 +111,12 @@ export async function POST(req: NextRequest) {
       fileSize: file.size,
       cloudinaryUrl: uploadResult.secure_url,
       extractedText,
-      metadata: {
-        originalName: file.name,
-        uploadedAt: new Date()
-      }
+      metadata: { originalName: file.name, uploadedAt: new Date() },
     });
-
     await document.save();
 
-    // Process extracted text for vocabulary and sentences
-    const sentences = extractedText
-      .split(/[.!?]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-
-    // Extract potential vocabulary (words with 3+ characters)
-    const words = extractedText
-      .split(/\s+/)
-      .filter((w) => w.length >= 3 && /[\p{L}]/u.test(w))
-      .map((w) => w.replace(/[.,;:!?]/g, ""));
-
+    const sentences = extractedText.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
+    const words = extractedText.split(/\s+/).filter(w => w.length >= 3 && /[\p{L}]/u.test(w)).map(w => w.replace(/[.,;:!?]/g, ""));
     const uniqueWords = [...new Set(words)];
 
     return NextResponse.json({
@@ -121,19 +125,12 @@ export async function POST(req: NextRequest) {
       filename: file.name,
       text: extractedText,
       chunks: sentences,
-      vocabulary: uniqueWords.slice(0, 50), // Top 50 words
-      stats: {
-        totalWords: words.length,
-        uniqueWords: uniqueWords.length,
-        sentences: sentences.length,
-      },
+      vocabulary: uniqueWords.slice(0, 50),
+      stats: { totalWords: words.length, uniqueWords: uniqueWords.length, sentences: sentences.length },
     });
   } catch (error) {
     console.error("OCR Error:", error);
-    return NextResponse.json(
-      { success: false, message: "OCR processing failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "OCR processing failed" }, { status: 500 });
   }
 }
 

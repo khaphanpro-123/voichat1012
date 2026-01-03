@@ -27,6 +27,9 @@ export function LoginForm() {
         return;
       }
 
+      // Pre-warm DB connection before navigating (fire-and-forget)
+      fetch("/api/health").catch(() => {});
+      
       router.push("/dashboard-new");
     } catch (err) {
       console.error(err);
