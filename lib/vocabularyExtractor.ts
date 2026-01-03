@@ -1,9 +1,19 @@
 // lib/vocabularyExtractor.ts
 import { OpenAI } from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-load OpenAI client to avoid build-time errors
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('Missing OPENAI_API_KEY environment variable');
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+}
 
 export interface ExtractedVocabulary {
   word: string;
@@ -61,7 +71,7 @@ ${text}
 
 Hãy trả về JSON hợp lệ:`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {

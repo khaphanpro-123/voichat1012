@@ -1,12 +1,6 @@
 // lib/db.ts
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI as string;
-
-if (!MONGO_URI) {
-  throw new Error("Missing MONGO_URI");
-}
-
 interface CachedConnection {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -28,6 +22,12 @@ const connectionOptions = {
 };
 
 export async function connectDB(): Promise<typeof mongoose> {
+  // Check MONGO_URI at runtime, not build time
+  const MONGO_URI = process.env.MONGO_URI;
+  if (!MONGO_URI) {
+    throw new Error("Missing MONGO_URI environment variable");
+  }
+
   // Return existing connection immediately
   if (cached.conn) {
     return cached.conn;
@@ -60,9 +60,4 @@ export async function connectDB(): Promise<typeof mongoose> {
 // Check if connected (non-blocking)
 export function isConnected(): boolean {
   return mongoose.connection.readyState === 1;
-}
-
-// Pre-warm connection on module load (non-blocking)
-if (typeof window === "undefined") {
-  connectDB().catch(() => {});
 }
