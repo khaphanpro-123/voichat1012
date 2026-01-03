@@ -139,13 +139,13 @@
 
 // app/api/rag/ingest-all/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+import getClientPromise from "@/lib/mongodb";
 import { ingestDoc } from "@/lib/ingest";
 
 export async function POST(req: NextRequest) {
   const { userId, childId } = await req.json();
 
-  const client = await clientPromise;
+  const client = await getClientPromise();
   const db = client.db(process.env.MONGO_DB);
 
   let totalVectors = 0;
