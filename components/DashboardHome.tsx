@@ -12,7 +12,9 @@ import {
   Upload,
   BookOpen,
   History,
+  HelpCircle,
 } from "lucide-react";
+import { OnboardingTutorial } from "./OnboardingTutorial";
 
 interface UserProgress {
   level: string;
@@ -122,6 +124,28 @@ export default function DashboardHome() {
   const cachedProgress = useMemo(() => userId ? getCachedProgress(userId) : null, [userId]);
   const [progress, setProgress] = useState<UserProgress | null>(cachedProgress);
   const [loading, setLoading] = useState(!cachedProgress); // Only show loading if no cache
+  
+  // Onboarding tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Check if user is new (first time)
+  useEffect(() => {
+    if (userId) {
+      const tutorialKey = `l2brain_tutorial_completed_${userId}`;
+      const completed = localStorage.getItem(tutorialKey);
+      if (!completed) {
+        // Show tutorial for new users after a short delay
+        setTimeout(() => setShowTutorial(true), 500);
+      }
+    }
+  }, [userId]);
+
+  const handleTutorialComplete = () => {
+    if (userId) {
+      localStorage.setItem(`l2brain_tutorial_completed_${userId}`, "true");
+    }
+    setShowTutorial(false);
+  };
 
   // Pre-warm DB connection on mount (fire-and-forget)
   useEffect(() => {
@@ -201,18 +225,37 @@ export default function DashboardHome() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial
+        isOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onComplete={handleTutorialComplete}
+      />
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          Xin chào, {userName}! 👋
-        </h1>
-        <p className="text-xl text-gray-600">
-          Trình độ: <span className="font-bold text-teal-600">{level}</span>
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              Xin chào, {userName}! 👋
+            </h1>
+            <p className="text-xl text-gray-600">
+              Trình độ: <span className="font-bold text-teal-600">{level}</span>
+            </p>
+          </div>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 transition-colors"
+            title="Xem hướng dẫn"
+          >
+            <HelpCircle className="w-5 h-5" />
+            <span className="hidden md:inline">Hướng dẫn</span>
+          </button>
+        </div>
       </motion.div>
 
       {/* Daily Stats */}
