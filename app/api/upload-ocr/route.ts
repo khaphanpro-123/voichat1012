@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[upload-ocr] Processing file:", file.name, file.type, file.size);
+    console.log("[upload-ocr] Processing:", file.name, file.type, file.size);
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -28,14 +28,12 @@ export async function POST(req: NextRequest) {
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
     if (!cloudName || !apiKey || !apiSecret) {
-      console.error("[upload-ocr] Missing Cloudinary config:", { cloudName: !!cloudName, apiKey: !!apiKey, apiSecret: !!apiSecret });
       return NextResponse.json(
-        { success: false, message: "Server configuration error: Missing Cloudinary credentials" },
+        { success: false, message: "Missing Cloudinary config" },
         { status: 500 }
       );
     }
 
-    // Dynamic imports
     const { v2: cloudinary } = await import("cloudinary");
     const { connectDB } = await import("@/lib/db");
     const Document = (await import("@/app/models/Document")).default;
@@ -46,16 +44,25 @@ export async function POST(req: NextRequest) {
       api_secret: apiSecret,
     });
 
-    console.log("[upload-ocr] Connecting to DB...");
     await connectDB();
 
-    console.log("[upload-ocr] Uploading to Cloudinary...");
-    // Upload to Cloudinary
+    // Determine resource type for Cloudinary
+    // PDF and documents must use "raw", images use "image"
+    let resourceType: "image" | "raw" = "raw";
+    if (file.type.startsWith("image/")) {
+      resourceType = "image";
+    }
+
+    // Upload to Cloudinary with correct resource type
     let uploadResult: any;
     try {
       uploadResult = await new Promise<any>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: "documents" },
+          { 
+            resource_type: resourceType, 
+            folder: "documents",
+            // No transformations for raw files
+          },
           (error, result) => {
             if (error) {
               console.error("[upload-ocr] Cloudinary error:", error);
@@ -68,23 +75,22 @@ export async function POST(req: NextRequest) {
         uploadStream.end(buffer);
       });
     } catch (cloudErr: any) {
-      console.error("[upload-ocr] Cloudinary upload failed:", cloudErr?.message);
+      console.error("[upload-ocr] Cloudinary failed:", cloudErr?.message);
       return NextResponse.json(
-        { success: false, message: "Cloudinary upload failed: " + (cloudErr?.message || "Unknown") },
+        { success: false, message: "Upload to cloud failed: " + cloudErr?.message },
         { status: 500 }
       );
     }
 
-    console.log("[upload-ocr] Extracting text...");
+    // Extract text based on file type
     let extractedText = "";
 
-    // Extract text based on file type
     if (file.type.startsWith("image/")) {
       extractedText = `[Image: ${file.name}] - Hình ảnh đã được upload thành công.`;
     } else if (file.type === "application/pdf") {
       extractedText = extractTextFromPDF(buffer);
       if (!extractedText || extractedText.length < 20) {
-        extractedText = `[PDF: ${file.name}] - PDF này có thể là dạng scan/hình ảnh.`;
+        extractedText = `[PDF: ${file.name}] - PDF này có thể là dạng scan/hình ảnh, không trích xuất được text.`;
       }
     } else if (
       file.type.includes("document") ||
@@ -96,7 +102,6 @@ export async function POST(req: NextRequest) {
         const result = await mammoth.extractRawText({ buffer });
         extractedText = result.value.trim() || `[DOCX: ${file.name}] - File rỗng.`;
       } catch (e: any) {
-        console.error("[upload-ocr] Mammoth error:", e?.message);
         extractedText = `[DOCX: ${file.name}] - Không thể đọc file.`;
       }
     } else if (file.type === "text/plain" || file.name.endsWith(".txt")) {
@@ -105,7 +110,6 @@ export async function POST(req: NextRequest) {
       extractedText = `[File: ${file.name}] - Đã upload thành công.`;
     }
 
-    console.log("[upload-ocr] Saving to MongoDB...");
     // Save to MongoDB
     const document = new Document({
       userId,
@@ -129,7 +133,6 @@ export async function POST(req: NextRequest) {
       .map((w) => w.replace(/[.,;:!?"'()[\]{}]/g, "").toLowerCase());
     const uniqueWords = [...new Set(words)];
 
-    console.log("[upload-ocr] Success!");
     return NextResponse.json({
       success: true,
       fileId: document._id.toString(),
@@ -144,13 +147,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("[upload-ocr] Error:", error?.message || error);
-    console.error("[upload-ocr] Stack:", error?.stack);
+    console.error("[upload-ocr] Error:", error?.message);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Upload failed: " + (error?.message || "Unknown error"),
-      },
+      { success: false, message: "Upload failed: " + (error?.message || "Unknown") },
       { status: 500 }
     );
   }
@@ -161,7 +160,6 @@ function extractTextFromPDF(buffer: Buffer): string {
     const content = buffer.toString("binary");
     const textParts: string[] = [];
 
-    // Extract text between BT and ET markers
     const btEtRegex = /BT\s*([\s\S]*?)\s*ET/g;
     let match;
     while ((match = btEtRegex.exec(content)) !== null) {
