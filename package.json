@@ -83,6 +83,7 @@
     "or": "^0.2.0",
     "pdf-parse": "^2.4.5",
     "pdf-parse-new": "^2.0.0",
+    "pdfjs-dist": "^4.0.379",
     "react": "^19",
     "react-day-picker": "9.8.0",
     "react-dom": "^19",

@@ -58,12 +58,25 @@ taskQueue.registerHandler(TASK_TYPES.OCR_PROCESS, async (data: OCRTaskData) => {
     }
   } else if (fileType === "application/pdf") {
     try {
-      // Use pdf-parse for better serverless compatibility
-      const pdfParse = (await import("pdf-parse")).default;
-      const pdfData = await pdfParse(buffer, { max: 0 });
-      extractedText = pdfData.text?.trim() || "";
+      // Use pdfjs-dist for serverless compatibility
+      const pdfjsLib = await import("pdfjs-dist");
+      const uint8Array = new Uint8Array(bufferArray);
+      const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+      const pdfDoc = await loadingTask.promise;
+      
+      const textParts: string[] = [];
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        textParts.push(pageText);
+      }
+      
+      extractedText = textParts.join("\n\n").trim();
       if (!extractedText || extractedText.length < 10) {
-        extractedText = `PDF uploaded: ${fileName}. Text extraction returned minimal content.`;
+        extractedText = `PDF uploaded: ${fileName}. This PDF may be image-based or protected.`;
       }
     } catch (err: any) {
       console.error("PDF Error:", err?.message || err);
