@@ -48,7 +48,6 @@ export async function POST(req: NextRequest) {
 
     // SYNC MODE (default): Process immediately for backward compatibility
     // But still optimized with dynamic imports
-    const { createWorker } = await import("tesseract.js");
     const { v2: cloudinary } = await import("cloudinary");
     const mammoth = await import("mammoth");
     const { connectDB } = await import("@/lib/db");
@@ -77,14 +76,9 @@ export async function POST(req: NextRequest) {
     let extractedText = "";
 
     if (file.type.startsWith("image/")) {
-      try {
-        const worker = await createWorker("vie");
-        const { data: { text } } = await worker.recognize(buffer);
-        extractedText = text.trim();
-        await worker.terminate();
-      } catch (err) {
-        extractedText = "Text extraction failed for this image";
-      }
+      // Skip OCR on serverless - tesseract.js needs local files
+      // Just note that it's an image
+      extractedText = `[Image file: ${file.name}] - OCR not available on serverless. Please use text-based documents for vocabulary extraction.`;
     } else if (file.type === "application/pdf") {
       try {
         const pdfParse = (await import("pdf-parse-new")).default;
