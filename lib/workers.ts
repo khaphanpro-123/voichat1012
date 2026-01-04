@@ -58,15 +58,16 @@ taskQueue.registerHandler(TASK_TYPES.OCR_PROCESS, async (data: OCRTaskData) => {
     }
   } else if (fileType === "application/pdf") {
     try {
-      const pdfParse = require("pdf-parse-new");
-      const pdfData = await pdfParse(buffer);
+      // Use pdf-parse for better serverless compatibility
+      const pdfParse = (await import("pdf-parse")).default;
+      const pdfData = await pdfParse(buffer, { max: 0 });
       extractedText = pdfData.text?.trim() || "";
-      if (!extractedText) {
-        extractedText = "PDF không có text có thể trích xuất.";
+      if (!extractedText || extractedText.length < 10) {
+        extractedText = `PDF uploaded: ${fileName}. Text extraction returned minimal content.`;
       }
-    } catch (err) {
-      console.error("PDF Error:", err);
-      extractedText = "PDF text extraction failed.";
+    } catch (err: any) {
+      console.error("PDF Error:", err?.message || err);
+      extractedText = `PDF uploaded: ${fileName}. Text extraction failed: ${err?.message || 'Unknown error'}`;
     }
   } else if (fileType.includes("document") || fileType.includes("wordprocessingml")) {
     try {

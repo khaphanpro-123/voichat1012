@@ -6,14 +6,13 @@ import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   MessageCircle,
-  Users,
-  Sparkles,
   Settings,
   Menu,
   X,
   LogOut,
   BookOpen,
   FileText,
+  HelpCircle,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -26,6 +25,7 @@ const navItems = [
   { href: "/dashboard-new/chat", label: "Voice Chat", icon: MessageCircle },
   { href: "/dashboard-new/documents", label: "Tài liệu", icon: FileText },
   { href: "/dashboard-new/vocabulary", label: "Từ vựng", icon: BookOpen },
+  { href: "/dashboard-new/guide", label: "Hướng dẫn", icon: HelpCircle },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -35,7 +35,6 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [level, setLevel] = useState(userLevel);
 
-  // Load user level from progress
   useEffect(() => {
     const loadProgress = async () => {
       if (session?.user) {
@@ -117,11 +116,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl">
               {userAvatar ? (
-                <img 
-                  src={userAvatar} 
-                  alt={userName}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                <img src={userAvatar} alt={userName} className="w-10 h-10 rounded-full object-cover" />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
                   {userInitial}
@@ -133,7 +128,6 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
               </div>
             </div>
             
-            {/* Logout button */}
             <button
               onClick={() => signOut({ callbackUrl: "/auth/login" })}
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -147,16 +141,11 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
 
       {/* Overlay for mobile */}
       {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setIsSidebarOpen(false)} />
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

@@ -81,12 +81,20 @@ export async function POST(req: NextRequest) {
       extractedText = `[Image file: ${file.name}] - OCR not available on serverless. Please use text-based documents for vocabulary extraction.`;
     } else if (file.type === "application/pdf") {
       try {
-        const pdfParse = (await import("pdf-parse-new")).default;
-        const pdfData = await pdfParse(buffer);
+        // Use pdf-parse instead of pdf-parse-new for better serverless compatibility
+        const pdfParse = (await import("pdf-parse")).default;
+        const pdfData = await pdfParse(buffer, {
+          // Disable test file loading which causes issues on serverless
+          max: 0,
+        });
         extractedText = pdfData.text?.trim() || "PDF không có text có thể trích xuất.";
-      } catch (err) {
-        console.error("PDF parse error:", err);
-        extractedText = "PDF text extraction failed.";
+        if (!extractedText || extractedText.length < 10) {
+          extractedText = `PDF uploaded: ${file.name}. Text extraction returned minimal content - this PDF may be image-based or protected.`;
+        }
+      } catch (err: any) {
+        console.error("PDF parse error:", err?.message || err);
+        // Fallback message with more detail
+        extractedText = `PDF uploaded: ${file.name}. Text extraction failed on serverless. Error: ${err?.message || 'Unknown'}`;
       }
     } else if (file.type.includes("document") || file.type.includes("wordprocessingml")) {
       try {
