@@ -87,10 +87,11 @@ export async function POST(req: NextRequest) {
       }
     } else if (file.type === "application/pdf") {
       try {
-        const pdfParse = require("pdf-parse-new");
+        const pdfParse = (await import("pdf-parse-new")).default;
         const pdfData = await pdfParse(buffer);
         extractedText = pdfData.text?.trim() || "PDF không có text có thể trích xuất.";
       } catch (err) {
+        console.error("PDF parse error:", err);
         extractedText = "PDF text extraction failed.";
       }
     } else if (file.type.includes("document") || file.type.includes("wordprocessingml")) {
@@ -128,9 +129,14 @@ export async function POST(req: NextRequest) {
       vocabulary: uniqueWords.slice(0, 50),
       stats: { totalWords: words.length, uniqueWords: uniqueWords.length, sentences: sentences.length },
     });
-  } catch (error) {
-    console.error("OCR Error:", error);
-    return NextResponse.json({ success: false, message: "OCR processing failed" }, { status: 500 });
+  } catch (error: any) {
+    console.error("OCR Error:", error?.message || error);
+    console.error("Stack:", error?.stack);
+    return NextResponse.json({ 
+      success: false, 
+      message: "OCR processing failed",
+      error: error?.message 
+    }, { status: 500 });
   }
 }
 
