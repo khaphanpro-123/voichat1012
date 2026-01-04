@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { taskQueue, TASK_TYPES } from "@/lib/queue";
-// Import workers to register handlers
-import "@/lib/workers";
 
 /**
- * ASYNC OCR Upload API
- * Returns HTTP 202 immediately, processes in background
- * Frontend polls /api/task-status?taskId=xxx for results
+ * Simple Document Upload API
+ * Supports: PDF, DOCX, TXT, Images
+ * PDF text extraction using simple regex (no external libs that fail on serverless)
  */
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const userId = formData.get("userId") as string || "anonymous";
-    const mode = formData.get("mode") as string; // "async" or "sync" (default sync for compatibility)
+    const userId = (formData.get("userId") as string) || "anonymous";
 
     if (!file) {
       return NextResponse.json(
@@ -22,34 +18,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert file to buffer array (serializable)
     const bytes = await file.arrayBuffer();
-    const bufferArray = Array.from(new Uint8Array(bytes));
+    const buffer = Buffer.from(bytes);
 
-    // ASYNC MODE: Return immediately, process in background
-    if (mode === "async") {
-      const taskId = taskQueue.enqueue(TASK_TYPES.OCR_PROCESS, {
-        buffer: bufferArray,
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        userId,
-      });
-
-      // Return 202 Accepted immediately
-      return NextResponse.json({
-        success: true,
-        accepted: true,
-        taskId,
-        message: "File accepted for processing",
-        pollUrl: `/api/task-status?taskId=${taskId}`,
-      }, { status: 202 });
-    }
-
-    // SYNC MODE (default): Process immediately for backward compatibility
-    // But still optimized with dynamic imports
+    // Dynamic imports
     const { v2: cloudinary } = await import("cloudinary");
-    const mammoth = await import("mammoth");
     const { connectDB } = await import("@/lib/db");
     const Document = (await import("@/app/models/Document")).default;
 
@@ -60,65 +33,50 @@ export async function POST(req: NextRequest) {
     });
 
     await connectDB();
-    const buffer = Buffer.from(bytes);
 
     // Upload to Cloudinary
     const uploadResult = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { resource_type: "auto", folder: "documents" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
+      cloudinary.uploader
+        .upload_stream(
+          { resource_type: "auto", folder: "documents" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        )
+        .end(buffer);
     });
 
     let extractedText = "";
 
+    // Extract text based on file type
     if (file.type.startsWith("image/")) {
-      // Skip OCR on serverless - tesseract.js needs local files
-      // Just note that it's an image
-      extractedText = `[Image file: ${file.name}] - OCR not available on serverless. Please use text-based documents for vocabulary extraction.`;
+      extractedText = `[Image: ${file.name}] - Hình ảnh đã được upload. OCR không khả dụng trên serverless.`;
     } else if (file.type === "application/pdf") {
-      try {
-        // Use pdfjs-dist for serverless compatibility (no file system needed)
-        const pdfjsLib = await import("pdfjs-dist");
-        
-        // Load PDF from buffer
-        const uint8Array = new Uint8Array(bytes);
-        const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
-        const pdfDoc = await loadingTask.promise;
-        
-        // Extract text from all pages
-        const textParts: string[] = [];
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-          const page = await pdfDoc.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items
-            .map((item: any) => item.str)
-            .join(" ");
-          textParts.push(pageText);
-        }
-        
-        extractedText = textParts.join("\n\n").trim();
-        if (!extractedText || extractedText.length < 10) {
-          extractedText = `PDF uploaded: ${file.name}. This PDF may be image-based or protected - no text could be extracted.`;
-        }
-      } catch (err: any) {
-        console.error("PDF parse error:", err?.message || err);
-        extractedText = `PDF uploaded: ${file.name}. Text extraction failed. Error: ${err?.message || 'Unknown'}`;
+      // Simple PDF text extraction - extract readable strings from PDF binary
+      extractedText = extractTextFromPDF(buffer);
+      if (!extractedText || extractedText.length < 20) {
+        extractedText = `[PDF: ${file.name}] - PDF này có thể là dạng scan/hình ảnh, không trích xuất được text.`;
       }
-    } else if (file.type.includes("document") || file.type.includes("wordprocessingml")) {
+    } else if (
+      file.type.includes("document") ||
+      file.type.includes("wordprocessingml") ||
+      file.name.endsWith(".docx")
+    ) {
       try {
+        const mammoth = await import("mammoth");
         const result = await mammoth.extractRawText({ buffer });
         extractedText = result.value.trim();
-      } catch (err) {
-        extractedText = "Document text extraction failed";
+      } catch {
+        extractedText = `[DOCX: ${file.name}] - Không thể trích xuất text từ file này.`;
       }
+    } else if (file.type === "text/plain" || file.name.endsWith(".txt")) {
+      extractedText = buffer.toString("utf-8");
     } else {
-      extractedText = "Text extraction not supported for this file type";
+      extractedText = `[File: ${file.name}] - Định dạng file không được hỗ trợ.`;
     }
 
+    // Save to MongoDB
     const document = new Document({
       userId,
       fileName: file.name,
@@ -130,8 +88,15 @@ export async function POST(req: NextRequest) {
     });
     await document.save();
 
-    const sentences = extractedText.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
-    const words = extractedText.split(/\s+/).filter(w => w.length >= 3 && /[\p{L}]/u.test(w)).map(w => w.replace(/[.,;:!?]/g, ""));
+    // Process text for vocabulary
+    const sentences = extractedText
+      .split(/[.!?]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    const words = extractedText
+      .split(/\s+/)
+      .filter((w) => w.length >= 3 && /[a-zA-Z]/.test(w))
+      .map((w) => w.replace(/[.,;:!?"'()[\]{}]/g, "").toLowerCase());
     const uniqueWords = [...new Set(words)];
 
     return NextResponse.json({
@@ -139,36 +104,96 @@ export async function POST(req: NextRequest) {
       fileId: document._id.toString(),
       filename: file.name,
       text: extractedText,
-      chunks: sentences,
+      chunks: sentences.slice(0, 100),
       vocabulary: uniqueWords.slice(0, 50),
-      stats: { totalWords: words.length, uniqueWords: uniqueWords.length, sentences: sentences.length },
+      stats: {
+        totalWords: words.length,
+        uniqueWords: uniqueWords.length,
+        sentences: sentences.length,
+      },
     });
   } catch (error: any) {
-    console.error("OCR Error:", error?.message || error);
-    console.error("Stack:", error?.stack);
-    return NextResponse.json({ 
-      success: false, 
-      message: "OCR processing failed",
-      error: error?.message 
-    }, { status: 500 });
+    console.error("Upload Error:", error?.message || error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Upload failed",
+        error: error?.message || "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 
-// For getting OCR status or results
+/**
+ * Extract readable text from PDF buffer
+ * Simple approach: find text streams and decode them
+ */
+function extractTextFromPDF(buffer: Buffer): string {
+  const content = buffer.toString("binary");
+  const textParts: string[] = [];
+
+  // Method 1: Extract text between BT and ET markers (text objects)
+  const btEtRegex = /BT\s*([\s\S]*?)\s*ET/g;
+  let match;
+  while ((match = btEtRegex.exec(content)) !== null) {
+    const textBlock = match[1];
+    // Extract text from Tj and TJ operators
+    const tjMatches = textBlock.match(/\(([^)]*)\)\s*Tj/g);
+    if (tjMatches) {
+      tjMatches.forEach((tj) => {
+        const text = tj.match(/\(([^)]*)\)/)?.[1];
+        if (text) textParts.push(decodeOctalEscapes(text));
+      });
+    }
+    // TJ array format
+    const tjArrayMatches = textBlock.match(/\[(.*?)\]\s*TJ/g);
+    if (tjArrayMatches) {
+      tjArrayMatches.forEach((tja) => {
+        const innerTexts = tja.match(/\(([^)]*)\)/g);
+        if (innerTexts) {
+          innerTexts.forEach((t) => {
+            const text = t.match(/\(([^)]*)\)/)?.[1];
+            if (text) textParts.push(decodeOctalEscapes(text));
+          });
+        }
+      });
+    }
+  }
+
+  // Method 2: Look for stream content with readable text
+  if (textParts.length === 0) {
+    // Try to find any readable ASCII text sequences
+    const readableRegex = /[A-Za-z][A-Za-z0-9\s.,!?;:'"()-]{10,}/g;
+    const readable = content.match(readableRegex);
+    if (readable) {
+      textParts.push(...readable.filter((t) => t.length > 15));
+    }
+  }
+
+  // Clean and join
+  let result = textParts
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .replace(/[^\x20-\x7E\u00C0-\u024F]/g, " ")
+    .trim();
+
+  return result;
+}
+
+function decodeOctalEscapes(str: string): string {
+  return str.replace(/\\([0-7]{3})/g, (_, octal) =>
+    String.fromCharCode(parseInt(octal, 8))
+  );
+}
+
 export async function GET(req: NextRequest) {
   const fileId = req.nextUrl.searchParams.get("fileId");
-
   if (!fileId) {
     return NextResponse.json(
       { success: false, message: "File ID required" },
       { status: 400 }
     );
   }
-
-  // In production, retrieve from database
-  return NextResponse.json({
-    success: true,
-    fileId,
-    status: "completed",
-  });
+  return NextResponse.json({ success: true, fileId, status: "completed" });
 }
