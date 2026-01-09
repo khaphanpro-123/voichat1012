@@ -1,24 +1,35 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, XCircle, Eye, EyeOff, Mail, Loader2 } from "lucide-react";
+
+type Step = "form" | "otp" | "complete";
 
 export function RegisterForm() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ fullName: "", email: "", password: "", confirmPassword: "" });
+  const [step, setStep] = useState<Step>("form");
+  const [formData, setFormData] = useState({ username: "", fullName: "", email: "", password: "", confirmPassword: "" });
+  const [otp, setOtp] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState(0);
+
+  const usernameValidation = useMemo(() => {
+    if (!formData.username) return { isValid: false, message: "" };
+    const isValid = /^[a-zA-Z0-9_]{3,20}$/.test(formData.username);
+    return { isValid, message: isValid ? "Username hợp lệ" : "3-20 ký tự, chỉ chữ, số và _" };
+  }, [formData.username]);
 
   const emailValidation = useMemo(() => {
     if (!formData.email) return { isValid: false, message: "" };
     const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
-    return { isValid, message: isValid ? "Email hop le" : "Email khong dung dinh dang" };
+    return { isValid, message: isValid ? "Email hợp lệ" : "Email không đúng định dạng" };
   }, [formData.email]);
 
   const passwordValidation = useMemo(() => {
@@ -34,26 +45,65 @@ export function RegisterForm() {
 
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // Send OTP
+  async function handleSendOTP() {
     setError("");
-    if (!formData.fullName.trim()) { setError("Vui long nhap ho ten"); return; }
-    if (!emailValidation.isValid) { setError("Email khong dung dinh dang"); return; }
-    if (!passwordValidation.isValid) { setError("Mat khau chua du yeu cau"); return; }
-    if (!passwordsMatch) { setError("Mat khau khong khop"); return; }
-    if (!agreedToTerms) { setError("Vui long dong y dieu khoan"); return; }
+    if (!usernameValidation.isValid) { setError("Username không hợp lệ"); return; }
+    if (!formData.fullName.trim()) { setError("Vui lòng nhập họ tên"); return; }
+    if (!emailValidation.isValid) { setError("Email không đúng định dạng"); return; }
+    if (!passwordValidation.isValid) { setError("Mật khẩu chưa đủ yêu cầu"); return; }
+    if (!passwordsMatch) { setError("Mật khẩu không khớp"); return; }
+    if (!agreedToTerms) { setError("Vui lòng đồng ý điều khoản"); return; }
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: formData.fullName, email: formData.email, password: formData.password }),
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, type: "register" }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.message || "Dang ky that bai"); return; }
+      if (!res.ok) { setError(data.message); return; }
+      setStep("otp");
+      startCountdown();
+    } catch { setError("Lỗi gửi OTP"); } finally { setIsLoading(false); }
+  }
+
+  function startCountdown() {
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((c) => { if (c <= 1) { clearInterval(timer); return 0; } return c - 1; });
+    }, 1000);
+  }
+
+  // Verify OTP and Register
+  async function handleVerifyAndRegister() {
+    if (otp.length !== 6) { setError("Vui lòng nhập đủ 6 số"); return; }
+    setError("");
+    setIsLoading(true);
+    try {
+      // Verify OTP
+      const verifyRes = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, otp, type: "register" }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) { setError(verifyData.message); return; }
+
+      // Register
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: formData.username, fullName: formData.fullName, email: formData.email, password: formData.password }),
+      });
+      const regData = await regRes.json();
+      if (!regRes.ok) { setError(regData.message); return; }
+
+      // Auto login
       const login = await signIn("credentials", { email: formData.email, password: formData.password, redirect: false });
       router.push(login?.ok ? "/dashboard-new" : "/auth/login");
-    } catch { setError("Loi ket noi"); } finally { setIsLoading(false); }
+    } catch { setError("Lỗi đăng ký"); } finally { setIsLoading(false); }
   }
 
   const Item = ({ ok, text }: { ok: boolean; text: string }) => (
@@ -63,47 +113,113 @@ export function RegisterForm() {
     </div>
   );
 
+  // OTP Step
+  if (step === "otp") {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-blue-600" />
+          </div>
+          <h3 className="text-lg font-semibold">Xác minh Email</h3>
+          <p className="text-sm text-gray-500 mt-1">Mã OTP đã được gửi đến <strong>{formData.email}</strong></p>
+        </div>
+
+        {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-center">Nhập mã 6 số</label>
+          <input
+            type="text"
+            maxLength={6}
+            placeholder="000000"
+            className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono rounded-lg border bg-gray-100 dark:bg-gray-700"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          />
+        </div>
+
+        <button
+          onClick={handleVerifyAndRegister}
+          disabled={isLoading || otp.length !== 6}
+          className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Đang xử lý...</> : "Xác nhận & Đăng ký"}
+        </button>
+
+        <div className="text-center text-sm">
+          {countdown > 0 ? (
+            <span className="text-gray-500">Gửi lại sau {countdown}s</span>
+          ) : (
+            <button onClick={handleSendOTP} className="text-blue-600 hover:underline">Gửi lại mã OTP</button>
+          )}
+        </div>
+
+        <button onClick={() => setStep("form")} className="w-full text-sm text-gray-500 hover:text-gray-700">← Quay lại</button>
+      </motion.div>
+    );
+  }
+
+  // Form Step
   return (
-    <motion.form onSubmit={handleSubmit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
+      
       <div>
-        <label className="block text-sm font-medium mb-1">Ho va ten</label>
-        <input required placeholder="Nhap ho ten" className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
+        <label className="block text-sm font-medium mb-1">Username</label>
+        <input placeholder="vd: john_doe123" className={`w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.username ? (usernameValidation.isValid ? "border-green-500" : "border-red-500") : ""}`} value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })} />
+        {formData.username && <p className={`mt-1 text-xs ${usernameValidation.isValid ? "text-green-600" : "text-red-500"}`}>{usernameValidation.isValid ? "✓ " : "✗ "}{usernameValidation.message}</p>}
       </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Họ và tên đầy đủ</label>
+        <input placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
+      </div>
+
       <div>
         <label className="block text-sm font-medium mb-1">Email</label>
-        <input required type="email" placeholder="email@example.com" className={`w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.email ? (emailValidation.isValid ? "border-green-500" : "border-red-500") : ""}`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-        {formData.email && <p className={`mt-1 text-xs ${emailValidation.isValid ? "text-green-600" : "text-red-500"}`}>{emailValidation.message}</p>}
+        <input type="email" placeholder="email@example.com" className={`w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.email ? (emailValidation.isValid ? "border-green-500" : "border-red-500") : ""}`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+        {formData.email && <p className={`mt-1 text-xs ${emailValidation.isValid ? "text-green-600" : "text-red-500"}`}>{emailValidation.isValid ? "✓ " : "✗ "}{emailValidation.message}</p>}
       </div>
+
       <div>
-        <label className="block text-sm font-medium mb-1">Mat khau</label>
+        <label className="block text-sm font-medium mb-1">Mật khẩu</label>
         <div className="relative">
-          <input required type={showPassword ? "text" : "password"} placeholder="Nhap mat khau" className="w-full px-4 py-2.5 pr-10 rounded-lg border bg-gray-100 dark:bg-gray-700" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+          <input type={showPassword ? "text" : "password"} placeholder="Nhập mật khẩu" className="w-full px-4 py-2.5 pr-10 rounded-lg border bg-gray-100 dark:bg-gray-700" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
           <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
         </div>
         {formData.password && (
           <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-1">
-            <Item ok={passwordValidation.hasMinLength} text="Toi thieu 6 ky tu" />
-            <Item ok={passwordValidation.hasUppercase} text="Co chu in hoa (A-Z)" />
-            <Item ok={passwordValidation.hasLowercase} text="Co chu thuong (a-z)" />
-            <Item ok={passwordValidation.hasNumber} text="Co so (0-9)" />
-            <Item ok={passwordValidation.hasSpecialChar} text="Co ky tu dac biet" />
+            <Item ok={passwordValidation.hasMinLength} text="Tối thiểu 6 ký tự" />
+            <Item ok={passwordValidation.hasUppercase} text="Có chữ in hoa (A-Z)" />
+            <Item ok={passwordValidation.hasLowercase} text="Có chữ thường (a-z)" />
+            <Item ok={passwordValidation.hasNumber} text="Có số (0-9)" />
+            <Item ok={passwordValidation.hasSpecialChar} text="Có ký tự đặc biệt" />
           </div>
         )}
       </div>
+
       <div>
-        <label className="block text-sm font-medium mb-1">Xac nhan mat khau</label>
+        <label className="block text-sm font-medium mb-1">Xác nhận mật khẩu</label>
         <div className="relative">
-          <input required type={showConfirmPassword ? "text" : "password"} placeholder="Nhap lai mat khau" className={`w-full px-4 py-2.5 pr-10 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.confirmPassword ? (passwordsMatch ? "border-green-500" : "border-red-500") : ""}`} value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
+          <input type={showConfirmPassword ? "text" : "password"} placeholder="Nhập lại mật khẩu" className={`w-full px-4 py-2.5 pr-10 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.confirmPassword ? (passwordsMatch ? "border-green-500" : "border-red-500") : ""}`} value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
           <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
         </div>
-        {formData.confirmPassword && <p className={`mt-1 text-xs ${passwordsMatch ? "text-green-600" : "text-red-500"}`}>{passwordsMatch ? "Khop" : "Khong khop"}</p>}
+        {formData.confirmPassword && <p className={`mt-1 text-xs ${passwordsMatch ? "text-green-600" : "text-red-500"}`}>{passwordsMatch ? "✓ Khớp" : "✗ Không khớp"}</p>}
       </div>
+
       <div className="flex items-start gap-3">
         <input type="checkbox" id="terms" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="mt-1 w-4 h-4" />
-        <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400">Toi dong y voi <a href="/terms" className="text-blue-600 hover:underline">Dieu khoan</a> va <a href="/privacy" className="text-blue-600 hover:underline">Chinh sach bao mat</a></label>
+        <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400">Tôi đồng ý với <a href="/terms" className="text-blue-600 hover:underline">Điều khoản</a> và <a href="/privacy" className="text-blue-600 hover:underline">Chính sách bảo mật</a></label>
       </div>
-      <button type="submit" disabled={isLoading || !agreedToTerms || !passwordValidation.isValid || !emailValidation.isValid} className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">{isLoading ? "Dang xu ly..." : "Dang ky"}</button>
-    </motion.form>
+
+      <button
+        onClick={handleSendOTP}
+        disabled={isLoading || !agreedToTerms || !passwordValidation.isValid || !emailValidation.isValid || !usernameValidation.isValid || !passwordsMatch}
+        className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Đang gửi...</> : "Tiếp tục"}
+      </button>
+    </motion.div>
   );
 }

@@ -1,25 +1,25 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IUser extends Document {
+  username: string;
   email: string;
   password: string;
   fullName: string;
   avatar?: string;
-  bio?: string;
   role: "user" | "admin";
-  childId?: Schema.Types.ObjectId;   // 👈 một child duy nhất
+  emailVerified?: boolean;
   createdAt: Date;
 }
 
 const UserSchema = new Schema<IUser>(
   {
-    email: { type: String, required: true, unique: true },
+    username: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     fullName: { type: String, required: true },
     avatar: { type: String, default: "/avatar-placeholder.png" },
-    bio: { type: String, default: "" },
     role: { type: String, enum: ["user", "admin"], default: "user" },
-    childId: { type: Schema.Types.ObjectId, ref: "Child" }, // 👈 1-1
+    emailVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

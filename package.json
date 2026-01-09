@@ -92,6 +92,7 @@
     "react-resizable-panels": "^2.1.7",
     "react-scroll-parallax": "^3.4.5",
     "recharts": "^3.1.2",
+    "resend": "^6.7.0",
     "snappy": "latest",
     "socks": "latest",
     "sonner": "^1.7.4",
