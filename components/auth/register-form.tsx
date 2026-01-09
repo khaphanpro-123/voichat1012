@@ -4,21 +4,16 @@ import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { CheckCircle, XCircle, Eye, EyeOff, Mail, Loader2 } from "lucide-react";
-
-type Step = "form" | "otp" | "complete";
+import { CheckCircle, XCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("form");
   const [formData, setFormData] = useState({ username: "", fullName: "", email: "", password: "", confirmPassword: "" });
-  const [otp, setOtp] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [countdown, setCountdown] = useState(0);
 
   const usernameValidation = useMemo(() => {
     if (!formData.username) return { isValid: false, message: "" };
@@ -45,8 +40,7 @@ export function RegisterForm() {
 
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0;
 
-  // Send OTP
-  async function handleSendOTP() {
+  async function handleRegister() {
     setError("");
     if (!usernameValidation.isValid) { setError("Username không hợp lệ"); return; }
     if (!formData.fullName.trim()) { setError("Vui lòng nhập họ tên"); return; }
@@ -57,53 +51,31 @@ export function RegisterForm() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/send-otp", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, type: "register" }),
+        body: JSON.stringify({ 
+          username: formData.username, 
+          fullName: formData.fullName, 
+          email: formData.email, 
+          password: formData.password 
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message); return; }
-      setStep("otp");
-      startCountdown();
-    } catch { setError("Lỗi gửi OTP"); } finally { setIsLoading(false); }
-  }
 
-  function startCountdown() {
-    setCountdown(60);
-    const timer = setInterval(() => {
-      setCountdown((c) => { if (c <= 1) { clearInterval(timer); return 0; } return c - 1; });
-    }, 1000);
-  }
-
-  // Verify OTP and Register
-  async function handleVerifyAndRegister() {
-    if (otp.length !== 6) { setError("Vui lòng nhập đủ 6 số"); return; }
-    setError("");
-    setIsLoading(true);
-    try {
-      // Verify OTP
-      const verifyRes = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, otp, type: "register" }),
+      // Auto login after register
+      const login = await signIn("credentials", { 
+        email: formData.email, 
+        password: formData.password, 
+        redirect: false 
       });
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok) { setError(verifyData.message); return; }
-
-      // Register
-      const regRes = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: formData.username, fullName: formData.fullName, email: formData.email, password: formData.password }),
-      });
-      const regData = await regRes.json();
-      if (!regRes.ok) { setError(regData.message); return; }
-
-      // Auto login
-      const login = await signIn("credentials", { email: formData.email, password: formData.password, redirect: false });
       router.push(login?.ok ? "/dashboard-new" : "/auth/login");
-    } catch { setError("Lỗi đăng ký"); } finally { setIsLoading(false); }
+    } catch { 
+      setError("Lỗi đăng ký, vui lòng thử lại"); 
+    } finally { 
+      setIsLoading(false); 
+    }
   }
 
   const Item = ({ ok, text }: { ok: boolean; text: string }) => (
@@ -113,54 +85,6 @@ export function RegisterForm() {
     </div>
   );
 
-  // OTP Step
-  if (step === "otp") {
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Mail className="w-8 h-8 text-blue-600" />
-          </div>
-          <h3 className="text-lg font-semibold">Xác minh Email</h3>
-          <p className="text-sm text-gray-500 mt-1">Mã OTP đã được gửi đến <strong>{formData.email}</strong></p>
-        </div>
-
-        {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
-
-        <div>
-          <label className="block text-sm font-medium mb-2 text-center">Nhập mã 6 số</label>
-          <input
-            type="text"
-            maxLength={6}
-            placeholder="000000"
-            className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono rounded-lg border bg-gray-100 dark:bg-gray-700"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          />
-        </div>
-
-        <button
-          onClick={handleVerifyAndRegister}
-          disabled={isLoading || otp.length !== 6}
-          className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Đang xử lý...</> : "Xác nhận & Đăng ký"}
-        </button>
-
-        <div className="text-center text-sm">
-          {countdown > 0 ? (
-            <span className="text-gray-500">Gửi lại sau {countdown}s</span>
-          ) : (
-            <button onClick={handleSendOTP} className="text-blue-600 hover:underline">Gửi lại mã OTP</button>
-          )}
-        </div>
-
-        <button onClick={() => setStep("form")} className="w-full text-sm text-gray-500 hover:text-gray-700">← Quay lại</button>
-      </motion.div>
-    );
-  }
-
-  // Form Step
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
@@ -214,11 +138,11 @@ export function RegisterForm() {
       </div>
 
       <button
-        onClick={handleSendOTP}
+        onClick={handleRegister}
         disabled={isLoading || !agreedToTerms || !passwordValidation.isValid || !emailValidation.isValid || !usernameValidation.isValid || !passwordsMatch}
         className="w-full py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
       >
-        {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Đang gửi...</> : "Tiếp tục"}
+        {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Đang đăng ký...</> : "Đăng ký"}
       </button>
     </motion.div>
   );

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/app/models/User";
-import OTP from "@/app/models/OTP";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -48,21 +47,6 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    // Check if email was verified via OTP
-    const verifiedOTP = await OTP.findOne({
-      email: email.toLowerCase(),
-      type: "register",
-      verified: true,
-      expiresAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }, // Within 30 mins of verification
-    });
-
-    if (!verifiedOTP) {
-      return NextResponse.json(
-        { success: false, message: "Email chưa được xác minh. Vui lòng xác minh OTP trước." },
-        { status: 400 }
-      );
-    }
-
     // Check if username already exists
     const existingUsername = await User.findOne({ username: username.toLowerCase() });
     if (existingUsername) {
@@ -84,18 +68,14 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user with verified email
+    // Create new user
     const newUser = await User.create({
       username: username.toLowerCase(),
       fullName: fullName.trim(),
       email: email.toLowerCase(),
       password: hashedPassword,
-      emailVerified: true,
       createdAt: new Date(),
     });
-
-    // Delete used OTP
-    await OTP.deleteMany({ email: email.toLowerCase(), type: "register" });
 
     return NextResponse.json({
       success: true,
