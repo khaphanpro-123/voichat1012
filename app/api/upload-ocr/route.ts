@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Increase body size limit for this route
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 /**
  * Simple Document Upload API
  * Supports: PDF, DOCX, TXT, Images
