@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User, { IUser } from "@/app/models/User";
-import Post, { IPost } from "@/app/models/Post";
 import mongoose from "mongoose";
 import { getAuthUser } from "@/lib/auth";
 
-// ✅ Lấy thông tin user + các bài viết
 export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const { id } = await context.params; // unwrap Promise
+  const { id } = await context.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return NextResponse.json({ success: false, message: "Invalid user id" }, { status: 400 });
@@ -19,11 +17,6 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
     return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
   }
 
-  const posts = await Post.find({ author: id })
-    .sort({ createdAt: -1 })
-    .populate("author", "fullName avatar")
-    .lean<IPost[]>();
-
   return NextResponse.json({
     success: true,
     user: {
@@ -33,7 +26,6 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
       avatar: user.avatar,
       bio: (user as any).bio || "",
     },
-    posts,
   });
 }
 
