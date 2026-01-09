@@ -5,7 +5,10 @@ let resendClient: Resend | null = null;
 function getResend() {
   if (!resendClient) {
     const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) throw new Error("Missing RESEND_API_KEY");
+    if (!apiKey) {
+      console.warn("Missing RESEND_API_KEY - email sending disabled");
+      return null;
+    }
     resendClient = new Resend(apiKey);
   }
   return resendClient;
@@ -13,6 +16,12 @@ function getResend() {
 
 export async function sendOTPEmail(email: string, otp: string, type: "register" | "reset-password" = "register") {
   const resend = getResend();
+  
+  if (!resend) {
+    console.log(`[NO RESEND] Would send OTP ${otp} to ${email}`);
+    return { id: "no-resend-configured" };
+  }
+  
   const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
   const appName = "EnglishPal";
 

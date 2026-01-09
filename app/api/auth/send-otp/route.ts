@@ -37,6 +37,17 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log(`[DEV MODE] OTP for ${email}: ${otp}`);
+      return NextResponse.json({
+        success: true,
+        message: "Mã OTP đã được gửi đến email của bạn",
+        // DEV only - remove in production
+        devOtp: process.env.NODE_ENV === "development" ? otp : undefined,
+      });
+    }
+
     // Send email
     await sendOTPEmail(email, otp, type);
 
