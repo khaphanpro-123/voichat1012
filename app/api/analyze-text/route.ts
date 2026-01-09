@@ -1,93 +1,82 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserApiKeys } from "@/lib/getUserApiKey";
 import { callAI, parseJsonFromAI } from "@/lib/aiProvider";
+import { preprocessText, filterVocabulary, validateWord } from "@/lib/textPreprocessor";
 
-const SYSTEM_PROMPT = `Bạn là hệ thống xử lý văn bản OCR để tạo flashcards học ngoại ngữ. Nhiệm vụ của bạn:
+const SYSTEM_PROMPT = `Bạn là hệ thống xử lý văn bản để tạo flashcards học ngoại ngữ. 
 
-1. Nhận input là text gốc (đã OCR).
-2. Chuẩn hoá văn bản:
-   - loại bỏ ký tự thừa, xuống dòng sai
-   - sửa lỗi OCR thường gặp
-3. Tách câu, đếm số câu, tách từ, đếm total words, unique words.
-4. ƯU TIÊN TRÍCH CỤM TỪ thay vì từ đơn lẻ:
-   - Cụm danh từ (noun phrases): "climate change", "social media"
-   - Cụm động từ (phrasal verbs): "look forward to", "give up"
+QUAN TRỌNG - LOẠI BỎ METADATA:
+- KHÔNG trích các chuỗi kỹ thuật: rdf, xmlns, xmp, adobe, uuid, checksum, moddate, base64
+- KHÔNG trích các chuỗi vô nghĩa: w5m0mpceihzreszntzcex9d, rdfrdf, xxmpmeta
+- KHÔNG trích DOI, URL, mã hex, mã hóa
+- CHỈ trích từ/cụm từ tiếng Anh có nghĩa thực sự
+
+Nhiệm vụ:
+1. Chuẩn hoá văn bản: loại bỏ ký tự thừa, sửa lỗi OCR
+2. Tách câu, đếm từ
+3. ƯU TIÊN TRÍCH CỤM TỪ thay vì từ đơn lẻ:
+   - Cụm danh từ: "climate change", "social media"
+   - Cụm động từ: "look forward to", "give up"
    - Collocations: "make a decision", "take responsibility"
-5. Chỉ trích từ đơn khi là động từ/tính từ quan trọng đứng một mình
+4. Chỉ trích từ đơn khi là động từ/tính từ quan trọng
 
-Trả về dạng JSON:
+Trả về JSON (KHÔNG markdown):
 {
   "total_words": number,
   "unique_words": number,
   "sentences": string[],
-  "important_words": string[],
+  "vocabulary": string[],
   "noun_phrases": string[],
   "verb_phrases": string[],
-  "collocations": string[],
-  "suggested_flashcard_words": string[]
-}
+  "collocations": string[]
+}`;
 
-Các từ/cụm từ gợi ý cho flashcard phải sạch, không trùng lặp, không rác.
-Ưu tiên cụm từ có nghĩa hoàn chỉnh, dễ hiểu trong ngữ cảnh.
-Không bịa nội dung. Tất cả phải dựa trên chính văn bản OCR.`;
+const VOCABULARY_EXTRACTION_PROMPT = `Bạn là hệ thống trích xuất từ vựng tiếng Anh cho người Việt.
 
-const VOCABULARY_EXTRACTION_PROMPT = `Bạn là hệ thống trích xuất từ vựng tiếng Anh cho người Việt học tiếng Anh.
+⚠️ QUAN TRỌNG - LOẠI BỎ HOÀN TOÀN:
+- Metadata kỹ thuật: rdf, xmlns, xmp, adobe, pdf, uuid, checksum
+- Chuỗi mã hóa: base64, hex, hash
+- Chuỗi vô nghĩa: w5m0mpceihzreszntzcex9d, rdfrdf, xxmpmeta
+- DOI, URL, đường dẫn file
+- Từ không có trong từ điển tiếng Anh
 
-Nhiệm vụ: Phân tích văn bản và trích xuất các từ vựng/cụm từ quan trọng cần học.
+✅ CHỈ TRÍCH:
+1. CỤM TỪ có nghĩa (ưu tiên):
+   - Noun phrases: "climate change", "artificial intelligence"
+   - Phrasal verbs: "look forward to", "take care of"
+   - Collocations: "make a decision", "pay attention"
 
-QUY TẮC QUAN TRỌNG - ƯU TIÊN CỤM TỪ:
-1. ƯU TIÊN TRÍCH CỤM TỪ (phrases) thay vì từ đơn lẻ:
-   - Cụm danh từ (noun phrases): "climate change", "social media", "artificial intelligence"
-   - Cụm động từ (phrasal verbs): "look forward to", "give up", "take care of"
-   - Collocations: "make a decision", "take responsibility", "pay attention"
-   - Cụm tính từ: "highly recommended", "deeply concerned"
-   
-2. CHỈ TRÍCH TỪ ĐƠN khi:
-   - Động từ chính quan trọng: "analyze", "implement", "achieve"
-   - Tính từ/trạng từ đặc biệt: "significant", "effectively"
-   - Danh từ chuyên ngành đứng một mình: "algorithm", "hypothesis"
+2. TỪ ĐƠN quan trọng:
+   - Động từ: "analyze", "implement"
+   - Tính từ: "significant", "effective"
+   - Danh từ chuyên ngành: "algorithm", "hypothesis"
 
 3. KHÔNG TRÍCH:
-   - Stopwords (the, a, an, is, are, was, were, have, has, etc.)
-   - Từ quá đơn giản (good, bad, big, small, very, etc.)
+   - Stopwords (the, a, is, are, have, etc.)
+   - Từ quá đơn giản (good, bad, big, very)
    - Đại từ, giới từ đơn lẻ
-   - Số, ký hiệu, tiếng Việt
+   - Số, ký hiệu
 
-4. Mỗi mục cần có: nghĩa tiếng Việt, loại từ, ví dụ trong ngữ cảnh
-5. Tối đa 30 mục quan trọng nhất (ưu tiên cụm từ)
-
-Trả về JSON (KHÔNG markdown):
+Trả về JSON (KHÔNG markdown, tối đa 30 mục):
 {
-  "vocabulary": [
-    {
-      "word": "take into account",
-      "meaning": "xem xét, tính đến",
-      "type": "phrasal verb",
-      "example": "We need to take into account all the factors."
-    },
-    {
-      "word": "climate change",
-      "meaning": "biến đổi khí hậu",
-      "type": "noun phrase",
-      "example": "Climate change is a global issue."
-    }
-  ],
+  "vocabulary": ["climate change", "take into account", "significant"],
   "total_extracted": number
 }`;
 
 async function analyzeText(text: string, keys: { openaiKey?: string | null; groqKey?: string | null; cohereKey?: string | null }) {
+  // Preprocess text first
+  const { cleanText, stats } = preprocessText(text);
+  console.log(`[analyze-text] Preprocessed: ${stats.originalLength} -> ${stats.cleanLength} chars, removed ${stats.metadataRemoved} metadata, ${stats.noiseRemoved} noise`);
+
   const prompt = `${SYSTEM_PROMPT}
 
-Hãy phân tích đoạn văn sau (được trích từ OCR):
+Văn bản đã được làm sạch:
 
-${text}
+${cleanText.slice(0, 4000)}
 
-Trả về ONLY valid JSON (không markdown, không code blocks):`;
+Trả về ONLY valid JSON:`;
 
-  const result = await callAI(prompt, keys, {
-    temperature: 0.3,
-    maxTokens: 2048
-  });
+  const result = await callAI(prompt, keys, { temperature: 0.3, maxTokens: 2048 });
 
   if (!result.success) {
     throw new Error(result.error || "AI API error");
@@ -95,25 +84,31 @@ Trả về ONLY valid JSON (không markdown, không code blocks):`;
 
   const parsed = parseJsonFromAI(result.content);
   if (parsed) {
-    return { ...parsed, provider: result.provider, model: result.model };
+    // Post-filter vocabulary
+    if (parsed.vocabulary) {
+      const { valid } = filterVocabulary(parsed.vocabulary);
+      parsed.vocabulary = valid;
+    }
+    return { ...parsed, provider: result.provider, model: result.model, preprocessStats: stats };
   }
   
   throw new Error("Invalid response format");
 }
 
 async function extractVocabulary(text: string, keys: { openaiKey?: string | null; groqKey?: string | null; cohereKey?: string | null }) {
+  // Preprocess text first
+  const { cleanText, stats } = preprocessText(text);
+  console.log(`[extract-vocab] Preprocessed: ${stats.originalLength} -> ${stats.cleanLength} chars`);
+
   const prompt = `${VOCABULARY_EXTRACTION_PROMPT}
 
-Văn bản cần trích xuất từ vựng:
+Văn bản cần trích xuất:
 
-${text.slice(0, 3000)}
+${cleanText.slice(0, 3000)}
 
 Trả về ONLY valid JSON:`;
 
-  const result = await callAI(prompt, keys, {
-    temperature: 0.3,
-    maxTokens: 2048
-  });
+  const result = await callAI(prompt, keys, { temperature: 0.3, maxTokens: 2048 });
 
   if (!result.success) {
     throw new Error(result.error || "AI API error");
@@ -121,7 +116,30 @@ Trả về ONLY valid JSON:`;
 
   const parsed = parseJsonFromAI(result.content);
   if (parsed) {
-    return { ...parsed, provider: result.provider, model: result.model };
+    // Post-filter vocabulary to remove any remaining noise
+    let vocabList: string[] = [];
+    
+    if (Array.isArray(parsed.vocabulary)) {
+      vocabList = parsed.vocabulary;
+    } else if (Array.isArray(parsed)) {
+      vocabList = parsed;
+    }
+
+    // Filter out invalid words
+    const { valid, rejected } = filterVocabulary(vocabList);
+    
+    if (rejected.length > 0) {
+      console.log(`[extract-vocab] Rejected ${rejected.length} items:`, rejected.slice(0, 5));
+    }
+
+    return {
+      vocabulary: valid,
+      total_extracted: valid.length,
+      provider: result.provider,
+      model: result.model,
+      preprocessStats: stats,
+      rejected: rejected.length,
+    };
   }
   
   throw new Error("Invalid response format");
@@ -143,12 +161,12 @@ export async function POST(req: NextRequest) {
 
     if (!keys.openaiKey && !keys.groqKey && !keys.cohereKey) {
       return NextResponse.json(
-        { success: false, message: "Chưa có API key nào. Vui lòng thêm OpenAI hoặc Groq key trong Settings." },
+        { success: false, message: "Chưa có API key. Vui lòng thêm Groq hoặc OpenAI key trong Settings." },
         { status: 400 }
       );
     }
 
-    console.log("Analyzing text (user:", userId, ", action:", action || "default", ")");
+    console.log(`[analyze-text] User: ${userId}, Action: ${action || "default"}, Text length: ${text.length}`);
     
     let result;
     if (action === 'extract_vocabulary') {
@@ -161,15 +179,12 @@ export async function POST(req: NextRequest) {
       success: true,
       analysis: result,
       provider: result.provider,
-      model: result.model
+      model: result.model,
     });
   } catch (error: any) {
-    console.error("Text analysis error:", error);
+    console.error("[analyze-text] Error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: error.message || "Failed to analyze text",
-      },
+      { success: false, message: error.message || "Failed to analyze text" },
       { status: 500 }
     );
   }
