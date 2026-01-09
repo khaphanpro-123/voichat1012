@@ -22,7 +22,14 @@ interface OCRResult {
   text: string;
   chunks: string[];
   vocabulary: string[];
-  stats: { totalWords: number; uniqueWords: number; sentences: number; };
+  stats: { totalWords: number; uniqueWords: number; sentences: number; metadataRemoved?: number };
+  logs?: ExtractionLog[];
+}
+
+interface ExtractionLog {
+  step: string;
+  data: any;
+  timestamp: number;
 }
 
 interface Flashcard {
@@ -63,6 +70,8 @@ export default function FileUploadOCR() {
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [isDeletingDoc, setIsDeletingDoc] = useState<string | null>(null);
+  const [showDebugLogs, setShowDebugLogs] = useState(false);
+  const [extractionLogs, setExtractionLogs] = useState<ExtractionLog[]>([]);
   
   // 3-step processing state
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([
@@ -184,15 +193,24 @@ export default function FileUploadOCR() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("userId", userId);
+      formData.append("debug", "true"); // Enable debug logging
 
       const ocrRes = await fetch("/api/upload-ocr", { method: "POST", body: formData });
       const ocrData = await ocrRes.json();
+      
+      // Store extraction logs for debugging
+      if (ocrData.logs) {
+        setExtractionLogs(ocrData.logs);
+      }
       
       if (!ocrRes.ok || !ocrData.success) {
         updateStepStatus(1, "error");
         throw new Error(ocrData.message || "Upload failed");
       }
       updateStepStatus(1, "completed");
+      
+      // Log stats for debugging
+      console.log("[FileUploadOCR] Upload stats:", ocrData.stats);
 
       // STEP 2: Extract Vocabulary with AI
       updateStepStatus(2, "processing");
@@ -202,6 +220,14 @@ export default function FileUploadOCR() {
         body: JSON.stringify({ text: ocrData.text, userId, action: "extract_vocabulary" }),
       });
       const analyzeData = await analyzeRes.json();
+      
+      // Log analysis results
+      console.log("[FileUploadOCR] Analysis result:", {
+        provider: analyzeData.provider,
+        model: analyzeData.model,
+        vocabCount: analyzeData.analysis?.vocabulary?.length,
+        stats: analyzeData.analysis?.preprocessStats,
+      });
       
       let vocabList: string[] = [];
       if (analyzeData.success && analyzeData.analysis?.vocabulary) {
@@ -213,7 +239,7 @@ export default function FileUploadOCR() {
       
       if (vocabList.length === 0) {
         updateStepStatus(2, "error");
-        throw new Error("Không tìm thấy từ vựng trong tài liệu.");
+        throw new Error("Không tìm thấy từ vựng trong tài liệu. Có thể file chỉ chứa metadata hoặc hình ảnh.");
       }
       updateStepStatus(2, "completed");
 
@@ -229,7 +255,9 @@ export default function FileUploadOCR() {
           totalWords: analyzeData.analysis?.total_words || ocrData.stats?.totalWords || vocabList.length,
           uniqueWords: analyzeData.analysis?.unique_words || ocrData.stats?.uniqueWords || vocabList.length,
           sentences: ocrData.stats?.sentences || 1,
+          metadataRemoved: ocrData.stats?.metadataRemoved || 0,
         },
+        logs: ocrData.logs,
       });
       setSelectedWords(vocabList);
       setStep("review");
@@ -420,20 +448,54 @@ export default function FileUploadOCR() {
           {/* REVIEW STEP */}
           {step === "review" && ocrResult && (
             <motion.div key="review" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-lg">
                   <p className="text-sm text-gray-600 mb-1">Total Words</p>
                   <p className="text-3xl font-bold text-teal-600">{ocrResult.stats.totalWords}</p>
                 </div>
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="bg-white rounded-2xl p-5 shadow-lg">
                   <p className="text-sm text-gray-600 mb-1">Từ vựng tìm thấy</p>
                   <p className="text-3xl font-bold text-blue-600">{ocrResult.vocabulary.length}</p>
                 </div>
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="bg-white rounded-2xl p-5 shadow-lg">
                   <p className="text-sm text-gray-600 mb-1">Đã chọn</p>
                   <p className="text-3xl font-bold text-purple-600">{selectedWords.length}</p>
                 </div>
+                <div className="bg-white rounded-2xl p-5 shadow-lg">
+                  <p className="text-sm text-gray-600 mb-1">Metadata đã lọc</p>
+                  <p className="text-3xl font-bold text-orange-600">{ocrResult.stats.metadataRemoved || 0}</p>
+                </div>
               </div>
+
+              {/* Debug Logs Toggle */}
+              {extractionLogs.length > 0 && (
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <button 
+                    onClick={() => setShowDebugLogs(!showDebugLogs)}
+                    className="flex items-center gap-2 text-gray-700 font-medium hover:text-gray-900"
+                  >
+                    <Brain className="w-5 h-5" />
+                    {showDebugLogs ? "Ẩn" : "Xem"} Debug Logs ({extractionLogs.length} bước)
+                  </button>
+                  
+                  {showDebugLogs && (
+                    <div className="mt-4 space-y-3 max-h-[400px] overflow-y-auto">
+                      {extractionLogs.map((log, idx) => (
+                        <div key={idx} className="bg-white rounded-xl p-4 border border-gray-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-gray-800">{log.step}</span>
+                            <span className="text-xs text-gray-500">{log.timestamp}ms</span>
+                          </div>
+                          <pre className="text-xs bg-gray-100 p-3 rounded-lg overflow-x-auto text-gray-700">
+                            {JSON.stringify(log.data, null, 2)}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="bg-white rounded-3xl shadow-xl p-8">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold text-gray-900">Chọn từ vựng để tạo Flashcards</h2>

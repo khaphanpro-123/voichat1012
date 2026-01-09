@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { extractVocabularyFromPDF, removeMetadata, validatePDFContent } from "@/lib/pdfVocabularyExtractor";
 
 // Increase body size limit for this route
 export const config = {
@@ -10,14 +11,21 @@ export const config = {
 };
 
 /**
- * Simple Document Upload API
- * Supports: PDF, DOCX, TXT, Images
+ * Document Upload API with Improved PDF Vocabulary Extraction
+ * 
+ * Pipeline:
+ * 1. Upload file to Cloudinary
+ * 2. Extract text (PDF/DOCX/TXT)
+ * 3. Filter metadata (XMP, RDF, UUID, etc.)
+ * 4. NLP chunking for vocabulary
+ * 5. Return cleaned text + vocabulary
  */
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const userId = (formData.get("userId") as string) || "anonymous";
+    const debug = formData.get("debug") === "true";
 
     if (!file) {
       return NextResponse.json(
@@ -92,14 +100,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract text based on file type
-    let extractedText = "";
+    let rawText = "";
+    let isImage = false;
 
     if (file.type.startsWith("image/")) {
-      extractedText = `[Image: ${file.name}] - Hình ảnh đã được upload thành công.`;
+      isImage = true;
+      rawText = `[Image: ${file.name}] - Hình ảnh đã được upload thành công.`;
     } else if (file.type === "application/pdf") {
-      extractedText = extractTextFromPDF(buffer);
-      if (!extractedText || extractedText.length < 20) {
-        extractedText = `[PDF: ${file.name}] - PDF này có thể là dạng scan/hình ảnh, không trích xuất được text.`;
+      rawText = extractTextFromPDF(buffer);
+      if (!rawText || rawText.length < 20) {
+        rawText = `[PDF: ${file.name}] - PDF này có thể là dạng scan/hình ảnh, không trích xuất được text.`;
       }
     } else if (
       file.type.includes("document") ||
@@ -109,15 +119,68 @@ export async function POST(req: NextRequest) {
       try {
         const mammoth = await import("mammoth");
         const result = await mammoth.extractRawText({ buffer });
-        extractedText = result.value.trim() || `[DOCX: ${file.name}] - File rỗng.`;
+        rawText = result.value.trim() || `[DOCX: ${file.name}] - File rỗng.`;
       } catch (e: any) {
-        extractedText = `[DOCX: ${file.name}] - Không thể đọc file.`;
+        rawText = `[DOCX: ${file.name}] - Không thể đọc file.`;
       }
     } else if (file.type === "text/plain" || file.name.endsWith(".txt")) {
-      extractedText = buffer.toString("utf-8");
+      rawText = buffer.toString("utf-8");
     } else {
-      extractedText = `[File: ${file.name}] - Đã upload thành công.`;
+      rawText = `[File: ${file.name}] - Đã upload thành công.`;
     }
+
+    // ============ IMPROVED VOCABULARY EXTRACTION ============
+    let extractedText = rawText;
+    let vocabulary: string[] = [];
+    let extractionLogs: any[] = [];
+    let stats = { totalWords: 0, uniqueWords: 0, sentences: 0, metadataRemoved: 0 };
+
+    if (!isImage && rawText.length > 50) {
+      // Step 1: Validate content
+      const validation = validatePDFContent(rawText);
+      
+      if (validation.valid) {
+        // Step 2: Remove metadata
+        const { cleaned, removedCount } = removeMetadata(rawText);
+        extractedText = cleaned;
+        
+        // Step 3: Extract vocabulary using improved extractor
+        const extraction = extractVocabularyFromPDF(rawText);
+        
+        if (extraction.success) {
+          vocabulary = extraction.vocabulary.map(v => v.word);
+          extractionLogs = extraction.logs;
+          stats = {
+            totalWords: extraction.stats.originalLength,
+            uniqueWords: extraction.stats.extractedCount,
+            sentences: extraction.stats.sentenceCount,
+            metadataRemoved: extraction.stats.metadataRemoved,
+          };
+        }
+        
+        console.log(`[upload-ocr] Extracted ${vocabulary.length} vocabulary items, removed ${removedCount} metadata`);
+      } else {
+        console.log(`[upload-ocr] Content validation failed: ${validation.reason}`);
+      }
+    }
+
+    // Fallback: basic word extraction if improved extraction failed
+    if (vocabulary.length === 0 && !isImage) {
+      const words = extractedText
+        .split(/\s+/)
+        .filter((w) => w.length >= 3 && /[a-zA-Z]/.test(w))
+        .map((w) => w.replace(/[.,;:!?"'()[\]{}]/g, "").toLowerCase());
+      vocabulary = [...new Set(words)].slice(0, 50);
+      stats.totalWords = words.length;
+      stats.uniqueWords = vocabulary.length;
+    }
+
+    // Process sentences
+    const sentences = extractedText
+      .split(/[.!?]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 10);
+    stats.sentences = sentences.length;
 
     // Save to MongoDB
     const document = new Document({
@@ -127,20 +190,13 @@ export async function POST(req: NextRequest) {
       fileSize: file.size,
       cloudinaryUrl: uploadResult?.secure_url || "",
       extractedText,
-      metadata: { originalName: file.name, uploadedAt: new Date() },
+      metadata: { 
+        originalName: file.name, 
+        uploadedAt: new Date(),
+        extractionStats: stats,
+      },
     });
     await document.save();
-
-    // Process text for vocabulary
-    const sentences = extractedText
-      .split(/[.!?]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    const words = extractedText
-      .split(/\s+/)
-      .filter((w) => w.length >= 3 && /[a-zA-Z]/.test(w))
-      .map((w) => w.replace(/[.,;:!?"'()[\]{}]/g, "").toLowerCase());
-    const uniqueWords = [...new Set(words)];
 
     return NextResponse.json({
       success: true,
@@ -148,12 +204,9 @@ export async function POST(req: NextRequest) {
       filename: file.name,
       text: extractedText,
       chunks: sentences.slice(0, 100),
-      vocabulary: uniqueWords.slice(0, 50),
-      stats: {
-        totalWords: words.length,
-        uniqueWords: uniqueWords.length,
-        sentences: sentences.length,
-      },
+      vocabulary: vocabulary.slice(0, 50),
+      stats,
+      logs: debug ? extractionLogs : undefined,
     });
   } catch (error: any) {
     console.error("[upload-ocr] Error:", error?.message);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserApiKeys } from "@/lib/getUserApiKey";
 import { callAI, parseJsonFromAI } from "@/lib/aiProvider";
 import { preprocessText, filterVocabulary, validateWord } from "@/lib/textPreprocessor";
+import { extractVocabularyFromPDF, removeMetadata, validatePDFContent } from "@/lib/pdfVocabularyExtractor";
 
 const SYSTEM_PROMPT = `Bạn là hệ thống xử lý văn bản để tạo flashcards học ngoại ngữ. 
 
@@ -96,27 +97,51 @@ Trả về ONLY valid JSON:`;
 }
 
 async function extractVocabulary(text: string, keys: { openaiKey?: string | null; groqKey?: string | null; cohereKey?: string | null }) {
-  // Preprocess text first
+  // Step 1: Validate content
+  const validation = validatePDFContent(text);
+  if (!validation.valid) {
+    console.log(`[extract-vocab] Validation failed: ${validation.reason}`);
+  }
+
+  // Step 2: Use improved PDF extractor for pre-processing
+  const pdfExtraction = extractVocabularyFromPDF(text);
+  const preExtractedWords = pdfExtraction.vocabulary.map(v => v.word);
+  
+  console.log(`[extract-vocab] Pre-extracted ${preExtractedWords.length} items from NLP`);
+  console.log(`[extract-vocab] Stats: ${JSON.stringify(pdfExtraction.stats)}`);
+
+  // Step 3: Also preprocess with original preprocessor
   const { cleanText, stats } = preprocessText(text);
   console.log(`[extract-vocab] Preprocessed: ${stats.originalLength} -> ${stats.cleanLength} chars`);
 
+  // Step 4: Use AI to refine and add more vocabulary
   const prompt = `${VOCABULARY_EXTRACTION_PROMPT}
 
-Văn bản cần trích xuất:
+Văn bản cần trích xuất (đã lọc metadata):
 
 ${cleanText.slice(0, 3000)}
 
-Trả về ONLY valid JSON:`;
+Từ vựng đã trích sẵn bằng NLP (tham khảo): ${preExtractedWords.slice(0, 20).join(", ")}
+
+Hãy bổ sung thêm từ vựng quan trọng và trả về ONLY valid JSON:`;
 
   const result = await callAI(prompt, keys, { temperature: 0.3, maxTokens: 2048 });
 
   if (!result.success) {
-    throw new Error(result.error || "AI API error");
+    // Fallback to pre-extracted vocabulary if AI fails
+    console.log(`[extract-vocab] AI failed, using pre-extracted vocabulary`);
+    return {
+      vocabulary: preExtractedWords,
+      total_extracted: preExtractedWords.length,
+      provider: "nlp",
+      model: "local",
+      preprocessStats: stats,
+      pdfExtractionLogs: pdfExtraction.logs,
+    };
   }
 
   const parsed = parseJsonFromAI(result.content);
   if (parsed) {
-    // Post-filter vocabulary to remove any remaining noise
     let vocabList: string[] = [];
     
     if (Array.isArray(parsed.vocabulary)) {
@@ -125,8 +150,11 @@ Trả về ONLY valid JSON:`;
       vocabList = parsed;
     }
 
+    // Merge AI results with pre-extracted vocabulary
+    const mergedVocab = [...new Set([...vocabList, ...preExtractedWords])];
+
     // Filter out invalid words
-    const { valid, rejected } = filterVocabulary(vocabList);
+    const { valid, rejected } = filterVocabulary(mergedVocab);
     
     if (rejected.length > 0) {
       console.log(`[extract-vocab] Rejected ${rejected.length} items:`, rejected.slice(0, 5));
@@ -138,11 +166,19 @@ Trả về ONLY valid JSON:`;
       provider: result.provider,
       model: result.model,
       preprocessStats: stats,
+      pdfExtractionStats: pdfExtraction.stats,
       rejected: rejected.length,
     };
   }
   
-  throw new Error("Invalid response format");
+  // Fallback to pre-extracted if AI response invalid
+  return {
+    vocabulary: preExtractedWords,
+    total_extracted: preExtractedWords.length,
+    provider: "nlp",
+    model: "local",
+    preprocessStats: stats,
+  };
 }
 
 export async function POST(req: NextRequest) {
