@@ -6,15 +6,51 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, Camera, Image as ImageIcon, Send, Check, X, Volume2,
   BookOpen, AlertCircle, Loader2, ChevronRight, Save, RefreshCw,
-  Sparkles, Languages, PenLine, CheckCircle2, XCircle
+  Sparkles, Languages, PenLine, CheckCircle2, XCircle, Lightbulb, Edit3
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
+
+// Kho từ vựng theo chủ đề
+const VOCABULARY_DATABASE: Record<string, { english: string; vietnamese: string; category: string }[]> = {
+  animals: [
+    { english: "dog", vietnamese: "con chó", category: "animals" },
+    { english: "cat", vietnamese: "con mèo", category: "animals" },
+    { english: "bird", vietnamese: "con chim", category: "animals" },
+    { english: "fish", vietnamese: "con cá", category: "animals" },
+    { english: "elephant", vietnamese: "con voi", category: "animals" },
+    { english: "lion", vietnamese: "con sư tử", category: "animals" },
+    { english: "tiger", vietnamese: "con hổ", category: "animals" },
+    { english: "rabbit", vietnamese: "con thỏ", category: "animals" },
+    { english: "horse", vietnamese: "con ngựa", category: "animals" },
+    { english: "cow", vietnamese: "con bò", category: "animals" },
+  ],
+  objects: [
+    { english: "table", vietnamese: "cái bàn", category: "objects" },
+    { english: "chair", vietnamese: "cái ghế", category: "objects" },
+    { english: "book", vietnamese: "quyển sách", category: "objects" },
+    { english: "phone", vietnamese: "điện thoại", category: "objects" },
+    { english: "computer", vietnamese: "máy tính", category: "objects" },
+    { english: "lamp", vietnamese: "đèn", category: "objects" },
+    { english: "clock", vietnamese: "đồng hồ", category: "objects" },
+    { english: "bag", vietnamese: "cái túi", category: "objects" },
+    { english: "pen", vietnamese: "cây bút", category: "objects" },
+    { english: "cup", vietnamese: "cái cốc", category: "objects" },
+  ],
+  food: [
+    { english: "apple", vietnamese: "quả táo", category: "food" },
+    { english: "banana", vietnamese: "quả chuối", category: "food" },
+    { english: "orange", vietnamese: "quả cam", category: "food" },
+    { english: "bread", vietnamese: "bánh mì", category: "food" },
+    { english: "rice", vietnamese: "cơm", category: "food" },
+  ],
+};
 
 interface MainObject {
   english: string;
   vietnamese: string;
   partOfSpeech: string;
   pronunciation: string;
+  category?: string;
 }
 
 interface SentenceCheck {
@@ -36,18 +72,7 @@ interface SentenceCheck {
   };
 }
 
-interface SampleSentence {
-  english: string;
-  vietnamese: string;
-  type: string;
-  structure: {
-    pattern: string;
-    explanation: string;
-    explanationVi: string;
-  };
-}
-
-type Step = "upload" | "identify" | "guess" | "sentences" | "checking" | "samples" | "results";
+type Step = "upload" | "identify" | "guess" | "sentences" | "checking" | "results";
 
 export default function ImageVocabularyLearning() {
   const { data: session } = useSession();
@@ -64,14 +89,33 @@ export default function ImageVocabularyLearning() {
   const [mainObject, setMainObject] = useState<MainObject | null>(null);
   const [needsDescription, setNeedsDescription] = useState(false);
   const [description, setDescription] = useState("");
+  
+  // Step 2: Guess with retry limit
   const [userGuess, setUserGuess] = useState("");
+  const [guessAttempts, setGuessAttempts] = useState(0);
   const [guessResult, setGuessResult] = useState<{ isCorrect: boolean; message: string } | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  
+  // Step 3-4: Sentences
   const [sentences, setSentences] = useState<string[]>(["", "", "", ""]);
   const [checkedSentences, setCheckedSentences] = useState<SentenceCheck[]>([]);
-  const [sampleSentences, setSampleSentences] = useState<SampleSentence[]>([]);
+  const [editingSentence, setEditingSentence] = useState<number | null>(null);
+  const [editedSentence, setEditedSentence] = useState("");
+  
+  // Results
   const [savedData, setSavedData] = useState<{ vocabulary: number; structures: number; errors: number } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Find word in vocabulary database
+  const findInDatabase = (word: string): { english: string; vietnamese: string; category: string } | null => {
+    const normalizedWord = word.toLowerCase().trim();
+    for (const category of Object.values(VOCABULARY_DATABASE)) {
+      const found = category.find(v => v.english.toLowerCase() === normalizedWord);
+      if (found) return found;
+    }
+    return null;
+  };
 
   // Handle image upload
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +133,7 @@ export default function ImageVocabularyLearning() {
     reader.readAsDataURL(file);
   }, []);
 
-  // Step 1: Identify image
+  // Step 1: Identify image and match with database
   const identifyImage = async (base64: string) => {
     setIsLoading(true);
     setError(null);
@@ -105,7 +149,14 @@ export default function ImageVocabularyLearning() {
         if (data.data.needsDescription) {
           setNeedsDescription(true);
         } else if (data.data.mainObject) {
-          setMainObject(data.data.mainObject);
+          const obj = data.data.mainObject;
+          // Check if word exists in database
+          const dbMatch = findInDatabase(obj.english);
+          if (dbMatch) {
+            setMainObject({ ...obj, vietnamese: dbMatch.vietnamese, category: dbMatch.category });
+          } else {
+            setMainObject(obj);
+          }
           setStep("guess");
         }
       } else {
@@ -132,11 +183,16 @@ export default function ImageVocabularyLearning() {
       const data = await res.json();
       
       if (data.success && data.data?.mainObject) {
-        setMainObject(data.data.mainObject);
+        const obj = data.data.mainObject;
+        const dbMatch = findInDatabase(obj.english);
+        if (dbMatch) {
+          setMainObject({ ...obj, vietnamese: dbMatch.vietnamese, category: dbMatch.category });
+        } else {
+          setMainObject(obj);
+        }
         setNeedsDescription(false);
         setStep("guess");
       } else {
-        // If still no mainObject, create one from description
         setMainObject({
           english: description.trim(),
           vietnamese: `(${description.trim()})`,
@@ -147,7 +203,6 @@ export default function ImageVocabularyLearning() {
         setStep("guess");
       }
     } catch (err: any) {
-      // On error, still allow user to proceed with their input
       setMainObject({
         english: description.trim(),
         vietnamese: `(${description.trim()})`,
@@ -161,35 +216,47 @@ export default function ImageVocabularyLearning() {
     }
   };
 
-  // Step 2: Check guess
+  // Step 2: Check guess with retry limit (max 3 attempts)
   const handleGuessSubmit = async () => {
     if (!userGuess.trim() || !mainObject) return;
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/image-vocabulary-learning", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "checkGuess", guess: userGuess, correctWord: mainObject.english, userId })
-      });
-      const data = await res.json();
-      
-      if (data.success) {
-        setGuessResult(data.data);
-        setTimeout(() => setStep("sentences"), 1500);
+    
+    const isCorrect = userGuess.trim().toLowerCase() === mainObject.english.toLowerCase();
+    const newAttempts = guessAttempts + 1;
+    setGuessAttempts(newAttempts);
+    
+    if (isCorrect) {
+      setGuessResult({ isCorrect: true, message: "🎉 Chính xác! Bạn đã đoán đúng!" });
+      setTimeout(() => setStep("sentences"), 1500);
+    } else {
+      if (newAttempts >= 3) {
+        // Show hint after 3 wrong attempts
+        setShowHint(true);
+        setGuessResult({ 
+          isCorrect: false, 
+          message: `❌ Sai ${newAttempts} lần. Đây là gợi ý: Từ bắt đầu bằng "${mainObject.english[0].toUpperCase()}" và có ${mainObject.english.length} chữ cái.`
+        });
+      } else {
+        setGuessResult({ 
+          isCorrect: false, 
+          message: `❌ Chưa đúng! Còn ${3 - newAttempts} lần thử.`
+        });
       }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      setUserGuess("");
     }
   };
 
-  // Step 4: Check sentences
+  // Skip to answer (after 3 wrong attempts)
+  const handleShowAnswer = () => {
+    setGuessResult({ isCorrect: true, message: `Đáp án đúng là: ${mainObject?.english}` });
+    setTimeout(() => setStep("sentences"), 1500);
+  };
+
+  // Step 3-4: Check sentences
   const handleCheckSentences = async () => {
     if (!mainObject) return;
     const validSentences = sentences.filter(s => s.trim());
-    if (validSentences.length === 0) {
-      setError("Vui lòng viết ít nhất 1 câu");
+    if (validSentences.length < 4) {
+      setError("Vui lòng viết đủ 4 câu");
       return;
     }
 
@@ -215,50 +282,50 @@ export default function ImageVocabularyLearning() {
 
     setCheckedSentences(results);
     setIsLoading(false);
-
-    // Generate sample sentences
-    await generateSamples(validSentences);
+    setStep("results");
   };
 
-  // Step 5: Generate sample sentences
-  const generateSamples = async (userSentences: string[]) => {
-    if (!mainObject) return;
+  // Edit and resubmit a sentence
+  const handleEditSentence = (index: number) => {
+    setEditingSentence(index);
+    setEditedSentence(checkedSentences[index].sentence);
+  };
+
+  const handleResubmitSentence = async () => {
+    if (editingSentence === null || !mainObject || !editedSentence.trim()) return;
+    
     setIsLoading(true);
     try {
       const res = await fetch("/api/image-vocabulary-learning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generateSamples", word: mainObject.english, userSentences, userId })
+        body: JSON.stringify({ action: "checkSentence", sentence: editedSentence, targetWord: mainObject.english, userId })
       });
       const data = await res.json();
       
-      if (data.success && data.data.sampleSentences) {
-        setSampleSentences(data.data.sampleSentences);
+      if (data.success) {
+        const newChecked = [...checkedSentences];
+        newChecked[editingSentence] = { sentence: editedSentence, ...data.data };
+        setCheckedSentences(newChecked);
       }
     } catch (err) {
-      console.error("Generate samples error:", err);
+      console.error("Recheck error:", err);
     } finally {
       setIsLoading(false);
-      setStep("samples");
+      setEditingSentence(null);
+      setEditedSentence("");
     }
   };
 
-  // Step 7: Save all data
+  // Save all data
   const handleSaveAll = async () => {
     if (!mainObject) return;
     setIsLoading(true);
     try {
-      // Collect all structures (filter out undefined)
-      const structures = [
-        ...checkedSentences
-          .filter(s => s.structure?.pattern)
-          .map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation || "", example: s.sentence })),
-        ...sampleSentences
-          .filter(s => s.structure?.pattern)
-          .map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation || "", example: s.english }))
-      ];
+      const structures = checkedSentences
+        .filter(s => s.structure?.pattern)
+        .map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation || "", example: s.sentence }));
 
-      // Collect all errors
       const errors = checkedSentences
         .filter(s => !s.isCorrect && s.errors?.length > 0)
         .flatMap(s => s.errors.map(e => ({
@@ -283,7 +350,6 @@ export default function ImageVocabularyLearning() {
       
       if (data.success) {
         setSavedData(data.saved);
-        setStep("results");
       }
     } catch (err: any) {
       setError(err.message);
@@ -292,7 +358,7 @@ export default function ImageVocabularyLearning() {
     }
   };
 
-  // Reset and start over
+  // Reset
   const handleReset = () => {
     setStep("upload");
     setImagePreview(null);
@@ -301,10 +367,13 @@ export default function ImageVocabularyLearning() {
     setNeedsDescription(false);
     setDescription("");
     setUserGuess("");
+    setGuessAttempts(0);
     setGuessResult(null);
+    setShowHint(false);
     setSentences(["", "", "", ""]);
     setCheckedSentences([]);
-    setSampleSentences([]);
+    setEditingSentence(null);
+    setEditedSentence("");
     setSavedData(null);
     setError(null);
   };
@@ -318,6 +387,9 @@ export default function ImageVocabularyLearning() {
     window.speechSynthesis.speak(utterance);
   };
 
+  // Check if all sentences are correct
+  const allSentencesCorrect = checkedSentences.length === 4 && checkedSentences.every(s => s.isCorrect);
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-4">
@@ -328,25 +400,33 @@ export default function ImageVocabularyLearning() {
               <ImageIcon className="w-6 h-6 text-pink-400" />
               Học từ vựng qua hình ảnh
             </h1>
-            <p className="text-white/60 text-sm mt-1">Chọn ảnh → Đoán từ → Viết câu → Học cấu trúc</p>
+            <p className="text-white/60 text-sm mt-1">Chọn ảnh → Đoán từ → Viết câu → Kiểm tra ngữ pháp</p>
           </div>
 
-          {/* Progress */}
+          {/* Progress - 4 steps */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            {["upload", "guess", "sentences", "results"].map((s, i) => (
-              <div key={s} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  step === s || (i === 0 && step === "identify") || (i === 2 && (step === "checking" || step === "samples"))
-                    ? "bg-pink-500 text-white"
-                    : i < ["upload", "guess", "sentences", "results"].indexOf(step) || step === "results"
-                    ? "bg-green-500 text-white"
-                    : "bg-white/20 text-white/50"
-                }`}>
-                  {i + 1}
+            {[
+              { id: "upload", label: "Chọn ảnh" },
+              { id: "guess", label: "Đoán từ" },
+              { id: "sentences", label: "Viết câu" },
+              { id: "results", label: "Kết quả" }
+            ].map((s, i) => {
+              const isActive = step === s.id || (s.id === "upload" && step === "identify") || (s.id === "sentences" && step === "checking");
+              const isPast = ["upload", "guess", "sentences", "results"].indexOf(step) > i || step === "results";
+              return (
+                <div key={s.id} className="flex items-center">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                      isActive ? "bg-pink-500 text-white scale-110" : isPast ? "bg-green-500 text-white" : "bg-white/20 text-white/50"
+                    }`}>
+                      {isPast && !isActive ? <Check className="w-5 h-5" /> : i + 1}
+                    </div>
+                    <span className={`text-xs mt-1 ${isActive ? "text-pink-400" : "text-white/50"}`}>{s.label}</span>
+                  </div>
+                  {i < 3 && <ChevronRight className="w-4 h-4 text-white/30 mx-2" />}
                 </div>
-                {i < 3 && <ChevronRight className="w-4 h-4 text-white/30 mx-1" />}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Error */}
@@ -364,7 +444,7 @@ export default function ImageVocabularyLearning() {
               <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-pink-500 to-violet-500 rounded-full flex items-center justify-center">
                 <Camera className="w-12 h-12 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Chọn hình ảnh</h2>
+              <h2 className="text-xl font-bold text-white mb-2">Bước 1: Chọn hình ảnh</h2>
               <p className="text-white/60 mb-6">Tải lên hình ảnh có đối tượng bạn muốn học từ vựng</p>
               
               <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageUpload} className="hidden" />
@@ -387,7 +467,8 @@ export default function ImageVocabularyLearning() {
               {isLoading && (
                 <div className="text-center py-8">
                   <Loader2 className="w-10 h-10 text-pink-400 animate-spin mx-auto mb-2" />
-                  <p className="text-white/70">Đang phân tích hình ảnh...</p>
+                  <p className="text-white/70">Đang nhận diện đối tượng trong ảnh...</p>
+                  <p className="text-white/50 text-sm">Đối chiếu với kho từ vựng...</p>
                 </div>
               )}
 
@@ -411,7 +492,7 @@ export default function ImageVocabularyLearning() {
             </motion.div>
           )}
 
-          {/* Step 2: Guess */}
+          {/* Step 2: Guess with retry limit */}
           {step === "guess" && mainObject && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/10 backdrop-blur rounded-2xl p-6">
               {imagePreview && (
@@ -419,8 +500,11 @@ export default function ImageVocabularyLearning() {
               )}
               
               <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-white mb-2">Đây là gì?</h2>
+                <h2 className="text-xl font-bold text-white mb-2">Bước 2: Đây là gì?</h2>
                 <p className="text-white/60">Nhập từ tiếng Anh cho đối tượng trong ảnh</p>
+                {guessAttempts > 0 && !guessResult?.isCorrect && (
+                  <p className="text-orange-400 text-sm mt-1">Số lần thử: {guessAttempts}/3</p>
+                )}
               </div>
 
               <div className="flex gap-2 mb-4">
@@ -428,17 +512,17 @@ export default function ImageVocabularyLearning() {
                   type="text"
                   value={userGuess}
                   onChange={(e) => setUserGuess(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleGuessSubmit()}
+                  onKeyDown={(e) => e.key === "Enter" && !guessResult?.isCorrect && handleGuessSubmit()}
                   placeholder="Nhập từ tiếng Anh..."
                   className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-lg"
-                  disabled={!!guessResult}
+                  disabled={guessResult?.isCorrect}
                 />
                 <button 
                   onClick={handleGuessSubmit} 
-                  disabled={isLoading || !!guessResult}
+                  disabled={isLoading || guessResult?.isCorrect || !userGuess.trim()}
                   className="px-6 py-3 bg-pink-500 text-white rounded-xl disabled:opacity-50"
                 >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  <Check className="w-5 h-5" />
                 </button>
               </div>
 
@@ -451,25 +535,44 @@ export default function ImageVocabularyLearning() {
                   <p className={`font-medium ${guessResult.isCorrect ? "text-green-300" : "text-orange-300"}`}>
                     {guessResult.message}
                   </p>
-                  <div className="mt-2 flex items-center gap-4">
-                    <div>
-                      <span className="text-white/60 text-sm">English:</span>
-                      <span className="text-white font-bold ml-2">{mainObject.english}</span>
-                      <button onClick={() => speak(mainObject.english)} className="ml-2 p-1 hover:bg-white/10 rounded">
-                        <Volume2 className="w-4 h-4 text-white/60" />
-                      </button>
+                  
+                  {guessResult.isCorrect && (
+                    <div className="mt-3 flex items-center gap-4">
+                      <div>
+                        <span className="text-white/60 text-sm">English:</span>
+                        <span className="text-white font-bold ml-2">{mainObject.english}</span>
+                        <button onClick={() => speak(mainObject.english)} className="ml-2 p-1 hover:bg-white/10 rounded">
+                          <Volume2 className="w-4 h-4 text-white/60" />
+                        </button>
+                      </div>
+                      <div>
+                        <span className="text-white/60 text-sm">Vietnamese:</span>
+                        <span className="text-green-300 font-bold ml-2">{mainObject.vietnamese}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-white/60 text-sm">Vietnamese:</span>
-                      <span className="text-green-300 font-bold ml-2">{mainObject.vietnamese}</span>
-                    </div>
-                  </div>
+                  )}
                 </motion.div>
+              )}
+
+              {/* Show answer button after 3 wrong attempts */}
+              {showHint && !guessResult?.isCorrect && (
+                <div className="mt-4 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb className="w-5 h-5 text-yellow-400" />
+                    <span className="text-yellow-300 font-medium">Bạn đã thử 3 lần</span>
+                  </div>
+                  <button
+                    onClick={handleShowAnswer}
+                    className="w-full py-3 bg-yellow-500 text-white rounded-xl font-medium hover:bg-yellow-600"
+                  >
+                    Xem đáp án và tiếp tục
+                  </button>
+                </div>
               )}
             </motion.div>
           )}
 
-          {/* Step 3: Write sentences */}
+          {/* Step 3: Write 4 sentences */}
           {step === "sentences" && mainObject && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/10 backdrop-blur rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -477,15 +580,21 @@ export default function ImageVocabularyLearning() {
                   <PenLine className="w-5 h-5 text-pink-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Viết 4 câu với từ "{mainObject.english}"</h2>
-                  <p className="text-white/60 text-sm">Thử các dạng câu khác nhau: khẳng định, phủ định, câu hỏi...</p>
+                  <h2 className="text-lg font-bold text-white">Bước 3: Viết 4 câu với từ "{mainObject.english}"</h2>
+                  <p className="text-white/60 text-sm">Viết 4 câu khác nhau có chứa từ vừa học</p>
                 </div>
+              </div>
+
+              <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-xl">
+                <p className="text-blue-300 text-sm">
+                  💡 Gợi ý: Thử viết câu khẳng định, phủ định, câu hỏi, hoặc câu với các thì khác nhau
+                </p>
               </div>
 
               <div className="space-y-3 mb-6">
                 {sentences.map((s, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <span className="text-white/40 w-6">{i + 1}.</span>
+                    <span className="text-white/40 w-6 text-center">{i + 1}.</span>
                     <input
                       type="text"
                       value={s}
@@ -494,8 +603,8 @@ export default function ImageVocabularyLearning() {
                         newSentences[i] = e.target.value;
                         setSentences(newSentences);
                       }}
-                      placeholder={`Câu ${i + 1}...`}
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white"
+                      placeholder={`Câu ${i + 1} với từ "${mainObject.english}"...`}
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:border-pink-500 transition"
                     />
                   </div>
                 ))}
@@ -503,145 +612,183 @@ export default function ImageVocabularyLearning() {
 
               <button
                 onClick={handleCheckSentences}
-                disabled={isLoading || sentences.every(s => !s.trim())}
+                disabled={isLoading || sentences.filter(s => s.trim()).length < 4}
                 className="w-full py-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                Kiểm tra câu
+                Kiểm tra ngữ pháp
               </button>
+              
+              {sentences.filter(s => s.trim()).length < 4 && (
+                <p className="text-orange-400 text-sm text-center mt-2">
+                  Còn thiếu {4 - sentences.filter(s => s.trim()).length} câu
+                </p>
+              )}
             </motion.div>
           )}
 
-          {/* Step 4: Checking sentences */}
+          {/* Step 4: Checking */}
           {step === "checking" && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center">
               <Loader2 className="w-12 h-12 text-pink-400 animate-spin mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-white mb-2">Đang kiểm tra câu...</h2>
-              <p className="text-white/60">Phân tích ngữ pháp, chính tả và cách dùng từ</p>
+              <h2 className="text-xl font-bold text-white mb-2">Bước 4: Đang kiểm tra ngữ pháp...</h2>
+              <p className="text-white/60">AI đang phân tích từng câu của bạn</p>
             </motion.div>
           )}
 
-          {/* Step 5-6: Show results and samples */}
-          {step === "samples" && (
+          {/* Step 4 Results: Show checked sentences */}
+          {step === "results" && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-              {/* Checked sentences */}
+              {/* Checked sentences with edit option */}
               <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-400" /> Kết quả kiểm tra
+                  <CheckCircle2 className="w-5 h-5 text-green-400" /> Kết quả kiểm tra ngữ pháp
                 </h3>
+                
                 <div className="space-y-4">
                   {checkedSentences.map((s, i) => (
-                    <div key={i} className={`p-4 rounded-xl ${s.isCorrect ? "bg-green-500/10 border border-green-500/30" : "bg-red-500/10 border border-red-500/30"}`}>
-                      <div className="flex items-start gap-2">
-                        {s.isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5" /> : <XCircle className="w-5 h-5 text-red-400 mt-0.5" />}
-                        <div className="flex-1">
-                          <p className="text-white font-medium">{s.sentence}</p>
-                          {!s.isCorrect && s.correctedSentence && (
-                            <p className="text-green-300 text-sm mt-1">✓ {s.correctedSentence}</p>
-                          )}
-                          {s.vietnameseTranslation && (
-                            <p className="text-white/60 text-sm mt-1">🇻🇳 {s.vietnameseTranslation}</p>
-                          )}
-                          
-                          {/* Errors */}
-                          {s.errors && s.errors.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              {s.errors.map((e, j) => (
-                                <div key={j} className="text-sm bg-red-500/20 rounded px-2 py-1">
-                                  <span className="text-red-300">{e.original}</span>
-                                  <span className="text-white/40 mx-1">→</span>
-                                  <span className="text-green-300">{e.corrected}</span>
-                                  {e.explanationVi && <span className="text-white/50 ml-2">({e.explanationVi})</span>}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Structure */}
-                          {s.structure && s.structure.pattern && (
-                            <div className="mt-2 text-sm bg-purple-500/20 rounded px-2 py-1">
-                              <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
-                              {s.structure.explanationVi && <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>}
-                            </div>
-                          )}
+                    <div key={i} className={`p-4 rounded-xl transition-all ${
+                      s.isCorrect 
+                        ? "bg-green-500/10 border border-green-500/30" 
+                        : "bg-red-500/10 border border-red-500/30"
+                    }`}>
+                      {/* Editing mode */}
+                      {editingSentence === i ? (
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={editedSentence}
+                            onChange={(e) => setEditedSentence(e.target.value)}
+                            className="w-full bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-white"
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleResubmitSentence}
+                              disabled={isLoading}
+                              className="flex-1 py-2 bg-green-500 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                            >
+                              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                              Kiểm tra lại
+                            </button>
+                            <button
+                              onClick={() => { setEditingSentence(null); setEditedSentence(""); }}
+                              className="px-4 py-2 bg-gray-500 text-white rounded-lg"
+                            >
+                              Hủy
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          {s.isCorrect ? (
+                            <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <XCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+                          )}
+                          
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-white font-medium">{s.sentence}</p>
+                              {!s.isCorrect && (
+                                <button
+                                  onClick={() => handleEditSentence(i)}
+                                  className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition"
+                                  title="Sửa và nộp lại"
+                                >
+                                  <Edit3 className="w-4 h-4 text-white/70" />
+                                </button>
+                              )}
+                            </div>
+                            
+                            {/* Corrected sentence */}
+                            {!s.isCorrect && s.correctedSentence && (
+                              <p className="text-green-300 text-sm mt-1 flex items-center gap-1">
+                                <Check className="w-4 h-4" /> {s.correctedSentence}
+                              </p>
+                            )}
+                            
+                            {/* Vietnamese translation */}
+                            {s.vietnameseTranslation && (
+                              <p className="text-white/60 text-sm mt-1">🇻🇳 {s.vietnameseTranslation}</p>
+                            )}
+                            
+                            {/* Errors detail */}
+                            {s.errors && s.errors.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {s.errors.map((e, j) => (
+                                  <div key={j} className="text-sm bg-red-500/20 rounded px-2 py-1">
+                                    <span className="text-red-300 line-through">{e.original}</span>
+                                    <span className="text-white/40 mx-1">→</span>
+                                    <span className="text-green-300">{e.corrected}</span>
+                                    {e.explanationVi && <span className="text-white/50 ml-2">({e.explanationVi})</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Structure */}
+                            {s.structure && s.structure.pattern && (
+                              <div className="mt-2 text-sm bg-purple-500/20 rounded px-2 py-1 inline-block">
+                                <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
+                                {s.structure.explanationVi && <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Sample sentences */}
-              {sampleSentences.length > 0 && (
-                <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-yellow-400" /> Câu mẫu bổ sung
-                  </h3>
-                  <div className="space-y-3">
-                    {sampleSentences.map((s, i) => (
-                      <div key={i} className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs bg-yellow-500/30 text-yellow-300 px-2 py-0.5 rounded">{s.type}</span>
-                          <button onClick={() => speak(s.english)} className="p-1 hover:bg-white/10 rounded">
-                            <Volume2 className="w-4 h-4 text-white/60" />
-                          </button>
-                        </div>
-                        <p className="text-white font-medium mt-1">{s.english}</p>
-                        <p className="text-white/60 text-sm">🇻🇳 {s.vietnamese}</p>
-                        {s.structure && s.structure.pattern && (
-                          <div className="mt-1 text-sm">
-                            <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
-                            {s.structure.explanationVi && <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+              {/* Summary and Save */}
+              <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">Tổng kết</h3>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="text-green-400">✓ {checkedSentences.filter(s => s.isCorrect).length} đúng</span>
+                    <span className="text-red-400">✗ {checkedSentences.filter(s => !s.isCorrect).length} sai</span>
                   </div>
                 </div>
-              )}
 
-              {/* Save button */}
-              <button
-                onClick={handleSaveAll}
-                disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                Lưu kết quả học tập
-              </button>
-            </motion.div>
-          )}
+                {!allSentencesCorrect && (
+                  <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-xl">
+                    <p className="text-yellow-300 text-sm flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4" />
+                      Bạn có thể sửa các câu sai bằng cách nhấn nút ✏️ và nộp lại
+                    </p>
+                  </div>
+                )}
 
-          {/* Step 8: Final results */}
-          {step === "results" && savedData && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                <Check className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">🎉 Hoàn thành!</h2>
-              <p className="text-white/60 mb-6">Dữ liệu học tập đã được lưu</p>
-
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-green-500/20 rounded-xl p-4">
-                  <BookOpen className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-white">{savedData.vocabulary}</p>
-                  <p className="text-white/60 text-sm">Từ vựng</p>
-                </div>
-                <div className="bg-purple-500/20 rounded-xl p-4">
-                  <Languages className="w-6 h-6 text-purple-400 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-white">{savedData.structures}</p>
-                  <p className="text-white/60 text-sm">Cấu trúc</p>
-                </div>
-                <div className="bg-orange-500/20 rounded-xl p-4">
-                  <AlertCircle className="w-6 h-6 text-orange-400 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-white">{savedData.errors}</p>
-                  <p className="text-white/60 text-sm">Lỗi sai</p>
-                </div>
+                {savedData ? (
+                  <div className="text-center py-4">
+                    <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                      <Check className="w-8 h-8 text-white" />
+                    </div>
+                    <p className="text-green-300 font-bold mb-2">🎉 Đã lưu thành công!</p>
+                    <div className="flex justify-center gap-6 text-sm">
+                      <span className="text-white/70">{savedData.vocabulary} từ vựng</span>
+                      <span className="text-white/70">{savedData.structures} cấu trúc</span>
+                      <span className="text-white/70">{savedData.errors} lỗi sai</span>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleSaveAll}
+                    disabled={isLoading}
+                    className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    Lưu kết quả học tập
+                  </button>
+                )}
               </div>
 
+              {/* Learn new word button */}
               <button
                 onClick={handleReset}
-                className="px-8 py-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white rounded-xl font-medium flex items-center gap-2 mx-auto"
+                className="w-full py-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white rounded-xl font-medium flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-5 h-5" /> Học từ mới
               </button>
