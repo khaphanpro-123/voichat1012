@@ -248,20 +248,24 @@ export default function ImageVocabularyLearning() {
     if (!mainObject) return;
     setIsLoading(true);
     try {
-      // Collect all structures
+      // Collect all structures (filter out undefined)
       const structures = [
-        ...checkedSentences.map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation, example: s.sentence })),
-        ...sampleSentences.map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation, example: s.english }))
+        ...checkedSentences
+          .filter(s => s.structure?.pattern)
+          .map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation || "", example: s.sentence })),
+        ...sampleSentences
+          .filter(s => s.structure?.pattern)
+          .map(s => ({ pattern: s.structure.pattern, explanation: s.structure.explanation || "", example: s.english }))
       ];
 
       // Collect all errors
       const errors = checkedSentences
-        .filter(s => !s.isCorrect)
+        .filter(s => !s.isCorrect && s.errors?.length > 0)
         .flatMap(s => s.errors.map(e => ({
-          original: e.original,
-          corrected: e.corrected,
-          type: e.type,
-          explanation: e.explanation
+          original: e.original || "",
+          corrected: e.corrected || "",
+          type: e.type || "unknown",
+          explanation: e.explanation || ""
         })));
 
       const res = await fetch("/api/image-vocabulary-learning", {
@@ -532,10 +536,12 @@ export default function ImageVocabularyLearning() {
                         {s.isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5" /> : <XCircle className="w-5 h-5 text-red-400 mt-0.5" />}
                         <div className="flex-1">
                           <p className="text-white font-medium">{s.sentence}</p>
-                          {!s.isCorrect && (
+                          {!s.isCorrect && s.correctedSentence && (
                             <p className="text-green-300 text-sm mt-1">✓ {s.correctedSentence}</p>
                           )}
-                          <p className="text-white/60 text-sm mt-1">🇻🇳 {s.vietnameseTranslation}</p>
+                          {s.vietnameseTranslation && (
+                            <p className="text-white/60 text-sm mt-1">🇻🇳 {s.vietnameseTranslation}</p>
+                          )}
                           
                           {/* Errors */}
                           {s.errors && s.errors.length > 0 && (
@@ -545,17 +551,19 @@ export default function ImageVocabularyLearning() {
                                   <span className="text-red-300">{e.original}</span>
                                   <span className="text-white/40 mx-1">→</span>
                                   <span className="text-green-300">{e.corrected}</span>
-                                  <span className="text-white/50 ml-2">({e.explanationVi})</span>
+                                  {e.explanationVi && <span className="text-white/50 ml-2">({e.explanationVi})</span>}
                                 </div>
                               ))}
                             </div>
                           )}
                           
                           {/* Structure */}
-                          <div className="mt-2 text-sm bg-purple-500/20 rounded px-2 py-1">
-                            <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
-                            <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>
-                          </div>
+                          {s.structure && s.structure.pattern && (
+                            <div className="mt-2 text-sm bg-purple-500/20 rounded px-2 py-1">
+                              <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
+                              {s.structure.explanationVi && <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -580,10 +588,12 @@ export default function ImageVocabularyLearning() {
                         </div>
                         <p className="text-white font-medium mt-1">{s.english}</p>
                         <p className="text-white/60 text-sm">🇻🇳 {s.vietnamese}</p>
-                        <div className="mt-1 text-sm">
-                          <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
-                          <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>
-                        </div>
+                        {s.structure && s.structure.pattern && (
+                          <div className="mt-1 text-sm">
+                            <span className="text-purple-300 font-mono">{s.structure.pattern}</span>
+                            {s.structure.explanationVi && <span className="text-white/50 ml-2">- {s.structure.explanationVi}</span>}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
