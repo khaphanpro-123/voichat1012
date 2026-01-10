@@ -70,6 +70,7 @@ export interface ILearningSession extends Document {
   // Metadata
   topic?: string;
   level?: string;
+  rating?: number; // 1-5 star rating from user
   createdAt: Date;
 }
 
@@ -129,6 +130,7 @@ const LearningSessionSchema = new Schema<ILearningSession>({
   
   topic: String,
   level: String,
+  rating: { type: Number, min: 1, max: 5 },
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -53,6 +53,55 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PATCH - Cập nhật rating cho phiên học
+export async function PATCH(req: NextRequest) {
+  try {
+    const { sessionId, rating } = await req.json();
+
+    if (!sessionId || !rating) {
+      return NextResponse.json(
+        { success: false, message: "sessionId và rating là bắt buộc" },
+        { status: 400 }
+      );
+    }
+
+    if (rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { success: false, message: "Rating phải từ 1-5" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const session = await LearningSession.findByIdAndUpdate(
+      sessionId,
+      { rating },
+      { new: true }
+    );
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Không tìm thấy phiên học" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Đã cập nhật đánh giá",
+      session
+    });
+
+  } catch (error) {
+    console.error("Update rating error:", error);
+    return NextResponse.json(
+      { success: false, message: "Lỗi cập nhật đánh giá" },
+      { status: 500 }
+    );
+  }
+}
+
 // GET - Lấy lịch sử học tập
 export async function GET(req: NextRequest) {
   try {

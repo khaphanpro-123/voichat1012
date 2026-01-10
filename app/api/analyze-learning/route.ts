@@ -147,6 +147,7 @@ export async function GET(req: NextRequest) {
     const userId = req.nextUrl.searchParams.get("userId");
     const useAI = req.nextUrl.searchParams.get("ai") === "true";
     const limit = parseInt(req.nextUrl.searchParams.get("limit") || "20");
+    const days = parseInt(req.nextUrl.searchParams.get("days") || "365");
 
     if (!userId) {
       return NextResponse.json({ success: false, message: "userId required" }, { status: 400 });
@@ -154,17 +155,23 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
+    // Build date filter
+    const dateFilter = days < 365 ? {
+      createdAt: { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) }
+    } : {};
+
     // Fetch recent sessions
-    const sessions = await LearningSession.find({ userId })
+    const sessions = await LearningSession.find({ userId, ...dateFilter })
       .sort({ createdAt: -1 })
       .limit(limit)
-      .lean() as SessionData[];
+      .lean() as unknown as SessionData[];
 
     if (sessions.length === 0) {
       return NextResponse.json({
         success: true,
         message: "No learning sessions found",
-        analysis: null
+        analysis: null,
+        sessions: []
       });
     }
 
@@ -179,6 +186,7 @@ export async function GET(req: NextRequest) {
           success: true,
           analysis: basicStats,
           aiAnalysis: null,
+          sessions,
           message: "Add API key in Settings for AI analysis"
         });
       }
@@ -189,7 +197,7 @@ export async function GET(req: NextRequest) {
           success: true,
           analysis: basicStats,
           aiAnalysis,
-          sessions: sessions.slice(0, 5) // Return recent 5 for display
+          sessions
         });
       } catch (aiError: any) {
         console.error("AI analysis error:", aiError);
@@ -197,6 +205,7 @@ export async function GET(req: NextRequest) {
           success: true,
           analysis: basicStats,
           aiAnalysis: null,
+          sessions,
           aiError: aiError.message
         });
       }
@@ -205,7 +214,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       analysis: basicStats,
-      sessions: sessions.slice(0, 10)
+      sessions
     });
 
   } catch (error: any) {
