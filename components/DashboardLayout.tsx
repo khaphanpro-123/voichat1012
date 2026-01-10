@@ -3,6 +3,7 @@ import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   MessageCircle,
@@ -13,6 +14,7 @@ import {
   BookOpen,
   FileText,
   HelpCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -34,6 +36,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [level, setLevel] = useState(userLevel);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const loadProgress = async () => {
@@ -59,8 +62,65 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   const userInitial = userName.charAt(0).toUpperCase();
   const userAvatar = session?.user?.image;
 
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    signOut({ callbackUrl: "/auth/login" });
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={cancelLogout}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl p-6 mx-4 max-w-sm w-full"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-8 h-8 text-orange-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Xác nhận đăng xuất</h3>
+                <p className="text-gray-600 mb-6">
+                  Phiên học tập của bạn sẽ được kết thúc. Bạn có chắc chắn muốn đăng xuất không?
+                </p>
+                <div className="flex gap-3 w-full">
+                  <button
+                    onClick={cancelLogout}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition"
+                  >
+                    Quay lại
+                  </button>
+                  <button
+                    onClick={confirmLogout}
+                    className="flex-1 px-4 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -129,7 +189,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
             </div>
             
             <button
-              onClick={() => signOut({ callbackUrl: "/auth/login" })}
+              onClick={handleLogout}
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
             >
               <LogOut className="w-4 h-4" />
