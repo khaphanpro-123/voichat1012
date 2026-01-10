@@ -87,12 +87,12 @@ const learningModes = [
     activity: "chatSessions",
   },
   {
-    id: "photomode",
+    id: "image-learning",
     title: "Học qua hình ảnh",
     description: "Upload ảnh, học từ vựng từ hình ảnh",
     icon: Camera,
     color: "from-blue-400 to-cyan-500",
-    href: "/dashboard-new/photo-mode",
+    href: "/dashboard-new/image-learning",
     activity: "photoAnalysis",
   },
   {
