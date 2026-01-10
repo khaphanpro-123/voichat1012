@@ -1,0 +1,758 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Mic, MicOff, Volume2, VolumeX, Settings, Send, BookOpen, 
+  Languages, ChevronDown, ChevronUp, Sparkles, Save, List,
+  X, Check, AlertCircle, Loader2
+} from "lucide-react";
+import DashboardLayout from "./DashboardLayout";
+
+interface VocabularyItem {
+  word: string;
+  meaning: string;
+  partOfSpeech: string;
+  example: string;
+}
+
+interface StructureItem {
+  pattern: string;
+  meaning: string;
+  example: string;
+}
+
+interface GrammarStructure {
+  pattern: string;
+  explanation: string;
+  explanationVi: string;
+  components?: Array<{ part: string; role: string; roleVi: string }>;
+}
+
+interface EnhancedResponse {
+  english: string;
+  vietnamese: string;
+  grammarStructure?: GrammarStructure;
+  vocabulary: VocabularyItem[];
+  structures: StructureItem[];
+}
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  enhancedResponse?: EnhancedResponse;
+}
+
+export default function VoiceChatEnhanced() {
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id || "anonymous";
+
+  // State
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState("");
+  const [textInput, setTextInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSupported, setIsSupported] = useState(true);
+  
+  // UI State
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSavedPanel, setShowSavedPanel] = useState(false);
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+  const [savedVocabulary, setSavedVocabulary] = useState<any[]>([]);
+  const [savedStructures, setSavedStructures] = useState<any[]>([]);
+  
+  // Settings
+  const [level, setLevel] = useState("A2");
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  const [speakBoth, setSpeakBoth] = useState(true); // Speak both English and Vietnamese
+  const [speakingSpeed, setSpeakingSpeed] = useState(0.9);
+  const [autoSave, setAutoSave] = useState(true);
+
+  // Refs
+  const recognitionRef = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const finalTranscriptRef = useRef("");
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) { 
+      setIsSupported(false); 
+      return; 
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => { 
+      setIsListening(true); 
+      setError(null);
+      finalTranscriptRef.current = "";
+      setCurrentTranscript("");
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+      const finalText = finalTranscriptRef.current.trim();
+      if (finalText) {
+        sendMessage(finalText);
+      }
+    };
+    
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      let final = "";
+      
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          final += result[0].transcript;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      
+      if (final) {
+        finalTranscriptRef.current = final;
+        setCurrentTranscript(final);
+      } else if (interim) {
+        setCurrentTranscript(interim);
+      }
+    };
+    
+    recognition.onerror = (event: any) => {
+      if (event.error === "not-allowed") {
+        setError("Vui lòng cho phép truy cập microphone");
+      }
+      setIsListening(false);
+    };
+    
+    recognitionRef.current = recognition;
+    return () => { recognition.stop(); };
+  }, []);
+
+  // Auto scroll
+  useEffect(() => { 
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); 
+  }, [messages]);
+
+  // Start session on mount
+  useEffect(() => {
+    startSession();
+    loadSavedItems();
+  }, []);
+
+  const startSession = async () => {
+    try {
+      const res = await fetch("/api/voice-chat-enhanced", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", userId, level })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const msg: Message = { 
+          id: Date.now().toString(), 
+          role: "assistant", 
+          content: data.response.english,
+          timestamp: new Date(),
+          enhancedResponse: data.response
+        };
+        setMessages([msg]);
+        if (autoSpeak) speakEnhanced(data.response);
+      }
+    } catch (err) { 
+      console.error("Start error:", err); 
+    }
+  };
+
+  const loadSavedItems = async () => {
+    try {
+      const res = await fetch("/api/voice-chat-enhanced", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getSaved", userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSavedVocabulary(data.vocabulary || []);
+        setSavedStructures(data.structures || []);
+      }
+    } catch (err) {
+      console.error("Load saved error:", err);
+    }
+  };
+
+
+  // Enhanced speak function - speaks both English and Vietnamese
+  const speakEnhanced = useCallback((response: EnhancedResponse) => {
+    if (isSpeaking) return;
+    window.speechSynthesis.cancel();
+
+    const speakText = (text: string, lang: string, onEnd?: () => void) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = speakingSpeed;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find(v => v.lang.startsWith(lang.split("-")[0]));
+      if (voice) utterance.voice = voice;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => {
+        if (onEnd) onEnd();
+        else setIsSpeaking(false);
+      };
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // Speak English first
+    if (speakBoth && response.vietnamese) {
+      speakText(response.english, "en-US", () => {
+        // Then speak Vietnamese after a short pause
+        setTimeout(() => {
+          speakText(response.vietnamese, "vi-VN");
+        }, 500);
+      });
+    } else {
+      speakText(response.english, "en-US");
+    }
+  }, [isSpeaking, speakingSpeed, speakBoth]);
+
+  const speakSingle = (text: string, lang: "en" | "vi") => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === "en" ? "en-US" : "vi-VN";
+    utterance.rate = speakingSpeed;
+    
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => v.lang.startsWith(lang === "en" ? "en" : "vi"));
+    if (voice) utterance.voice = voice;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => { 
+    window.speechSynthesis.cancel(); 
+    setIsSpeaking(false); 
+  };
+
+  const startListening = () => {
+    if (!isSupported) { 
+      setError("Trình duyệt không hỗ trợ. Vui lòng dùng Chrome."); 
+      return; 
+    }
+    stopSpeaking();
+    finalTranscriptRef.current = "";
+    setCurrentTranscript("");
+    try { 
+      recognitionRef.current?.start(); 
+    } catch (err) { 
+      console.error("Start error:", err); 
+    }
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+  };
+
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isProcessing) return;
+    setIsProcessing(true);
+    setCurrentTranscript("");
+
+    const userMsg: Message = { 
+      id: Date.now().toString(), 
+      role: "user", 
+      content: text, 
+      timestamp: new Date() 
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setTextInput("");
+
+    try {
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
+      const res = await fetch("/api/voice-chat-enhanced", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "chat", 
+          message: text, 
+          conversationHistory: history, 
+          level, 
+          userId,
+          autoSave
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const assistantMsg: Message = {
+          id: (Date.now() + 1).toString(), 
+          role: "assistant", 
+          content: data.response.english,
+          timestamp: new Date(),
+          enhancedResponse: data.response
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+        
+        // Auto-expand new message
+        setExpandedMessages(prev => new Set([...prev, assistantMsg.id]));
+        
+        if (autoSpeak) speakEnhanced(data.response);
+        
+        // Refresh saved items
+        if (autoSave) {
+          setTimeout(loadSavedItems, 1000);
+        }
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Không thể kết nối. Vui lòng thử lại.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTextSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (textInput.trim()) sendMessage(textInput.trim());
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  // Render message with enhanced features
+  const renderMessage = (msg: Message) => {
+    const isExpanded = expandedMessages.has(msg.id);
+    const enhanced = msg.enhancedResponse;
+
+    return (
+      <motion.div 
+        key={msg.id}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+      >
+        <div className={`max-w-[90%] ${msg.role === "user" ? "" : "w-full"}`}>
+          {/* Main bubble */}
+          <div className={`rounded-2xl p-4 ${
+            msg.role === "user" 
+              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white" 
+              : "bg-white/10 text-white"
+          }`}>
+            <p className="text-lg">{msg.content}</p>
+            
+            {/* Vietnamese translation for assistant */}
+            {msg.role === "assistant" && enhanced?.vietnamese && (
+              <p className="text-white/70 mt-2 pt-2 border-t border-white/20 italic">
+                🇻🇳 {enhanced.vietnamese}
+              </p>
+            )}
+          </div>
+
+          {/* Action buttons for assistant messages */}
+          {msg.role === "assistant" && enhanced && (
+            <div className="flex flex-wrap items-center gap-2 mt-2 ml-2">
+              {/* Play English */}
+              <button 
+                onClick={() => speakSingle(enhanced.english, "en")}
+                className="flex items-center gap-1 px-3 py-1.5 bg-white/10 text-white/80 rounded-lg text-sm hover:bg-white/20"
+              >
+                <Volume2 className="w-4 h-4" /> EN
+              </button>
+              
+              {/* Play Vietnamese */}
+              {enhanced.vietnamese && (
+                <button 
+                  onClick={() => speakSingle(enhanced.vietnamese, "vi")}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-white/10 text-white/80 rounded-lg text-sm hover:bg-white/20"
+                >
+                  <Volume2 className="w-4 h-4" /> VI
+                </button>
+              )}
+              
+              {/* Expand/Collapse details */}
+              <button 
+                onClick={() => toggleExpand(msg.id)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/30 text-blue-300 rounded-lg text-sm hover:bg-blue-500/40"
+              >
+                <Sparkles className="w-4 h-4" />
+                {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
+                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </div>
+          )}
+
+          {/* Expanded details */}
+          <AnimatePresence>
+            {msg.role === "assistant" && enhanced && isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3 space-y-3"
+              >
+                {/* Grammar Structure */}
+                {enhanced.grammarStructure && (
+                  <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Languages className="w-5 h-5 text-purple-400" />
+                      <h4 className="font-bold text-purple-300">Cấu trúc ngữ pháp</h4>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-3 mb-2">
+                      <p className="text-xl font-mono text-white">{enhanced.grammarStructure.pattern}</p>
+                    </div>
+                    <p className="text-white/80 text-sm">{enhanced.grammarStructure.explanation}</p>
+                    <p className="text-white/60 text-sm mt-1">🇻🇳 {enhanced.grammarStructure.explanationVi}</p>
+                  </div>
+                )}
+
+                {/* Vocabulary */}
+                {enhanced.vocabulary && enhanced.vocabulary.length > 0 && (
+                  <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BookOpen className="w-5 h-5 text-green-400" />
+                      <h4 className="font-bold text-green-300">Từ vựng</h4>
+                      {autoSave && <span className="text-xs bg-green-500/30 px-2 py-0.5 rounded-full text-green-300">Đã lưu</span>}
+                    </div>
+                    <div className="space-y-2">
+                      {enhanced.vocabulary.map((v, i) => (
+                        <div key={i} className="bg-white/10 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg font-bold text-white">{v.word}</span>
+                            <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white/70">{v.partOfSpeech}</span>
+                            <button 
+                              onClick={() => speakSingle(v.word, "en")}
+                              className="p-1 hover:bg-white/20 rounded"
+                            >
+                              <Volume2 className="w-3 h-3 text-white/60" />
+                            </button>
+                          </div>
+                          <p className="text-green-300">= {v.meaning}</p>
+                          <p className="text-white/60 text-sm mt-1 italic">"{v.example}"</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Structures */}
+                {enhanced.structures && enhanced.structures.length > 0 && (
+                  <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-5 h-5 text-orange-400" />
+                      <h4 className="font-bold text-orange-300">Cấu trúc câu</h4>
+                      {autoSave && <span className="text-xs bg-orange-500/30 px-2 py-0.5 rounded-full text-orange-300">Đã lưu</span>}
+                    </div>
+                    <div className="space-y-2">
+                      {enhanced.structures.map((s, i) => (
+                        <div key={i} className="bg-white/10 rounded-lg p-3">
+                          <p className="font-mono text-white font-bold">{s.pattern}</p>
+                          <p className="text-orange-300">= {s.meaning}</p>
+                          <p className="text-white/60 text-sm mt-1 italic">Ví dụ: "{s.example}"</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    );
+  };
+
+
+  return (
+    <DashboardLayout>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col">
+        {/* Header */}
+        <div className="bg-black/20 backdrop-blur-sm border-b border-white/10 px-4 py-3">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-yellow-400" />
+                English Voice Chat
+              </h1>
+              <p className="text-white/60 text-sm">Học tiếng Anh qua hội thoại với AI</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowSavedPanel(!showSavedPanel)}
+                className="p-2 bg-white/10 text-white/80 rounded-lg hover:bg-white/20 relative"
+              >
+                <List className="w-5 h-5" />
+                {(savedVocabulary.length + savedStructures.length) > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {savedVocabulary.length + savedStructures.length}
+                  </span>
+                )}
+              </button>
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className="p-2 bg-white/10 text-white/80 rounded-lg hover:bg-white/20"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="max-w-4xl mx-auto px-4 mt-4">
+            <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <p className="text-red-300 text-sm">{error}</p>
+              <button onClick={() => setError(null)} className="ml-auto">
+                <X className="w-4 h-4 text-red-400" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Panel */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="max-w-4xl mx-auto px-4 mt-4"
+            >
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <h3 className="font-bold text-white mb-4">⚙️ Cài đặt</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-white/70 text-sm">Trình độ</label>
+                    <select 
+                      value={level} 
+                      onChange={(e) => setLevel(e.target.value)}
+                      className="w-full mt-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+                    >
+                      <option value="A1">A1 - Beginner</option>
+                      <option value="A2">A2 - Elementary</option>
+                      <option value="B1">B1 - Intermediate</option>
+                      <option value="B2">B2 - Upper Int.</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-white/70 text-sm">Tốc độ nói</label>
+                    <input 
+                      type="range" 
+                      min="0.5" 
+                      max="1.5" 
+                      step="0.1"
+                      value={speakingSpeed}
+                      onChange={(e) => setSpeakingSpeed(parseFloat(e.target.value))}
+                      className="w-full mt-3"
+                    />
+                    <p className="text-white/50 text-xs text-center">{speakingSpeed}x</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={autoSpeak} 
+                        onChange={(e) => setAutoSpeak(e.target.checked)}
+                        className="rounded"
+                      />
+                      Tự động phát âm
+                    </label>
+                    <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={speakBoth} 
+                        onChange={(e) => setSpeakBoth(e.target.checked)}
+                        className="rounded"
+                      />
+                      Phát cả Anh + Việt
+                    </label>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={autoSave} 
+                        onChange={(e) => setAutoSave(e.target.checked)}
+                        className="rounded"
+                      />
+                      Tự động lưu từ vựng
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Saved Panel */}
+        <AnimatePresence>
+          {showSavedPanel && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              className="fixed right-0 top-0 h-full w-80 bg-slate-900/95 backdrop-blur-sm border-l border-white/10 z-50 overflow-y-auto"
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-white">📚 Đã lưu</h3>
+                  <button onClick={() => setShowSavedPanel(false)}>
+                    <X className="w-5 h-5 text-white/60" />
+                  </button>
+                </div>
+
+                {/* Vocabulary */}
+                <div className="mb-6">
+                  <h4 className="text-green-400 font-medium mb-2 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" /> Từ vựng ({savedVocabulary.length})
+                  </h4>
+                  <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                    {savedVocabulary.length === 0 ? (
+                      <p className="text-white/40 text-sm">Chưa có từ vựng nào</p>
+                    ) : (
+                      savedVocabulary.slice(0, 20).map((v, i) => (
+                        <div key={i} className="bg-white/5 rounded-lg p-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-white font-medium">{v.word}</span>
+                            <button 
+                              onClick={() => speakSingle(v.word, "en")}
+                              className="p-1 hover:bg-white/10 rounded"
+                            >
+                              <Volume2 className="w-3 h-3 text-white/40" />
+                            </button>
+                          </div>
+                          <p className="text-green-400 text-sm">{v.meaning}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Structures */}
+                <div>
+                  <h4 className="text-orange-400 font-medium mb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Cấu trúc ({savedStructures.length})
+                  </h4>
+                  <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                    {savedStructures.length === 0 ? (
+                      <p className="text-white/40 text-sm">Chưa có cấu trúc nào</p>
+                    ) : (
+                      savedStructures.slice(0, 20).map((s, i) => (
+                        <div key={i} className="bg-white/5 rounded-lg p-2">
+                          <p className="text-white font-mono text-sm">{s.word}</p>
+                          <p className="text-orange-400 text-sm">{s.meaning}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full">
+          <div className="space-y-4">
+            {messages.map(renderMessage)}
+            
+            {isProcessing && (
+              <div className="flex justify-start">
+                <div className="bg-white/10 rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 text-white/70 animate-spin" />
+                    <span className="text-white/70">Đang xử lý...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-black/20 backdrop-blur-sm border-t border-white/10 p-4">
+          <div className="max-w-4xl mx-auto">
+            {/* Transcript */}
+            {currentTranscript && (
+              <div className="mb-3 bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-white">{currentTranscript}</p>
+              </div>
+            )}
+
+            {/* Status */}
+            <p className="text-white/60 text-sm text-center mb-3">
+              {isListening ? "🎤 Đang nghe... (tự động gửi khi bạn ngừng nói)" 
+                : isSpeaking ? "🔊 Đang phát âm thanh..."
+                : "Nhấn mic để nói hoặc gõ tin nhắn"}
+            </p>
+
+            {/* Controls */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <motion.button 
+                onClick={isListening ? stopListening : startListening} 
+                disabled={isProcessing || isSpeaking} 
+                whileTap={{ scale: 0.95 }}
+                className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
+                  isListening ? "bg-red-500 ring-4 ring-red-500/30" : "bg-gradient-to-br from-pink-500 to-violet-500"
+                } ${(isProcessing || isSpeaking) ? "opacity-50" : ""}`}
+              >
+                {isListening ? <MicOff className="w-7 h-7 text-white" /> : <Mic className="w-7 h-7 text-white" />}
+              </motion.button>
+              
+              <button 
+                onClick={isSpeaking ? stopSpeaking : () => messages.length > 0 && messages[messages.length - 1].enhancedResponse && speakEnhanced(messages[messages.length - 1].enhancedResponse!)}
+                className="p-3 bg-white/10 text-white/80 rounded-full hover:bg-white/20"
+              >
+                {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Text input */}
+            <form onSubmit={handleTextSubmit} className="flex gap-2">
+              <input 
+                type="text" 
+                value={textInput} 
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Hoặc gõ tin nhắn bằng tiếng Anh..."
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40"
+              />
+              <button 
+                type="submit" 
+                disabled={!textInput.trim() || isProcessing}
+                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

@@ -2,13 +2,15 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import VoiceChatEnhanced from "@/components/VoiceChatEnhanced";
 import VoiceChatLive from "@/components/VoiceChatLive";
 
 export default function ChatPage() {
   const { status } = useSession();
   const router = useRouter();
+  const [useEnhanced, setUseEnhanced] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -26,5 +28,6 @@ export default function ChatPage() {
     );
   }
 
-  return <VoiceChatLive />;
+  // Use enhanced version by default
+  return useEnhanced ? <VoiceChatEnhanced /> : <VoiceChatLive />;
 }
