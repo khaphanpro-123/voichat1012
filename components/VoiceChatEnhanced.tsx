@@ -70,9 +70,9 @@ export default function VoiceChatEnhanced() {
   // Settings
   const [level, setLevel] = useState("A2");
   const [autoSpeak, setAutoSpeak] = useState(true);
-  const [speakBoth, setSpeakBoth] = useState(true); // Speak both English and Vietnamese
   const [speakingSpeed, setSpeakingSpeed] = useState(0.9);
   const [autoSave, setAutoSave] = useState(true);
+  const [voiceAccent, setVoiceAccent] = useState<"US" | "UK">("US"); // US or UK accent
 
   // Refs
   const recognitionRef = useRef<any>(null);
@@ -192,51 +192,39 @@ export default function VoiceChatEnhanced() {
   };
 
 
-  // Enhanced speak function - speaks both English and Vietnamese
+  // Speak English only with selected accent (US or UK)
   const speakEnhanced = useCallback((response: EnhancedResponse) => {
     if (isSpeaking) return;
     window.speechSynthesis.cancel();
 
-    const speakText = (text: string, lang: string, onEnd?: () => void) => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = speakingSpeed;
-      
-      const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => v.lang.startsWith(lang.split("-")[0]));
-      if (voice) utterance.voice = voice;
-      
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => {
-        if (onEnd) onEnd();
-        else setIsSpeaking(false);
-      };
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
-    };
-
-    // Speak English first
-    if (speakBoth && response.vietnamese) {
-      speakText(response.english, "en-US", () => {
-        // Then speak Vietnamese after a short pause
-        setTimeout(() => {
-          speakText(response.vietnamese, "vi-VN");
-        }, 500);
-      });
-    } else {
-      speakText(response.english, "en-US");
-    }
-  }, [isSpeaking, speakingSpeed, speakBoth]);
-
-  const speakSingle = (text: string, lang: "en" | "vi") => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === "en" ? "en-US" : "vi-VN";
+    const utterance = new SpeechSynthesisUtterance(response.english);
+    utterance.lang = voiceAccent === "UK" ? "en-GB" : "en-US";
     utterance.rate = speakingSpeed;
     
     const voices = window.speechSynthesis.getVoices();
-    const voice = voices.find(v => v.lang.startsWith(lang === "en" ? "en" : "vi"));
+    // Find voice matching accent
+    const targetLang = voiceAccent === "UK" ? "en-GB" : "en-US";
+    const voice = voices.find(v => v.lang === targetLang) || 
+                  voices.find(v => v.lang.startsWith("en"));
+    if (voice) utterance.voice = voice;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
+    window.speechSynthesis.speak(utterance);
+  }, [isSpeaking, speakingSpeed, voiceAccent]);
+
+  const speakSingle = (text: string) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = voiceAccent === "UK" ? "en-GB" : "en-US";
+    utterance.rate = speakingSpeed;
+    
+    const voices = window.speechSynthesis.getVoices();
+    const targetLang = voiceAccent === "UK" ? "en-GB" : "en-US";
+    const voice = voices.find(v => v.lang === targetLang) || 
+                  voices.find(v => v.lang.startsWith("en"));
     if (voice) utterance.voice = voice;
     
     utterance.onstart = () => setIsSpeaking(true);
@@ -376,21 +364,11 @@ export default function VoiceChatEnhanced() {
             <div className="flex flex-wrap items-center gap-2 mt-2 ml-2">
               {/* Play English */}
               <button 
-                onClick={() => speakSingle(enhanced.english, "en")}
+                onClick={() => speakSingle(enhanced.english)}
                 className="flex items-center gap-1 px-3 py-1.5 bg-white/10 text-white/80 rounded-lg text-sm hover:bg-white/20"
               >
-                <Volume2 className="w-4 h-4" /> EN
+                <Volume2 className="w-4 h-4" /> 🔊
               </button>
-              
-              {/* Play Vietnamese */}
-              {enhanced.vietnamese && (
-                <button 
-                  onClick={() => speakSingle(enhanced.vietnamese, "vi")}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-white/10 text-white/80 rounded-lg text-sm hover:bg-white/20"
-                >
-                  <Volume2 className="w-4 h-4" /> VI
-                </button>
-              )}
               
               {/* Expand/Collapse details */}
               <button 
@@ -398,79 +376,54 @@ export default function VoiceChatEnhanced() {
                 className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/30 text-blue-300 rounded-lg text-sm hover:bg-blue-500/40"
               >
                 <Sparkles className="w-4 h-4" />
-                {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
+                {isExpanded ? "Ẩn" : "Chi tiết"}
                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
           )}
 
-          {/* Expanded details */}
+          {/* Expanded details - Compact version */}
           <AnimatePresence>
             {msg.role === "assistant" && enhanced && isExpanded && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mt-3 space-y-3"
+                className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3"
               >
-                {/* Grammar Structure */}
+                {/* Grammar Structure - Compact */}
                 {enhanced.grammarStructure && (
-                  <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-4">
+                  <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Languages className="w-5 h-5 text-purple-400" />
-                      <h4 className="font-bold text-purple-300">Cấu trúc ngữ pháp</h4>
+                      <Languages className="w-4 h-4 text-purple-400" />
+                      <h4 className="font-bold text-purple-300 text-sm">Ngữ pháp</h4>
                     </div>
-                    <div className="bg-white/10 rounded-lg p-3 mb-2">
-                      <p className="text-xl font-mono text-white">{enhanced.grammarStructure.pattern}</p>
-                    </div>
-                    <p className="text-white/80 text-sm">{enhanced.grammarStructure.explanation}</p>
-                    <p className="text-white/60 text-sm mt-1">🇻🇳 {enhanced.grammarStructure.explanationVi}</p>
+                    <p className="text-lg font-mono text-white mb-1">{enhanced.grammarStructure.pattern}</p>
+                    <p className="text-white/70 text-xs">{enhanced.grammarStructure.explanation}</p>
+                    <p className="text-white/50 text-xs">🇻🇳 {enhanced.grammarStructure.explanationVi}</p>
                   </div>
                 )}
 
-                {/* Vocabulary */}
+                {/* Vocabulary - Compact */}
                 {enhanced.vocabulary && enhanced.vocabulary.length > 0 && (
-                  <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen className="w-5 h-5 text-green-400" />
-                      <h4 className="font-bold text-green-300">Từ vựng</h4>
-                      {autoSave && <span className="text-xs bg-green-500/30 px-2 py-0.5 rounded-full text-green-300">Đã lưu</span>}
+                  <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-green-400" />
+                      <h4 className="font-bold text-green-300 text-sm">Từ vựng</h4>
+                      {autoSave && <span className="text-xs bg-green-500/30 px-1.5 py-0.5 rounded text-green-300">✓</span>}
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {enhanced.vocabulary.map((v, i) => (
-                        <div key={i} className="bg-white/10 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-lg font-bold text-white">{v.word}</span>
-                            <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white/70">{v.partOfSpeech}</span>
-                            <button 
-                              onClick={() => speakSingle(v.word, "en")}
-                              className="p-1 hover:bg-white/20 rounded"
-                            >
-                              <Volume2 className="w-3 h-3 text-white/60" />
-                            </button>
-                          </div>
-                          <p className="text-green-300">= {v.meaning}</p>
-                          <p className="text-white/60 text-sm mt-1 italic">"{v.example}"</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Structures */}
-                {enhanced.structures && enhanced.structures.length > 0 && (
-                  <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="w-5 h-5 text-orange-400" />
-                      <h4 className="font-bold text-orange-300">Cấu trúc câu</h4>
-                      {autoSave && <span className="text-xs bg-orange-500/30 px-2 py-0.5 rounded-full text-orange-300">Đã lưu</span>}
-                    </div>
-                    <div className="space-y-2">
-                      {enhanced.structures.map((s, i) => (
-                        <div key={i} className="bg-white/10 rounded-lg p-3">
-                          <p className="font-mono text-white font-bold">{s.pattern}</p>
-                          <p className="text-orange-300">= {s.meaning}</p>
-                          <p className="text-white/60 text-sm mt-1 italic">Ví dụ: "{s.example}"</p>
+                        <div key={i} className="flex items-center gap-2 bg-white/5 rounded-lg px-2 py-1.5">
+                          <button 
+                            onClick={() => speakSingle(v.word)}
+                            className="p-1 hover:bg-white/20 rounded"
+                          >
+                            <Volume2 className="w-3 h-3 text-white/60" />
+                          </button>
+                          <span className="font-bold text-white text-sm">{v.word}</span>
+                          <span className="text-white/40 text-xs">({v.partOfSpeech})</span>
+                          <span className="text-green-300 text-sm">= {v.meaning}</span>
                         </div>
                       ))}
                     </div>
@@ -504,9 +457,9 @@ export default function VoiceChatEnhanced() {
                 className="p-2 bg-white/10 text-white/80 rounded-lg hover:bg-white/20 relative"
               >
                 <List className="w-5 h-5" />
-                {(savedVocabulary.length + savedStructures.length) > 0 && (
+                {savedVocabulary.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {savedVocabulary.length + savedStructures.length}
+                    {savedVocabulary.length}
                   </span>
                 )}
               </button>
@@ -559,7 +512,32 @@ export default function VoiceChatEnhanced() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-white/70 text-sm">Tốc độ nói</label>
+                    <label className="text-white/70 text-sm">Giọng đọc</label>
+                    <div className="flex gap-2 mt-1">
+                      <button
+                        onClick={() => setVoiceAccent("US")}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                          voiceAccent === "US" 
+                            ? "bg-blue-500 text-white" 
+                            : "bg-white/10 text-white/70 hover:bg-white/20"
+                        }`}
+                      >
+                        🇺🇸 Mỹ
+                      </button>
+                      <button
+                        onClick={() => setVoiceAccent("UK")}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                          voiceAccent === "UK" 
+                            ? "bg-blue-500 text-white" 
+                            : "bg-white/10 text-white/70 hover:bg-white/20"
+                        }`}
+                      >
+                        🇬🇧 Anh
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-white/70 text-sm">Tốc độ: {speakingSpeed}x</label>
                     <input 
                       type="range" 
                       min="0.5" 
@@ -567,9 +545,8 @@ export default function VoiceChatEnhanced() {
                       step="0.1"
                       value={speakingSpeed}
                       onChange={(e) => setSpeakingSpeed(parseFloat(e.target.value))}
-                      className="w-full mt-3"
+                      className="w-full mt-2"
                     />
-                    <p className="text-white/50 text-xs text-center">{speakingSpeed}x</p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
@@ -581,17 +558,6 @@ export default function VoiceChatEnhanced() {
                       />
                       Tự động phát âm
                     </label>
-                    <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={speakBoth} 
-                        onChange={(e) => setSpeakBoth(e.target.checked)}
-                        className="rounded"
-                      />
-                      Phát cả Anh + Việt
-                    </label>
-                  </div>
-                  <div className="flex flex-col gap-2">
                     <label className="flex items-center gap-2 text-white/70 text-sm cursor-pointer">
                       <input 
                         type="checkbox" 
@@ -619,52 +585,31 @@ export default function VoiceChatEnhanced() {
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-white">📚 Đã lưu</h3>
+                  <h3 className="font-bold text-white">📚 Từ vựng đã lưu</h3>
                   <button onClick={() => setShowSavedPanel(false)}>
                     <X className="w-5 h-5 text-white/60" />
                   </button>
                 </div>
 
                 {/* Vocabulary */}
-                <div className="mb-6">
+                <div>
                   <h4 className="text-green-400 font-medium mb-2 flex items-center gap-2">
                     <BookOpen className="w-4 h-4" /> Từ vựng ({savedVocabulary.length})
                   </h4>
-                  <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                  <div className="space-y-2 max-h-[70vh] overflow-y-auto">
                     {savedVocabulary.length === 0 ? (
                       <p className="text-white/40 text-sm">Chưa có từ vựng nào</p>
                     ) : (
-                      savedVocabulary.slice(0, 20).map((v, i) => (
-                        <div key={i} className="bg-white/5 rounded-lg p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-white font-medium">{v.word}</span>
-                            <button 
-                              onClick={() => speakSingle(v.word, "en")}
-                              className="p-1 hover:bg-white/10 rounded"
-                            >
-                              <Volume2 className="w-3 h-3 text-white/40" />
-                            </button>
-                          </div>
-                          <p className="text-green-400 text-sm">{v.meaning}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Structures */}
-                <div>
-                  <h4 className="text-orange-400 font-medium mb-2 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> Cấu trúc ({savedStructures.length})
-                  </h4>
-                  <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                    {savedStructures.length === 0 ? (
-                      <p className="text-white/40 text-sm">Chưa có cấu trúc nào</p>
-                    ) : (
-                      savedStructures.slice(0, 20).map((s, i) => (
-                        <div key={i} className="bg-white/5 rounded-lg p-2">
-                          <p className="text-white font-mono text-sm">{s.word}</p>
-                          <p className="text-orange-400 text-sm">{s.meaning}</p>
+                      savedVocabulary.slice(0, 30).map((v, i) => (
+                        <div key={i} className="bg-white/5 rounded-lg p-2 flex items-center gap-2">
+                          <button 
+                            onClick={() => speakSingle(v.word)}
+                            className="p-1 hover:bg-white/10 rounded"
+                          >
+                            <Volume2 className="w-3 h-3 text-white/40" />
+                          </button>
+                          <span className="text-white font-medium">{v.word}</span>
+                          <span className="text-green-400 text-sm">= {v.meaning}</span>
                         </div>
                       ))
                     )}
