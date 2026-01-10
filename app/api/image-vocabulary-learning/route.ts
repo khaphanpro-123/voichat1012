@@ -144,25 +144,54 @@ async function identifyImage(imageBase64: string, keys: any) {
 
 // Identify from text description (fallback)
 async function identifyFromDescription(description: string, keys: any) {
-  const prompt = `User describes an image: "${description}"
+  // Clean and interpret the description
+  const cleanDesc = description.trim().toLowerCase();
   
-Identify the main object and return ONLY valid JSON:
+  const prompt = `You are a vocabulary learning assistant. The user describes what they see in an image: "${description}"
+
+Your task: Identify the main English vocabulary word for this object/concept.
+
+IMPORTANT: 
+- If user says "picture", "image", "photo" - they might mean the word "picture" itself, or they're describing what's IN the picture
+- If unclear, assume they want to learn the word they typed
+- Always provide a valid response
+
+Return ONLY valid JSON (no markdown, no explanation):
 {
   "mainObject": {
-    "english": "the main object in English",
-    "vietnamese": "đối tượng chính bằng tiếng Việt",
-    "partOfSpeech": "noun/verb/adjective",
-    "pronunciation": "/phonetic/"
+    "english": "${cleanDesc === 'picture' || cleanDesc === 'image' || cleanDesc === 'photo' ? cleanDesc : 'the main object'}",
+    "vietnamese": "nghĩa tiếng Việt",
+    "partOfSpeech": "noun",
+    "pronunciation": "/phonetic transcription/"
   },
   "relatedWords": [
     { "english": "related word 1", "vietnamese": "từ liên quan 1" },
     { "english": "related word 2", "vietnamese": "từ liên quan 2" }
   ]
-}`;
+}
 
-  const result = await callAI(prompt, keys, { temperature: 0.3, maxTokens: 500 });
+Example for "dog": {"mainObject":{"english":"dog","vietnamese":"con chó","partOfSpeech":"noun","pronunciation":"/dɔːɡ/"},"relatedWords":[{"english":"puppy","vietnamese":"chó con"},{"english":"bark","vietnamese":"sủa"}]}
+Example for "picture": {"mainObject":{"english":"picture","vietnamese":"bức tranh, hình ảnh","partOfSpeech":"noun","pronunciation":"/ˈpɪktʃər/"},"relatedWords":[{"english":"photo","vietnamese":"ảnh chụp"},{"english":"image","vietnamese":"hình ảnh"}]}`;
+
+  const result = await callAI(prompt, keys, { temperature: 0.3, maxTokens: 600 });
   if (!result.success) throw new Error(result.error);
-  return parseJsonFromAI(result.content);
+  
+  const parsed = parseJsonFromAI(result.content);
+  
+  // If parsing failed, create a basic response from the description
+  if (!parsed || !parsed.mainObject) {
+    return {
+      mainObject: {
+        english: cleanDesc,
+        vietnamese: `(${cleanDesc})`,
+        partOfSpeech: "noun",
+        pronunciation: ""
+      },
+      relatedWords: []
+    };
+  }
+  
+  return parsed;
 }
 
 async function checkSentence(sentence: string, targetWord: string, keys: any) {

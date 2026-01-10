@@ -127,19 +127,35 @@ export default function ImageVocabularyLearning() {
       const res = await fetch("/api/image-vocabulary-learning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "identifyFromDescription", description, userId })
+        body: JSON.stringify({ action: "identifyFromDescription", description: description.trim(), userId })
       });
       const data = await res.json();
       
-      if (data.success && data.data.mainObject) {
+      if (data.success && data.data?.mainObject) {
         setMainObject(data.data.mainObject);
         setNeedsDescription(false);
         setStep("guess");
       } else {
-        setError(data.message || "Không thể xác định đối tượng");
+        // If still no mainObject, create one from description
+        setMainObject({
+          english: description.trim(),
+          vietnamese: `(${description.trim()})`,
+          partOfSpeech: "noun",
+          pronunciation: ""
+        });
+        setNeedsDescription(false);
+        setStep("guess");
       }
     } catch (err: any) {
-      setError(err.message);
+      // On error, still allow user to proceed with their input
+      setMainObject({
+        english: description.trim(),
+        vietnamese: `(${description.trim()})`,
+        partOfSpeech: "noun",
+        pronunciation: ""
+      });
+      setNeedsDescription(false);
+      setStep("guess");
     } finally {
       setIsLoading(false);
     }
