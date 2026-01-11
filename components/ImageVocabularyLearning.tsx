@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Check, X, Volume2, BookOpen, AlertCircle, Loader2, ChevronRight, 
+  Check, X, Volume2, AlertCircle, Loader2, ChevronRight, 
   Save, RefreshCw, PenLine, CheckCircle2, XCircle, Lightbulb, Edit3,
   Image as ImageIcon, Grid3X3, Sparkles
 } from "lucide-react";
@@ -48,10 +48,12 @@ interface SentenceCheck {
   sentence: string;
   isCorrect: boolean;
   correctedSentence: string;
-  errors: Array<{ type: string; original: string; corrected: string; explanation: string; explanationVi: string }>;
+  errors: Array<{ type: string; original: string; corrected: string; explanation: string; explanationVi: string; position?: string }>;
   vietnameseTranslation: string;
   hasTargetWord: boolean;
   isDuplicate: boolean;
+  grammarRule?: string;
+  grammarRuleVi?: string;
 }
 
 type Step = "select" | "guess" | "sentences" | "checking" | "results";
@@ -318,6 +320,53 @@ export default function ImageVocabularyLearning() {
 
   const correctCount = checkedSentences.filter(s => s.isCorrect).length;
   const wrongCount = checkedSentences.filter(s => !s.isCorrect).length;
+
+  // Analyze common errors for summary
+  const errorSummary = useMemo(() => {
+    const errorTypes: Record<string, { count: number; examples: string[] }> = {};
+    checkedSentences.forEach(s => {
+      if (s.errors) {
+        s.errors.forEach(e => {
+          const type = e.type || "grammar";
+          if (!errorTypes[type]) errorTypes[type] = { count: 0, examples: [] };
+          errorTypes[type].count++;
+          if (errorTypes[type].examples.length < 2) {
+            errorTypes[type].examples.push(`${e.original} → ${e.corrected}`);
+          }
+        });
+      }
+    });
+    return Object.entries(errorTypes)
+      .map(([type, data]) => ({ type, ...data }))
+      .sort((a, b) => b.count - a.count);
+  }, [checkedSentences]);
+
+  const getErrorTypeLabel = (type: string): string => {
+    const labels: Record<string, string> = {
+      subject_verb_agreement: "Hòa hợp chủ-vị",
+      article: "Mạo từ (a/an/the)",
+      singular_plural: "Số ít/số nhiều",
+      spelling: "Chính tả",
+      punctuation: "Dấu câu",
+      word_order: "Trật tự từ",
+      tense: "Thì động từ",
+      grammar: "Ngữ pháp chung"
+    };
+    return labels[type] || type.replace(/_/g, " ");
+  };
+
+  const getErrorSuggestion = (type: string): string => {
+    const suggestions: Record<string, string> = {
+      subject_verb_agreement: "Ôn lại quy tắc chia động từ theo chủ ngữ số ít/nhiều",
+      article: "Học quy tắc dùng a/an/the với danh từ đếm được",
+      singular_plural: "Chú ý danh từ đếm được cần mạo từ hoặc dạng số nhiều",
+      spelling: "Đọc nhiều và ghi nhớ cách viết từ",
+      punctuation: "Nhớ kết thúc câu bằng dấu chấm (.)",
+      word_order: "Ghi nhớ cấu trúc S + V + O trong tiếng Anh",
+      tense: "Ôn lại các thì cơ bản và dấu hiệu nhận biết"
+    };
+    return suggestions[type] || "Luyện tập thêm để cải thiện";
+  };
 
   return (
     <DashboardLayout>
@@ -646,15 +695,32 @@ export default function ImageVocabularyLearning() {
 
                             {/* Grammar errors */}
                             {s.errors && s.errors.length > 0 && (
-                              <div className="mt-2 space-y-1">
+                              <div className="mt-2 space-y-2">
                                 {s.errors.map((e, j) => (
-                                  <div key={j} className="text-sm bg-red-500/20 rounded px-2 py-1">
-                                    <span className="text-red-300 line-through">{e.original}</span>
-                                    <span className="text-white/40 mx-1">→</span>
-                                    <span className="text-green-300">{e.corrected}</span>
-                                    {e.explanationVi && <span className="text-white/50 ml-2">({e.explanationVi})</span>}
+                                  <div key={j} className="text-sm bg-red-500/20 rounded-lg p-2">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="px-2 py-0.5 bg-red-500/30 text-red-300 rounded text-xs font-medium">
+                                        {getErrorTypeLabel(e.type)}
+                                      </span>
+                                      {e.position && <span className="text-white/40 text-xs">({e.position})</span>}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-red-300 line-through">{e.original}</span>
+                                      <span className="text-white/40">→</span>
+                                      <span className="text-green-300 font-medium">{e.corrected}</span>
+                                    </div>
+                                    {e.explanationVi && (
+                                      <p className="text-white/60 text-xs mt-1 italic">💡 {e.explanationVi}</p>
+                                    )}
                                   </div>
                                 ))}
+                              </div>
+                            )}
+
+                            {/* Grammar rule for this sentence */}
+                            {s.grammarRuleVi && (
+                              <div className="mt-2 p-2 bg-blue-500/20 rounded-lg">
+                                <p className="text-blue-300 text-xs">📖 Quy tắc: {s.grammarRuleVi}</p>
                               </div>
                             )}
                           </div>
@@ -679,6 +745,32 @@ export default function ImageVocabularyLearning() {
                     <p className="text-white/70 text-sm">Câu sai ❌</p>
                   </div>
                 </div>
+
+                {/* Common Errors Summary */}
+                {errorSummary.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-white/80 font-medium mb-2">📋 Danh sách lỗi phổ biến:</p>
+                    <div className="space-y-2">
+                      {errorSummary.map((err, i) => (
+                        <div key={i} className="p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-orange-300 font-medium">{getErrorTypeLabel(err.type)}</span>
+                            <span className="text-orange-400 text-sm font-bold">{err.count}x</span>
+                          </div>
+                          <div className="text-white/60 text-xs mb-1">
+                            {err.examples.map((ex, j) => (
+                              <span key={j} className="mr-2">• {ex}</span>
+                            ))}
+                          </div>
+                          <p className="text-yellow-300 text-xs flex items-center gap-1">
+                            <Lightbulb className="w-3 h-3" />
+                            {getErrorSuggestion(err.type)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {wrongCount > 0 && (
                   <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-xl">

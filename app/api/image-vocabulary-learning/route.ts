@@ -34,32 +34,54 @@ Return ONLY valid JSON:
   ]
 }`;
 
-// Step 4: Check sentence
+// Step 4: Check sentence - Detailed grammar analysis
 const CHECK_SENTENCE_PROMPT = `You are an English grammar checker for Vietnamese learners.
-Check this sentence that should contain the word "{word}":
+
+TASK: Check this sentence that should contain the word "{word}" (or its variants like "{word}s"):
 
 Sentence: "{sentence}"
 
-Return ONLY valid JSON:
+CHECK FOR THESE COMMON ERRORS:
+1. **Subject-Verb Agreement**: "Phone are" → "Phone is" (singular subject needs singular verb)
+2. **Articles (a/an/the)**: "I like phone" → "I like the phone" or "I like phones" (countable nouns need articles)
+3. **Singular/Plural**: Match subject with verb and use correct noun form
+4. **Spelling**: Check all words for typos (e.g., "convinient" → "convenient")
+5. **Punctuation**: Sentences must end with period (.), question mark (?), or exclamation (!)
+6. **Word Order**: English follows S + V + O structure
+
+FIRST: Check if sentence contains "{word}" or "{word}s". If NOT, set hasTargetWord: false.
+
+Return ONLY valid JSON (no markdown):
 {
   "isCorrect": true/false,
-  "correctedSentence": "corrected version if wrong, or same if correct",
+  "hasTargetWord": true/false,
+  "correctedSentence": "fully corrected sentence with proper punctuation",
   "errors": [
     {
-      "type": "grammar/spelling/word_usage",
-      "original": "wrong part",
-      "corrected": "correct part",
-      "explanation": "brief explanation",
-      "explanationVi": "giải thích tiếng Việt"
+      "type": "subject_verb_agreement|article|singular_plural|spelling|punctuation|word_order",
+      "original": "the exact wrong part",
+      "corrected": "the correct version",
+      "position": "where in sentence",
+      "explanation": "Brief English explanation of the rule",
+      "explanationVi": "Giải thích tiếng Việt về quy tắc ngữ pháp"
     }
   ],
-  "vietnameseTranslation": "bản dịch tiếng Việt",
+  "vietnameseTranslation": "Bản dịch tiếng Việt của câu đúng",
+  "grammarRule": "Main grammar rule applied (e.g., 'Singular nouns need articles')",
+  "grammarRuleVi": "Quy tắc ngữ pháp chính (ví dụ: 'Danh từ số ít cần mạo từ')",
   "structure": {
     "pattern": "S + V + O",
-    "explanation": "Subject + Verb + Object structure",
-    "explanationVi": "Cấu trúc Chủ ngữ + Động từ + Tân ngữ"
+    "explanation": "Subject + Verb + Object",
+    "explanationVi": "Chủ ngữ + Động từ + Tân ngữ"
   }
-}`;
+}
+
+EXAMPLES:
+Input: "I have a phone" (missing period)
+Output: {"isCorrect":false,"hasTargetWord":true,"correctedSentence":"I have a phone.","errors":[{"type":"punctuation","original":"phone","corrected":"phone.","position":"end","explanation":"Sentences must end with punctuation","explanationVi":"Câu phải kết thúc bằng dấu chấm"}],"vietnameseTranslation":"Tôi có một chiếc điện thoại.","grammarRule":"End sentences with period","grammarRuleVi":"Kết thúc câu bằng dấu chấm","structure":{"pattern":"S + V + O","explanation":"Subject + Verb + Object","explanationVi":"Chủ ngữ + Động từ + Tân ngữ"}}
+
+Input: "Phone are interesting"
+Output: {"isCorrect":false,"hasTargetWord":true,"correctedSentence":"The phone is interesting.","errors":[{"type":"article","original":"Phone","corrected":"The phone","position":"start","explanation":"Singular countable nouns need an article","explanationVi":"Danh từ đếm được số ít cần mạo từ"},{"type":"subject_verb_agreement","original":"are","corrected":"is","position":"verb","explanation":"Singular subject 'phone' needs singular verb 'is'","explanationVi":"Chủ ngữ số ít 'phone' cần động từ số ít 'is'"}],"vietnameseTranslation":"Chiếc điện thoại thật thú vị.","grammarRule":"Subject-verb agreement and articles","grammarRuleVi":"Hòa hợp chủ-vị và mạo từ","structure":{"pattern":"S + V + Adj","explanation":"Subject + Verb + Adjective","explanationVi":"Chủ ngữ + Động từ + Tính từ"}}`;
 
 // Step 5: Generate sample sentences
 const SAMPLE_SENTENCES_PROMPT = `Generate 4 sample sentences using the word "{word}" in different sentence types that the user hasn't used yet.
