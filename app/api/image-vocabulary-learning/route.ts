@@ -45,29 +45,42 @@ STEP 1: Check if sentence contains "{word}" or "{word}s" (case-insensitive). If 
 
 STEP 2: Check for these COMMON ERRORS (Vietnamese learners often make):
 
-1. **THIẾU MẠO TỪ (Missing Article)**
-   - Sai: "I love computer" → Đúng: "I love the computer." hoặc "I love computers."
+1. **THIẾU MẠO TỪ (Missing Article)** - type: "article"
+   - Sai: "I love chair" → Đúng: "I love the chair." hoặc "I love chairs."
    - Quy tắc: Danh từ đếm được số ít cần mạo từ "a/an/the"
 
-2. **SAI CHIA ĐỘNG TỪ (Subject-Verb Agreement)**
-   - Sai: "Computer are useful." → Đúng: "Computers are useful." hoặc "The computer is useful."
+2. **SAI CHIA ĐỘNG TỪ (Subject-Verb Agreement)** - type: "subject_verb_agreement"
+   - Sai: "Chair are useful." → Đúng: "Chairs are useful." hoặc "The chair is useful."
    - Quy tắc: Chủ ngữ số ít dùng "is", số nhiều dùng "are"
 
-3. **SAI LOẠI TỪ (Wrong Word Type)**
-   - Sai: "Computer is very kindly." → Đúng: "Computer is very kind." hoặc "Computer is very useful."
-   - Quy tắc: "kindly" là trạng từ (adverb), không dùng để mô tả tính chất của vật
+3. **SAI LOẠI TỪ (Wrong Word Type)** - type: "word_type"
+   - Sai: "chair is love" → Đúng: "The chair is lovely." (love là danh từ/động từ, cần dùng tính từ lovely)
+   - Sai: "Chair is very kindly." → Đúng: "The chair is very nice." (kindly là trạng từ)
+   - Quy tắc: Phân biệt danh từ, động từ, tính từ, trạng từ
 
-4. **LỖI CHÍNH TẢ (Spelling)**
+4. **LỖI CHÍNH TẢ (Spelling)** - type: "spelling"
    - Sai: "convinient" → Đúng: "convenient"
    - Quy tắc: Kiểm tra chính tả cẩn thận
 
-5. **THIẾU DẤU CÂU (Missing Punctuation)**
-   - Sai: "I love computers" → Đúng: "I love computers."
+5. **THIẾU DẤU CÂU (Missing Punctuation)** - type: "punctuation"
+   - Sai: "I love chairs" → Đúng: "I love chairs."
    - Quy tắc: Câu tiếng Anh cần dấu chấm (.), dấu hỏi (?), hoặc dấu chấm than (!) ở cuối
 
-6. **SAI TRẬT TỰ TỪ (Word Order)**
-   - Sai: "Very I like computer." → Đúng: "I like computer very much."
+6. **SAI TRẬT TỰ TỪ (Word Order)** - type: "word_order"
+   - Sai: "Very I like chair." → Đúng: "I like the chair very much."
    - Quy tắc: Tiếng Anh theo cấu trúc S + V + O
+
+7. **THIẾU ĐỘNG TỪ (Missing Verb)** - type: "missing_verb"
+   - Sai: "chair very cheap" → Đúng: "The chair is very cheap."
+   - Quy tắc: Câu tiếng Anh cần có động từ
+
+8. **SAI SO SÁNH (Comparative Error)** - type: "comparative"
+   - Sai: "chair very cheaper" → Đúng: "The chair is much cheaper."
+   - Quy tắc: Dùng "much" + tính từ so sánh hơn, không dùng "very"
+
+9. **VIẾT HOA SAI (Capitalization)** - type: "capitalization"
+   - Sai: "i love chair" → Đúng: "I love the chair."
+   - Quy tắc: "I" luôn viết hoa, đầu câu viết hoa
 
 Return ONLY valid JSON (no markdown, no explanation outside JSON):
 {
@@ -76,7 +89,7 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
   "correctedSentence": "Câu đã sửa hoàn chỉnh với dấu câu",
   "errors": [
     {
-      "type": "article|subject_verb_agreement|word_type|spelling|punctuation|word_order",
+      "type": "article|subject_verb_agreement|word_type|spelling|punctuation|word_order|missing_verb|comparative|capitalization",
       "original": "phần sai trong câu gốc",
       "corrected": "phần đã sửa đúng",
       "position": "vị trí lỗi (start/middle/end/verb)",

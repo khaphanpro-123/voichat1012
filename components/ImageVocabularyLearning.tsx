@@ -352,7 +352,10 @@ export default function ImageVocabularyLearning() {
       word_order: "Trật tự từ",
       word_type: "Sai loại từ",
       tense: "Thì động từ",
-      grammar: "Ngữ pháp chung"
+      grammar: "Ngữ pháp chung",
+      missing_verb: "Thiếu động từ",
+      comparative: "Lỗi so sánh",
+      capitalization: "Viết hoa sai"
     };
     return labels[type] || type.replace(/_/g, " ");
   };
@@ -366,7 +369,10 @@ export default function ImageVocabularyLearning() {
       punctuation: "Nhớ kết thúc câu bằng dấu chấm (.)",
       word_order: "Ghi nhớ cấu trúc S + V + O trong tiếng Anh",
       word_type: "Phân biệt tính từ (adj) và trạng từ (adv)",
-      tense: "Ôn lại các thì cơ bản và dấu hiệu nhận biết"
+      tense: "Ôn lại các thì cơ bản và dấu hiệu nhận biết",
+      missing_verb: "Câu tiếng Anh cần có động từ (is/are/was/were...)",
+      comparative: "Dùng 'much' + tính từ so sánh hơn, không dùng 'very'",
+      capitalization: "Nhớ viết hoa 'I' và chữ cái đầu câu"
     };
     return suggestions[type] || "Luyện tập thêm để cải thiện";
   };
