@@ -3,59 +3,51 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  TrendingUp, TrendingDown, Clock, Target, AlertCircle, CheckCircle,
-  Mic, BookOpen, MessageCircle, ChevronDown, ChevronUp, Brain,
-  Sparkles, BarChart3, RefreshCw, Lightbulb, Star, Calendar,
-  Filter, PenLine, Volume2, Image as ImageIcon, Zap
+  TrendingUp, Clock, BookOpen, MessageCircle, ChevronDown, ChevronUp,
+  BarChart3, RefreshCw, Calendar, Filter, PenLine, Volume2, 
+  Image as ImageIcon, FileText, Mic, AlertTriangle, Lightbulb, Eye
 } from "lucide-react";
 
-interface BasicStats {
-  totalSessions: number;
-  avgScore: number;
-  trend: "improving" | "stable" | "declining";
-  trendPercent: number;
-  pronunciationErrors: { total: number; common: { word: string; count: number }[] };
-  grammarErrors: { total: number; common: { type: string; count: number }[] };
-  vocabularyLearned: number;
-}
-
+// Types
 interface LearningSession {
   _id: string;
   sessionNumber: number;
   sessionType: string;
   duration: number;
-  overallScore: number;
-  pronunciationScore: number;
-  grammarScore: number;
   totalErrors: number;
   pronunciationErrors: any[];
   grammarErrors: any[];
-  strengths: string[];
-  areasToImprove: string[];
+  learnedVocabulary: any[];
   createdAt: string;
-  rating?: number;
+  wordsSpoken?: number;
+  sentencesWritten?: number;
 }
 
-interface SkillData {
-  skill: string;
-  sessions: number;
-  avgScore: number;
-  trend: number;
+interface ErrorByFunction {
+  functionName: string;
+  functionLabel: string;
+  icon: any;
+  color: string;
+  totalErrors: number;
+  errorTypes: { type: string; count: number; examples: string[]; suggestion: string }[];
 }
 
-type TabType = "overview" | "sessions" | "analysis";
 type TimeFilter = "week" | "month" | "all";
 
+const FUNCTION_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
+  voice_chat: { label: "Voice Chat", icon: MessageCircle, color: "purple" },
+  image_learning: { label: "Viết câu từ hình ảnh", icon: ImageIcon, color: "pink" },
+  writing: { label: "Viết đoạn văn", icon: FileText, color: "blue" },
+  pronunciation: { label: "Phát âm từ vựng", icon: Mic, color: "orange" },
+  grammar_quiz: { label: "Trắc nghiệm ngữ pháp", icon: PenLine, color: "green" },
+};
+
 export default function LearningHistory({ userId }: { userId: string }) {
-  const [stats, setStats] = useState<BasicStats | null>(null);
   const [sessions, setSessions] = useState<LearningSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
-  const [expandedSession, setExpandedSession] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("month");
-  const [ratingSession, setRatingSession] = useState<string | null>(null);
+  const [expandedFunction, setExpandedFunction] = useState<string | null>(null);
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -65,10 +57,9 @@ export default function LearningHistory({ userId }: { userId: string }) {
     setLoading(true);
     try {
       const days = timeFilter === "week" ? 7 : timeFilter === "month" ? 30 : 365;
-      const res = await fetch(`/api/analyze-learning?userId=${userId}&limit=50&days=${days}`);
+      const res = await fetch(`/api/analyze-learning?userId=${userId}&limit=100&days=${days}`);
       const data = await res.json();
       if (data.success) {
-        setStats(data.analysis);
         setSessions(data.sessions || []);
       }
     } catch (error) {
@@ -77,104 +68,152 @@ export default function LearningHistory({ userId }: { userId: string }) {
     setLoading(false);
   };
 
-  const fetchAIAnalysis = async () => {
-    setAiLoading(true);
-    try {
-      const res = await fetch(`/api/analyze-learning?userId=${userId}&ai=true&limit=20`);
-      const data = await res.json();
-      if (data.success && data.aiAnalysis) {
-        setAiAnalysis(data.aiAnalysis);
-        setActiveTab("analysis");
+  // Calculate overview stats
+  const overviewStats = useMemo(() => {
+    const totalSessions = sessions.length;
+    const totalDuration = sessions.reduce((a, s) => a + (s.duration || 0), 0);
+    const totalVocabulary = sessions.reduce((a, s) => a + (s.learnedVocabulary?.length || 0), 0);
+    const totalSentences = sessions.reduce((a, s) => a + (s.sentencesWritten || 0), 0);
+    const completedSessions = sessions.filter(s => s.duration > 60).length;
+    const completionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+
+    // Calculate improvement (compare first half vs second half)
+    const midpoint = Math.floor(sessions.length / 2);
+    const recentErrors = sessions.slice(0, midpoint).reduce((a, s) => a + (s.totalErrors || 0), 0);
+    const olderErrors = sessions.slice(midpoint).reduce((a, s) => a + (s.totalErrors || 0), 0);
+    const improvementRate = olderErrors > 0 ? Math.round(((olderErrors - recentErrors) / olderErrors) * 100) : 0;
+
+    // Sessions by type for chart
+    const byType: Record<string, number> = {};
+    sessions.forEach(s => {
+      byType[s.sessionType] = (byType[s.sessionType] || 0) + 1;
+    });
+
+    return { totalSessions, totalDuration, totalVocabulary, totalSentences, completionRate, improvementRate, byType };
+  }, [sessions]);
+
+  // Analyze errors by function - only show functions with errors
+  const errorsByFunction = useMemo((): ErrorByFunction[] => {
+    const errorMap: Record<string, { errors: any[]; grammarErrors: any[]; pronunciationErrors: any[] }> = {};
+
+    sessions.forEach(s => {
+      const funcType = s.sessionType;
+      if (!errorMap[funcType]) {
+        errorMap[funcType] = { errors: [], grammarErrors: [], pronunciationErrors: [] };
       }
-    } catch (error) {
-      console.error("AI analysis error:", error);
-    }
-    setAiLoading(false);
-  };
+      if (s.grammarErrors?.length) errorMap[funcType].grammarErrors.push(...s.grammarErrors);
+      if (s.pronunciationErrors?.length) errorMap[funcType].pronunciationErrors.push(...s.pronunciationErrors);
+    });
 
-  const rateSession = async (sessionId: string, rating: number) => {
-    try {
-      await fetch("/api/learning-session", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, rating })
+    const result: ErrorByFunction[] = [];
+
+    Object.entries(errorMap).forEach(([funcType, data]) => {
+      const config = FUNCTION_CONFIG[funcType] || { label: funcType, icon: PenLine, color: "gray" };
+      const totalErrors = data.grammarErrors.length + data.pronunciationErrors.length;
+      
+      if (totalErrors === 0) return; // Skip functions with no errors
+
+      // Group grammar errors by type
+      const grammarByType: Record<string, { count: number; examples: string[] }> = {};
+      data.grammarErrors.forEach((e: any) => {
+        const type = e.errorType || "grammar";
+        if (!grammarByType[type]) grammarByType[type] = { count: 0, examples: [] };
+        grammarByType[type].count++;
+        if (grammarByType[type].examples.length < 3 && e.original) {
+          grammarByType[type].examples.push(`${e.original} → ${e.corrected}`);
+        }
       });
-      setSessions(prev => prev.map(s => s._id === sessionId ? { ...s, rating } : s));
-      setRatingSession(null);
-    } catch (error) {
-      console.error("Rate error:", error);
-    }
+
+      // Group pronunciation errors
+      const pronByWord: Record<string, number> = {};
+      data.pronunciationErrors.forEach((e: any) => {
+        const word = e.word || "unknown";
+        pronByWord[word] = (pronByWord[word] || 0) + 1;
+      });
+
+      const errorTypes: ErrorByFunction["errorTypes"] = [];
+
+      // Add grammar error types
+      Object.entries(grammarByType).forEach(([type, info]) => {
+        errorTypes.push({
+          type: formatErrorType(type),
+          count: info.count,
+          examples: info.examples,
+          suggestion: getSuggestion(type)
+        });
+      });
+
+      // Add pronunciation errors as one type
+      if (data.pronunciationErrors.length > 0) {
+        const topWords = Object.entries(pronByWord)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([word]) => word);
+        errorTypes.push({
+          type: "Lỗi phát âm",
+          count: data.pronunciationErrors.length,
+          examples: topWords,
+          suggestion: "Luyện phát âm theo mẫu, chú ý nhấn âm và âm cuối"
+        });
+      }
+
+      result.push({
+        functionName: funcType,
+        functionLabel: config.label,
+        icon: config.icon,
+        color: config.color,
+        totalErrors,
+        errorTypes: errorTypes.sort((a, b) => b.count - a.count)
+      });
+    });
+
+    return result.sort((a, b) => b.totalErrors - a.totalErrors);
+  }, [sessions]);
+
+  const formatErrorType = (type: string): string => {
+    const map: Record<string, string> = {
+      tense: "Sai thì",
+      article: "Thiếu/sai mạo từ",
+      plural: "Sai số ít/nhiều",
+      word_order: "Sai trật tự từ",
+      preposition: "Sai giới từ",
+      subject_verb: "Sai hòa hợp chủ-vị",
+      question_form: "Sai dạng câu hỏi",
+      spelling: "Lỗi chính tả",
+      punctuation: "Lỗi dấu câu",
+      connector: "Thiếu từ nối",
+    };
+    return map[type] || type.replace(/_/g, " ");
   };
 
-  // Calculate skill breakdown from sessions
-  const skillBreakdown = useMemo((): SkillData[] => {
-    const skillMap: Record<string, { sessions: number; totalScore: number; recentScores: number[] }> = {};
-    
-    sessions.forEach(s => {
-      const skill = s.sessionType;
-      if (!skillMap[skill]) skillMap[skill] = { sessions: 0, totalScore: 0, recentScores: [] };
-      skillMap[skill].sessions++;
-      skillMap[skill].totalScore += s.overallScore || 0;
-      if (skillMap[skill].recentScores.length < 5) skillMap[skill].recentScores.push(s.overallScore || 0);
-    });
-
-    return Object.entries(skillMap).map(([skill, data]) => {
-      const avgScore = Math.round(data.totalScore / data.sessions);
-      const recent = data.recentScores;
-      const trend = recent.length >= 2 ? recent[0] - recent[recent.length - 1] : 0;
-      return { skill, sessions: data.sessions, avgScore, trend };
-    }).sort((a, b) => b.sessions - a.sessions);
-  }, [sessions]);
-
-  // Group sessions by date
-  const sessionsByDate = useMemo(() => {
-    const groups: Record<string, LearningSession[]> = {};
-    sessions.forEach(s => {
-      const date = new Date(s.createdAt).toLocaleDateString("vi-VN");
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(s);
-    });
-    return groups;
-  }, [sessions]);
+  const getSuggestion = (type: string): string => {
+    const map: Record<string, string> = {
+      tense: "Ôn lại các thì cơ bản, chú ý dấu hiệu nhận biết",
+      article: "Học quy tắc dùng a/an/the",
+      plural: "Chú ý danh từ đếm được/không đếm được",
+      word_order: "Ghi nhớ cấu trúc S + V + O",
+      preposition: "Học các cụm giới từ thông dụng",
+      subject_verb: "Chú ý ngôi thứ 3 số ít thêm -s/-es",
+      question_form: "Luyện mẫu câu hỏi Yes/No và Wh-",
+      spelling: "Đọc nhiều và ghi nhớ cách viết",
+      connector: "Học các từ nối: however, therefore, moreover...",
+    };
+    return map[type] || "Luyện tập thêm để cải thiện";
+  };
 
   const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    return mins > 0 ? `${mins} phút` : `${seconds} giây`;
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins} phút`;
   };
 
-  const getSessionIcon = (type: string) => {
-    switch (type) {
-      case "voice_chat": return <MessageCircle className="w-5 h-5" />;
-      case "pronunciation": return <Mic className="w-5 h-5" />;
-      case "vocabulary": return <BookOpen className="w-5 h-5" />;
-      case "image_describe": return <ImageIcon className="w-5 h-5" />;
-      case "image_learning": return <ImageIcon className="w-5 h-5" />;
-      default: return <PenLine className="w-5 h-5" />;
-    }
-  };
-
-  const getSessionLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      voice_chat: "Voice Chat",
-      pronunciation: "Phát âm",
-      vocabulary: "Từ vựng",
-      image_describe: "Mô tả ảnh",
-      image_learning: "Học qua ảnh",
-      debate: "Tranh luận"
-    };
-    return labels[type] || type;
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-500";
-    if (score >= 60) return "text-yellow-500";
-    return "text-red-500";
-  };
-
-  const getScoreBg = (score: number) => {
-    if (score >= 80) return "bg-green-500";
-    if (score >= 60) return "bg-yellow-500";
-    return "bg-red-500";
+  const speak = (text: string) => {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
   };
 
   if (loading) {
@@ -185,7 +224,7 @@ export default function LearningHistory({ userId }: { userId: string }) {
     );
   }
 
-  if (!stats || sessions.length === 0) {
+  if (sessions.length === 0) {
     return (
       <div className="text-center p-8">
         <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -197,33 +236,14 @@ export default function LearningHistory({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-        {[
-          { id: "overview", label: "Tổng quan", icon: BarChart3 },
-          { id: "sessions", label: "Phiên học", icon: Clock },
-          { id: "analysis", label: "Phân tích AI", icon: Brain },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as TabType)}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition ${
-              activeTab === tab.id ? "bg-white shadow text-teal-600" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Time Filter */}
+      {/* Header with Time Filter */}
       <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <BarChart3 className="w-6 h-6 text-teal-500" />
+          Lịch sử học tập
+        </h2>
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600">Lọc theo:</span>
-        </div>
-        <div className="flex gap-2">
           {[
             { id: "week", label: "7 ngày" },
             { id: "month", label: "30 ngày" },
@@ -239,486 +259,283 @@ export default function LearningHistory({ userId }: { userId: string }) {
               {f.label}
             </button>
           ))}
+          <button onClick={fetchData} className="p-2 hover:bg-gray-100 rounded-lg">
+            <RefreshCw className="w-4 h-4 text-gray-500" />
+          </button>
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {/* Overview Tab */}
-        {activeTab === "overview" && (
-          <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-            {/* Stats Cards - No scores, focus on activity */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl p-5 text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-5 h-5 opacity-80" />
-                  <span className="text-white/80 text-sm">Tổng phiên học</span>
-                </div>
-                <p className="text-4xl font-bold">{stats.totalSessions}</p>
-              </div>
-              
-              <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-5 text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 opacity-80" />
-                  <span className="text-white/80 text-sm">Thời gian học</span>
-                </div>
-                <p className="text-4xl font-bold">{Math.round(sessions.reduce((a, s) => a + (s.duration || 0), 0) / 60)}</p>
-                <p className="text-white/70 text-sm">phút</p>
-              </div>
+      {/* Part 1: Overview Stats */}
+      <div className="bg-white rounded-2xl p-6 shadow-lg">
+        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          📊 Tổng quan học tập ({timeFilter === "week" ? "7 ngày" : timeFilter === "month" ? "30 ngày" : "tất cả"})
+        </h3>
 
-              <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100">
-                <div className="flex items-center gap-2 mb-2">
-                  {stats.trend === "improving" ? <TrendingUp className="w-5 h-5 text-green-500" /> : 
-                   stats.trend === "declining" ? <TrendingDown className="w-5 h-5 text-red-500" /> :
-                   <BarChart3 className="w-5 h-5 text-gray-500" />}
-                  <span className="text-gray-500 text-sm">Xu hướng</span>
-                </div>
-                <p className={`text-2xl font-bold ${stats.trend === "improving" ? "text-green-500" : stats.trend === "declining" ? "text-red-500" : "text-gray-500"}`}>
-                  {stats.trendPercent > 0 ? "+" : ""}{stats.trendPercent}%
-                </p>
-              </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-4 text-white">
+            <Calendar className="w-5 h-5 opacity-80 mb-1" />
+            <p className="text-2xl font-bold">{overviewStats.totalSessions}</p>
+            <p className="text-white/80 text-xs">Phiên học</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 text-white">
+            <Clock className="w-5 h-5 opacity-80 mb-1" />
+            <p className="text-2xl font-bold">{formatDuration(overviewStats.totalDuration)}</p>
+            <p className="text-white/80 text-xs">Thời gian học</p>
+          </div>
 
-              <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen className="w-5 h-5 text-blue-500" />
-                  <span className="text-gray-500 text-sm">Từ vựng đã học</span>
-                </div>
-                <p className="text-4xl font-bold text-blue-600">{stats.vocabularyLearned}</p>
-              </div>
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white">
+            <BookOpen className="w-5 h-5 opacity-80 mb-1" />
+            <p className="text-2xl font-bold">{overviewStats.totalVocabulary}</p>
+            <p className="text-white/80 text-xs">Từ vựng đã học</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-4 text-white">
+            <PenLine className="w-5 h-5 opacity-80 mb-1" />
+            <p className="text-2xl font-bold">{overviewStats.totalSentences}</p>
+            <p className="text-white/80 text-xs">Câu đã viết</p>
+          </div>
+
+          <div className="bg-white border-2 border-green-200 rounded-xl p-4">
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              <span className="text-xs text-gray-500">Hoàn thành</span>
             </div>
+            <p className="text-2xl font-bold text-green-600">{overviewStats.completionRate}%</p>
+            <p className="text-gray-500 text-xs">Tỷ lệ hoàn thành</p>
+          </div>
 
-            {/* Skill Breakdown Chart */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-teal-500" />
-                Phân bố theo kỹ năng
-              </h3>
-              <div className="space-y-4">
-                {skillBreakdown.map((skill, i) => (
-                  <div key={skill.skill} className="flex items-center gap-4">
-                    <div className="w-24 flex items-center gap-2">
-                      {getSessionIcon(skill.skill)}
-                      <span className="text-sm font-medium text-gray-700">{getSessionLabel(skill.skill)}</span>
+          <div className="bg-white border-2 border-blue-200 rounded-xl p-4">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className="w-4 h-4 text-blue-500" />
+              <span className="text-xs text-gray-500">Cải thiện</span>
+            </div>
+            <p className={`text-2xl font-bold ${overviewStats.improvementRate >= 0 ? "text-blue-600" : "text-red-600"}`}>
+              {overviewStats.improvementRate >= 0 ? "+" : ""}{overviewStats.improvementRate}%
+            </p>
+            <p className="text-gray-500 text-xs">Giảm lỗi sai</p>
+          </div>
+        </div>
+
+        {/* Activity Chart by Function */}
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-600 mb-3">Phân bố theo chức năng:</p>
+          <div className="space-y-3">
+            {Object.entries(overviewStats.byType).map(([type, count], i) => {
+              const config = FUNCTION_CONFIG[type] || { label: type, color: "gray" };
+              const percentage = Math.round((count / overviewStats.totalSessions) * 100);
+              const colorClasses: Record<string, string> = {
+                purple: "from-purple-400 to-purple-600",
+                pink: "from-pink-400 to-pink-600",
+                blue: "from-blue-400 to-blue-600",
+                orange: "from-orange-400 to-orange-600",
+                green: "from-green-400 to-green-600",
+                gray: "from-gray-400 to-gray-600",
+              };
+              return (
+                <div key={type} className="flex items-center gap-3">
+                  <span className="w-32 text-sm text-gray-700 truncate">{config.label}</span>
+                  <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percentage}%` }}
+                      transition={{ delay: i * 0.1, duration: 0.5 }}
+                      className={`h-full bg-gradient-to-r ${colorClasses[config.color]} rounded-full flex items-center justify-end pr-2`}
+                    >
+                      {percentage > 10 && <span className="text-xs text-white font-bold">{count}</span>}
+                    </motion.div>
+                  </div>
+                  <span className="w-12 text-right text-sm text-gray-500">{percentage}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* View Sessions Detail */}
+        <button
+          onClick={() => setExpandedSession(expandedSession === "all" ? null : "all")}
+          className="w-full py-2 text-sm text-teal-600 hover:bg-teal-50 rounded-lg flex items-center justify-center gap-1"
+        >
+          <Eye className="w-4 h-4" />
+          {expandedSession === "all" ? "Ẩn chi tiết phiên học" : "Xem chi tiết từng phiên học"}
+          {expandedSession === "all" ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {/* Sessions Detail */}
+        <AnimatePresence>
+          {expandedSession === "all" && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="mt-4 max-h-96 overflow-y-auto space-y-2"
+            >
+              {sessions.slice(0, 20).map((session) => {
+                const config = FUNCTION_CONFIG[session.sessionType] || { label: session.sessionType, icon: PenLine, color: "gray" };
+                const Icon = config.icon;
+                return (
+                  <div key={session._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-${config.color}-100`}>
+                      <Icon className={`w-5 h-5 text-${config.color}-600`} />
                     </div>
                     <div className="flex-1">
-                      <div className="h-6 bg-gray-100 rounded-full overflow-hidden">
+                      <p className="font-medium text-gray-800 text-sm">{config.label} #{session.sessionNumber}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(session.createdAt).toLocaleDateString("vi-VN")} • {formatDuration(session.duration)}
+                      </p>
+                    </div>
+                    {session.totalErrors > 0 && (
+                      <span className="px-2 py-1 bg-orange-100 text-orange-600 rounded-full text-xs font-medium">
+                        {session.totalErrors} lỗi
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Part 2: Error Analysis by Function */}
+      <div className="bg-white rounded-2xl p-6 shadow-lg">
+        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-orange-500" />
+          Phân tích lỗi học tập
+        </h3>
+
+        {errorsByFunction.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+              <span className="text-3xl">🎉</span>
+            </div>
+            <p className="text-green-600 font-medium">Tuyệt vời! Không có lỗi nào được ghi nhận.</p>
+            <p className="text-gray-500 text-sm mt-1">Tiếp tục học để duy trì phong độ!</p>
+          </div>
+        ) : (
+          <>
+            {/* Error Summary Table */}
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-2 font-medium text-gray-600">Chức năng</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-600">Loại lỗi phổ biến</th>
+                    <th className="text-center py-3 px-2 font-medium text-gray-600">Số lỗi</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-600">Gợi ý cải thiện</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {errorsByFunction.map((func) => {
+                    const Icon = func.icon;
+                    const topError = func.errorTypes[0];
+                    return (
+                      <tr key={func.functionName} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-2">
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 text-${func.color}-500`} />
+                            <span className="font-medium text-gray-800">{func.functionLabel}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-2 text-gray-600">{topError?.type || "-"}</td>
+                        <td className="py-3 px-2 text-center">
+                          <span className="px-2 py-1 bg-orange-100 text-orange-600 rounded-full font-medium">
+                            {func.totalErrors}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2 text-gray-500 text-xs">{topError?.suggestion || "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Detailed Error Cards */}
+            <div className="space-y-4">
+              {errorsByFunction.map((func) => {
+                const Icon = func.icon;
+                const isExpanded = expandedFunction === func.functionName;
+                const colorClasses: Record<string, { bg: string; border: string; text: string }> = {
+                  purple: { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-600" },
+                  pink: { bg: "bg-pink-50", border: "border-pink-200", text: "text-pink-600" },
+                  blue: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-600" },
+                  orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-600" },
+                  green: { bg: "bg-green-50", border: "border-green-200", text: "text-green-600" },
+                  gray: { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600" },
+                };
+                const colors = colorClasses[func.color] || colorClasses.gray;
+
+                return (
+                  <div key={func.functionName} className={`rounded-xl border ${colors.border} overflow-hidden`}>
+                    <button
+                      onClick={() => setExpandedFunction(isExpanded ? null : func.functionName)}
+                      className={`w-full p-4 flex items-center justify-between ${colors.bg} hover:opacity-90 transition`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-5 h-5 ${colors.text}`} />
+                        <span className="font-medium text-gray-800">{func.functionLabel}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${colors.bg} ${colors.text} border ${colors.border}`}>
+                          {func.totalErrors} lỗi
+                        </span>
+                      </div>
+                      {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                    </button>
+
+                    <AnimatePresence>
+                      {isExpanded && (
                         <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(skill.sessions / stats.totalSessions) * 100}%` }}
-                          transition={{ delay: i * 0.1, duration: 0.5 }}
-                          className="h-full bg-gradient-to-r from-teal-400 to-cyan-500 rounded-full flex items-center justify-end pr-2"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="bg-white"
                         >
-                          <span className="text-xs text-white font-bold">{skill.sessions}</span>
-                        </motion.div>
-                      </div>
-                    </div>
-                    <div className="w-16 text-right">
-                      {skill.trend > 0 ? (
-                        <span className="text-green-500 text-sm flex items-center justify-end gap-1">
-                          <TrendingUp className="w-3 h-3" /> +{skill.trend}
-                        </span>
-                      ) : skill.trend < 0 ? (
-                        <span className="text-red-500 text-sm flex items-center justify-end gap-1">
-                          <TrendingDown className="w-3 h-3" /> {skill.trend}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">—</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Error Summary */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Pronunciation Errors */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Mic className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800">Lỗi phát âm</h3>
-                    <p className="text-sm text-gray-500">{stats.pronunciationErrors.total} lỗi tổng cộng</p>
-                  </div>
-                </div>
-                {stats.pronunciationErrors.common.length > 0 ? (
-                  <div className="space-y-2">
-                    {stats.pronunciationErrors.common.slice(0, 5).map((e, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => {
-                            const u = new SpeechSynthesisUtterance(e.word);
-                            u.lang = "en-US";
-                            speechSynthesis.speak(u);
-                          }} className="p-1 hover:bg-orange-100 rounded">
-                            <Volume2 className="w-4 h-4 text-orange-500" />
-                          </button>
-                          <span className="font-medium text-gray-800">{e.word}</span>
-                        </div>
-                        <span className="text-sm text-orange-600 font-bold">{e.count}x</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-sm text-center py-4">🎉 Không có lỗi phát âm!</p>
-                )}
-              </div>
-
-              {/* Grammar Errors */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <PenLine className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800">Lỗi ngữ pháp</h3>
-                    <p className="text-sm text-gray-500">{stats.grammarErrors.total} lỗi tổng cộng</p>
-                  </div>
-                </div>
-                {stats.grammarErrors.common.length > 0 ? (
-                  <div className="space-y-2">
-                    {stats.grammarErrors.common.slice(0, 5).map((e, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                        <span className="font-medium text-gray-800 capitalize">{e.type.replace(/_/g, " ")}</span>
-                        <span className="text-sm text-purple-600 font-bold">{e.count}x</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-sm text-center py-4">🎉 Không có lỗi ngữ pháp!</p>
-                )}
-              </div>
-            </div>
-
-            {/* AI Analysis Button */}
-            <button
-              onClick={fetchAIAnalysis}
-              disabled={aiLoading}
-              className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {aiLoading ? (
-                <><RefreshCw className="w-5 h-5 animate-spin" /> Đang phân tích...</>
-              ) : (
-                <><Brain className="w-5 h-5" /> Phân tích chi tiết với AI</>
-              )}
-            </button>
-          </motion.div>
-        )}
-
-        {/* Sessions Tab */}
-        {activeTab === "sessions" && (
-          <motion.div key="sessions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-            {/* Rating Prompt */}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-4 flex items-start gap-3">
-              <Lightbulb className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-yellow-800">Đánh giá phiên học</p>
-                <p className="text-sm text-yellow-700">Bạn có cảm thấy phiên học giúp bạn cải thiện kỹ năng không? Hãy đánh giá bằng sao để chúng tôi hiểu rõ hơn!</p>
-              </div>
-            </div>
-
-            {/* Sessions grouped by date */}
-            {Object.entries(sessionsByDate).map(([date, dateSessions]) => (
-              <div key={date}>
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-500">{date}</span>
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{dateSessions.length} phiên</span>
-                </div>
-                
-                <div className="space-y-3">
-                  {dateSessions.map((session) => (
-                    <div key={session._id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                      <button
-                        onClick={() => setExpandedSession(expandedSession === session._id ? null : session._id)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            session.sessionType === "voice_chat" ? "bg-purple-100 text-purple-600" :
-                            session.sessionType === "pronunciation" ? "bg-orange-100 text-orange-600" :
-                            session.sessionType === "vocabulary" ? "bg-green-100 text-green-600" :
-                            "bg-blue-100 text-blue-600"
-                          }`}>
-                            {getSessionIcon(session.sessionType)}
-                          </div>
-                          <div className="text-left">
-                            <p className="font-bold text-gray-800">
-                              {getSessionLabel(session.sessionType)} #{session.sessionNumber}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {new Date(session.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-                              {" • "}{formatDuration(session.duration)}
-                              {session.totalErrors > 0 && (
-                                <span className="text-orange-500"> • {session.totalErrors} lỗi</span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {/* Star Rating */}
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <button
-                                key={star}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  rateSession(session._id, star);
-                                }}
-                                className={`p-0.5 ${session.rating && session.rating >= star ? "text-yellow-400" : "text-gray-300"} hover:text-yellow-400 transition`}
-                              >
-                                <Star className="w-4 h-4" fill={session.rating && session.rating >= star ? "currentColor" : "none"} />
-                              </button>
-                            ))}
-                          </div>
-                          {expandedSession === session._id ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                        </div>
-                      </button>
-
-                      <AnimatePresence>
-                        {expandedSession === session._id && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="border-t border-gray-100"
-                          >
-                            <div className="p-4 space-y-4">
-                              {/* Errors */}
-                              {session.pronunciationErrors?.length > 0 && (
-                                <div>
-                                  <p className="text-sm font-medium text-orange-600 mb-2 flex items-center gap-1">
-                                    <Mic className="w-4 h-4" /> Lỗi phát âm ({session.pronunciationErrors.length})
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {session.pronunciationErrors.map((e: any, i: number) => (
-                                      <span key={i} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">{e.word}</span>
-                                    ))}
-                                  </div>
+                          <div className="p-4 space-y-4">
+                            {func.errorTypes.map((errorType, i) => (
+                              <div key={i} className="p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-medium text-gray-800">{errorType.type}</span>
+                                  <span className="text-sm text-orange-600 font-bold">{errorType.count}x</span>
                                 </div>
-                              )}
-
-                              {session.grammarErrors?.length > 0 && (
-                                <div>
-                                  <p className="text-sm font-medium text-purple-600 mb-2 flex items-center gap-1">
-                                    <PenLine className="w-4 h-4" /> Lỗi ngữ pháp ({session.grammarErrors.length})
-                                  </p>
-                                  <div className="space-y-2">
-                                    {session.grammarErrors.slice(0, 3).map((e: any, i: number) => (
-                                      <div key={i} className="p-3 bg-purple-50 rounded-lg text-sm">
-                                        <p className="text-red-500 line-through">{e.original}</p>
-                                        <p className="text-green-600 font-medium">✓ {e.corrected}</p>
-                                        {e.explanationVi && <p className="text-gray-500 text-xs mt-1">{e.explanationVi}</p>}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Feedback */}
-                              <div className="grid grid-cols-2 gap-4">
-                                {session.strengths?.length > 0 && (
-                                  <div className="p-3 bg-green-50 rounded-xl">
-                                    <p className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1">
-                                      <CheckCircle className="w-4 h-4" /> Điểm mạnh
-                                    </p>
-                                    <ul className="text-sm space-y-1 text-green-800">
-                                      {session.strengths.map((s, i) => <li key={i}>• {s}</li>)}
-                                    </ul>
+                                
+                                {/* Examples */}
+                                {errorType.examples.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="text-xs text-gray-500 mb-1">Ví dụ:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {errorType.examples.map((ex, j) => (
+                                        <span key={j} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-700">
+                                          {errorType.type === "Lỗi phát âm" ? (
+                                            <button onClick={() => speak(ex)} className="flex items-center gap-1 hover:text-blue-600">
+                                              <Volume2 className="w-3 h-3" /> {ex}
+                                            </button>
+                                          ) : ex}
+                                        </span>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
-                                {session.areasToImprove?.length > 0 && (
-                                  <div className="p-3 bg-orange-50 rounded-xl">
-                                    <p className="text-sm font-medium text-orange-700 mb-2 flex items-center gap-1">
-                                      <Target className="w-4 h-4" /> Cần cải thiện
-                                    </p>
-                                    <ul className="text-sm space-y-1 text-orange-800">
-                                      {session.areasToImprove.map((a, i) => <li key={i}>• {a}</li>)}
-                                    </ul>
-                                  </div>
-                                )}
+
+                                {/* Suggestion */}
+                                <div className="flex items-start gap-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+                                  <Lightbulb className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                                  <p className="text-xs text-yellow-800">{errorType.suggestion}</p>
+                                </div>
                               </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {sessions.length === 0 && (
-              <div className="text-center p-8 text-gray-500">
-                <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Chưa có phiên học nào trong khoảng thời gian này</p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* AI Analysis Tab */}
-        {activeTab === "analysis" && (
-          <motion.div key="analysis" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-            {aiAnalysis ? (
-              <>
-                {/* Summary */}
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Sparkles className="w-6 h-6" />
-                    <h3 className="font-bold text-lg">Phân tích AI</h3>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-white/70 text-sm">Xu hướng</p>
-                      <p className="text-xl font-bold capitalize">{aiAnalysis.summary?.trend || "stable"}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/70 text-sm">Thay đổi</p>
-                      <p className="text-xl font-bold">{(aiAnalysis.summary?.trendPercent || 0) > 0 ? "+" : ""}{aiAnalysis.summary?.trendPercent || 0}%</p>
-                    </div>
-                    <div>
-                      <p className="text-white/70 text-sm">Phiên học</p>
-                      <p className="text-xl font-bold">{aiAnalysis.summary?.totalSessions || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/70 text-sm">Lỗi cần sửa</p>
-                      <p className="text-xl font-bold">{(aiAnalysis.errorAnalysis?.pronunciation?.count || 0) + (aiAnalysis.errorAnalysis?.grammar?.count || 0)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Weekly Goal */}
-                {aiAnalysis.weeklyGoal && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-start gap-3">
-                    <Zap className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-bold text-yellow-800">🎯 Mục tiêu tuần này</p>
-                      <p className="text-yellow-700">{aiAnalysis.weeklyGoal}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Strengths */}
-                {aiAnalysis.strengths?.length > 0 && (
-                  <div className="bg-green-50 rounded-2xl p-6">
-                    <h4 className="font-bold text-green-700 mb-3 flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5" /> Điểm mạnh của bạn
-                    </h4>
-                    <ul className="space-y-2">
-                      {aiAnalysis.strengths.map((s: string, i: number) => (
-                        <li key={i} className="flex items-start gap-2 text-green-800">
-                          <span className="text-green-500">✓</span> {s}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Error Analysis */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Pronunciation */}
-                  {aiAnalysis.errorAnalysis?.pronunciation?.commonErrors?.length > 0 && (
-                    <div className="bg-white rounded-2xl p-6 shadow-lg">
-                      <h4 className="font-bold text-orange-600 mb-4 flex items-center gap-2">
-                        <Mic className="w-5 h-5" /> Lỗi phát âm cần khắc phục
-                      </h4>
-                      <div className="space-y-3">
-                        {aiAnalysis.errorAnalysis.pronunciation.commonErrors.map((e: any, i: number) => (
-                          <div key={i} className="p-3 bg-orange-50 rounded-lg">
-                            <p className="font-medium text-orange-700">Âm: {e.sound}</p>
-                            <p className="text-sm text-gray-600">Từ: {e.words?.join(", ")}</p>
-                            {e.tip && <p className="text-sm text-orange-600 mt-1">💡 {e.tip}</p>}
-                          </div>
-                        ))}
-                      </div>
-                      {aiAnalysis.errorAnalysis.pronunciation.exercises?.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-orange-100">
-                          <p className="text-sm font-medium mb-2 text-gray-700">Bài tập gợi ý:</p>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {aiAnalysis.errorAnalysis.pronunciation.exercises.map((ex: string, i: number) => (
-                              <li key={i}>• {ex}</li>
                             ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Grammar */}
-                  {aiAnalysis.errorAnalysis?.grammar?.commonErrors?.length > 0 && (
-                    <div className="bg-white rounded-2xl p-6 shadow-lg">
-                      <h4 className="font-bold text-purple-600 mb-4 flex items-center gap-2">
-                        <PenLine className="w-5 h-5" /> Lỗi ngữ pháp cần khắc phục
-                      </h4>
-                      <div className="space-y-3">
-                        {aiAnalysis.errorAnalysis.grammar.commonErrors.map((e: any, i: number) => (
-                          <div key={i} className="p-3 bg-purple-50 rounded-lg">
-                            <p className="font-medium text-purple-700">{e.type}</p>
-                            <p className="text-sm text-gray-600">{e.ruleVi || e.rule}</p>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Recommendations */}
-                {aiAnalysis.recommendations && (
-                  <div className="bg-white rounded-2xl p-6 shadow-lg">
-                    <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
-                      <Target className="w-5 h-5" /> Lộ trình học tập cá nhân hóa
-                    </h4>
-                    
-                    {aiAnalysis.recommendations.practiceAreas?.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium mb-2 text-gray-700">Lĩnh vực cần luyện tập:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {aiAnalysis.recommendations.practiceAreas.map((area: string, i: number) => (
-                            <span key={i} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">{area}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {aiAnalysis.recommendations.nextSteps?.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-2 text-gray-700">Bước tiếp theo:</p>
-                        <ul className="space-y-2">
-                          {aiAnalysis.recommendations.nextSteps.map((step: string, i: number) => (
-                            <li key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                              <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">{i + 1}</span>
-                              <span className="text-gray-700">{step}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center p-8">
-                <Brain className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-xl font-bold text-gray-600 mb-2">Chưa có phân tích AI</h3>
-                <p className="text-gray-500 mb-4">Nhấn nút bên dưới để AI phân tích lịch sử học tập của bạn</p>
-                <button
-                  onClick={fetchAIAnalysis}
-                  disabled={aiLoading}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:shadow-lg transition flex items-center justify-center gap-2 mx-auto disabled:opacity-50"
-                >
-                  {aiLoading ? (
-                    <><RefreshCw className="w-5 h-5 animate-spin" /> Đang phân tích...</>
-                  ) : (
-                    <><Sparkles className="w-5 h-5" /> Phân tích với AI</>
-                  )}
-                </button>
-              </div>
-            )}
-          </motion.div>
+                );
+              })}
+            </div>
+          </>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
