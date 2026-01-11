@@ -3,10 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import {
   Check, X, Volume2, AlertCircle, Loader2, ChevronRight,
   Save, RefreshCw, PenLine, CheckCircle2, XCircle, Lightbulb, Edit3,
-  Image as ImageIcon, Grid3X3, Sparkles, Clock, BookOpen, HelpCircle
+  Image as ImageIcon, Grid3X3, Sparkles, Clock, BookOpen, HelpCircle,
+  Key, ExternalLink
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 
@@ -210,6 +212,12 @@ export default function ImageVocabularyLearning() {
   // Results
   const [saved, setSaved] = useState(false);
 
+  // API Key error state
+  const [apiKeyError, setApiKeyError] = useState<{
+    type: "MISSING_KEY" | "EXPIRED_KEY" | "QUOTA_EXCEEDED" | null;
+    message: string;
+  } | null>(null);
+
   // Check guide preference and countdown on mount
   useEffect(() => {
     // Check if user dismissed guide
@@ -340,6 +348,7 @@ export default function ImageVocabularyLearning() {
     setStep("checking");
     setIsLoading(true);
     setError(null);
+    setApiKeyError(null);
 
     const results: SentenceCheck[] = [];
     const normalizedSentences = sentences.map(s => normalize(s));
@@ -356,6 +365,17 @@ export default function ImageVocabularyLearning() {
           body: JSON.stringify({ action: "checkSentence", sentence, targetWord: selectedImage!.word, userId })
         });
         const data = await res.json();
+
+        // Check for API key errors
+        if (!data.success && data.requireApiKey) {
+          setApiKeyError({
+            type: data.error as "MISSING_KEY" | "EXPIRED_KEY" | "QUOTA_EXCEEDED",
+            message: data.message
+          });
+          setIsLoading(false);
+          setStep("sentences");
+          return;
+        }
 
         if (data.success) {
           results.push({ sentence, hasTargetWord, isDuplicate, ...data.data });
@@ -394,6 +414,7 @@ export default function ImageVocabularyLearning() {
 
     setIsLoading(true);
     setError(null);
+    setApiKeyError(null);
 
     try {
       const res = await fetch("/api/image-vocabulary-learning", {
@@ -402,6 +423,18 @@ export default function ImageVocabularyLearning() {
         body: JSON.stringify({ action: "checkSentence", sentence: editedSentence, targetWord: selectedImage.word, userId })
       });
       const data = await res.json();
+
+      // Check for API key errors
+      if (!data.success && data.requireApiKey) {
+        setApiKeyError({
+          type: data.error as "MISSING_KEY" | "EXPIRED_KEY" | "QUOTA_EXCEEDED",
+          message: data.message
+        });
+        setIsLoading(false);
+        setEditingIndex(null);
+        setEditedSentence("");
+        return;
+      }
 
       if (data.success) {
         const newChecked = [...checkedSentences];
@@ -473,6 +506,7 @@ export default function ImageVocabularyLearning() {
     setEditedSentence("");
     setSaved(false);
     setError(null);
+    setApiKeyError(null);
   };
 
   // Speak
@@ -679,6 +713,73 @@ export default function ImageVocabularyLearning() {
               <p className="text-red-300 text-sm flex-1">{error}</p>
               <button onClick={() => setError(null)}><X className="w-4 h-4 text-red-400" /></button>
             </div>
+          )}
+
+          {/* API Key Error Banner */}
+          {apiKeyError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mb-4 p-4 rounded-xl border ${
+                apiKeyError.type === "MISSING_KEY" 
+                  ? "bg-yellow-500/20 border-yellow-500/50" 
+                  : apiKeyError.type === "EXPIRED_KEY"
+                  ? "bg-red-500/20 border-red-500/50"
+                  : "bg-orange-500/20 border-orange-500/50"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <Key className={`w-6 h-6 flex-shrink-0 mt-0.5 ${
+                  apiKeyError.type === "MISSING_KEY" ? "text-yellow-400" : 
+                  apiKeyError.type === "EXPIRED_KEY" ? "text-red-400" : "text-orange-400"
+                }`} />
+                <div className="flex-1">
+                  <h3 className={`font-semibold mb-1 ${
+                    apiKeyError.type === "MISSING_KEY" ? "text-yellow-300" : 
+                    apiKeyError.type === "EXPIRED_KEY" ? "text-red-300" : "text-orange-300"
+                  }`}>
+                    {apiKeyError.type === "MISSING_KEY" && "Cần cấu hình API Key"}
+                    {apiKeyError.type === "EXPIRED_KEY" && "API Key hết hạn hoặc không hợp lệ"}
+                    {apiKeyError.type === "QUOTA_EXCEEDED" && "API Key đã hết quota"}
+                  </h3>
+                  <p className={`text-sm mb-3 ${
+                    apiKeyError.type === "MISSING_KEY" ? "text-yellow-200/80" : 
+                    apiKeyError.type === "EXPIRED_KEY" ? "text-red-200/80" : "text-orange-200/80"
+                  }`}>
+                    {apiKeyError.message}
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Link
+                      href="/settings"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                        apiKeyError.type === "MISSING_KEY" 
+                          ? "bg-yellow-500 text-black hover:bg-yellow-400" 
+                          : apiKeyError.type === "EXPIRED_KEY"
+                          ? "bg-red-500 text-white hover:bg-red-400"
+                          : "bg-orange-500 text-white hover:bg-orange-400"
+                      }`}
+                    >
+                      <Key className="w-4 h-4" />
+                      Đi tới Cài đặt API Keys
+                    </Link>
+                    <a
+                      href="https://console.groq.com/keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-white/60 hover:text-white/80"
+                    >
+                      Lấy Groq Key miễn phí <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setApiKeyError(null)}
+                  className="text-white/40 hover:text-white/60"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
           )}
 
           {/* Step 1: Select Image */}

@@ -501,8 +501,17 @@ export async function POST(req: NextRequest) {
     const { action, userId = "anonymous" } = body;
     
     const keys = await getUserApiKeys(userId);
-    if (!keys.openaiKey && !keys.groqKey && !keys.cohereKey) {
-      return NextResponse.json({ success: false, message: "Vui lòng cấu hình API key trong Settings" }, { status: 400 });
+    
+    // Check if user has any API key
+    const hasAnyKey = !!(keys.openaiKey || keys.groqKey || keys.cohereKey);
+    
+    if (!hasAnyKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "MISSING_KEY",
+        message: "Vui lòng cấu hình API key trong Settings để sử dụng tính năng này",
+        requireApiKey: true
+      }, { status: 401 });
     }
 
     switch (action) {
@@ -619,6 +628,37 @@ export async function POST(req: NextRequest) {
     }
   } catch (err: any) {
     console.error("Image vocabulary learning error:", err);
-    return NextResponse.json({ success: false, message: err.message || "Lỗi server" }, { status: 500 });
+    
+    // Check for specific error types
+    const errorMessage = err.message || "";
+    
+    // Detect expired/invalid key errors
+    if (errorMessage.includes("401") || errorMessage.includes("403") || 
+        errorMessage.includes("INVALID_KEY") || errorMessage.includes("expired") ||
+        errorMessage.includes("invalid_api_key")) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "EXPIRED_KEY",
+        message: "API key đã hết hạn hoặc không hợp lệ. Vui lòng cập nhật key mới trong Settings.",
+        requireApiKey: true
+      }, { status: 401 });
+    }
+    
+    // Detect quota exceeded
+    if (errorMessage.includes("429") || errorMessage.includes("QUOTA_EXCEEDED") ||
+        errorMessage.includes("rate_limit") || errorMessage.includes("quota")) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "QUOTA_EXCEEDED",
+        message: "API key đã hết quota. Vui lòng thử lại sau hoặc sử dụng key khác.",
+        requireApiKey: true
+      }, { status: 429 });
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      error: "SERVER_ERROR",
+      message: err.message || "Lỗi server" 
+    }, { status: 500 });
   }
 }
