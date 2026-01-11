@@ -48,7 +48,17 @@ interface SentenceCheck {
   sentence: string;
   isCorrect: boolean;
   correctedSentence: string;
-  errors: Array<{ type: string; original: string; corrected: string; explanation: string; explanationVi: string; position?: string }>;
+  errors: Array<{
+    type: string;
+    original: string;
+    corrected: string;
+    explanation: string;
+    explanationVi: string;
+    position?: string;
+    errorWord?: string;
+    errorPosition?: string;
+    errorMessage?: string;
+  }>;
   vietnameseTranslation: string;
   hasTargetWord: boolean;
   isDuplicate: boolean;
@@ -707,14 +717,22 @@ export default function ImageVocabularyLearning() {
                               <div className="mt-2 space-y-2">
                                 {s.errors.map((e, j) => (
                                   <div key={j} className="text-sm bg-red-500/20 rounded-lg p-2">
-                                    <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                                       <span className="px-2 py-0.5 bg-red-500/30 text-red-300 rounded text-xs font-medium">
                                         {getErrorTypeLabel(e.type)}
                                       </span>
-                                      {e.position && <span className="text-white/40 text-xs">({e.position})</span>}
+                                      {(e.errorWord || e.errorPosition) && (
+                                        <span className="text-white/50 text-xs">
+                                          {e.errorWord && <span className="text-orange-300">"{e.errorWord}"</span>}
+                                          {e.errorPosition && <span> - {e.errorPosition}</span>}
+                                        </span>
+                                      )}
                                     </div>
+                                    {e.errorMessage && (
+                                      <p className="text-red-300 text-xs mb-1">❌ {e.errorMessage}</p>
+                                    )}
                                     <div className="flex items-center gap-2">
-                                      <span className="text-red-300 line-through">{e.original}</span>
+                                      <span className="text-red-300 line-through">{e.original || e.errorWord}</span>
                                       <span className="text-white/40">→</span>
                                       <span className="text-green-300 font-medium">{e.corrected}</span>
                                     </div>

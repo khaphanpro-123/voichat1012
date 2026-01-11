@@ -35,83 +35,162 @@ Return ONLY valid JSON:
 }`;
 
 // Step 4: Check sentence - Detailed grammar analysis for Vietnamese learners
-const CHECK_SENTENCE_PROMPT = `You are a friendly English grammar tutor for Vietnamese learners.
+const CHECK_SENTENCE_PROMPT = `Bạn là trợ lý học tiếng Anh thân thiện cho người Việt.
 
-TASK: Check this sentence that should contain the word "{word}" (or variants like "{word}s"):
+NHIỆM VỤ: Kiểm tra câu có chứa từ "{word}" (hoặc "{word}s"):
 
-Sentence: "{sentence}"
+Câu người dùng nhập: "{sentence}"
 
-STEP 1: Check if sentence contains "{word}" or "{word}s" (case-insensitive). If NOT → hasTargetWord: false.
+---
+### BƯỚC 1: Chuẩn hóa và kiểm tra từ khóa
+- Chuẩn hóa: viết hoa chữ cái đầu câu, loại bỏ khoảng trắng thừa
+- Kiểm tra câu có chứa "{word}" hoặc "{word}s" (không phân biệt hoa/thường)
+- Nếu KHÔNG có → hasTargetWord: false
 
-STEP 2: Check for these COMMON ERRORS (Vietnamese learners often make):
+---
+### BƯỚC 2: Phân tích lỗi ngữ pháp CHI TIẾT
 
-1. **THIẾU MẠO TỪ (Missing Article)** - type: "article"
-   - Sai: "I love chair" → Đúng: "I love the chair." hoặc "I love chairs."
-   - Quy tắc: Danh từ đếm được số ít cần mạo từ "a/an/the"
+Với MỖI lỗi phát hiện, phải chỉ rõ:
+- **errorWord**: từ/cụm từ sai cụ thể (ví dụ: "i", "orange", "cuối câu")
+- **errorPosition**: vị trí trong câu (đầu câu/giữa câu/cuối câu/sau động từ...)
+- **errorMessage**: mô tả ngắn gọn lỗi bằng tiếng Việt
+- **suggestion**: cách sửa cụ thể
 
-2. **SAI CHIA ĐỘNG TỪ (Subject-Verb Agreement)** - type: "subject_verb_agreement"
-   - Sai: "Chair are useful." → Đúng: "Chairs are useful." hoặc "The chair is useful."
-   - Quy tắc: Chủ ngữ số ít dùng "is", số nhiều dùng "are"
+DANH SÁCH LỖI CẦN KIỂM TRA:
 
-3. **SAI LOẠI TỪ (Wrong Word Type)** - type: "word_type"
-   - Sai: "chair is love" → Đúng: "The chair is lovely." (love là danh từ/động từ, cần dùng tính từ lovely)
-   - Sai: "Chair is very kindly." → Đúng: "The chair is very nice." (kindly là trạng từ)
-   - Quy tắc: Phân biệt danh từ, động từ, tính từ, trạng từ
+1. **VIẾT HOA (capitalization)**
+   - Ví dụ: "i love orange" → lỗi ở "i" (đầu câu)
+   - errorWord: "i", errorPosition: "đầu câu", errorMessage: "Chữ 'I' luôn viết hoa"
 
-4. **LỖI CHÍNH TẢ (Spelling)** - type: "spelling"
-   - Sai: "convinient" → Đúng: "convenient"
-   - Quy tắc: Kiểm tra chính tả cẩn thận
+2. **MẠO TỪ (article)**
+   - Ví dụ: "I love orange" → lỗi ở "orange" (thiếu mạo từ)
+   - errorWord: "orange", errorPosition: "sau động từ", errorMessage: "Thiếu mạo từ trước danh từ số ít"
 
-5. **THIẾU DẤU CÂU (Missing Punctuation)** - type: "punctuation"
-   - Sai: "I love chairs" → Đúng: "I love chairs."
-   - Quy tắc: Câu tiếng Anh cần dấu chấm (.), dấu hỏi (?), hoặc dấu chấm than (!) ở cuối
+3. **DẤU CÂU (punctuation)**
+   - Ví dụ: "I love the orange" → lỗi ở cuối câu
+   - errorWord: "(cuối câu)", errorPosition: "cuối câu", errorMessage: "Thiếu dấu chấm kết thúc câu"
 
-6. **SAI TRẬT TỰ TỪ (Word Order)** - type: "word_order"
-   - Sai: "Very I like chair." → Đúng: "I like the chair very much."
-   - Quy tắc: Tiếng Anh theo cấu trúc S + V + O
+4. **CHIA ĐỘNG TỪ (subject_verb_agreement)**
+   - Ví dụ: "Orange are sweet" → lỗi ở "are"
+   - errorWord: "are", errorPosition: "động từ", errorMessage: "Chủ ngữ số ít dùng 'is', không dùng 'are'"
 
-7. **THIẾU ĐỘNG TỪ (Missing Verb)** - type: "missing_verb"
-   - Sai: "chair very cheap" → Đúng: "The chair is very cheap."
-   - Quy tắc: Câu tiếng Anh cần có động từ
+5. **SỐ ÍT/SỐ NHIỀU (singular_plural)**
+   - Ví dụ: "I have many orange" → lỗi ở "orange"
+   - errorWord: "orange", errorPosition: "sau 'many'", errorMessage: "Sau 'many' cần danh từ số nhiều"
 
-8. **SAI SO SÁNH (Comparative Error)** - type: "comparative"
-   - Sai: "chair very cheaper" → Đúng: "The chair is much cheaper."
-   - Quy tắc: Dùng "much" + tính từ so sánh hơn, không dùng "very"
+6. **LOẠI TỪ (word_type)**
+   - Ví dụ: "Orange is beauty" → lỗi ở "beauty"
+   - errorWord: "beauty", errorPosition: "sau 'is'", errorMessage: "Cần tính từ 'beautiful', không phải danh từ 'beauty'"
 
-9. **VIẾT HOA SAI (Capitalization)** - type: "capitalization"
-   - Sai: "i love chair" → Đúng: "I love the chair."
-   - Quy tắc: "I" luôn viết hoa, đầu câu viết hoa
+7. **CHÍNH TẢ (spelling)**
+   - Ví dụ: "orang is sweet" → lỗi ở "orang"
+   - errorWord: "orang", errorPosition: "chủ ngữ", errorMessage: "Sai chính tả, đúng là 'orange'"
 
-Return ONLY valid JSON (no markdown, no explanation outside JSON):
+8. **TRẬT TỰ TỪ (word_order)**
+   - Ví dụ: "Very I like orange" → lỗi ở "Very I"
+   - errorWord: "Very I", errorPosition: "đầu câu", errorMessage: "Sai trật tự từ, đúng: 'I like orange very much'"
+
+9. **THIẾU ĐỘNG TỪ (missing_verb)**
+   - Ví dụ: "Orange very sweet" → thiếu động từ
+   - errorWord: "(thiếu)", errorPosition: "sau chủ ngữ", errorMessage: "Thiếu động từ 'is'"
+
+10. **SO SÁNH (comparative)**
+    - Ví dụ: "Orange very sweeter" → lỗi ở "very sweeter"
+    - errorWord: "very sweeter", errorPosition: "sau chủ ngữ", errorMessage: "Dùng 'much sweeter', không dùng 'very sweeter'"
+
+---
+### BƯỚC 3: Trả về JSON
+
+Return ONLY valid JSON (không markdown, không giải thích ngoài JSON):
 {
   "isCorrect": true/false,
   "hasTargetWord": true/false,
-  "correctedSentence": "Câu đã sửa hoàn chỉnh với dấu câu",
+  "originalSentence": "Câu gốc người dùng nhập",
+  "correctedSentence": "Câu đã sửa hoàn chỉnh với dấu câu đúng",
   "errors": [
     {
-      "type": "article|subject_verb_agreement|word_type|spelling|punctuation|word_order|missing_verb|comparative|capitalization",
-      "original": "phần sai trong câu gốc",
-      "corrected": "phần đã sửa đúng",
-      "position": "vị trí lỗi (start/middle/end/verb)",
+      "type": "capitalization|article|punctuation|subject_verb_agreement|singular_plural|word_type|spelling|word_order|missing_verb|comparative",
+      "errorWord": "từ/cụm từ sai cụ thể",
+      "errorPosition": "vị trí cụ thể trong câu",
+      "original": "phần sai",
+      "corrected": "phần đã sửa",
+      "errorMessage": "Mô tả lỗi ngắn gọn bằng tiếng Việt",
       "explanation": "Brief English explanation",
-      "explanationVi": "Giải thích tiếng Việt dễ hiểu"
+      "explanationVi": "Giải thích chi tiết tiếng Việt"
     }
   ],
   "vietnameseTranslation": "Bản dịch tiếng Việt của câu đúng",
   "grammarRule": "Main grammar rule in English",
-  "grammarRuleVi": "Quy tắc ngữ pháp chính bằng tiếng Việt",
+  "grammarRuleVi": "Quy tắc ngữ pháp chính bằng tiếng Việt (1 dòng)",
   "structure": {
     "pattern": "S + V + O",
     "explanation": "Subject + Verb + Object",
     "explanationVi": "Chủ ngữ + Động từ + Tân ngữ"
   },
-  "encouragement": "Lời khuyến khích thân thiện bằng tiếng Việt (ví dụ: 'Gần đúng rồi! Chỉ cần thêm dấu chấm cuối câu.')"
+  "encouragement": "Lời khuyến khích thân thiện (ví dụ: 'Gần đúng rồi! Chỉ cần thêm dấu chấm cuối câu thôi! 👍')"
 }
 
-IMPORTANT: 
-- Be encouraging and friendly, not critical
-- If sentence is correct, set isCorrect: true and encouragement: "Tuyệt vời! Câu hoàn toàn đúng ngữ pháp! 🎉"
-- Always provide Vietnamese explanations for Vietnamese learners`;
+---
+### VÍ DỤ PHẢN HỒI
+
+Input: "i love orange"
+
+Output:
+{
+  "isCorrect": false,
+  "hasTargetWord": true,
+  "originalSentence": "i love orange",
+  "correctedSentence": "I love the orange.",
+  "errors": [
+    {
+      "type": "capitalization",
+      "errorWord": "i",
+      "errorPosition": "đầu câu",
+      "original": "i",
+      "corrected": "I",
+      "errorMessage": "Chữ 'I' luôn viết hoa",
+      "explanation": "'I' is always capitalized in English",
+      "explanationVi": "Đại từ 'I' (tôi) luôn viết hoa trong tiếng Anh"
+    },
+    {
+      "type": "article",
+      "errorWord": "orange",
+      "errorPosition": "sau động từ 'love'",
+      "original": "orange",
+      "corrected": "the orange",
+      "errorMessage": "Thiếu mạo từ trước danh từ số ít",
+      "explanation": "Countable singular nouns need an article (a/an/the)",
+      "explanationVi": "Danh từ đếm được số ít cần mạo từ 'a/an/the' hoặc dùng số nhiều 'oranges'"
+    },
+    {
+      "type": "punctuation",
+      "errorWord": "(cuối câu)",
+      "errorPosition": "cuối câu",
+      "original": "",
+      "corrected": ".",
+      "errorMessage": "Thiếu dấu chấm kết thúc câu",
+      "explanation": "Sentences need ending punctuation",
+      "explanationVi": "Câu tiếng Anh cần kết thúc bằng dấu chấm (.), dấu hỏi (?), hoặc dấu chấm than (!)"
+    }
+  ],
+  "vietnameseTranslation": "Tôi yêu quả cam.",
+  "grammarRule": "Subject + Verb + Article + Object",
+  "grammarRuleVi": "Chủ ngữ viết hoa + Động từ + Mạo từ + Tân ngữ + Dấu chấm",
+  "structure": {
+    "pattern": "S + V + the + N",
+    "explanation": "Subject + Verb + Article + Noun",
+    "explanationVi": "Chủ ngữ + Động từ + Mạo từ + Danh từ"
+  },
+  "encouragement": "Gần đúng rồi! Bạn chỉ cần nhớ 3 điều: viết hoa 'I', thêm mạo từ 'the', và dấu chấm cuối câu. Cố lên! 💪"
+}
+
+---
+### QUY TẮC QUAN TRỌNG:
+- Luôn thân thiện, khuyến khích, KHÔNG chê bai
+- Nếu câu đúng hoàn toàn → isCorrect: true, encouragement: "Tuyệt vời! Câu hoàn toàn đúng ngữ pháp! 🎉"
+- Nếu chỉ có 1 lỗi nhỏ → khen trước, sửa sau: "Câu rất tốt! Chỉ cần thêm dấu chấm cuối câu thôi!"
+- Luôn đưa ra ít nhất một cách sửa tự nhiên
+- Giải thích ngắn gọn, dễ hiểu, không dùng thuật ngữ phức tạp`;
 
 // Step 5: Generate sample sentences
 const SAMPLE_SENTENCES_PROMPT = `Generate 4 sample sentences using the word "{word}" in different sentence types that the user hasn't used yet.
