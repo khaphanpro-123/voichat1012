@@ -34,54 +34,71 @@ Return ONLY valid JSON:
   ]
 }`;
 
-// Step 4: Check sentence - Detailed grammar analysis
-const CHECK_SENTENCE_PROMPT = `You are an English grammar checker for Vietnamese learners.
+// Step 4: Check sentence - Detailed grammar analysis for Vietnamese learners
+const CHECK_SENTENCE_PROMPT = `You are a friendly English grammar tutor for Vietnamese learners.
 
-TASK: Check this sentence that should contain the word "{word}" (or its variants like "{word}s"):
+TASK: Check this sentence that should contain the word "{word}" (or variants like "{word}s"):
 
 Sentence: "{sentence}"
 
-CHECK FOR THESE COMMON ERRORS:
-1. **Subject-Verb Agreement**: "Phone are" → "Phone is" (singular subject needs singular verb)
-2. **Articles (a/an/the)**: "I like phone" → "I like the phone" or "I like phones" (countable nouns need articles)
-3. **Singular/Plural**: Match subject with verb and use correct noun form
-4. **Spelling**: Check all words for typos (e.g., "convinient" → "convenient")
-5. **Punctuation**: Sentences must end with period (.), question mark (?), or exclamation (!)
-6. **Word Order**: English follows S + V + O structure
+STEP 1: Check if sentence contains "{word}" or "{word}s" (case-insensitive). If NOT → hasTargetWord: false.
 
-FIRST: Check if sentence contains "{word}" or "{word}s". If NOT, set hasTargetWord: false.
+STEP 2: Check for these COMMON ERRORS (Vietnamese learners often make):
 
-Return ONLY valid JSON (no markdown):
+1. **THIẾU MẠO TỪ (Missing Article)**
+   - Sai: "I love computer" → Đúng: "I love the computer." hoặc "I love computers."
+   - Quy tắc: Danh từ đếm được số ít cần mạo từ "a/an/the"
+
+2. **SAI CHIA ĐỘNG TỪ (Subject-Verb Agreement)**
+   - Sai: "Computer are useful." → Đúng: "Computers are useful." hoặc "The computer is useful."
+   - Quy tắc: Chủ ngữ số ít dùng "is", số nhiều dùng "are"
+
+3. **SAI LOẠI TỪ (Wrong Word Type)**
+   - Sai: "Computer is very kindly." → Đúng: "Computer is very kind." hoặc "Computer is very useful."
+   - Quy tắc: "kindly" là trạng từ (adverb), không dùng để mô tả tính chất của vật
+
+4. **LỖI CHÍNH TẢ (Spelling)**
+   - Sai: "convinient" → Đúng: "convenient"
+   - Quy tắc: Kiểm tra chính tả cẩn thận
+
+5. **THIẾU DẤU CÂU (Missing Punctuation)**
+   - Sai: "I love computers" → Đúng: "I love computers."
+   - Quy tắc: Câu tiếng Anh cần dấu chấm (.), dấu hỏi (?), hoặc dấu chấm than (!) ở cuối
+
+6. **SAI TRẬT TỰ TỪ (Word Order)**
+   - Sai: "Very I like computer." → Đúng: "I like computer very much."
+   - Quy tắc: Tiếng Anh theo cấu trúc S + V + O
+
+Return ONLY valid JSON (no markdown, no explanation outside JSON):
 {
   "isCorrect": true/false,
   "hasTargetWord": true/false,
-  "correctedSentence": "fully corrected sentence with proper punctuation",
+  "correctedSentence": "Câu đã sửa hoàn chỉnh với dấu câu",
   "errors": [
     {
-      "type": "subject_verb_agreement|article|singular_plural|spelling|punctuation|word_order",
-      "original": "the exact wrong part",
-      "corrected": "the correct version",
-      "position": "where in sentence",
-      "explanation": "Brief English explanation of the rule",
-      "explanationVi": "Giải thích tiếng Việt về quy tắc ngữ pháp"
+      "type": "article|subject_verb_agreement|word_type|spelling|punctuation|word_order",
+      "original": "phần sai trong câu gốc",
+      "corrected": "phần đã sửa đúng",
+      "position": "vị trí lỗi (start/middle/end/verb)",
+      "explanation": "Brief English explanation",
+      "explanationVi": "Giải thích tiếng Việt dễ hiểu"
     }
   ],
   "vietnameseTranslation": "Bản dịch tiếng Việt của câu đúng",
-  "grammarRule": "Main grammar rule applied (e.g., 'Singular nouns need articles')",
-  "grammarRuleVi": "Quy tắc ngữ pháp chính (ví dụ: 'Danh từ số ít cần mạo từ')",
+  "grammarRule": "Main grammar rule in English",
+  "grammarRuleVi": "Quy tắc ngữ pháp chính bằng tiếng Việt",
   "structure": {
     "pattern": "S + V + O",
     "explanation": "Subject + Verb + Object",
     "explanationVi": "Chủ ngữ + Động từ + Tân ngữ"
-  }
+  },
+  "encouragement": "Lời khuyến khích thân thiện bằng tiếng Việt (ví dụ: 'Gần đúng rồi! Chỉ cần thêm dấu chấm cuối câu.')"
 }
 
-EXAMPLES:
-Input: "I have a phone" (missing period)
-Output: {"isCorrect":false,"hasTargetWord":true,"correctedSentence":"I have a phone.","errors":[{"type":"punctuation","original":"phone","corrected":"phone.","position":"end","explanation":"Sentences must end with punctuation","explanationVi":"Câu phải kết thúc bằng dấu chấm"}],"vietnameseTranslation":"Tôi có một chiếc điện thoại.","grammarRule":"End sentences with period","grammarRuleVi":"Kết thúc câu bằng dấu chấm","structure":{"pattern":"S + V + O","explanation":"Subject + Verb + Object","explanationVi":"Chủ ngữ + Động từ + Tân ngữ"}}
-
-Input: "Phone are interesting"
-Output: {"isCorrect":false,"hasTargetWord":true,"correctedSentence":"The phone is interesting.","errors":[{"type":"article","original":"Phone","corrected":"The phone","position":"start","explanation":"Singular countable nouns need an article","explanationVi":"Danh từ đếm được số ít cần mạo từ"},{"type":"subject_verb_agreement","original":"are","corrected":"is","position":"verb","explanation":"Singular subject 'phone' needs singular verb 'is'","explanationVi":"Chủ ngữ số ít 'phone' cần động từ số ít 'is'"}],"vietnameseTranslation":"Chiếc điện thoại thật thú vị.","grammarRule":"Subject-verb agreement and articles","grammarRuleVi":"Hòa hợp chủ-vị và mạo từ","structure":{"pattern":"S + V + Adj","explanation":"Subject + Verb + Adjective","explanationVi":"Chủ ngữ + Động từ + Tính từ"}}`;
+IMPORTANT: 
+- Be encouraging and friendly, not critical
+- If sentence is correct, set isCorrect: true and encouragement: "Tuyệt vời! Câu hoàn toàn đúng ngữ pháp! 🎉"
+- Always provide Vietnamese explanations for Vietnamese learners`;
 
 // Step 5: Generate sample sentences
 const SAMPLE_SENTENCES_PROMPT = `Generate 4 sample sentences using the word "{word}" in different sentence types that the user hasn't used yet.

@@ -54,6 +54,7 @@ interface SentenceCheck {
   isDuplicate: boolean;
   grammarRule?: string;
   grammarRuleVi?: string;
+  encouragement?: string;
 }
 
 type Step = "select" | "guess" | "sentences" | "checking" | "results";
@@ -349,6 +350,7 @@ export default function ImageVocabularyLearning() {
       spelling: "Chính tả",
       punctuation: "Dấu câu",
       word_order: "Trật tự từ",
+      word_type: "Sai loại từ",
       tense: "Thì động từ",
       grammar: "Ngữ pháp chung"
     };
@@ -363,6 +365,7 @@ export default function ImageVocabularyLearning() {
       spelling: "Đọc nhiều và ghi nhớ cách viết từ",
       punctuation: "Nhớ kết thúc câu bằng dấu chấm (.)",
       word_order: "Ghi nhớ cấu trúc S + V + O trong tiếng Anh",
+      word_type: "Phân biệt tính từ (adj) và trạng từ (adv)",
       tense: "Ôn lại các thì cơ bản và dấu hiệu nhận biết"
     };
     return suggestions[type] || "Luyện tập thêm để cải thiện";
@@ -721,6 +724,15 @@ export default function ImageVocabularyLearning() {
                             {s.grammarRuleVi && (
                               <div className="mt-2 p-2 bg-blue-500/20 rounded-lg">
                                 <p className="text-blue-300 text-xs">📖 Quy tắc: {s.grammarRuleVi}</p>
+                              </div>
+                            )}
+
+                            {/* Encouragement message */}
+                            {s.encouragement && (
+                              <div className={`mt-2 p-2 rounded-lg ${s.isCorrect ? "bg-green-500/20" : "bg-yellow-500/20"}`}>
+                                <p className={`text-sm ${s.isCorrect ? "text-green-300" : "text-yellow-300"}`}>
+                                  💬 {s.encouragement}
+                                </p>
                               </div>
                             )}
                           </div>
