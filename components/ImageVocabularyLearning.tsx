@@ -58,6 +58,7 @@ interface SentenceCheck {
     errorWord?: string;
     errorPosition?: string;
     errorMessage?: string;
+    errorIndex?: number;
   }>;
   vietnameseTranslation: string;
   hasTargetWord: boolean;
@@ -65,6 +66,7 @@ interface SentenceCheck {
   grammarRule?: string;
   grammarRuleVi?: string;
   encouragement?: string;
+  detectedVariant?: string;
 }
 
 type Step = "select" | "guess" | "sentences" | "checking" | "results";
@@ -354,7 +356,7 @@ export default function ImageVocabularyLearning() {
 
   const getErrorTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
-      subject_verb_agreement: "Hòa hợp chủ-vị",
+      subject_verb_agreement: "Chia động từ",
       article: "Mạo từ (a/an/the)",
       singular_plural: "Số ít/số nhiều",
       spelling: "Chính tả",
@@ -365,24 +367,34 @@ export default function ImageVocabularyLearning() {
       grammar: "Ngữ pháp chung",
       missing_verb: "Thiếu động từ",
       comparative: "Lỗi so sánh",
-      capitalization: "Viết hoa sai"
+      capitalization: "Viết hoa",
+      verb_form_after_attitude: "Dạng động từ sau like/love",
+      missing_subject: "Thiếu chủ ngữ",
+      question_form: "Cấu trúc câu hỏi",
+      negation: "Câu phủ định",
+      tense_agreement: "Hợp tác thì"
     };
     return labels[type] || type.replace(/_/g, " ");
   };
 
   const getErrorSuggestion = (type: string): string => {
     const suggestions: Record<string, string> = {
-      subject_verb_agreement: "Ôn lại quy tắc chia động từ theo chủ ngữ số ít/nhiều",
-      article: "Học quy tắc dùng a/an/the với danh từ đếm được",
+      subject_verb_agreement: "Ngôi 3 số ít (he/she/it) → động từ thêm -s/-es",
+      article: "Danh từ đếm được số ít cần a/an/the",
       singular_plural: "Chú ý danh từ đếm được cần mạo từ hoặc dạng số nhiều",
       spelling: "Đọc nhiều và ghi nhớ cách viết từ",
       punctuation: "Nhớ kết thúc câu bằng dấu chấm (.)",
       word_order: "Ghi nhớ cấu trúc S + V + O trong tiếng Anh",
-      word_type: "Phân biệt tính từ (adj) và trạng từ (adv)",
+      word_type: "Phân biệt danh từ (N), động từ (V), tính từ (Adj)",
       tense: "Ôn lại các thì cơ bản và dấu hiệu nhận biết",
       missing_verb: "Câu tiếng Anh cần có động từ (is/are/was/were...)",
       comparative: "Dùng 'much' + tính từ so sánh hơn, không dùng 'very'",
-      capitalization: "Nhớ viết hoa 'I' và chữ cái đầu câu"
+      capitalization: "Nhớ viết hoa 'I' và chữ cái đầu câu",
+      verb_form_after_attitude: "Sau like/love/hate dùng V-ing hoặc to V",
+      missing_subject: "Câu cần có chủ ngữ rõ ràng (I/You/He/She...)",
+      question_form: "Câu hỏi Yes/No: Do/Does + S + V?",
+      negation: "He/She/It dùng doesn't, I/You/We/They dùng don't",
+      tense_agreement: "can/will/should + V nguyên mẫu"
     };
     return suggestions[type] || "Luyện tập thêm để cải thiện";
   };

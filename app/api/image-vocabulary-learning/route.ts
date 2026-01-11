@@ -37,66 +37,95 @@ Return ONLY valid JSON:
 // Step 4: Check sentence - Detailed grammar analysis for Vietnamese learners
 const CHECK_SENTENCE_PROMPT = `Bạn là trợ lý học tiếng Anh thân thiện cho người Việt.
 
-NHIỆM VỤ: Kiểm tra câu có chứa từ "{word}" (hoặc "{word}s"):
+NHIỆM VỤ: Kiểm tra câu tiếng Anh có chứa từ gốc "{word}" hoặc biến thể của nó.
 
 Câu người dùng nhập: "{sentence}"
 
 ---
-### BƯỚC 1: Chuẩn hóa và kiểm tra từ khóa
-- Chuẩn hóa: viết hoa chữ cái đầu câu, loại bỏ khoảng trắng thừa
-- Kiểm tra câu có chứa "{word}" hoặc "{word}s" (không phân biệt hoa/thường)
-- Nếu KHÔNG có → hasTargetWord: false
+### BƯỚC 1: Kiểm tra từ gốc và biến thể
+
+**Từ gốc**: "{word}"
+**Biến thể hợp lệ** (tự động sinh từ từ gốc):
+- Danh từ số nhiều: {word}s, {word}es
+- Động từ ngôi 3: {word}s
+- V-ing: {word}ing (bỏ e nếu có: swim→swimming, run→running)
+- V-ed/V2/V3: {word}ed, hoặc bất quy tắc (swim→swam→swum, run→ran→run)
+- Danh từ chỉ người: {word}er, {word}or (swim→swimmer, run→runner)
+
+**Quy tắc**: Câu hợp lệ nếu chứa BẤT KỲ biến thể nào của từ gốc (không phân biệt hoa/thường).
+
+Nếu KHÔNG có từ gốc hoặc biến thể → hasTargetWord: false, dừng kiểm tra ngữ pháp.
 
 ---
 ### BƯỚC 2: Phân tích lỗi ngữ pháp CHI TIẾT
 
 Với MỖI lỗi phát hiện, phải chỉ rõ:
-- **errorWord**: từ/cụm từ sai cụ thể (ví dụ: "i", "orange", "cuối câu")
+- **errorWord**: từ/cụm từ sai cụ thể
 - **errorPosition**: vị trí trong câu (đầu câu/giữa câu/cuối câu/sau động từ...)
+- **errorIndex**: vị trí từ (số thứ tự từ trong câu, bắt đầu từ 0)
 - **errorMessage**: mô tả ngắn gọn lỗi bằng tiếng Việt
-- **suggestion**: cách sửa cụ thể
+- **suggestion**: gợi ý sửa cụ thể
 
 DANH SÁCH LỖI CẦN KIỂM TRA:
 
-1. **VIẾT HOA (capitalization)**
-   - Ví dụ: "i love orange" → lỗi ở "i" (đầu câu)
-   - errorWord: "i", errorPosition: "đầu câu", errorMessage: "Chữ 'I' luôn viết hoa"
+1. **SAI DẠNG SAU ĐỘNG TỪ THÁI ĐỘ (verb_form_after_attitude)**
+   - Quy tắc: like/love/hate/prefer/enjoy + V-ing HOẶC to V
+   - Sai: "I love swim" → Đúng: "I love swimming." hoặc "I love to swim."
+   - errorWord: "swim", errorMessage: "Sau 'love' cần dùng 'swimming' hoặc 'to swim'"
 
-2. **MẠO TỪ (article)**
-   - Ví dụ: "I love orange" → lỗi ở "orange" (thiếu mạo từ)
-   - errorWord: "orange", errorPosition: "sau động từ", errorMessage: "Thiếu mạo từ trước danh từ số ít"
+2. **CHIA ĐỘNG TỪ HIỆN TẠI ĐƠN (subject_verb_agreement)**
+   - Quy tắc: Ngôi 3 số ít (he/she/it) → động từ thêm -s/-es
+   - Sai: "She swim fast." → Đúng: "She swims fast."
+   - errorWord: "swim", errorMessage: "Ngôi 3 số ít cần 'swims'"
 
-3. **DẤU CÂU (punctuation)**
-   - Ví dụ: "I love the orange" → lỗi ở cuối câu
-   - errorWord: "(cuối câu)", errorPosition: "cuối câu", errorMessage: "Thiếu dấu chấm kết thúc câu"
+3. **THIẾU CHỦ NGỮ (missing_subject)**
+   - Quy tắc: Câu cần chủ ngữ rõ ràng (trừ mệnh lệnh)
+   - Sai: "Swim don't like it." → Đúng: "I don't like swimming."
+   - errorWord: "(thiếu)", errorMessage: "Câu cần chủ ngữ rõ ràng"
 
-4. **CHIA ĐỘNG TỪ (subject_verb_agreement)**
-   - Ví dụ: "Orange are sweet" → lỗi ở "are"
-   - errorWord: "are", errorPosition: "động từ", errorMessage: "Chủ ngữ số ít dùng 'is', không dùng 'are'"
+4. **CÂU HỎI YES/NO (question_form)**
+   - Quy tắc: Do/Does + S + V(base)? | Did + S + V(base)?
+   - Sai: "You like swimming?" → Đúng: "Do you like swimming?"
+   - errorWord: "You", errorMessage: "Câu hỏi Yes/No cần 'Do/Does' ở đầu"
 
-5. **SỐ ÍT/SỐ NHIỀU (singular_plural)**
-   - Ví dụ: "I have many orange" → lỗi ở "orange"
-   - errorWord: "orange", errorPosition: "sau 'many'", errorMessage: "Sau 'many' cần danh từ số nhiều"
+5. **PHỦ ĐỊNH (negation)**
+   - Quy tắc: don't/doesn't + V(base) | didn't + V(base)
+   - Sai: "He don't like swimming." → Đúng: "He doesn't like swimming."
+   - errorWord: "don't", errorMessage: "He/She/It dùng 'doesn't', không dùng 'don't'"
 
-6. **LOẠI TỪ (word_type)**
-   - Ví dụ: "Orange is beauty" → lỗi ở "beauty"
-   - errorWord: "beauty", errorPosition: "sau 'is'", errorMessage: "Cần tính từ 'beautiful', không phải danh từ 'beauty'"
+6. **VIẾT HOA (capitalization)**
+   - Quy tắc: "I" luôn viết hoa, đầu câu viết hoa
+   - Sai: "i love swimming" → Đúng: "I love swimming."
+   - errorWord: "i", errorMessage: "Chữ 'I' luôn viết hoa"
 
-7. **CHÍNH TẢ (spelling)**
-   - Ví dụ: "orang is sweet" → lỗi ở "orang"
-   - errorWord: "orang", errorPosition: "chủ ngữ", errorMessage: "Sai chính tả, đúng là 'orange'"
+7. **MẠO TỪ (article)**
+   - Quy tắc: Danh từ đếm được số ít cần a/an/the
+   - Sai: "He is fast swimmer." → Đúng: "He is a fast swimmer."
+   - errorWord: "swimmer", errorMessage: "Thiếu mạo từ 'a' trước 'fast swimmer'"
 
-8. **TRẬT TỰ TỪ (word_order)**
-   - Ví dụ: "Very I like orange" → lỗi ở "Very I"
-   - errorWord: "Very I", errorPosition: "đầu câu", errorMessage: "Sai trật tự từ, đúng: 'I like orange very much'"
+8. **DẤU CÂU (punctuation)**
+   - Quy tắc: Câu kết thúc bằng . ? !
+   - Sai: "I love swimming" → Đúng: "I love swimming."
+   - errorWord: "(cuối câu)", errorMessage: "Thiếu dấu chấm kết thúc câu"
 
-9. **THIẾU ĐỘNG TỪ (missing_verb)**
-   - Ví dụ: "Orange very sweet" → thiếu động từ
-   - errorWord: "(thiếu)", errorPosition: "sau chủ ngữ", errorMessage: "Thiếu động từ 'is'"
+9. **TRẬT TỰ TỪ (word_order)**
+   - Quy tắc: S + V + O/Adj/Adv
+   - Sai: "Very I like swimming." → Đúng: "I like swimming very much."
+   - errorWord: "Very I", errorMessage: "Sai trật tự từ"
 
-10. **SO SÁNH (comparative)**
-    - Ví dụ: "Orange very sweeter" → lỗi ở "very sweeter"
-    - errorWord: "very sweeter", errorPosition: "sau chủ ngữ", errorMessage: "Dùng 'much sweeter', không dùng 'very sweeter'"
+10. **DẠNG DANH TỪ/ĐỘNG TỪ (word_type)**
+    - Quy tắc: Phân biệt swimmer (N), swimming (Gerund), swim (V)
+    - Sai: "He is a good swimming." → Đúng: "He is a good swimmer."
+    - errorWord: "swimming", errorMessage: "Cần danh từ 'swimmer', không phải 'swimming'"
+
+11. **THÌ VÀ HỢP TÁC TỪ (tense_agreement)**
+    - Quy tắc: be + Adj/N; have + V3; can + V(base)
+    - Sai: "He can swims." → Đúng: "He can swim."
+    - errorWord: "swims", errorMessage: "Sau 'can' dùng động từ nguyên mẫu 'swim'"
+
+12. **CHÍNH TẢ (spelling)**
+    - Sai: "swiming" → Đúng: "swimming"
+    - errorWord: "swiming", errorMessage: "Sai chính tả, đúng là 'swimming'"
 
 ---
 ### BƯỚC 3: Trả về JSON
@@ -105,13 +134,15 @@ Return ONLY valid JSON (không markdown, không giải thích ngoài JSON):
 {
   "isCorrect": true/false,
   "hasTargetWord": true/false,
+  "detectedVariant": "biến thể từ gốc tìm thấy trong câu (ví dụ: swimming, swimmer, swam)",
   "originalSentence": "Câu gốc người dùng nhập",
   "correctedSentence": "Câu đã sửa hoàn chỉnh với dấu câu đúng",
   "errors": [
     {
-      "type": "capitalization|article|punctuation|subject_verb_agreement|singular_plural|word_type|spelling|word_order|missing_verb|comparative",
+      "type": "verb_form_after_attitude|subject_verb_agreement|missing_subject|question_form|negation|capitalization|article|punctuation|word_order|word_type|tense_agreement|spelling",
       "errorWord": "từ/cụm từ sai cụ thể",
       "errorPosition": "vị trí cụ thể trong câu",
+      "errorIndex": 0,
       "original": "phần sai",
       "corrected": "phần đã sửa",
       "errorMessage": "Mô tả lỗi ngắn gọn bằng tiếng Việt",
@@ -121,76 +152,113 @@ Return ONLY valid JSON (không markdown, không giải thích ngoài JSON):
   ],
   "vietnameseTranslation": "Bản dịch tiếng Việt của câu đúng",
   "grammarRule": "Main grammar rule in English",
-  "grammarRuleVi": "Quy tắc ngữ pháp chính bằng tiếng Việt (1 dòng)",
+  "grammarRuleVi": "Quy tắc ngữ pháp chính bằng tiếng Việt",
   "structure": {
     "pattern": "S + V + O",
     "explanation": "Subject + Verb + Object",
     "explanationVi": "Chủ ngữ + Động từ + Tân ngữ"
   },
-  "encouragement": "Lời khuyến khích thân thiện (ví dụ: 'Gần đúng rồi! Chỉ cần thêm dấu chấm cuối câu thôi! 👍')"
+  "encouragement": "Lời khuyến khích thân thiện"
 }
 
 ---
-### VÍ DỤ PHẢN HỒI
+### VÍ DỤ ĐẦU VÀO/ĐẦU RA
 
-Input: "i love orange"
-
-Output:
+**Input**: "I love swim."
+**Output**:
 {
   "isCorrect": false,
   "hasTargetWord": true,
-  "originalSentence": "i love orange",
-  "correctedSentence": "I love the orange.",
+  "detectedVariant": "swim",
+  "originalSentence": "I love swim.",
+  "correctedSentence": "I love swimming.",
   "errors": [
     {
-      "type": "capitalization",
-      "errorWord": "i",
-      "errorPosition": "đầu câu",
-      "original": "i",
-      "corrected": "I",
-      "errorMessage": "Chữ 'I' luôn viết hoa",
-      "explanation": "'I' is always capitalized in English",
-      "explanationVi": "Đại từ 'I' (tôi) luôn viết hoa trong tiếng Anh"
-    },
-    {
-      "type": "article",
-      "errorWord": "orange",
+      "type": "verb_form_after_attitude",
+      "errorWord": "swim",
       "errorPosition": "sau động từ 'love'",
-      "original": "orange",
-      "corrected": "the orange",
-      "errorMessage": "Thiếu mạo từ trước danh từ số ít",
-      "explanation": "Countable singular nouns need an article (a/an/the)",
-      "explanationVi": "Danh từ đếm được số ít cần mạo từ 'a/an/the' hoặc dùng số nhiều 'oranges'"
-    },
-    {
-      "type": "punctuation",
-      "errorWord": "(cuối câu)",
-      "errorPosition": "cuối câu",
-      "original": "",
-      "corrected": ".",
-      "errorMessage": "Thiếu dấu chấm kết thúc câu",
-      "explanation": "Sentences need ending punctuation",
-      "explanationVi": "Câu tiếng Anh cần kết thúc bằng dấu chấm (.), dấu hỏi (?), hoặc dấu chấm than (!)"
+      "errorIndex": 2,
+      "original": "swim",
+      "corrected": "swimming",
+      "errorMessage": "Sau 'love' cần dùng 'swimming' hoặc 'to swim'",
+      "explanation": "After 'love', use V-ing or 'to V'",
+      "explanationVi": "Sau động từ chỉ sở thích (love/like/hate) cần dùng V-ing hoặc to V"
     }
   ],
-  "vietnameseTranslation": "Tôi yêu quả cam.",
-  "grammarRule": "Subject + Verb + Article + Object",
-  "grammarRuleVi": "Chủ ngữ viết hoa + Động từ + Mạo từ + Tân ngữ + Dấu chấm",
-  "structure": {
-    "pattern": "S + V + the + N",
-    "explanation": "Subject + Verb + Article + Noun",
-    "explanationVi": "Chủ ngữ + Động từ + Mạo từ + Danh từ"
-  },
-  "encouragement": "Gần đúng rồi! Bạn chỉ cần nhớ 3 điều: viết hoa 'I', thêm mạo từ 'the', và dấu chấm cuối câu. Cố lên! 💪"
+  "vietnameseTranslation": "Tôi thích bơi.",
+  "grammarRule": "love/like/hate + V-ing or to V",
+  "grammarRuleVi": "Sau love/like/hate dùng V-ing hoặc to V",
+  "structure": { "pattern": "S + love + V-ing", "explanation": "Subject + love + Gerund", "explanationVi": "Chủ ngữ + love + Danh động từ" },
+  "encouragement": "Gần đúng rồi! Chỉ cần đổi 'swim' thành 'swimming'. Cố lên! 💪"
+}
+
+**Input**: "She swim fast."
+**Output**:
+{
+  "isCorrect": false,
+  "hasTargetWord": true,
+  "detectedVariant": "swim",
+  "originalSentence": "She swim fast.",
+  "correctedSentence": "She swims fast.",
+  "errors": [
+    {
+      "type": "subject_verb_agreement",
+      "errorWord": "swim",
+      "errorPosition": "động từ chính",
+      "errorIndex": 1,
+      "original": "swim",
+      "corrected": "swims",
+      "errorMessage": "Ngôi 3 số ít (She) cần động từ thêm -s",
+      "explanation": "Third person singular requires verb + s",
+      "explanationVi": "Chủ ngữ ngôi 3 số ít (he/she/it) cần động từ thêm -s/-es"
+    }
+  ],
+  "vietnameseTranslation": "Cô ấy bơi nhanh.",
+  "grammarRule": "He/She/It + Verb-s",
+  "grammarRuleVi": "Ngôi 3 số ít + Động từ thêm -s",
+  "structure": { "pattern": "S + V-s + Adv", "explanation": "Subject + Verb-s + Adverb", "explanationVi": "Chủ ngữ + Động từ-s + Trạng từ" },
+  "encouragement": "Tốt lắm! Chỉ cần nhớ thêm '-s' cho động từ khi chủ ngữ là She/He/It. 👍"
+}
+
+**Input**: "He is a fast swimmer."
+**Output**:
+{
+  "isCorrect": true,
+  "hasTargetWord": true,
+  "detectedVariant": "swimmer",
+  "originalSentence": "He is a fast swimmer.",
+  "correctedSentence": "He is a fast swimmer.",
+  "errors": [],
+  "vietnameseTranslation": "Anh ấy là một người bơi nhanh.",
+  "grammarRule": "S + be + a/an + Adj + N",
+  "grammarRuleVi": "Chủ ngữ + be + mạo từ + Tính từ + Danh từ",
+  "structure": { "pattern": "S + be + a + Adj + N", "explanation": "Subject + be + Article + Adjective + Noun", "explanationVi": "Chủ ngữ + be + Mạo từ + Tính từ + Danh từ" },
+  "encouragement": "Tuyệt vời! Câu hoàn toàn đúng ngữ pháp! 🎉"
+}
+
+**Input**: "I run every day."
+**Output**:
+{
+  "isCorrect": false,
+  "hasTargetWord": false,
+  "detectedVariant": null,
+  "originalSentence": "I run every day.",
+  "correctedSentence": null,
+  "errors": [],
+  "vietnameseTranslation": null,
+  "grammarRule": null,
+  "grammarRuleVi": null,
+  "structure": null,
+  "encouragement": "❌ Câu thiếu từ gốc '{word}' hoặc biến thể của nó (swimming, swimmer, swims, swam, swum...)."
 }
 
 ---
 ### QUY TẮC QUAN TRỌNG:
 - Luôn thân thiện, khuyến khích, KHÔNG chê bai
-- Nếu câu đúng hoàn toàn → isCorrect: true, encouragement: "Tuyệt vời! Câu hoàn toàn đúng ngữ pháp! 🎉"
-- Nếu chỉ có 1 lỗi nhỏ → khen trước, sửa sau: "Câu rất tốt! Chỉ cần thêm dấu chấm cuối câu thôi!"
-- Luôn đưa ra ít nhất một cách sửa tự nhiên
-- Giải thích ngắn gọn, dễ hiểu, không dùng thuật ngữ phức tạp`;
+- Nếu câu đúng hoàn toàn → isCorrect: true
+- Nếu thiếu từ gốc → hasTargetWord: false, không kiểm tra ngữ pháp
+- Chấp nhận TẤT CẢ biến thể hợp lệ của từ gốc
+- Giải thích ngắn gọn, dễ hiểu`;
 
 // Step 5: Generate sample sentences
 const SAMPLE_SENTENCES_PROMPT = `Generate 4 sample sentences using the word "{word}" in different sentence types that the user hasn't used yet.
