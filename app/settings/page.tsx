@@ -8,15 +8,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Key, Play, ExternalLink, CheckCircle, 
   Copy, Eye, EyeOff, Loader2, AlertCircle, Sparkles,
-  Youtube, ChevronDown, ChevronUp
+  Video, ChevronDown, ChevronUp, Trash2, LogIn
 } from "lucide-react";
 
-type Provider = "groq" | "openai" | "gemini";
+type Provider = "groq" | "openai" | "gemini" | "cohere";
 
 interface ApiKeyState {
   groq: string;
   openai: string;
   gemini: string;
+  cohere: string;
+}
+
+interface SavedKeyState {
+  groq: string;
+  openai: string;
+  gemini: string;
+  cohere: string;
 }
 
 interface VideoGuide {
@@ -32,7 +40,7 @@ const videoGuides: VideoGuide[] = [
   {
     provider: "groq",
     title: "Cách lấy Groq API Key (Miễn phí)",
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Replace with actual video
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
     duration: "2:30",
     steps: [
@@ -46,7 +54,7 @@ const videoGuides: VideoGuide[] = [
   {
     provider: "openai",
     title: "Cách lấy OpenAI API Key",
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Replace with actual video
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
     duration: "3:15",
     steps: [
@@ -60,7 +68,7 @@ const videoGuides: VideoGuide[] = [
   {
     provider: "gemini",
     title: "Cách lấy Google Gemini API Key (Miễn phí)",
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Replace with actual video
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
     duration: "2:00",
     steps: [
@@ -68,6 +76,20 @@ const videoGuides: VideoGuide[] = [
       "Đăng nhập bằng Google",
       "Click 'Create API Key'",
       "Chọn project hoặc tạo mới",
+      "Copy key và dán vào đây"
+    ]
+  },
+  {
+    provider: "cohere",
+    title: "Cách lấy Cohere API Key (Miễn phí)",
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    duration: "2:00",
+    steps: [
+      "Truy cập dashboard.cohere.com",
+      "Đăng nhập/Đăng ký tài khoản",
+      "Vào mục API Keys",
+      "Click 'Create Trial Key'",
       "Copy key và dán vào đây"
     ]
   }
@@ -83,7 +105,8 @@ const providerInfo = {
     icon: "⚡",
     description: "Miễn phí, tốc độ cực nhanh",
     link: "https://console.groq.com/keys",
-    recommended: true
+    recommended: true,
+    keyPrefix: "gsk_"
   },
   openai: {
     name: "OpenAI",
@@ -94,7 +117,8 @@ const providerInfo = {
     icon: "🤖",
     description: "Chất lượng cao, trả phí",
     link: "https://platform.openai.com/api-keys",
-    recommended: false
+    recommended: false,
+    keyPrefix: "sk-"
   },
   gemini: {
     name: "Google Gemini",
@@ -105,41 +129,71 @@ const providerInfo = {
     icon: "✨",
     description: "Miễn phí, hỗ trợ Vision",
     link: "https://aistudio.google.com/app/apikey",
-    recommended: true
+    recommended: true,
+    keyPrefix: "AIza"
+  },
+  cohere: {
+    name: "Cohere",
+    color: "from-purple-500 to-pink-500",
+    bgColor: "bg-purple-500/10",
+    borderColor: "border-purple-500/30",
+    textColor: "text-purple-400",
+    icon: "🟣",
+    description: "Miễn phí, Command-R models",
+    link: "https://dashboard.cohere.com/api-keys",
+    recommended: true,
+    keyPrefix: ""
   }
+};
+
+// Mask key: show only last 4 characters
+const maskKey = (key: string): string => {
+  if (!key || key.length < 8) return "";
+  return "••••••••" + key.slice(-4);
 };
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   
-  const [keys, setKeys] = useState<ApiKeyState>({ groq: "", openai: "", gemini: "" });
-  const [showKeys, setShowKeys] = useState<Record<Provider, boolean>>({ groq: false, openai: false, gemini: false });
+  const [keys, setKeys] = useState<ApiKeyState>({ groq: "", openai: "", gemini: "", cohere: "" });
+  const [savedKeys, setSavedKeys] = useState<SavedKeyState>({ groq: "", openai: "", gemini: "", cohere: "" });
+  const [showKeys, setShowKeys] = useState<Record<Provider, boolean>>({ groq: false, openai: false, gemini: false, cohere: false });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<Provider | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [expandedGuide, setExpandedGuide] = useState<Provider | null>(null);
   const [showVideoModal, setShowVideoModal] = useState<Provider | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
+    if (status === "authenticated") {
+      setIsLoggedIn(true);
+    } else if (status === "unauthenticated") {
+      setIsLoggedIn(false);
+      setLoading(false);
     }
-  }, [status, router]);
+  }, [status]);
 
   // Load existing keys
   useEffect(() => {
     const loadKeys = async () => {
-      if (!session?.user) return;
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
       const userId = (session.user as any).id;
       try {
         const res = await fetch(`/api/user-api-keys?userId=${userId}`);
         const data = await res.json();
         if (data.success && data.keys) {
-          setKeys({
+          // Store saved keys separately for display
+          setSavedKeys({
             groq: data.keys.groqKey || "",
             openai: data.keys.openaiKey || "",
-            gemini: data.keys.geminiKey || ""
+            gemini: data.keys.geminiKey || "",
+            cohere: data.keys.cohereKey || ""
           });
         }
       } catch (err) {
@@ -152,25 +206,39 @@ export default function SettingsPage() {
   }, [session]);
 
   const handleSave = async () => {
-    if (!session?.user) return;
+    if (!session?.user) {
+      setMessage({ type: "error", text: "Vui lòng đăng nhập để lưu API keys" });
+      return;
+    }
     setSaving(true);
     setMessage(null);
     
     try {
       const userId = (session.user as any).id;
+      
+      // Only send keys that have been entered (not empty)
+      const keysToSave: Record<string, string | null> = { userId };
+      if (keys.groq) keysToSave.groqKey = keys.groq;
+      if (keys.openai) keysToSave.openaiKey = keys.openai;
+      if (keys.gemini) keysToSave.geminiKey = keys.gemini;
+      if (keys.cohere) keysToSave.cohereKey = keys.cohere;
+      
       const res = await fetch("/api/user-api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          groqKey: keys.groq || null,
-          openaiKey: keys.openai || null,
-          geminiKey: keys.gemini || null
-        })
+        body: JSON.stringify(keysToSave)
       });
       const data = await res.json();
       if (data.success) {
         setMessage({ type: "success", text: "✅ Đã lưu API keys thành công!" });
+        // Update saved keys and clear input fields
+        setSavedKeys(prev => ({
+          groq: keys.groq || prev.groq,
+          openai: keys.openai || prev.openai,
+          gemini: keys.gemini || prev.gemini,
+          cohere: keys.cohere || prev.cohere
+        }));
+        setKeys({ groq: "", openai: "", gemini: "", cohere: "" });
       } else {
         setMessage({ type: "error", text: data.message || "Lỗi khi lưu" });
       }
@@ -178,6 +246,32 @@ export default function SettingsPage() {
       setMessage({ type: "error", text: "Không thể kết nối server" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (provider: Provider) => {
+    if (!session?.user) return;
+    if (!confirm(`Bạn có chắc muốn xóa ${providerInfo[provider].name} API key?`)) return;
+    
+    setDeleting(provider);
+    try {
+      const userId = (session.user as any).id;
+      const res = await fetch("/api/user-api-keys", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, provider })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: "success", text: `✅ Đã xóa ${providerInfo[provider].name} API key` });
+        setSavedKeys(prev => ({ ...prev, [provider]: "" }));
+      } else {
+        setMessage({ type: "error", text: data.message || "Lỗi khi xóa" });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "Không thể kết nối server" });
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -210,9 +304,37 @@ export default function SettingsPage() {
               <Key className="w-6 h-6 text-yellow-400" />
               Cài đặt API Keys
             </h1>
-            <p className="text-white/60 text-sm">Xin chào, {userName}</p>
+            <p className="text-white/60 text-sm">
+              {isLoggedIn ? `Xin chào, ${userName}` : "Chưa đăng nhập"}
+            </p>
           </div>
         </div>
+
+        {/* Login Warning */}
+        {!isLoggedIn && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-yellow-500/20 border border-yellow-500/50"
+          >
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-yellow-300 font-semibold mb-1">Bạn chưa đăng nhập</h3>
+                <p className="text-yellow-200/80 text-sm mb-3">
+                  Vui lòng đăng nhập để lưu và quản lý API keys của bạn. API keys sẽ được lưu an toàn trong tài khoản.
+                </p>
+                <Link
+                  href="/auth/login"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-black font-medium rounded-lg hover:bg-yellow-400 transition"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Đăng nhập ngay
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Message */}
         <AnimatePresence>
@@ -260,6 +382,7 @@ export default function SettingsPage() {
             const info = providerInfo[provider];
             const guide = videoGuides.find(g => g.provider === provider)!;
             const isExpanded = expandedGuide === provider;
+            const hasSavedKey = !!savedKeys[provider];
             
             return (
               <motion.div
@@ -280,6 +403,9 @@ export default function SettingsPage() {
                         {info.recommended && (
                           <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full">Khuyên dùng</span>
                         )}
+                        {hasSavedKey && (
+                          <span className="text-xs bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded-full">✓ Đã lưu</span>
+                        )}
                       </div>
                       <p className="text-white/60 text-sm">{info.description}</p>
                     </div>
@@ -294,33 +420,61 @@ export default function SettingsPage() {
                   </a>
                 </div>
 
-                {/* Input */}
-                <div className="px-4 pb-4">
-                  <div className="relative">
-                    <input
-                      type={showKeys[provider] ? "text" : "password"}
-                      value={keys[provider]}
-                      onChange={(e) => setKeys({ ...keys, [provider]: e.target.value })}
-                      placeholder={`Nhập ${info.name} API Key...`}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 pr-20 text-white placeholder-white/30 focus:outline-none focus:border-white/30"
-                    />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {/* Saved Key Display */}
+                {hasSavedKey && (
+                  <div className="px-4 pb-2">
+                    <div className="flex items-center gap-2 p-3 bg-black/30 rounded-xl border border-green-500/30">
+                      <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                      <span className="text-green-400 font-mono text-sm flex-1">
+                        {showKeys[provider] ? savedKeys[provider] : maskKey(savedKeys[provider])}
+                      </span>
                       <button
                         onClick={() => setShowKeys({ ...showKeys, [provider]: !showKeys[provider] })}
-                        className="p-2 hover:bg-white/10 rounded-lg"
+                        className="p-1.5 hover:bg-white/10 rounded-lg"
+                        title={showKeys[provider] ? "Ẩn key" : "Hiện key"}
                       >
                         {showKeys[provider] ? <EyeOff className="w-4 h-4 text-white/60" /> : <Eye className="w-4 h-4 text-white/60" />}
                       </button>
-                      {keys[provider] && (
-                        <button
-                          onClick={() => copyToClipboard(keys[provider])}
-                          className="p-2 hover:bg-white/10 rounded-lg"
-                        >
-                          <Copy className="w-4 h-4 text-white/60" />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => copyToClipboard(savedKeys[provider])}
+                        className="p-1.5 hover:bg-white/10 rounded-lg"
+                        title="Copy key"
+                      >
+                        <Copy className="w-4 h-4 text-white/60" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(provider)}
+                        disabled={deleting === provider || !isLoggedIn}
+                        className="p-1.5 hover:bg-red-500/20 rounded-lg disabled:opacity-50"
+                        title="Xóa key"
+                      >
+                        {deleting === provider ? (
+                          <Loader2 className="w-4 h-4 text-red-400 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        )}
+                      </button>
                     </div>
                   </div>
+                )}
+
+                {/* Input for new/update key */}
+                <div className="px-4 pb-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={keys[provider]}
+                      onChange={(e) => setKeys({ ...keys, [provider]: e.target.value })}
+                      placeholder={hasSavedKey ? `Nhập key mới để cập nhật...` : `Nhập ${info.name} API Key...`}
+                      disabled={!isLoggedIn}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                  {hasSavedKey && (
+                    <p className="text-white/40 text-xs mt-2">
+                      💡 Nhập key mới ở trên để thay thế key hiện tại
+                    </p>
+                  )}
                 </div>
 
                 {/* Video Guide Toggle */}
@@ -360,7 +514,7 @@ export default function SettingsPage() {
                             {guide.duration}
                           </div>
                           <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                            <Youtube className="w-12 h-12 text-white/30" />
+                            <Video className="w-12 h-12 text-white/30" />
                           </div>
                         </button>
 
@@ -390,11 +544,11 @@ export default function SettingsPage() {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          disabled={saving}
-          className="w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+          disabled={saving || !isLoggedIn || (!keys.groq && !keys.openai && !keys.gemini && !keys.cohere)}
+          className="w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-          {saving ? "Đang lưu..." : "Lưu API Keys"}
+          {saving ? "Đang lưu..." : !isLoggedIn ? "Đăng nhập để lưu" : "Lưu API Keys"}
         </button>
 
         {/* Quick Links */}
@@ -443,7 +597,7 @@ export default function SettingsPage() {
               </div>
               <div className="aspect-video bg-black flex items-center justify-center">
                 <div className="text-center text-white/60">
-                  <Youtube className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                  <Video className="w-16 h-16 mx-auto mb-4 text-red-500" />
                   <p>Video hướng dẫn sẽ được cập nhật sớm</p>
                   <a
                     href={providerInfo[showVideoModal].link}
