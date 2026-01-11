@@ -299,29 +299,54 @@ export async function callAI(
  * Parse JSON from AI response (handles markdown code blocks)
  */
 export function parseJsonFromAI(content: string): any {
+  if (!content) {
+    console.error("[parseJsonFromAI] Empty content");
+    return null;
+  }
+  
   // Remove markdown code blocks
   let cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
   
+  // Remove any leading/trailing whitespace
+  cleaned = cleaned.trim();
+  
+  // Try to extract JSON object first (most common case)
+  const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (objectMatch) {
+    try {
+      const parsed = JSON.parse(objectMatch[0]);
+      return parsed;
+    } catch (e) {
+      console.error("[parseJsonFromAI] Failed to parse object:", (e as Error).message);
+      // Try to fix common JSON issues
+      try {
+        // Replace single quotes with double quotes
+        const fixed = objectMatch[0]
+          .replace(/'/g, '"')
+          .replace(/,\s*}/g, '}')  // Remove trailing commas
+          .replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
+        return JSON.parse(fixed);
+      } catch {}
+    }
+  }
+
   // Try to extract JSON array
   const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
   if (arrayMatch) {
     try {
       return JSON.parse(arrayMatch[0]);
-    } catch {}
-  }
-
-  // Try to extract JSON object
-  const objectMatch = cleaned.match(/\{[\s\S]*\}/);
-  if (objectMatch) {
-    try {
-      return JSON.parse(objectMatch[0]);
-    } catch {}
+    } catch (e) {
+      console.error("[parseJsonFromAI] Failed to parse array:", (e as Error).message);
+    }
   }
 
   // Try parsing the whole content
   try {
     return JSON.parse(cleaned);
-  } catch {}
+  } catch (e) {
+    console.error("[parseJsonFromAI] Failed to parse whole content:", (e as Error).message);
+    console.error("[parseJsonFromAI] Content preview:", cleaned.substring(0, 200));
+  }
 
   return null;
 }

@@ -35,230 +35,54 @@ Return ONLY valid JSON:
 }`;
 
 // Step 4: Check sentence - Detailed grammar analysis for Vietnamese learners
-const CHECK_SENTENCE_PROMPT = `Bạn là trợ lý học tiếng Anh thân thiện cho người Việt.
+const CHECK_SENTENCE_PROMPT = `You are a friendly English grammar checker for Vietnamese learners.
 
-NHIỆM VỤ: Kiểm tra câu tiếng Anh có chứa từ gốc "{word}" hoặc biến thể của nó.
+TASK: Check if the sentence contains the word "{word}" (or its variants like {word}s, {word}ing, {word}er, {word}ed) and analyze grammar errors.
 
-Câu người dùng nhập: "{sentence}"
+Sentence: "{sentence}"
+Target word: "{word}"
 
----
-### BƯỚC 1: Kiểm tra từ gốc và biến thể
+RULES:
+1. First check if sentence contains "{word}" or any variant (swimming, swimmer, swims, swam, swum for "swim")
+2. If no target word found: hasTargetWord = false, skip grammar check
+3. If found: check for these common errors:
+   - Subject-verb agreement (She swim → She swims)
+   - Verb form after like/love/hate (I love swim → I love swimming)
+   - Missing article (He is swimmer → He is a swimmer)
+   - Capitalization (i love → I love)
+   - Punctuation (missing period at end)
+   - Spelling errors
 
-**Từ gốc**: "{word}"
-**Biến thể hợp lệ** (tự động sinh từ từ gốc):
-- Danh từ số nhiều: {word}s, {word}es
-- Động từ ngôi 3: {word}s
-- V-ing: {word}ing (bỏ e nếu có: swim→swimming, run→running)
-- V-ed/V2/V3: {word}ed, hoặc bất quy tắc (swim→swam→swum, run→ran→run)
-- Danh từ chỉ người: {word}er, {word}or (swim→swimmer, run→runner)
-
-**Quy tắc**: Câu hợp lệ nếu chứa BẤT KỲ biến thể nào của từ gốc (không phân biệt hoa/thường).
-
-Nếu KHÔNG có từ gốc hoặc biến thể → hasTargetWord: false, dừng kiểm tra ngữ pháp.
-
----
-### BƯỚC 2: Phân tích lỗi ngữ pháp CHI TIẾT
-
-Với MỖI lỗi phát hiện, phải chỉ rõ:
-- **errorWord**: từ/cụm từ sai cụ thể
-- **errorPosition**: vị trí trong câu (đầu câu/giữa câu/cuối câu/sau động từ...)
-- **errorIndex**: vị trí từ (số thứ tự từ trong câu, bắt đầu từ 0)
-- **errorMessage**: mô tả ngắn gọn lỗi bằng tiếng Việt
-- **suggestion**: gợi ý sửa cụ thể
-
-DANH SÁCH LỖI CẦN KIỂM TRA:
-
-1. **SAI DẠNG SAU ĐỘNG TỪ THÁI ĐỘ (verb_form_after_attitude)**
-   - Quy tắc: like/love/hate/prefer/enjoy + V-ing HOẶC to V
-   - Sai: "I love swim" → Đúng: "I love swimming." hoặc "I love to swim."
-   - errorWord: "swim", errorMessage: "Sau 'love' cần dùng 'swimming' hoặc 'to swim'"
-
-2. **CHIA ĐỘNG TỪ HIỆN TẠI ĐƠN (subject_verb_agreement)**
-   - Quy tắc: Ngôi 3 số ít (he/she/it) → động từ thêm -s/-es
-   - Sai: "She swim fast." → Đúng: "She swims fast."
-   - errorWord: "swim", errorMessage: "Ngôi 3 số ít cần 'swims'"
-
-3. **THIẾU CHỦ NGỮ (missing_subject)**
-   - Quy tắc: Câu cần chủ ngữ rõ ràng (trừ mệnh lệnh)
-   - Sai: "Swim don't like it." → Đúng: "I don't like swimming."
-   - errorWord: "(thiếu)", errorMessage: "Câu cần chủ ngữ rõ ràng"
-
-4. **CÂU HỎI YES/NO (question_form)**
-   - Quy tắc: Do/Does + S + V(base)? | Did + S + V(base)?
-   - Sai: "You like swimming?" → Đúng: "Do you like swimming?"
-   - errorWord: "You", errorMessage: "Câu hỏi Yes/No cần 'Do/Does' ở đầu"
-
-5. **PHỦ ĐỊNH (negation)**
-   - Quy tắc: don't/doesn't + V(base) | didn't + V(base)
-   - Sai: "He don't like swimming." → Đúng: "He doesn't like swimming."
-   - errorWord: "don't", errorMessage: "He/She/It dùng 'doesn't', không dùng 'don't'"
-
-6. **VIẾT HOA (capitalization)**
-   - Quy tắc: "I" luôn viết hoa, đầu câu viết hoa
-   - Sai: "i love swimming" → Đúng: "I love swimming."
-   - errorWord: "i", errorMessage: "Chữ 'I' luôn viết hoa"
-
-7. **MẠO TỪ (article)**
-   - Quy tắc: Danh từ đếm được số ít cần a/an/the
-   - Sai: "He is fast swimmer." → Đúng: "He is a fast swimmer."
-   - errorWord: "swimmer", errorMessage: "Thiếu mạo từ 'a' trước 'fast swimmer'"
-
-8. **DẤU CÂU (punctuation)**
-   - Quy tắc: Câu kết thúc bằng . ? !
-   - Sai: "I love swimming" → Đúng: "I love swimming."
-   - errorWord: "(cuối câu)", errorMessage: "Thiếu dấu chấm kết thúc câu"
-
-9. **TRẬT TỰ TỪ (word_order)**
-   - Quy tắc: S + V + O/Adj/Adv
-   - Sai: "Very I like swimming." → Đúng: "I like swimming very much."
-   - errorWord: "Very I", errorMessage: "Sai trật tự từ"
-
-10. **DẠNG DANH TỪ/ĐỘNG TỪ (word_type)**
-    - Quy tắc: Phân biệt swimmer (N), swimming (Gerund), swim (V)
-    - Sai: "He is a good swimming." → Đúng: "He is a good swimmer."
-    - errorWord: "swimming", errorMessage: "Cần danh từ 'swimmer', không phải 'swimming'"
-
-11. **THÌ VÀ HỢP TÁC TỪ (tense_agreement)**
-    - Quy tắc: be + Adj/N; have + V3; can + V(base)
-    - Sai: "He can swims." → Đúng: "He can swim."
-    - errorWord: "swims", errorMessage: "Sau 'can' dùng động từ nguyên mẫu 'swim'"
-
-12. **CHÍNH TẢ (spelling)**
-    - Sai: "swiming" → Đúng: "swimming"
-    - errorWord: "swiming", errorMessage: "Sai chính tả, đúng là 'swimming'"
-
----
-### BƯỚC 3: Trả về JSON
-
-Return ONLY valid JSON (không markdown, không giải thích ngoài JSON):
+Return ONLY valid JSON (no markdown, no explanation):
 {
-  "isCorrect": true/false,
-  "hasTargetWord": true/false,
-  "detectedVariant": "biến thể từ gốc tìm thấy trong câu (ví dụ: swimming, swimmer, swam)",
-  "originalSentence": "Câu gốc người dùng nhập",
-  "correctedSentence": "Câu đã sửa hoàn chỉnh với dấu câu đúng",
-  "errors": [
-    {
-      "type": "verb_form_after_attitude|subject_verb_agreement|missing_subject|question_form|negation|capitalization|article|punctuation|word_order|word_type|tense_agreement|spelling",
-      "errorWord": "từ/cụm từ sai cụ thể",
-      "errorPosition": "vị trí cụ thể trong câu",
-      "errorIndex": 0,
-      "original": "phần sai",
-      "corrected": "phần đã sửa",
-      "errorMessage": "Mô tả lỗi ngắn gọn bằng tiếng Việt",
-      "explanation": "Brief English explanation",
-      "explanationVi": "Giải thích chi tiết tiếng Việt"
-    }
-  ],
-  "vietnameseTranslation": "Bản dịch tiếng Việt của câu đúng",
-  "grammarRule": "Main grammar rule in English",
-  "grammarRuleVi": "Quy tắc ngữ pháp chính bằng tiếng Việt",
-  "structure": {
-    "pattern": "S + V + O",
-    "explanation": "Subject + Verb + Object",
-    "explanationVi": "Chủ ngữ + Động từ + Tân ngữ"
-  },
-  "encouragement": "Lời khuyến khích thân thiện"
-}
-
----
-### VÍ DỤ ĐẦU VÀO/ĐẦU RA
-
-**Input**: "I love swim."
-**Output**:
-{
-  "isCorrect": false,
-  "hasTargetWord": true,
-  "detectedVariant": "swim",
-  "originalSentence": "I love swim.",
-  "correctedSentence": "I love swimming.",
-  "errors": [
-    {
-      "type": "verb_form_after_attitude",
-      "errorWord": "swim",
-      "errorPosition": "sau động từ 'love'",
-      "errorIndex": 2,
-      "original": "swim",
-      "corrected": "swimming",
-      "errorMessage": "Sau 'love' cần dùng 'swimming' hoặc 'to swim'",
-      "explanation": "After 'love', use V-ing or 'to V'",
-      "explanationVi": "Sau động từ chỉ sở thích (love/like/hate) cần dùng V-ing hoặc to V"
-    }
-  ],
-  "vietnameseTranslation": "Tôi thích bơi.",
-  "grammarRule": "love/like/hate + V-ing or to V",
-  "grammarRuleVi": "Sau love/like/hate dùng V-ing hoặc to V",
-  "structure": { "pattern": "S + love + V-ing", "explanation": "Subject + love + Gerund", "explanationVi": "Chủ ngữ + love + Danh động từ" },
-  "encouragement": "Gần đúng rồi! Chỉ cần đổi 'swim' thành 'swimming'. Cố lên! 💪"
-}
-
-**Input**: "She swim fast."
-**Output**:
-{
-  "isCorrect": false,
-  "hasTargetWord": true,
-  "detectedVariant": "swim",
-  "originalSentence": "She swim fast.",
-  "correctedSentence": "She swims fast.",
+  "isCorrect": true or false,
+  "hasTargetWord": true or false,
+  "detectedVariant": "the variant found (e.g. swimming)",
+  "originalSentence": "original sentence",
+  "correctedSentence": "corrected sentence with proper punctuation",
   "errors": [
     {
       "type": "subject_verb_agreement",
       "errorWord": "swim",
-      "errorPosition": "động từ chính",
+      "errorPosition": "after subject",
       "errorIndex": 1,
       "original": "swim",
       "corrected": "swims",
       "errorMessage": "Ngôi 3 số ít (She) cần động từ thêm -s",
-      "explanation": "Third person singular requires verb + s",
-      "explanationVi": "Chủ ngữ ngôi 3 số ít (he/she/it) cần động từ thêm -s/-es"
+      "explanation": "Third person singular needs verb+s",
+      "explanationVi": "Chủ ngữ ngôi 3 số ít cần động từ thêm -s"
     }
   ],
-  "vietnameseTranslation": "Cô ấy bơi nhanh.",
-  "grammarRule": "He/She/It + Verb-s",
-  "grammarRuleVi": "Ngôi 3 số ít + Động từ thêm -s",
-  "structure": { "pattern": "S + V-s + Adv", "explanation": "Subject + Verb-s + Adverb", "explanationVi": "Chủ ngữ + Động từ-s + Trạng từ" },
-  "encouragement": "Tốt lắm! Chỉ cần nhớ thêm '-s' cho động từ khi chủ ngữ là She/He/It. 👍"
+  "vietnameseTranslation": "Vietnamese translation of correct sentence",
+  "encouragement": "Friendly encouragement in Vietnamese"
 }
 
-**Input**: "He is a fast swimmer."
-**Output**:
-{
-  "isCorrect": true,
-  "hasTargetWord": true,
-  "detectedVariant": "swimmer",
-  "originalSentence": "He is a fast swimmer.",
-  "correctedSentence": "He is a fast swimmer.",
-  "errors": [],
-  "vietnameseTranslation": "Anh ấy là một người bơi nhanh.",
-  "grammarRule": "S + be + a/an + Adj + N",
-  "grammarRuleVi": "Chủ ngữ + be + mạo từ + Tính từ + Danh từ",
-  "structure": { "pattern": "S + be + a + Adj + N", "explanation": "Subject + be + Article + Adjective + Noun", "explanationVi": "Chủ ngữ + be + Mạo từ + Tính từ + Danh từ" },
-  "encouragement": "Tuyệt vời! Câu hoàn toàn đúng ngữ pháp! 🎉"
-}
+ERROR TYPES: subject_verb_agreement, verb_form_after_attitude, article, capitalization, punctuation, spelling, word_order, negation, question_form
 
-**Input**: "I run every day."
-**Output**:
-{
-  "isCorrect": false,
-  "hasTargetWord": false,
-  "detectedVariant": null,
-  "originalSentence": "I run every day.",
-  "correctedSentence": null,
-  "errors": [],
-  "vietnameseTranslation": null,
-  "grammarRule": null,
-  "grammarRuleVi": null,
-  "structure": null,
-  "encouragement": "❌ Câu thiếu từ gốc '{word}' hoặc biến thể của nó (swimming, swimmer, swims, swam, swum...)."
-}
-
----
-### QUY TẮC QUAN TRỌNG:
-- Luôn thân thiện, khuyến khích, KHÔNG chê bai
-- Nếu câu đúng hoàn toàn → isCorrect: true
-- Nếu thiếu từ gốc → hasTargetWord: false, không kiểm tra ngữ pháp
-- Chấp nhận TẤT CẢ biến thể hợp lệ của từ gốc
-- Giải thích ngắn gọn, dễ hiểu`;
+EXAMPLES:
+Input: "I love swim." → errors: [{type:"verb_form_after_attitude", errorWord:"swim", corrected:"swimming", errorMessage:"Sau 'love' cần V-ing"}]
+Input: "She swim fast." → errors: [{type:"subject_verb_agreement", errorWord:"swim", corrected:"swims", errorMessage:"Ngôi 3 số ít cần thêm -s"}]
+Input: "He is a fast swimmer." → isCorrect: true, errors: []`;
 
 // Step 5: Generate sample sentences
 const SAMPLE_SENTENCES_PROMPT = `Generate 4 sample sentences using the word "{word}" in different sentence types that the user hasn't used yet.
@@ -395,12 +219,48 @@ Example for "picture": {"mainObject":{"english":"picture","vietnamese":"bức tr
 
 async function checkSentence(sentence: string, targetWord: string, keys: any) {
   const prompt = CHECK_SENTENCE_PROMPT
-    .replace("{word}", targetWord)
+    .replace(/{word}/g, targetWord)
     .replace("{sentence}", sentence);
 
-  const result = await callAI(prompt, keys, { temperature: 0.2, maxTokens: 500 });
-  if (!result.success) throw new Error(result.error);
-  return parseJsonFromAI(result.content);
+  console.log(`[checkSentence] Checking: "${sentence}" with target word: "${targetWord}"`);
+  
+  const result = await callAI(prompt, keys, { temperature: 0.2, maxTokens: 1200 });
+  
+  if (!result.success) {
+    console.error("[checkSentence] AI call failed:", result.error);
+    throw new Error(result.error);
+  }
+  
+  console.log("[checkSentence] AI response:", result.content.substring(0, 500));
+  
+  const parsed = parseJsonFromAI(result.content);
+  
+  if (!parsed) {
+    console.error("[checkSentence] Failed to parse JSON from AI response");
+    // Return a default error response if parsing fails
+    return {
+      isCorrect: false,
+      hasTargetWord: true,
+      originalSentence: sentence,
+      correctedSentence: sentence,
+      errors: [{
+        type: "parse_error",
+        errorWord: "",
+        errorPosition: "",
+        errorIndex: 0,
+        original: sentence,
+        corrected: sentence,
+        errorMessage: "Không thể phân tích câu. Vui lòng thử lại.",
+        explanation: "Could not parse AI response",
+        explanationVi: "Hệ thống gặp lỗi khi phân tích. Vui lòng thử lại."
+      }],
+      vietnameseTranslation: "",
+      encouragement: "Hãy thử lại nhé! 💪"
+    };
+  }
+  
+  console.log("[checkSentence] Parsed result:", JSON.stringify(parsed).substring(0, 500));
+  return parsed;
 }
 
 async function generateSampleSentences(word: string, userSentences: string[], keys: any) {
