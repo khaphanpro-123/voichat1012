@@ -9,19 +9,6 @@ import {
 } from "lucide-react";
 
 // Types
-interface GrammarErrorItem {
-  _id: string;
-  sentence: string;
-  correctedSentence: string;
-  errorType: string;
-  errorWord: string;
-  errorMessage: string;
-  explanation: string;
-  targetWord?: string;
-  source: string;
-  createdAt: string;
-}
-
 interface ErrorStat {
   errorType: string;
   count: number;
@@ -56,7 +43,6 @@ export default function LearningHistory({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [totalErrors, setTotalErrors] = useState(0);
   const [errorsByType, setErrorsByType] = useState<ErrorStat[]>([]);
-  const [recentErrors, setRecentErrors] = useState<GrammarErrorItem[]>([]);
   const [expandedError, setExpandedError] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -73,7 +59,6 @@ export default function LearningHistory({ userId }: { userId: string }) {
       if (data.success) {
         setTotalErrors(data.totalErrors || 0);
         setErrorsByType(data.errorsByType || []);
-        setRecentErrors(data.recentErrors || []);
       }
     } catch (error) {
       console.error("Fetch errors:", error);
@@ -92,7 +77,6 @@ export default function LearningHistory({ userId }: { userId: string }) {
       });
       setTotalErrors(0);
       setErrorsByType([]);
-      setRecentErrors([]);
     } catch (err) {
       console.error("Clear errors:", err);
     }
@@ -308,39 +292,6 @@ export default function LearningHistory({ userId }: { userId: string }) {
               <li key={i}>• <strong>{getErrorLabel(err.errorType)}</strong>: {getErrorSuggestion(err.errorType)}</li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {/* Recent Errors List */}
-      {recentErrors.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <h3 className="font-semibold text-gray-800 mb-4">Lỗi gần đây ({recentErrors.length})</h3>
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {recentErrors.map((err, i) => (
-              <div key={err._id || i} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-xs font-medium">
-                        {getErrorLabel(err.errorType)}
-                      </span>
-                      {err.targetWord && (
-                        <span className="text-xs text-gray-400">Từ: {err.targetWord}</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-red-600 line-through">{err.sentence}</p>
-                    <p className="text-sm text-green-600 font-medium">{err.correctedSentence}</p>
-                    {err.explanation && (
-                      <p className="text-xs text-gray-500 mt-1">💡 {err.explanation}</p>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-400 whitespace-nowrap">
-                    {new Date(err.createdAt).toLocaleDateString("vi-VN")}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
     </div>
