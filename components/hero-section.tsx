@@ -100,7 +100,7 @@ export function HeroSection() {
                 size="lg"
                 className="min-w-[200px] text-lg font-semibold px-8 py-6 rounded-xl transform transition-all duration-300 hover:scale-105 hover:shadow-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
-                Bắt đầu miễn phí
+                Đăng ký tài khoản
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -110,7 +110,7 @@ export function HeroSection() {
                 size="lg"
                 className="min-w-[200px] text-lg font-semibold px-8 py-6 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
               >
-                Xem Demo
+                Đăng nhập
               </Button>
             </Link>
           </div>

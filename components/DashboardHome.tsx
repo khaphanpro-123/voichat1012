@@ -79,7 +79,7 @@ function setCachedProgress(userId: string, data: UserProgress): void {
 const learningModes = [
   {
     id: "chat",
-    title: "L2-BRAIN",
+    title: "Voice Chat",
     description: "Trò chuyện & luyện phát âm tiếng Anh hiệu quả",
     icon: MessageCircle,
     color: "from-purple-400 to-pink-500",
@@ -191,16 +191,6 @@ export default function DashboardHome() {
     vocabularyLearned: 0,
     pronunciationPractice: 0,
   };
-
-  // Tips for Vietnamese learners
-  const tips = [
-    "Luyện phát âm mỗi ngày 15 phút để cải thiện accent!",
-    "Học 5-10 từ vựng mới mỗi ngày và ôn lại từ cũ.",
-    "Xem phim/video tiếng Anh có phụ đề để cải thiện listening.",
-    "Đừng ngại mắc lỗi - đó là cách tốt nhất để học!",
-    "Ghi âm giọng nói của bạn và so sánh với native speaker.",
-  ];
-  const randomTip = tips[Math.floor(Math.random() * tips.length)];
 
   if (loading) {
     return (
@@ -314,7 +304,7 @@ export default function DashboardHome() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+        className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8"
       >
         <div className="bg-white rounded-2xl p-4 shadow-md text-center">
           <p className="text-3xl font-bold text-blue-600">{activities.chatSessions}</p>
@@ -328,35 +318,7 @@ export default function DashboardHome() {
           <p className="text-3xl font-bold text-green-600">{activities.documentsUploaded}</p>
           <p className="text-sm text-gray-600">Tài liệu</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-md text-center">
-          <p className="text-3xl font-bold text-orange-600">{activities.pronunciationPractice}</p>
-          <p className="text-sm text-gray-600">Luyện phát âm</p>
-        </div>
       </motion.div>
-
-      {/* Common Mistakes Section */}
-      {progress?.commonMistakes && progress.commonMistakes.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18 }}
-          className="mb-8"
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-4">⚠️ Lỗi thường gặp</h2>
-          <div className="bg-white rounded-2xl shadow-md p-4 space-y-3 max-h-[200px] overflow-y-auto">
-            {progress.commonMistakes.slice(0, 5).map((mistake, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 bg-red-50 rounded-xl">
-                <span className="text-red-500 font-bold text-sm">{mistake.count}x</span>
-                <div className="flex-1">
-                  <p className="text-red-600 line-through text-sm">{mistake.original}</p>
-                  <p className="text-green-600 font-medium text-sm">✓ {mistake.corrected}</p>
-                  <p className="text-gray-500 text-xs mt-1">{mistake.explanation}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
 
       {/* Mode Selection */}
       <motion.div
@@ -430,17 +392,6 @@ export default function DashboardHome() {
             </button>
           </Link>
         </div>
-      </motion.div>
-
-      {/* Quick Tips */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-6 border border-blue-200"
-      >
-        <h3 className="text-lg font-bold text-gray-900 mb-3">💡 Mẹo học tiếng Anh</h3>
-        <p className="text-gray-700">{randomTip}</p>
       </motion.div>
     </div>
   );
