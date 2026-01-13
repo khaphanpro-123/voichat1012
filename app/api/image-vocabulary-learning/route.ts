@@ -418,6 +418,42 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ success: false, message: "Thiếu câu hoặc từ vựng" }, { status: 400 });
         }
         const result = await checkSentence(sentence, targetWord, keys);
+        
+        // Auto-save errors to GrammarError model if sentence has errors
+        if (result && result.isCorrect === false && result.errors && result.errors.length > 0 && userId !== "anonymous") {
+          try {
+            await connectDB();
+            const GrammarError = (await import("@/app/models/GrammarError")).default;
+            
+            for (const error of result.errors) {
+              // Check if this error already exists (avoid duplicates)
+              const existing = await GrammarError.findOne({
+                userId,
+                sentence: sentence.toLowerCase().trim(),
+                errorType: error.type
+              });
+              
+              if (!existing) {
+                await GrammarError.create({
+                  userId,
+                  sentence,
+                  correctedSentence: result.correctedSentence || "",
+                  errorType: error.type || "grammar",
+                  errorWord: error.errorWord || error.original || "",
+                  errorMessage: error.errorMessage || error.explanation || "",
+                  explanation: error.explanationVi || error.explanation || "",
+                  targetWord,
+                  source: "image_learning"
+                });
+              }
+            }
+            console.log(`[checkSentence] Auto-saved ${result.errors.length} errors for user ${userId}`);
+          } catch (saveErr) {
+            console.error("[checkSentence] Error auto-saving grammar errors:", saveErr);
+            // Don't fail the request if saving errors fails
+          }
+        }
+        
         return NextResponse.json({ success: true, data: result });
       }
 

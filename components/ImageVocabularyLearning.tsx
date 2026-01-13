@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   Check, X, Volume2, AlertCircle, Loader2, ChevronRight,
-  Save, RefreshCw, PenLine, CheckCircle2, XCircle, Lightbulb, Edit3,
+  RefreshCw, PenLine, CheckCircle2, XCircle, Lightbulb, Edit3,
   Image as ImageIcon, Grid3X3, Sparkles, Clock, BookOpen, HelpCircle,
   Key, ExternalLink
 } from "lucide-react";
@@ -210,7 +210,7 @@ export default function ImageVocabularyLearning() {
   const [editedSentence, setEditedSentence] = useState("");
 
   // Results
-  const [saved, setSaved] = useState(false);
+  // (removed saved state - errors are auto-saved now)
 
   // API Key error state
   const [apiKeyError, setApiKeyError] = useState<{
@@ -455,43 +455,6 @@ export default function ImageVocabularyLearning() {
     }
   };
 
-  // Save results
-  const handleSave = async () => {
-    if (!selectedImage) return;
-    setIsLoading(true);
-
-    try {
-      const structures = checkedSentences
-        .filter(s => s.isCorrect)
-        .map(s => ({ pattern: "", explanation: "", example: s.sentence }));
-
-      const errors = checkedSentences
-        .filter(s => !s.isCorrect && s.errors?.length > 0)
-        .flatMap(s => s.errors.map(e => ({
-          original: e.original || "",
-          corrected: e.corrected || "",
-          type: e.type || "grammar",
-          explanation: e.explanation || ""
-        })));
-
-      await fetch("/api/image-vocabulary-learning", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "saveAll", userId,
-          vocabulary: { word: selectedImage.word, meaning: selectedImage.wordVi, partOfSpeech: "noun" },
-          structures, errors
-        })
-      });
-
-      setSaved(true);
-    } catch (err) {
-      console.error("Save error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Reset
   const handleReset = () => {
     setStep("select");
@@ -504,7 +467,6 @@ export default function ImageVocabularyLearning() {
     setCheckedSentences([]);
     setEditingIndex(null);
     setEditedSentence("");
-    setSaved(false);
     setError(null);
     setApiKeyError(null);
   };
@@ -1007,18 +969,9 @@ export default function ImageVocabularyLearning() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {!saved ? (
-                    <button
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Lưu kết quả
-                    </button>
-                  ) : (
-                    <span className="px-4 py-2 bg-green-500/20 text-green-300 rounded-lg font-medium flex items-center gap-2">
-                      <Check className="w-4 h-4" /> Đã lưu
+                  {wrongCount > 0 && (
+                    <span className="px-4 py-2 bg-orange-500/20 text-orange-300 rounded-lg font-medium flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4" /> Lỗi đã tự động lưu
                     </span>
                   )}
                   <button
