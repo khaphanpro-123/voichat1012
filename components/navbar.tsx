@@ -1,19 +1,21 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, BookOpen, HelpCircle, LayoutDashboard, Phone } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Menu, X, BookOpen, HelpCircle, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
-const tabs = [
-  { href: "/learn", label: "Khóa học", icon: BookOpen },
-  { href: "/settings", label: "Khảo sát", icon: HelpCircle },
-  { href: "/dashboard-new", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/contact", label: "Liên hệ", icon: Phone },
-];
-
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession();
+
+  // Dynamic tabs based on login status
+  const tabs = [
+    { href: session ? "/dashboard-new" : "/auth/login", label: "Khóa học", icon: BookOpen },
+    { href: "/settings", label: "Khảo sát", icon: HelpCircle },
+    { href: "/dashboard-new", label: "Dashboard", icon: LayoutDashboard },
+  ];
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-md shadow-md border-b border-gray-200 dark:border-gray-800">
@@ -29,7 +31,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1">
             {tabs.map((tab) => (
               <Link
-                key={tab.href}
+                key={tab.label}
                 href={tab.href}
                 className="flex items-center space-x-2 px-4 py-3 text-lg font-semibold rounded-full
                                text-foreground/80 hover:text-primary hover:bg-primary/10
@@ -78,7 +80,7 @@ export function Navbar() {
           <div className="flex flex-col items-center py-6 space-y-4">
             {tabs.map((tab) => (
               <Link
-                key={tab.href}
+                key={tab.label}
                 href={tab.href}
                 className="flex items-center space-x-2 text-xl font-semibold text-foreground hover:text-primary transition-colors"
                 onClick={() => setIsOpen(false)}

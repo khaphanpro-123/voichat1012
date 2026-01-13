@@ -74,19 +74,19 @@ export function HeroSection() {
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-2">
                 <span className="text-3xl">👨‍🎓</span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Người học</p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Người học</p>
             </div>
             <div className="text-center flex flex-col items-center">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-2">
                 <span className="text-3xl">📚</span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Từ vựng phong phú</p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Từ vựng phong phú</p>
             </div>
             <div className="text-center flex flex-col items-center">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-2">
                 <span className="text-3xl">🤖</span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">AI sẵn sàng 24/7</p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">AI sẵn sàng 24/7</p>
             </div>
           </div>
 
@@ -148,26 +148,6 @@ export function HeroSection() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Testimonial Preview */}
-          <div className="mt-16 max-w-2xl mx-auto">
-            <div className="bg-white/20 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-              <p className="text-lg text-white italic mb-4">
-                "Mình đã học tiếng Anh nhiều năm nhưng không dám nói. Với L2-BRAIN, 
-                mình có thể luyện nói bất cứ lúc nào mà không sợ xấu hổ. 
-                Sau 3 tháng, mình đã tự tin giao tiếp hơn rất nhiều!"
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                  K
-                </div>
-                <div>
-                  <p className="text-white font-medium">Phan Văn Kha</p>
-                  <p className="text-white/60 text-sm">Sinh viên, Cần Thơ</p>
-                </div>
               </div>
             </div>
           </div>
