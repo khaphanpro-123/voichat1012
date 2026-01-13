@@ -104,7 +104,7 @@ export function HeroSection() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/dashboard-new">
+            <Link href="/auth/login">
               <Button
                 variant="outline"
                 size="lg"
