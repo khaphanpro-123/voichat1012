@@ -12,7 +12,7 @@ import {
   Upload,
   BookOpen,
   History,
-  HelpCircle,
+  Play,
 } from "lucide-react";
 import { OnboardingTutorial } from "./OnboardingTutorial";
 
@@ -127,6 +127,10 @@ export default function DashboardHome() {
   
   // Onboarding tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+
+  // Video hướng dẫn - thay link YouTube của bạn vào đây
+  const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/dQw4w9WgXcQ"; // Thay bằng video của bạn
 
   // Check if user is new (first time)
   useEffect(() => {
@@ -228,67 +232,48 @@ export default function DashboardHome() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Xin chào, {userName}! 👋
-            </h1>
-            <p className="text-xl text-gray-600">
-              Trình độ: <span className="font-bold text-teal-600">{level}</span>
-            </p>
-          </div>
-          <button
-            onClick={() => setShowTutorial(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 transition-colors"
-            title="Xem hướng dẫn"
-          >
-            <HelpCircle className="w-5 h-5" />
-            <span className="hidden md:inline">Hướng dẫn</span>
-          </button>
-        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          Xin chào, {userName}! 👋
+        </h1>
       </motion.div>
 
-      {/* Daily Stats */}
+      {/* Stats Cards - 3 columns */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid md:grid-cols-2 gap-6 mb-8"
+        className="grid md:grid-cols-3 gap-6 mb-8"
       >
         {/* Streak Card */}
         <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-6 text-white shadow-xl">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-              <Flame className="w-8 h-8" />
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <Flame className="w-7 h-7" />
             </div>
             <div>
               <p className="text-sm opacity-90 mb-1">Chuỗi ngày học</p>
-              <p className="text-4xl font-bold">{currentStreak} ngày</p>
+              <p className="text-3xl font-bold">{currentStreak} ngày</p>
             </div>
           </div>
-          <p className="text-sm opacity-75 mt-4">
+          <p className="text-sm opacity-75 mt-3">
             {currentStreak === 0 
-              ? "Bắt đầu học ngay để tạo chuỗi ngày! 🔥" 
-              : "Tuyệt vời! Tiếp tục duy trì nhé! 🔥"}
+              ? "Bắt đầu học ngay! 🔥" 
+              : "Tiếp tục duy trì! 🔥"}
           </p>
         </div>
 
         {/* XP Card */}
         <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-3xl p-6 text-white shadow-xl">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-              <Trophy className="w-8 h-8" />
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <Trophy className="w-7 h-7" />
             </div>
             <div>
               <p className="text-sm opacity-90 mb-1">Điểm kinh nghiệm</p>
-              <p className="text-4xl font-bold">{totalXp} XP</p>
+              <p className="text-3xl font-bold">{totalXp} XP</p>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="flex justify-between text-sm opacity-75 mb-2">
-              <span>Tiến độ level</span>
-              <span>{levelProgress}%</span>
-            </div>
+          <div className="mt-3">
             <div className="w-full bg-white/20 rounded-full h-2">
               <div 
                 className="bg-white h-2 rounded-full transition-all duration-500" 
@@ -297,7 +282,65 @@ export default function DashboardHome() {
             </div>
           </div>
         </div>
+
+        {/* Video Guide Card */}
+        <div 
+          onClick={() => setShowVideoModal(true)}
+          className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl p-6 text-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <Play className="w-7 h-7" />
+            </div>
+            <div>
+              <p className="text-sm opacity-90 mb-1">Video hướng dẫn</p>
+              <p className="text-xl font-bold">Xem ngay</p>
+            </div>
+          </div>
+          <p className="text-sm opacity-75 mt-3">
+            Hướng dẫn sử dụng ứng dụng 📺
+          </p>
+        </div>
       </motion.div>
+
+      {/* Video Modal */}
+      {showVideoModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowVideoModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-4xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-bold text-gray-900">Video hướng dẫn sử dụng</h3>
+              <button 
+                onClick={() => setShowVideoModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="aspect-video">
+              <iframe
+                src={TUTORIAL_VIDEO_URL}
+                title="Video hướng dẫn"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            <div className="p-4 bg-gray-50">
+              <p className="text-sm text-gray-600">
+                💡 Xem video để biết cách sử dụng các tính năng của ứng dụng một cách hiệu quả nhất!
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Activity Summary */}
       <motion.div
