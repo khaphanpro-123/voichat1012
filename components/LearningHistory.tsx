@@ -5,20 +5,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle, Lightbulb, RefreshCw, ChevronDown, ChevronUp,
   BarChart3, Volume2, CheckCircle, XCircle, HelpCircle, Info, Trash2,
-  Image as ImageIcon
+  Image as ImageIcon, Edit3, Send
 } from "lucide-react";
 
 // Types
+interface ErrorExample {
+  sentence: string;
+  corrected: string;
+  errorWord: string;
+  errorMessage: string;
+  explanation: string;
+  _id?: string;
+}
+
 interface ErrorStat {
   errorType: string;
   count: number;
-  examples: {
-    sentence: string;
-    corrected: string;
-    errorWord: string;
-    errorMessage: string;
-    explanation: string;
-  }[];
+  examples: ErrorExample[];
 }
 
 const ERROR_TYPE_MAP: Record<string, { label: string; suggestion: string }> = {
@@ -46,6 +49,12 @@ export default function LearningHistory({ userId }: { userId: string }) {
   const [expandedError, setExpandedError] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
   const [clearing, setClearing] = useState(false);
+  
+  // Practice mode state
+  const [practiceError, setPracticeError] = useState<{ type: string; index: number; example: ErrorExample } | null>(null);
+  const [practiceInput, setPracticeInput] = useState("");
+  const [practiceResult, setPracticeResult] = useState<"correct" | "wrong" | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchErrors();
@@ -93,6 +102,73 @@ export default function LearningHistory({ userId }: { userId: string }) {
 
   const getErrorLabel = (type: string) => ERROR_TYPE_MAP[type]?.label || type.replace(/_/g, " ");
   const getErrorSuggestion = (type: string) => ERROR_TYPE_MAP[type]?.suggestion || "Luyện tập thêm để cải thiện";
+
+  // Normalize text for comparison (remove extra spaces, lowercase, trim)
+  const normalizeText = (text: string) => {
+    return text.toLowerCase().trim().replace(/\s+/g, " ").replace(/\s*([.,!?])\s*/g, "$1");
+  };
+
+  // Start practice mode for an error
+  const startPractice = (errorType: string, index: number, example: ErrorExample) => {
+    setPracticeError({ type: errorType, index, example });
+    setPracticeInput("");
+    setPracticeResult(null);
+  };
+
+  // Check practice answer
+  const checkPracticeAnswer = async () => {
+    if (!practiceError || !practiceInput.trim()) return;
+    
+    const userAnswer = normalizeText(practiceInput);
+    const correctAnswer = normalizeText(practiceError.example.corrected);
+    
+    // Check if answer is correct (allow minor punctuation differences)
+    const isCorrect = userAnswer === correctAnswer || 
+      userAnswer.replace(/[.,!?]/g, "") === correctAnswer.replace(/[.,!?]/g, "");
+    
+    if (isCorrect) {
+      setPracticeResult("correct");
+      // Delete the error from database after 1.5s
+      setDeleting(true);
+      setTimeout(async () => {
+        try {
+          // Find and delete this specific error
+          const res = await fetch("/api/grammar-errors", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              userId, 
+              sentence: practiceError.example.sentence,
+              errorType: practiceError.type
+            })
+          });
+          
+          if (res.ok) {
+            // Update local state - remove this example
+            setErrorsByType(prev => {
+              const updated = prev.map(err => {
+                if (err.errorType === practiceError.type) {
+                  const newExamples = err.examples.filter((_, i) => i !== practiceError.index);
+                  return { ...err, count: err.count - 1, examples: newExamples };
+                }
+                return err;
+              }).filter(err => err.count > 0);
+              return updated;
+            });
+            setTotalErrors(prev => prev - 1);
+          }
+        } catch (err) {
+          console.error("Delete error:", err);
+        }
+        setDeleting(false);
+        setPracticeError(null);
+        setPracticeInput("");
+        setPracticeResult(null);
+      }, 1500);
+    } else {
+      setPracticeResult("wrong");
+    }
+  };
 
   if (loading) {
     return (
@@ -168,8 +244,8 @@ export default function LearningHistory({ userId }: { userId: string }) {
                   <h4 className="font-semibold text-blue-800 mb-2">Cách hệ thống hoạt động</h4>
                   <ul className="text-sm text-blue-700 space-y-1">
                     <li>• <strong>Tự động ghi nhận</strong>: Khi bạn viết câu sai trong phần học từ vựng, lỗi được lưu tự động</li>
-                    <li>• <strong>Phân loại lỗi</strong>: Ngữ pháp (chia động từ, mạo từ, dấu câu...)</li>
-                    <li>• <strong>Gợi ý sửa</strong>: Mỗi lỗi đều có ví dụ và cách khắc phục</li>
+                    <li>• <strong>Phân loại lỗi</strong>: Ngữ pháp (chia động từ, mạo từ, chính tả...)</li>
+                    <li>• <strong>Sửa lỗi trực tiếp</strong>: Click "Sửa lỗi này" để luyện tập, sửa đúng thì lỗi sẽ biến mất</li>
                     <li>• <strong>Không cần lưu thủ công</strong>: Hệ thống tự động lưu khi kiểm tra câu</li>
                   </ul>
                 </div>
@@ -249,27 +325,105 @@ export default function LearningHistory({ userId }: { userId: string }) {
                 <div className="space-y-3">
                   {errorsByType.find(e => e.errorType === expandedError)?.examples.map((ex, i) => (
                     <div key={i} className="bg-white p-3 rounded-lg border border-orange-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <XCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-red-600 line-through">{ex.sentence}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-green-600 font-medium">{ex.corrected}</span>
-                        <button onClick={() => speak(ex.corrected)} className="p-1 hover:bg-gray-100 rounded">
-                          <Volume2 className="w-4 h-4 text-blue-500" />
-                        </button>
-                      </div>
-                      {ex.errorWord && (
-                        <p className="text-xs text-orange-600 mb-1">
-                          Từ sai: <span className="font-medium">"{ex.errorWord}"</span>
-                        </p>
-                      )}
-                      {(ex.explanation || ex.errorMessage) && (
-                        <div className="flex items-start gap-2 mt-2 p-2 bg-yellow-50 rounded">
-                          <Lightbulb className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-yellow-800">{ex.explanation || ex.errorMessage}</p>
+                      {/* Practice mode for this error */}
+                      {practiceError?.type === expandedError && practiceError?.index === i ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <XCircle className="w-4 h-4 text-red-500" />
+                            <span className="text-red-600">{ex.sentence}</span>
+                          </div>
+                          
+                          {practiceResult === "correct" ? (
+                            <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                              <span className="text-green-700 font-medium">
+                                {deleting ? "Đang xóa lỗi khỏi hệ thống..." : "🎉 Chính xác! Lỗi này sẽ được xóa."}
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={practiceInput}
+                                  onChange={(e) => {
+                                    setPracticeInput(e.target.value);
+                                    setPracticeResult(null);
+                                  }}
+                                  onKeyDown={(e) => e.key === "Enter" && checkPracticeAnswer()}
+                                  placeholder="Viết lại câu đúng..."
+                                  className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                                    practiceResult === "wrong" 
+                                      ? "border-red-300 focus:ring-red-200" 
+                                      : "border-gray-300 focus:ring-teal-200"
+                                  }`}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={checkPracticeAnswer}
+                                  className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 flex items-center gap-1"
+                                >
+                                  <Send className="w-4 h-4" />
+                                </button>
+                              </div>
+                              
+                              {practiceResult === "wrong" && (
+                                <div className="flex items-start gap-2 p-2 bg-red-50 rounded-lg">
+                                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                  <div>
+                                    <p className="text-sm text-red-600">Chưa đúng, thử lại nhé!</p>
+                                    <p className="text-xs text-gray-500 mt-1">Gợi ý: {ex.corrected}</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <button
+                                onClick={() => {
+                                  setPracticeError(null);
+                                  setPracticeInput("");
+                                  setPracticeResult(null);
+                                }}
+                                className="text-xs text-gray-500 hover:text-gray-700"
+                              >
+                                Hủy
+                              </button>
+                            </>
+                          )}
                         </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 mb-2">
+                            <XCircle className="w-4 h-4 text-red-500" />
+                            <span className="text-red-600 line-through">{ex.sentence}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span className="text-green-600 font-medium">{ex.corrected}</span>
+                            <button onClick={() => speak(ex.corrected)} className="p-1 hover:bg-gray-100 rounded">
+                              <Volume2 className="w-4 h-4 text-blue-500" />
+                            </button>
+                          </div>
+                          {ex.errorWord && (
+                            <p className="text-xs text-orange-600 mb-1">
+                              Từ sai: <span className="font-medium">"{ex.errorWord}"</span>
+                            </p>
+                          )}
+                          {(ex.explanation || ex.errorMessage) && (
+                            <div className="flex items-start gap-2 mt-2 p-2 bg-yellow-50 rounded">
+                              <Lightbulb className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-yellow-800">{ex.explanation || ex.errorMessage}</p>
+                            </div>
+                          )}
+                          
+                          {/* Practice button */}
+                          <button
+                            onClick={() => startPractice(expandedError, i, ex)}
+                            className="mt-2 px-3 py-1.5 bg-teal-100 text-teal-700 rounded-lg text-sm hover:bg-teal-200 flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            Sửa lỗi này
+                          </button>
+                        </>
                       )}
                     </div>
                   ))}

@@ -15,19 +15,19 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    // Build query
-    const query: any = { userId };
-    if (errorType) query.errorType = errorType;
+    // Build query - exclude punctuation errors (not important)
+    const query: any = { userId, errorType: { $ne: "punctuation" } };
+    if (errorType && errorType !== "punctuation") query.errorType = errorType;
 
-    // Lấy danh sách lỗi
+    // Lấy danh sách lỗi (exclude punctuation)
     const errors = await GrammarError.find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
 
-    // Thống kê theo loại lỗi
+    // Thống kê theo loại lỗi (exclude punctuation)
     const errorStats = await GrammarError.aggregate([
-      { $match: { userId } },
+      { $match: { userId, errorType: { $ne: "punctuation" } } },
       { 
         $group: { 
           _id: "$errorType", 
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, errorId, clearAll } = body;
+    const { userId, errorId, clearAll, sentence, errorType } = body;
 
     if (!userId) {
       return NextResponse.json({ success: false, message: "userId required" }, { status: 400 });
@@ -131,7 +131,17 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: true, message: "Đã xóa lỗi" });
     }
 
-    return NextResponse.json({ success: false, message: "Cần errorId hoặc clearAll" }, { status: 400 });
+    // Delete by sentence + errorType (for practice fix feature)
+    if (sentence && errorType) {
+      await GrammarError.findOneAndDelete({ 
+        userId, 
+        sentence: { $regex: new RegExp(`^${sentence.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        errorType 
+      });
+      return NextResponse.json({ success: true, message: "Đã xóa lỗi sau khi sửa đúng" });
+    }
+
+    return NextResponse.json({ success: false, message: "Cần errorId, clearAll, hoặc sentence+errorType" }, { status: 400 });
 
   } catch (error: any) {
     console.error("Delete grammar error:", error);
