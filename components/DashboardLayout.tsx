@@ -13,9 +13,9 @@ import {
   LogOut,
   BookOpen,
   FileText,
-  HelpCircle,
   AlertTriangle,
   ClipboardList,
+  Camera,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -26,10 +26,10 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: "/dashboard-new", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard-new/chat", label: "Voice Chat", icon: MessageCircle },
-  { href: "/dashboard-new/documents", label: "Tài liệu", icon: FileText },
+  { href: "/dashboard-new/image-learning", label: "Học qua hình ảnh", icon: Camera },
+  { href: "/dashboard-new/documents", label: "Tải lên tài liệu", icon: FileText },
   { href: "/dashboard-new/vocabulary", label: "Từ vựng", icon: BookOpen },
   { href: "/dashboard-new/survey", label: "Khảo sát học tập", icon: ClipboardList },
-  { href: "/dashboard-new/guide", label: "Hướng dẫn", icon: HelpCircle },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
