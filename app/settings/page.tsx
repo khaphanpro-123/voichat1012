@@ -99,9 +99,9 @@ const providerInfo = {
   groq: {
     name: "Groq",
     color: "from-orange-500 to-red-500",
-    bgColor: "bg-orange-500/10",
-    borderColor: "border-orange-500/30",
-    textColor: "text-orange-400",
+    bgColor: "bg-orange-50",
+    borderColor: "border-orange-300",
+    textColor: "text-orange-600",
     icon: "⚡",
     description: "Miễn phí, tốc độ cực nhanh",
     link: "https://console.groq.com/keys",
@@ -111,9 +111,9 @@ const providerInfo = {
   openai: {
     name: "OpenAI",
     color: "from-green-500 to-emerald-500",
-    bgColor: "bg-green-500/10",
-    borderColor: "border-green-500/30",
-    textColor: "text-green-400",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-300",
+    textColor: "text-green-600",
     icon: "🤖",
     description: "Chất lượng cao, trả phí",
     link: "https://platform.openai.com/api-keys",
@@ -123,9 +123,9 @@ const providerInfo = {
   gemini: {
     name: "Google Gemini",
     color: "from-blue-500 to-purple-500",
-    bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/30",
-    textColor: "text-blue-400",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-300",
+    textColor: "text-blue-600",
     icon: "✨",
     description: "Miễn phí, hỗ trợ Vision",
     link: "https://aistudio.google.com/app/apikey",
@@ -135,9 +135,9 @@ const providerInfo = {
   cohere: {
     name: "Cohere",
     color: "from-purple-500 to-pink-500",
-    bgColor: "bg-purple-500/10",
-    borderColor: "border-purple-500/30",
-    textColor: "text-purple-400",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-300",
+    textColor: "text-purple-600",
     icon: "🟣",
     description: "Miễn phí, Command-R models",
     link: "https://dashboard.cohere.com/api-keys",
@@ -283,8 +283,8 @@ export default function SettingsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-zinc-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-gray-800 animate-spin" />
       </div>
     );
   }
@@ -292,19 +292,19 @@ export default function SettingsPage() {
   const userName = session?.user?.name || session?.user?.email || "User";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-zinc-900 p-4 md:p-8">
+    <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard-new" className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition">
-            <ArrowLeft className="w-5 h-5 text-white" />
+          <Link href="/dashboard-new" className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition">
+            <ArrowLeft className="w-5 h-5 text-gray-800" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Key className="w-6 h-6 text-yellow-400" />
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <Key className="w-7 h-7 text-yellow-500" />
               Cài đặt API Keys
             </h1>
-            <p className="text-white/60 text-sm">
+            <p className="text-gray-600 text-base font-medium">
               {isLoggedIn ? `Xin chào, ${userName}` : "Chưa đăng nhập"}
             </p>
           </div>
@@ -315,18 +315,18 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-xl bg-yellow-500/20 border border-yellow-500/50"
+            className="mb-6 p-4 rounded-xl bg-yellow-50 border-2 border-yellow-400"
           >
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-yellow-300 font-semibold mb-1">Bạn chưa đăng nhập</h3>
-                <p className="text-yellow-200/80 text-sm mb-3">
+                <h3 className="text-yellow-800 font-bold text-lg mb-1">Bạn chưa đăng nhập</h3>
+                <p className="text-yellow-700 text-base mb-3">
                   Vui lòng đăng nhập để lưu và quản lý API keys của bạn. API keys sẽ được lưu an toàn trong tài khoản.
                 </p>
                 <Link
                   href="/auth/login"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-black font-medium rounded-lg hover:bg-yellow-400 transition"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition"
                 >
                   <LogIn className="w-4 h-4" />
                   Đăng nhập ngay
@@ -345,20 +345,20 @@ export default function SettingsPage() {
               exit={{ opacity: 0, y: -10 }}
               className={`mb-6 p-4 rounded-xl flex items-center gap-2 ${
                 message.type === "success" 
-                  ? "bg-green-500/20 border border-green-500/50 text-green-300"
-                  : "bg-red-500/20 border border-red-500/50 text-red-300"
+                  ? "bg-green-50 border-2 border-green-400 text-green-800"
+                  : "bg-red-50 border-2 border-red-400 text-red-800"
               }`}
             >
               {message.type === "success" ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-              {message.text}
+              <span className="font-semibold">{message.text}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Why API Keys */}
-        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl p-6 border border-purple-500/20 mb-8">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-400" />
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-yellow-500" />
             Tại sao cần API key riêng?
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
@@ -368,9 +368,9 @@ export default function SettingsPage() {
               { icon: "🔒", text: "Bảo mật - key chỉ lưu trong tài khoản bạn" },
               { icon: "💰", text: "Tự kiểm soát chi phí API" }
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
+              <div key={i} className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm">
                 <span className="text-2xl">{item.icon}</span>
-                <span className="text-white/80 text-sm">{item.text}</span>
+                <span className="text-gray-800 font-medium">{item.text}</span>
               </div>
             ))}
           </div>
@@ -389,32 +389,32 @@ export default function SettingsPage() {
                 key={provider}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`${info.bgColor} border ${info.borderColor} rounded-2xl overflow-hidden`}
+                className={`${info.bgColor} border-2 ${info.borderColor} rounded-2xl overflow-hidden shadow-sm`}
               >
                 {/* Provider Header */}
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center text-2xl`}>
+                    <div className={`w-12 h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center text-2xl shadow-md`}>
                       {info.icon}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-white font-bold">{info.name}</h3>
+                        <h3 className="text-gray-900 font-bold text-lg">{info.name}</h3>
                         {info.recommended && (
-                          <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full">Khuyên dùng</span>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Khuyên dùng</span>
                         )}
                         {hasSavedKey && (
-                          <span className="text-xs bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded-full">✓ Đã lưu</span>
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">✓ Đã lưu</span>
                         )}
                       </div>
-                      <p className="text-white/60 text-sm">{info.description}</p>
+                      <p className="text-gray-600 font-medium">{info.description}</p>
                     </div>
                   </div>
                   <a
                     href={info.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1 px-3 py-1.5 ${info.bgColor} ${info.textColor} rounded-lg text-sm hover:opacity-80`}
+                    className={`flex items-center gap-1 px-3 py-1.5 bg-white ${info.textColor} rounded-lg text-sm font-semibold hover:opacity-80 shadow-sm border ${info.borderColor}`}
                   >
                     Lấy key <ExternalLink className="w-3 h-3" />
                   </a>
@@ -423,35 +423,35 @@ export default function SettingsPage() {
                 {/* Saved Key Display */}
                 {hasSavedKey && (
                   <div className="px-4 pb-2">
-                    <div className="flex items-center gap-2 p-3 bg-black/30 rounded-xl border border-green-500/30">
-                      <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                      <span className="text-green-400 font-mono text-sm flex-1">
+                    <div className="flex items-center gap-2 p-3 bg-white rounded-xl border-2 border-green-300 shadow-sm">
+                      <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span className="text-green-700 font-mono text-sm flex-1 font-semibold">
                         {showKeys[provider] ? savedKeys[provider] : maskKey(savedKeys[provider])}
                       </span>
                       <button
                         onClick={() => setShowKeys({ ...showKeys, [provider]: !showKeys[provider] })}
-                        className="p-1.5 hover:bg-white/10 rounded-lg"
+                        className="p-1.5 hover:bg-gray-100 rounded-lg"
                         title={showKeys[provider] ? "Ẩn key" : "Hiện key"}
                       >
-                        {showKeys[provider] ? <EyeOff className="w-4 h-4 text-white/60" /> : <Eye className="w-4 h-4 text-white/60" />}
+                        {showKeys[provider] ? <EyeOff className="w-4 h-4 text-gray-500" /> : <Eye className="w-4 h-4 text-gray-500" />}
                       </button>
                       <button
                         onClick={() => copyToClipboard(savedKeys[provider])}
-                        className="p-1.5 hover:bg-white/10 rounded-lg"
+                        className="p-1.5 hover:bg-gray-100 rounded-lg"
                         title="Copy key"
                       >
-                        <Copy className="w-4 h-4 text-white/60" />
+                        <Copy className="w-4 h-4 text-gray-500" />
                       </button>
                       <button
                         onClick={() => handleDelete(provider)}
                         disabled={deleting === provider || !isLoggedIn}
-                        className="p-1.5 hover:bg-red-500/20 rounded-lg disabled:opacity-50"
+                        className="p-1.5 hover:bg-red-50 rounded-lg disabled:opacity-50"
                         title="Xóa key"
                       >
                         {deleting === provider ? (
-                          <Loader2 className="w-4 h-4 text-red-400 animate-spin" />
+                          <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
                         ) : (
-                          <Trash2 className="w-4 h-4 text-red-400" />
+                          <Trash2 className="w-4 h-4 text-red-500" />
                         )}
                       </button>
                     </div>
@@ -467,11 +467,11 @@ export default function SettingsPage() {
                       onChange={(e) => setKeys({ ...keys, [provider]: e.target.value })}
                       placeholder={hasSavedKey ? `Nhập key mới để cập nhật...` : `Nhập ${info.name} API Key...`}
                       disabled={!isLoggedIn}
-                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     />
                   </div>
                   {hasSavedKey && (
-                    <p className="text-white/40 text-xs mt-2">
+                    <p className="text-gray-500 text-sm mt-2 font-medium">
                       💡 Nhập key mới ở trên để thay thế key hiện tại
                     </p>
                   )}
@@ -480,9 +480,9 @@ export default function SettingsPage() {
                 {/* Video Guide Toggle */}
                 <button
                   onClick={() => setExpandedGuide(isExpanded ? null : provider)}
-                  className="w-full px-4 py-3 bg-black/20 flex items-center justify-between text-white/70 hover:text-white hover:bg-black/30 transition"
+                  className="w-full px-4 py-3 bg-white/50 flex items-center justify-between text-gray-600 hover:text-gray-900 hover:bg-white/80 transition border-t border-gray-200"
                 >
-                  <span className="flex items-center gap-2 text-sm">
+                  <span className="flex items-center gap-2 font-medium">
                     <Play className="w-4 h-4" />
                     Xem hướng dẫn lấy API key
                   </span>
@@ -498,11 +498,11 @@ export default function SettingsPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="p-4 bg-black/20 space-y-4">
+                      <div className="p-4 bg-white/70 space-y-4 border-t border-gray-200">
                         {/* Video Thumbnail */}
                         <button
                           onClick={() => setShowVideoModal(provider)}
-                          className="relative w-full aspect-video rounded-xl overflow-hidden group"
+                          className="relative w-full aspect-video rounded-xl overflow-hidden group shadow-md"
                         >
                           <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-transparent z-10" />
                           <div className="absolute inset-0 flex items-center justify-center z-20">
@@ -510,21 +510,21 @@ export default function SettingsPage() {
                               <Play className="w-8 h-8 text-white ml-1" />
                             </div>
                           </div>
-                          <div className="absolute bottom-2 right-2 z-20 bg-black/70 px-2 py-1 rounded text-white text-xs">
+                          <div className="absolute bottom-2 right-2 z-20 bg-black/70 px-2 py-1 rounded text-white text-xs font-semibold">
                             {guide.duration}
                           </div>
-                          <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                            <Video className="w-12 h-12 text-white/30" />
+                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                            <Video className="w-12 h-12 text-gray-400" />
                           </div>
                         </button>
 
                         {/* Steps */}
                         <div>
-                          <h4 className="text-white/80 font-medium mb-2 text-sm">Các bước thực hiện:</h4>
+                          <h4 className="text-gray-800 font-bold mb-2">Các bước thực hiện:</h4>
                           <ol className="space-y-2">
                             {guide.steps.map((step, i) => (
-                              <li key={i} className="flex items-start gap-2 text-white/60 text-sm">
-                                <span className={`w-5 h-5 ${info.bgColor} ${info.textColor} rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0`}>
+                              <li key={i} className="flex items-start gap-2 text-gray-700 font-medium">
+                                <span className={`w-5 h-5 ${info.bgColor} ${info.textColor} rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 border ${info.borderColor}`}>
                                   {i + 1}
                                 </span>
                                 {step}
@@ -545,7 +545,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving || !isLoggedIn || (!keys.groq && !keys.openai && !keys.gemini && !keys.cohere)}
-          className="w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-lg rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
           {saving ? "Đang lưu..." : !isLoggedIn ? "Đăng nhập để lưu" : "Lưu API Keys"}
@@ -555,17 +555,17 @@ export default function SettingsPage() {
         <div className="mt-8 grid grid-cols-2 gap-4">
           <Link
             href="/dashboard-new/survey"
-            className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition text-center"
+            className="p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
           >
             <span className="text-2xl mb-2 block">📋</span>
-            <span className="text-white/80 text-sm">Khảo sát học tập</span>
+            <span className="text-gray-800 font-semibold">Khảo sát học tập</span>
           </Link>
           <Link
             href="/dashboard-new/guide"
-            className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition text-center"
+            className="p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
           >
             <span className="text-2xl mb-2 block">📖</span>
-            <span className="text-white/80 text-sm">Hướng dẫn sử dụng</span>
+            <span className="text-gray-800 font-semibold">Hướng dẫn sử dụng</span>
           </Link>
         </div>
       </div>
@@ -585,25 +585,25 @@ export default function SettingsPage() {
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-3xl bg-gray-900 rounded-2xl overflow-hidden"
+              className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl"
             >
-              <div className="p-4 flex items-center justify-between border-b border-white/10">
-                <h3 className="text-white font-bold">
+              <div className="p-4 flex items-center justify-between border-b border-gray-200">
+                <h3 className="text-gray-900 font-bold text-lg">
                   {videoGuides.find(g => g.provider === showVideoModal)?.title}
                 </h3>
-                <button onClick={() => setShowVideoModal(null)} className="text-white/60 hover:text-white">
+                <button onClick={() => setShowVideoModal(null)} className="text-gray-500 hover:text-gray-900 text-xl font-bold">
                   ✕
                 </button>
               </div>
-              <div className="aspect-video bg-black flex items-center justify-center">
-                <div className="text-center text-white/60">
+              <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                <div className="text-center text-gray-600">
                   <Video className="w-16 h-16 mx-auto mb-4 text-red-500" />
-                  <p>Video hướng dẫn sẽ được cập nhật sớm</p>
+                  <p className="font-medium">Video hướng dẫn sẽ được cập nhật sớm</p>
                   <a
                     href={providerInfo[showVideoModal].link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20"
+                    className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300"
                   >
                     Truy cập trực tiếp <ExternalLink className="w-4 h-4" />
                   </a>
