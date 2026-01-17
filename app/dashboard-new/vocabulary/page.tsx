@@ -156,6 +156,16 @@ export default function VocabularyPage() {
     speechSynthesis.speak(utterance);
   };
 
+  const speakSentence = (sentence: string) => {
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = "en-US";
+    utterance.rate = 0.85;
+    utterance.pitch = 1.0;
+    speechSynthesis.speak(utterance);
+  };
+
   const deleteWord = async (wordId: string) => {
     if (!confirm("Bạn có chắc muốn xóa?")) return;
     setDeletingId(wordId);
@@ -311,7 +321,7 @@ export default function VocabularyPage() {
               <BookOpen className="w-8 h-8 text-teal-600" />
               Kho từ vựng
             </h1>
-            <p className="text-gray-600 mt-1">{vocabulary.length} từ vựng • {structures.length} cấu trúc • {errors.length} lỗi sai</p>
+            <p className="text-gray-600 mt-1">{vocabulary.length} từ vựng • {structures.length} cấu trúc</p>
           </div>
           <div className="flex gap-3">
             <button onClick={loadVocabulary} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200">
@@ -336,12 +346,6 @@ export default function VocabularyPage() {
             <Languages className="w-5 h-5" />
             Cấu trúc câu
             <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">{structures.length}</span>
-          </button>
-          <button onClick={() => setActiveTab("errors")}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition ${activeTab === "errors" ? "bg-white text-orange-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
-            <AlertCircle className="w-5 h-5" />
-            Lỗi sai
-            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">{errors.length}</span>
           </button>
         </div>
 
@@ -411,7 +415,16 @@ export default function VocabularyPage() {
                           <p className="text-lg text-teal-600 font-medium mb-2">{getMeaning(word)}</p>
                           {getExample(word) && (
                             <div className="text-gray-600 text-sm">
-                              <p className="italic">&quot;{getExample(word)}&quot;</p>
+                              <div className="flex items-start gap-2">
+                                <p className="italic flex-1">&quot;{getExample(word)}&quot;</p>
+                                <button 
+                                  onClick={() => speakSentence(getExample(word))} 
+                                  className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 flex-shrink-0"
+                                  title="Phát âm câu ví dụ"
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </button>
+                              </div>
                               {getExampleTranslation(word) && <p className="text-gray-500 mt-1">{getExampleTranslation(word)}</p>}
                             </div>
                           )}
@@ -450,52 +463,24 @@ export default function VocabularyPage() {
                           <p className="text-gray-700 mb-2">{getMeaning(structure)}</p>
                           {getExample(structure) && (
                             <div className="bg-white/50 rounded-lg p-3 mt-2">
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium text-purple-600">Ví dụ:</span> {getExample(structure)}
-                              </p>
+                              <div className="flex items-start gap-2">
+                                <p className="text-sm text-gray-600 flex-1">
+                                  <span className="font-medium text-purple-600">Ví dụ:</span> {getExample(structure)}
+                                </p>
+                                <button 
+                                  onClick={() => speakSentence(getExample(structure))} 
+                                  className="p-1.5 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 flex-shrink-0"
+                                  title="Phát âm câu ví dụ"
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
                         <button onClick={() => deleteWord(structure._id)} disabled={deletingId === structure._id}
                           className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50">
                           {deletingId === structure._id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === "errors" && (
-            <motion.div key="errors" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              {filteredErrors.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-                  <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Chưa có lỗi sai</h3>
-                  <p className="text-gray-500">Lỗi sai sẽ được lưu khi bạn viết câu trong phần học qua hình ảnh</p>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {filteredErrors.map((error) => (
-                    <motion.div key={error._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-2xl p-5 hover:shadow-lg transition">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-red-500 line-through text-lg">{error.word}</span>
-                            <span className="text-gray-400">→</span>
-                            <span className="text-green-600 font-bold text-lg">{getMeaning(error)}</span>
-                            <span className="text-xs px-2 py-1 bg-orange-100 text-orange-600 rounded-full">{error.exampleTranslation || "Lỗi"}</span>
-                          </div>
-                          {getExample(error) && (
-                            <p className="text-gray-600 text-sm mt-2">💡 {getExample(error)}</p>
-                          )}
-                        </div>
-                        <button onClick={() => deleteWord(error._id)} disabled={deletingId === error._id}
-                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50">
-                          {deletingId === error._id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </button>
                       </div>
                     </motion.div>
