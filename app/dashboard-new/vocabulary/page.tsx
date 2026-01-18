@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import VocabularyQuiz from "@/components/VocabularyQuiz";
 import { motion, AnimatePresence } from "framer-motion";
+import { getIPA } from "@/lib/ipaDict";
 import {
   BookOpen,
   Search,
@@ -39,6 +40,7 @@ interface VocabularyWord {
   isLearned: boolean;
   source?: string;
   pronunciation?: string;
+  ipa?: string; // IPA from database
 }
 
 interface QuizQuestion {
@@ -91,36 +93,11 @@ export default function VocabularyPage() {
   const getExampleTranslation = (word: VocabularyWord): string => word.exampleTranslation || word.exampleVi || "";
   const getWordType = (word: VocabularyWord): string => word.partOfSpeech || word.type || "other";
   
-  // Generate pronunciation (IPA) - using a simple mapping for common words
+  // Get IPA pronunciation - prioritize database IPA, then dictionary, then pronunciation field
   const getPronunciation = (word: VocabularyWord): string => {
+    if (word.ipa) return word.ipa;
     if (word.pronunciation) return word.pronunciation;
-    
-    // Simple IPA pronunciation mapping for common English words
-    const ipaMap: Record<string, string> = {
-      'good': '/ɡʊd/',
-      'application': '/ˌæplɪˈkeɪʃən/',
-      'hello': '/həˈloʊ/',
-      'world': '/wɜːrld/',
-      'cat': '/kæt/',
-      'dog': '/dɔːɡ/',
-      'house': '/haʊs/',
-      'water': '/ˈwɔːtər/',
-      'food': '/fuːd/',
-      'book': '/bʊk/',
-      'school': '/skuːl/',
-      'student': '/ˈstuːdənt/',
-      'teacher': '/ˈtiːtʃər/',
-      'friend': '/frend/',
-      'family': '/ˈfæməli/',
-      'love': '/lʌv/',
-      'happy': '/ˈhæpi/',
-      'beautiful': '/ˈbjuːtɪfəl/',
-      'important': '/ɪmˈpɔːrtənt/',
-      'different': '/ˈdɪfrənt/',
-    };
-    
-    const w = word.word.toLowerCase();
-    return ipaMap[w] || `/${w}/`; // Fallback to simple format if not in map
+    return getIPA(word.word);
   };
 
   useEffect(() => {

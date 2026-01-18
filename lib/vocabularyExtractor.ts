@@ -22,6 +22,7 @@ export interface ExtractedVocabulary {
   meaning: string;
   example: string;
   exampleTranslation: string;
+  ipa?: string; // IPA pronunciation
   level: 'beginner' | 'intermediate' | 'advanced';
   category: string;
   imagePrompt: string;

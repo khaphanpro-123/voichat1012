@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import Vocabulary from "@/app/models/Vocabulary";
 import Document from "@/app/models/Document";
 import { extractVocabularyFromText } from "@/lib/vocabularyExtractor";
+import { getIPA } from "@/lib/ipaDict";
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,6 +87,10 @@ export async function POST(req: NextRequest) {
           word: vocab.word
         });
 
+        // Get IPA pronunciation for English words in the meaning
+        const englishWords = vocab.meaning.split(/\s+/).filter(w => /^[a-zA-Z]+$/.test(w));
+        const ipaForWord = englishWords.length > 0 ? getIPA(englishWords[0]) : undefined;
+
         if (existingVocab) {
           // Update existing vocabulary with new information
           existingVocab.meaning = vocab.meaning;
@@ -94,6 +99,7 @@ export async function POST(req: NextRequest) {
           existingVocab.imagePrompt = vocab.imagePrompt;
           existingVocab.imageUrl = imageUrl;
           existingVocab.category = vocab.category;
+          existingVocab.ipa = vocab.ipa || ipaForWord;
           if (sourceDoc) {
             existingVocab.sourceDocument = sourceDoc._id;
           }
@@ -108,6 +114,7 @@ export async function POST(req: NextRequest) {
             meaning: vocab.meaning,
             example: vocab.example,
             exampleTranslation: vocab.exampleTranslation,
+            ipa: vocab.ipa || ipaForWord,
             level: vocab.level,
             category: vocab.category,
             imagePrompt: vocab.imagePrompt,

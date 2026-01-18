@@ -7,6 +7,7 @@ export interface IVocabulary extends Document {
   meaning: string;
   example: string;
   exampleTranslation: string;
+  ipa?: string; // IPA pronunciation
   audioUrl?: string;
   imageUrl?: string;
   imagePrompt?: string;
@@ -38,6 +39,7 @@ const VocabularySchema = new Schema({
   meaning: { type: String, required: true },
   example: { type: String, required: true },
   exampleTranslation: { type: String, required: true },
+  ipa: { type: String }, // IPA pronunciation
   audioUrl: { type: String },
   imageUrl: { type: String },
   imagePrompt: { type: String },
