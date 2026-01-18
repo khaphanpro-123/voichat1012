@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractVocabularyFromPDF, removeMetadata, validatePDFContent } from "@/lib/pdfVocabularyExtractor";
+import { extractVocabularyAdvanced } from "@/lib/advancedVocabularyExtractor";
 
 // Increase body size limit for this route
 export const config = {
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File;
     const userId = (formData.get("userId") as string) || "anonymous";
     const debug = formData.get("debug") === "true";
+    const convertPdf = formData.get("convertPdf") === "true";
 
     if (!file) {
       return NextResponse.json(
@@ -34,7 +36,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[upload-ocr] Processing:", file.name, file.type, file.size);
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+    const allowedExtensions = ['.pdf', '.docx', '.txt'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      return NextResponse.json(
+        { success: false, message: "Chỉ chấp nhận file PDF, Word (.docx) hoặc TXT" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, message: "File quá lớn. Tối đa 10MB" },
+        { status: 400 }
+      );
+    }
+
+    console.log("[upload-ocr] Processing:", file.name, file.type, file.size, "convertPdf:", convertPdf);
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -136,31 +162,70 @@ export async function POST(req: NextRequest) {
     let stats = { totalWords: 0, uniqueWords: 0, sentences: 0, metadataRemoved: 0 };
 
     if (!isImage && rawText.length > 50) {
+      const startTime = Date.now();
+      
       // Step 1: Validate content
       const validation = validatePDFContent(rawText);
+      extractionLogs.push({ step: "Validation", data: validation, timestamp: Date.now() - startTime });
       
       if (validation.valid) {
         // Step 2: Remove metadata
         const { cleaned, removedCount } = removeMetadata(rawText);
         extractedText = cleaned;
+        extractionLogs.push({ 
+          step: "Metadata Removal", 
+          data: { removedCount, originalLength: rawText.length, cleanedLength: cleaned.length }, 
+          timestamp: Date.now() - startTime 
+        });
         
-        // Step 3: Extract vocabulary using improved extractor
-        const extraction = extractVocabularyFromPDF(rawText);
-        
-        if (extraction.success) {
-          vocabulary = extraction.vocabulary.map(v => v.word);
-          extractionLogs = extraction.logs;
+        // Step 3: Use Advanced Vocabulary Extraction (TF-IDF + RAKE + YAKE)
+        try {
+          const advancedResult = extractVocabularyAdvanced(extractedText, {
+            maxWords: 100,
+            minWordLength: 3,
+            methods: ['tfidf', 'rake', 'yake']
+          });
+          
+          vocabulary = advancedResult.vocabulary;
           stats = {
-            totalWords: extraction.stats.originalLength,
-            uniqueWords: extraction.stats.extractedCount,
-            sentences: extraction.stats.sentenceCount,
-            metadataRemoved: extraction.stats.metadataRemoved,
+            totalWords: advancedResult.stats.totalWords,
+            uniqueWords: advancedResult.stats.uniqueWords,
+            sentences: advancedResult.stats.sentences,
+            metadataRemoved: removedCount,
           };
+          
+          extractionLogs.push({ 
+            step: "Advanced Extraction (TF-IDF+RAKE+YAKE)", 
+            data: { 
+              method: advancedResult.stats.method,
+              extractedCount: vocabulary.length,
+              topScores: advancedResult.scores.slice(0, 10).map(s => ({ word: s.word, score: s.score.toFixed(3) }))
+            }, 
+            timestamp: Date.now() - startTime 
+          });
+          
+          console.log(`[upload-ocr] Advanced extraction: ${vocabulary.length} words using ${advancedResult.stats.method}`);
+        } catch (advErr) {
+          console.error("[upload-ocr] Advanced extraction failed, falling back:", advErr);
+          
+          // Fallback to original extractor
+          const extraction = extractVocabularyFromPDF(rawText);
+          if (extraction.success) {
+            vocabulary = extraction.vocabulary.map(v => v.word);
+            extractionLogs.push(...extraction.logs);
+            stats = {
+              totalWords: extraction.stats.originalLength,
+              uniqueWords: extraction.stats.extractedCount,
+              sentences: extraction.stats.sentenceCount,
+              metadataRemoved: extraction.stats.metadataRemoved,
+            };
+          }
         }
         
         console.log(`[upload-ocr] Extracted ${vocabulary.length} vocabulary items, removed ${removedCount} metadata`);
       } else {
         console.log(`[upload-ocr] Content validation failed: ${validation.reason}`);
+        extractionLogs.push({ step: "Validation Failed", data: { reason: validation.reason }, timestamp: Date.now() - startTime });
       }
     }
 
