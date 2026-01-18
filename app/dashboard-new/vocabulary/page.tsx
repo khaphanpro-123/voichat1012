@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import VocabularyQuiz from "@/components/VocabularyQuiz";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
@@ -37,12 +38,17 @@ interface VocabularyWord {
   timesReviewed: number;
   isLearned: boolean;
   source?: string;
+  pronunciation?: string;
 }
 
 interface QuizQuestion {
   word: VocabularyWord;
-  options: string[];
+  type: "multiple_choice" | "fill_blank" | "word_order";
+  question: string;
+  options?: string[];
   correctAnswer: string;
+  blankedSentence?: string;
+  words?: string[];
 }
 
 type TabType = "vocabulary" | "structures" | "errors";
@@ -84,6 +90,15 @@ export default function VocabularyPage() {
   const getExample = (word: VocabularyWord): string => word.example || word.exampleEn || "";
   const getExampleTranslation = (word: VocabularyWord): string => word.exampleTranslation || word.exampleVi || "";
   const getWordType = (word: VocabularyWord): string => word.partOfSpeech || word.type || "other";
+  
+  // Generate pronunciation (IPA-like) - simplified version
+  const getPronunciation = (word: VocabularyWord): string => {
+    if (word.pronunciation) return word.pronunciation;
+    // Simple pronunciation mapping for common words
+    const w = word.word.toLowerCase();
+    // This is a simplified version - in production, use a proper pronunciation API
+    return `/${w}/`;
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/login");
@@ -188,11 +203,11 @@ export default function VocabularyPage() {
     }
   };
 
-  // Quiz functions
+  // Quiz functions - Enhanced with multiple question types
   const startQuiz = () => {
-    const validWords = vocabulary.filter((w) => getMeaning(w)?.trim().length > 0);
+    const validWords = vocabulary.filter((w) => getMeaning(w)?.trim().length > 0 && getExample(w)?.trim().length > 0);
     if (validWords.length < 4) {
-      alert("Cần ít nhất 4 từ vựng để bắt đầu quiz!");
+      alert("Cần ít nhất 4 từ vựng có câu ví dụ để bắt đầu quiz!");
       return;
     }
 
@@ -200,18 +215,86 @@ export default function VocabularyPage() {
     if (selectedType !== "all") {
       selectedWords = selectedWords.filter((w) => normalizeType(getWordType(w)) === selectedType);
     }
-    selectedWords = selectedWords.slice(0, 20);
+    selectedWords = selectedWords.slice(0, 15);
 
     if (selectedWords.length < 4) {
       alert("Không đủ từ vựng để tạo quiz!");
       return;
     }
 
-    const questions: QuizQuestion[] = selectedWords.map((word) => {
-      const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
-      const correctMeaning = getMeaning(word);
-      const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
-      return { word, options, correctAnswer: correctMeaning };
+    const questions: QuizQuestion[] = [];
+    
+    selectedWords.forEach((word, index) => {
+      const questionTypes: Array<"multiple_choice" | "fill_blank" | "word_order"> = ["multiple_choice", "fill_blank", "word_order"];
+      const randomType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+      
+      if (randomType === "multiple_choice") {
+        // Multiple choice: What does this word mean?
+        const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
+        const correctMeaning = getMeaning(word);
+        const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
+        questions.push({
+          word,
+          type: "multiple_choice",
+          question: `Nghĩa của từ "${word.word}" là gì?`,
+          options,
+          correctAnswer: correctMeaning
+        });
+      } else if (randomType === "fill_blank" && getExample(word)) {
+        // Fill in the blank: Complete the sentence
+        const example = getExample(word);
+        const wordInSentence = word.word;
+        const blankedSentence = example.replace(new RegExp(`\\b${wordInSentence}\\b`, 'gi'), '______');
+        
+        if (blankedSentence !== example) { // Make sure word was found
+          questions.push({
+            word,
+            type: "fill_blank",
+            question: "Điền từ vào chỗ trống:",
+            blankedSentence,
+            correctAnswer: wordInSentence.toLowerCase()
+          });
+        } else {
+          // Fallback to multiple choice if word not found in sentence
+          const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
+          const correctMeaning = getMeaning(word);
+          const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
+          questions.push({
+            word,
+            type: "multiple_choice",
+            question: `Nghĩa của từ "${word.word}" là gì?`,
+            options,
+            correctAnswer: correctMeaning
+          });
+        }
+      } else if (randomType === "word_order" && getExample(word)) {
+        // Word order: Arrange words to form a sentence
+        const example = getExample(word);
+        const words = example.split(/\s+/).filter(w => w.length > 0);
+        
+        if (words.length >= 4 && words.length <= 10) {
+          const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+          questions.push({
+            word,
+            type: "word_order",
+            question: "Sắp xếp các từ thành câu đúng:",
+            words: shuffledWords,
+            correctAnswer: example.toLowerCase().replace(/[.,!?]/g, '').trim()
+          });
+        } else {
+          // Fallback to multiple choice if sentence too long/short
+          const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
+          const correctMeaning = getMeaning(word);
+          const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
+          questions.push({
+            word,
+            type: "multiple_choice",
+            question: `Nghĩa của từ "${word.word}" là gì?`,
+            options,
+            correctAnswer: correctMeaning
+          });
+        }
+      }
     });
 
     setQuizQuestions(questions);
@@ -227,7 +310,21 @@ export default function VocabularyPage() {
     if (showResult) return;
     setSelectedAnswer(answer);
     setShowResult(true);
-    if (answer === quizQuestions[currentQuestionIndex].correctAnswer) setQuizScore((prev) => prev + 1);
+    
+    const currentQ = quizQuestions[currentQuestionIndex];
+    let isCorrect = false;
+    
+    if (currentQ.type === "multiple_choice") {
+      isCorrect = answer === currentQ.correctAnswer;
+    } else if (currentQ.type === "fill_blank") {
+      isCorrect = answer.toLowerCase().trim() === currentQ.correctAnswer.toLowerCase().trim();
+    } else if (currentQ.type === "word_order") {
+      const userAnswer = answer.toLowerCase().replace(/[.,!?]/g, '').trim();
+      const correctAnswer = currentQ.correctAnswer.toLowerCase().replace(/[.,!?]/g, '').trim();
+      isCorrect = userAnswer === correctAnswer;
+    }
+    
+    if (isCorrect) setQuizScore((prev) => prev + 1);
 
     setTimeout(() => {
       if (currentQuestionIndex < quizQuestions.length - 1) {
@@ -260,53 +357,29 @@ export default function VocabularyPage() {
   if (quizMode) {
     return (
       <DashboardLayout>
-        <div className="p-6 md:p-8 max-w-3xl mx-auto">
-          {!quizComplete ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-3xl shadow-xl p-8">
-              <div className="flex items-center justify-between mb-6">
-                <span className="font-bold text-gray-700">Câu {currentQuestionIndex + 1}/{quizQuestions.length}</span>
-                <span className="font-bold text-teal-600"><Trophy className="w-5 h-5 inline mr-1" />{quizScore} điểm</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-                <div className="bg-teal-500 h-2 rounded-full transition-all" style={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }} />
-              </div>
-              <div className="text-center mb-8">
-                <p className="text-gray-500 mb-2">Nghĩa của từ này là gì?</p>
-                <h2 className="text-4xl font-bold text-gray-900">{quizQuestions[currentQuestionIndex]?.word.word}</h2>
-                <button onClick={() => speakWord(quizQuestions[currentQuestionIndex]?.word.word)} className="mt-2 p-2 bg-teal-100 text-teal-600 rounded-full">
-                  <Volume2 className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="grid gap-3">
-                {quizQuestions[currentQuestionIndex]?.options.map((option, idx) => {
-                  const isCorrect = option === quizQuestions[currentQuestionIndex].correctAnswer;
-                  const isSelected = selectedAnswer === option;
-                  return (
-                    <button key={idx} onClick={() => handleAnswer(option)} disabled={showResult}
-                      className={`w-full p-4 rounded-xl text-left font-medium transition ${showResult ? (isCorrect ? "bg-green-100 border-2 border-green-500" : isSelected ? "bg-red-100 border-2 border-red-500" : "bg-gray-100") : "bg-gray-100 hover:bg-teal-50 border-2 border-transparent"}`}>
-                      <div className="flex items-center justify-between">
-                        <span>{option}</span>
-                        {showResult && isCorrect && <CheckCircle className="w-5 h-5 text-green-500" />}
-                        {showResult && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-red-500" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <button onClick={exitQuiz} className="mt-6 w-full py-3 text-gray-500 hover:text-gray-700">Thoát Quiz</button>
-            </motion.div>
-          ) : (
+        {!quizComplete ? (
+          <VocabularyQuiz
+            questions={quizQuestions}
+            onExit={exitQuiz}
+            onComplete={(finalScore) => {
+              setQuizScore(finalScore);
+              setQuizComplete(true);
+            }}
+            speakWord={speakWord}
+          />
+        ) : (
+          <div className="p-6 md:p-8 max-w-3xl mx-auto">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl shadow-xl p-8 text-center">
               <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
               <h2 className="text-3xl font-bold mb-2">Hoàn thành!</h2>
               <p className="text-xl text-gray-600 mb-6">Bạn đạt <span className="font-bold text-teal-600">{quizScore}/{quizQuestions.length}</span> điểm</p>
               <div className="flex gap-4 justify-center">
-                <button onClick={exitQuiz} className="px-6 py-3 bg-gray-100 rounded-xl">Quay lại</button>
-                <button onClick={startQuiz} className="px-6 py-3 bg-teal-600 text-white rounded-xl">Chơi lại</button>
+                <button onClick={exitQuiz} className="px-6 py-3 bg-gray-100 rounded-xl hover:bg-gray-200">Quay lại</button>
+                <button onClick={startQuiz} className="px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700">Chơi lại</button>
               </div>
             </motion.div>
-          )}
-        </div>
+          </div>
+        )}
       </DashboardLayout>
     );
   }
@@ -399,30 +472,34 @@ export default function VocabularyPage() {
                   <p className="text-gray-500">Upload tài liệu hoặc học qua hình ảnh để thêm từ vựng</p>
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid md:grid-cols-2 gap-3">
                   {filteredVocabulary.map((word) => (
-                    <motion.div key={word._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition">
-                      <div className="flex items-start justify-between">
+                    <motion.div key={word._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                      className="bg-white rounded-xl p-4 shadow hover:shadow-md transition border border-gray-100">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-gray-900">{word.word}</h3>
-                            <button onClick={() => speakWord(word.word)} className="p-1.5 bg-teal-100 text-teal-600 rounded-lg hover:bg-teal-200">
-                              <Volume2 className="w-4 h-4" />
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
+                            <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
+                              <Volume2 className="w-3.5 h-3.5" />
                             </button>
-                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-full">{getWordType(word)}</span>
-                            {word.source && <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">{word.source}</span>}
                           </div>
-                          <p className="text-lg text-teal-600 font-medium mb-2">{getMeaning(word)}</p>
+                          <p className="text-xs text-gray-500 mb-1">{getPronunciation(word)}</p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">{getWordType(word)}</span>
+                            {word.source && <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{word.source}</span>}
+                          </div>
+                          <p className="text-sm text-teal-600 font-medium mb-2">{getMeaning(word)}</p>
                           {getExample(word) && (
-                            <div className="text-gray-600 text-sm">
-                              <div className="flex items-start gap-2">
+                            <div className="text-xs text-gray-600 bg-gray-50 rounded p-2">
+                              <div className="flex items-start gap-1">
                                 <p className="italic flex-1">&quot;{getExample(word)}&quot;</p>
                                 <button 
                                   onClick={() => speakSentence(getExample(word))} 
-                                  className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 flex-shrink-0"
-                                  title="Phát âm câu ví dụ"
+                                  className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 flex-shrink-0"
+                                  title="Phát âm câu"
                                 >
-                                  <Volume2 className="w-4 h-4" />
+                                  <Volume2 className="w-3 h-3" />
                                 </button>
                               </div>
                               {getExampleTranslation(word) && <p className="text-gray-500 mt-1">{getExampleTranslation(word)}</p>}
@@ -430,8 +507,8 @@ export default function VocabularyPage() {
                           )}
                         </div>
                         <button onClick={() => deleteWord(word._id)} disabled={deletingId === word._id}
-                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50">
-                          {deletingId === word._id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50">
+                          {deletingId === word._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </motion.div>
