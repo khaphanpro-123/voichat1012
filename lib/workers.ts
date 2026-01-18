@@ -199,6 +199,7 @@ Return ONLY valid JSON array (no markdown, no code blocks):
         meaning: card.vietnamese,
         example: card.exampleEn,
         exampleTranslation: card.exampleVi,
+        ipa: card.pronunciation, // Save IPA pronunciation
         level: card.level,
         easeFactor: 2.5,
         interval: 1,

@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
               userId, word: card.word, type: card.partOfSpeech,
               meaning: card.vietnamese, example: card.exampleEn,
               exampleTranslation: card.exampleVi, level: card.level,
+              ipa: card.pronunciation, // Save IPA pronunciation
               easeFactor: 2.5, interval: 1, repetitions: 0,
               nextReviewDate: new Date(), timesReviewed: 0,
               timesCorrect: 0, timesIncorrect: 0, isLearned: false
