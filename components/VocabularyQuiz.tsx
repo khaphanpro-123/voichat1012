@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Volume2, Trophy, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
 interface QuizQuestion {
-  word: { word: string; meaning: string; example: string };
+  word: { word: string; meaning: string; example: string; exampleTranslation?: string };
   type: "multiple_choice" | "fill_blank" | "word_order";
   question: string;
   options?: string[];
@@ -176,6 +176,15 @@ export default function VocabularyQuiz({ questions, onExit, onComplete, speakWor
 
           {currentQ.type === "word_order" && (
             <>
+              {/* Hint: Vietnamese translation */}
+              {currentQ.word.exampleTranslation && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+                  <p className="text-sm text-blue-700">
+                    <span className="font-semibold">💡 Gợi ý:</span> {currentQ.word.exampleTranslation}
+                  </p>
+                </div>
+              )}
+              
               {/* Selected words area */}
               <div className="bg-gray-50 rounded-xl p-4 mb-4 min-h-[60px]">
                 {selectedWords.length === 0 ? (
@@ -224,9 +233,17 @@ export default function VocabularyQuiz({ questions, onExit, onComplete, speakWor
               
               {showResult && (
                 <div className={`mt-4 p-4 rounded-xl ${isCorrect ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-                  <p className={`font-medium ${isCorrect ? "text-green-700" : "text-red-700"}`}>
-                    {isCorrect ? "✓ Chính xác!" : `✗ Đáp án đúng: ${currentQ.correctAnswer}`}
+                  <p className={`font-medium mb-2 ${isCorrect ? "text-green-700" : "text-red-700"}`}>
+                    {isCorrect ? "✓ Chính xác!" : "✗ Câu đúng:"}
                   </p>
+                  {!isCorrect && (
+                    <>
+                      <p className="text-gray-700 mb-1">{currentQ.correctAnswer}</p>
+                      {currentQ.word.exampleTranslation && (
+                        <p className="text-gray-600 text-sm italic">{currentQ.word.exampleTranslation}</p>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </>

@@ -91,13 +91,36 @@ export default function VocabularyPage() {
   const getExampleTranslation = (word: VocabularyWord): string => word.exampleTranslation || word.exampleVi || "";
   const getWordType = (word: VocabularyWord): string => word.partOfSpeech || word.type || "other";
   
-  // Generate pronunciation (IPA-like) - simplified version
+  // Generate pronunciation (IPA) - using a simple mapping for common words
   const getPronunciation = (word: VocabularyWord): string => {
     if (word.pronunciation) return word.pronunciation;
-    // Simple pronunciation mapping for common words
+    
+    // Simple IPA pronunciation mapping for common English words
+    const ipaMap: Record<string, string> = {
+      'good': '/ɡʊd/',
+      'application': '/ˌæplɪˈkeɪʃən/',
+      'hello': '/həˈloʊ/',
+      'world': '/wɜːrld/',
+      'cat': '/kæt/',
+      'dog': '/dɔːɡ/',
+      'house': '/haʊs/',
+      'water': '/ˈwɔːtər/',
+      'food': '/fuːd/',
+      'book': '/bʊk/',
+      'school': '/skuːl/',
+      'student': '/ˈstuːdənt/',
+      'teacher': '/ˈtiːtʃər/',
+      'friend': '/frend/',
+      'family': '/ˈfæməli/',
+      'love': '/lʌv/',
+      'happy': '/ˈhæpi/',
+      'beautiful': '/ˈbjuːtɪfəl/',
+      'important': '/ɪmˈpɔːrtənt/',
+      'different': '/ˈdɪfrənt/',
+    };
+    
     const w = word.word.toLowerCase();
-    // This is a simplified version - in production, use a proper pronunciation API
-    return `/${w}/`;
+    return ipaMap[w] || `/${w}/`; // Fallback to simple format if not in map
   };
 
   useEffect(() => {
@@ -275,7 +298,10 @@ export default function VocabularyPage() {
         if (words.length >= 4 && words.length <= 10) {
           const shuffledWords = [...words].sort(() => Math.random() - 0.5);
           questions.push({
-            word,
+            word: {
+              ...word,
+              exampleTranslation: getExampleTranslation(word)
+            },
             type: "word_order",
             question: "Sắp xếp các từ thành câu đúng:",
             words: shuffledWords,
