@@ -56,9 +56,15 @@ Min-Max Normalization (0-1 scaling)
     ↓
 Weighted Ensemble Combination
     ↓
+Context Relevance Boost (co-occurrence analysis)
+    ↓
+Filter Proper Nouns & Technical Terms
+    ↓
 Ranking & Top-K Selection
     ↓
-Return Vocabulary List
+Generate Selection Reasons
+    ↓
+Return Vocabulary List with Explanations
 ```
 
 ## Key Features
@@ -90,6 +96,20 @@ Final score calculation:
 score = 0.15×freq + 0.35×tfidf + 0.25×rake + 0.25×yake
 ```
 
+### 6. **Context Filtering (Bước 4)** ⭐ NEW
+- **Context Relevance**: Analyzes co-occurrence within 5-word window
+- **Proper Noun Detection**: Filters names, places (>70% capitalization ratio)
+- **Technical Term Filtering**: Removes metadata terms (pdf, doc, http, etc.)
+- **Context Boost**: Words with high context relevance get 5% boost per point
+
+### 7. **Reason Generation (Bước 5)** ⭐ NEW
+Each selected word includes explanation:
+- "TF-IDF cao (từ đặc trưng cho tài liệu)"
+- "RAKE cao (xuất hiện trong cụm từ quan trọng)"
+- "YAKE cao (vị trí và ngữ cảnh tốt)"
+- "tần suất xuất hiện cao"
+- "liên quan mạnh với ngữ cảnh"
+
 ## Files Modified/Created
 
 ### Created:
@@ -113,8 +133,12 @@ This ensures vocabulary extraction always succeeds even if advanced methods fail
 Enhanced debug logs show:
 - Extraction method used
 - Weight configuration
+- **Filtered proper nouns count** ⭐ NEW
+- **Filtered technical terms count** ⭐ NEW
 - Top 10 scored words with:
   - Final ensemble score
+  - **Selection reason (Vietnamese)** ⭐ NEW
+  - **Context relevance score** ⭐ NEW
   - Individual normalized scores (freq, tfidf, rake, yake)
 - Processing time per step
 
@@ -122,15 +146,18 @@ Enhanced debug logs show:
 
 ```typescript
 extractVocabularyEnsemble(text, {
-  maxWords: 100,           // Max vocabulary items to return
-  minWordLength: 3,        // Minimum word length
-  weights: {               // Customizable weights
+  maxWords: 100,              // Max vocabulary items to return
+  minWordLength: 3,           // Minimum word length
+  weights: {                  // Customizable weights
     frequency: 0.15,
     tfidf: 0.35,
     rake: 0.25,
     yake: 0.25
   },
-  includeNgrams: true      // Enable bigrams/trigrams
+  includeNgrams: true,        // Enable bigrams/trigrams
+  filterProperNouns: true,    // ⭐ NEW: Remove names, places
+  filterTechnical: true,      // ⭐ NEW: Remove metadata terms
+  contextFiltering: true      // ⭐ NEW: Enable context analysis
 })
 ```
 
@@ -158,6 +185,10 @@ extractVocabularyEnsemble(text, {
 - [ ] Cache extraction results for large documents
 - [ ] Add batch processing for multiple documents
 - [ ] Implement A/B testing to compare methods
+- [x] ✅ Context-based filtering (Step 4) - COMPLETED
+- [x] ✅ Reason generation (Step 5) - COMPLETED
+- [ ] Semantic similarity using embeddings (future enhancement)
+- [ ] Machine learning model for weight optimization
 
 ## References
 
@@ -168,9 +199,24 @@ extractVocabularyEnsemble(text, {
 
 ## Deployment
 
-✅ Committed to GitHub: `7ead357`
-✅ Auto-deployment to Vercel triggered
+✅ Committed to GitHub: `c19556c`  
+✅ Auto-deployment to Vercel triggered  
 ✅ Production URL: https://voichat1012-alpha.vercel.app
+
+## Recent Updates
+
+### v2.0 - Context Filtering & Reason Generation (Jan 19, 2026)
+- ✅ Added proper noun detection and filtering
+- ✅ Added technical term filtering
+- ✅ Implemented context relevance scoring
+- ✅ Added Vietnamese reason generation for word selection
+- ✅ Enhanced debug logs with filtering statistics
+
+### v1.0 - Initial Ensemble Implementation (Jan 19, 2026)
+- ✅ Integrated 4 algorithms (Freq, TF-IDF, RAKE, YAKE)
+- ✅ Implemented Min-Max normalization
+- ✅ Added weighted ensemble scoring
+- ✅ Created comprehensive documentation
 
 ## Status
 
