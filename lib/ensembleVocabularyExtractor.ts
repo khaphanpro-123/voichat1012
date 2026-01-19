@@ -27,6 +27,10 @@ interface WordScore {
     rake: number;
     yake: number;
   };
+  reason?: string; // Explanation for why this word was selected
+  contextRelevance?: number; // Relevance score based on context
+  isProperNoun?: boolean; // Flag for proper nouns
+  isTechnical?: boolean; // Flag for technical terms
 }
 
 interface EnsembleResult {
@@ -38,6 +42,8 @@ interface EnsembleResult {
     sentences: number;
     method: string;
     weights: Record<string, number>;
+    filteredProperNouns?: number;
+    filteredTechnical?: number;
   };
 }
 
@@ -51,7 +57,9 @@ interface EnsembleOptions {
     yake?: number;
   };
   includeNgrams?: boolean;
-  ngramRange?: [number, number];
+  filterProperNouns?: boolean; // Remove proper nouns (names, places)
+  filterTechnical?: boolean; // Remove technical/metadata terms
+  contextFiltering?: boolean; // Enable context-based filtering
 }
 
 // PDF metadata patterns to remove
@@ -75,6 +83,21 @@ const STOPWORDS = new Set([
   't', 'just', 'don', 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain',
   'aren', 'couldn', 'didn', 'doesn', 'hadn', 'hasn', 'haven', 'isn', 'ma',
   'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 'weren', 'won', 'wouldn'
+]);
+
+// Technical/metadata terms to filter
+const TECHNICAL_TERMS = new Set([
+  'pdf', 'doc', 'docx', 'txt', 'file', 'document', 'page', 'section',
+  'chapter', 'figure', 'table', 'appendix', 'reference', 'bibliography',
+  'http', 'https', 'www', 'com', 'org', 'net', 'url', 'link',
+  'copyright', 'isbn', 'doi', 'version', 'draft', 'revision',
+  'metadata', 'header', 'footer', 'annotation', 'comment'
+]);
+
+// Common proper noun indicators (words that often appear before names)
+const PROPER_NOUN_INDICATORS = new Set([
+  'mr', 'mrs', 'ms', 'dr', 'prof', 'professor', 'sir', 'madam',
+  'president', 'minister', 'director', 'ceo', 'cto', 'cfo'
 ]);
 
 /**
@@ -344,6 +367,108 @@ function minMaxNormalize(values: number[]): number[] {
 }
 
 /**
+ * Check if a word is likely a proper noun
+ * Heuristics: starts with capital letter, appears after proper noun indicators
+ */
+function isLikelyProperNoun(word: string, originalText: string): boolean {
+  // Check if word consistently appears capitalized in original text
+  const regex = new RegExp(`\\b${word}\\b`, 'gi');
+  const matches = originalText.match(regex) || [];
+  
+  if (matches.length === 0) return false;
+  
+  // Count how many times it appears capitalized
+  const capitalizedCount = matches.filter(m => m[0] === m[0].toUpperCase()).length;
+  const capitalizedRatio = capitalizedCount / matches.length;
+  
+  // If >70% capitalized and not at sentence start, likely proper noun
+  return capitalizedRatio > 0.7;
+}
+
+/**
+ * Check if a word is technical/metadata term
+ */
+function isTechnicalTerm(word: string): boolean {
+  return TECHNICAL_TERMS.has(word.toLowerCase());
+}
+
+/**
+ * Calculate context relevance score using simple co-occurrence
+ * Words that appear together frequently are more contextually relevant
+ */
+function calculateContextRelevance(
+  word: string, 
+  allWords: string[], 
+  windowSize: number = 5
+): number {
+  const positions: number[] = [];
+  allWords.forEach((w, i) => {
+    if (w === word) positions.push(i);
+  });
+  
+  if (positions.length === 0) return 0;
+  
+  // Calculate average distance to other content words
+  let totalRelevance = 0;
+  let count = 0;
+  
+  positions.forEach(pos => {
+    const start = Math.max(0, pos - windowSize);
+    const end = Math.min(allWords.length, pos + windowSize + 1);
+    const contextWords = allWords.slice(start, end);
+    
+    // Count non-stopwords in context
+    const contentWords = contextWords.filter(w => !STOPWORDS.has(w) && w !== word);
+    totalRelevance += contentWords.length;
+    count++;
+  });
+  
+  return count > 0 ? totalRelevance / count : 0;
+}
+
+/**
+ * Generate explanation for why a word was selected
+ */
+function generateReason(wordScore: WordScore): string {
+  const reasons: string[] = [];
+  
+  // Check which features contributed most
+  const { normalized } = wordScore;
+  const maxFeature = Math.max(
+    normalized.frequency,
+    normalized.tfidf,
+    normalized.rake,
+    normalized.yake
+  );
+  
+  if (normalized.tfidf === maxFeature && normalized.tfidf > 0.7) {
+    reasons.push("TF-IDF cao (từ đặc trưng cho tài liệu)");
+  }
+  
+  if (normalized.rake === maxFeature && normalized.rake > 0.7) {
+    reasons.push("RAKE cao (xuất hiện trong cụm từ quan trọng)");
+  }
+  
+  if (normalized.yake === maxFeature && normalized.yake > 0.7) {
+    reasons.push("YAKE cao (vị trí và ngữ cảnh tốt)");
+  }
+  
+  if (normalized.frequency > 0.8) {
+    reasons.push("tần suất xuất hiện cao");
+  }
+  
+  if (wordScore.contextRelevance && wordScore.contextRelevance > 5) {
+    reasons.push("liên quan mạnh với ngữ cảnh");
+  }
+  
+  if (reasons.length === 0) {
+    reasons.push("điểm tổng hợp cao từ nhiều tiêu chí");
+  }
+  
+  return "Được chọn vì: " + reasons.join(", ");
+}
+
+/**
  * Ensemble vocabulary extraction with scaling and weighting
  */
 export function extractVocabularyEnsemble(
@@ -359,7 +484,10 @@ export function extractVocabularyEnsemble(
       rake: 0.25,
       yake: 0.25
     },
-    includeNgrams = true
+    includeNgrams = true,
+    filterProperNouns = true,
+    filterTechnical = true,
+    contextFiltering = true
   } = options;
   
   // Step 1: Clean PDF metadata
@@ -401,7 +529,10 @@ export function extractVocabularyEnsemble(
         tfidf: 0,
         rake: 0,
         yake: 0
-      }
+      },
+      isProperNoun: filterProperNouns ? isLikelyProperNoun(word, text) : false,
+      isTechnical: filterTechnical ? isTechnicalTerm(word) : false,
+      contextRelevance: contextFiltering ? calculateContextRelevance(word, tokens) : 0
     };
   });
   
@@ -429,12 +560,39 @@ export function extractVocabularyEnsemble(
       weights.tfidf! * normTfidf[i] +
       weights.rake! * normRake[i] +
       weights.yake! * normYake[i];
+    
+    // Boost score if high context relevance
+    if (contextFiltering && ws.contextRelevance && ws.contextRelevance > 3) {
+      ws.score *= (1 + ws.contextRelevance * 0.05); // 5% boost per context point
+    }
   });
   
-  // Step 7: Sort and return top keywords
-  const sortedScores = wordScores
+  // Step 7: Filter unwanted terms (Bước 4: Lọc ngữ cảnh)
+  let filteredScores = wordScores;
+  let filteredProperNounsCount = 0;
+  let filteredTechnicalCount = 0;
+  
+  if (filterProperNouns) {
+    const beforeCount = filteredScores.length;
+    filteredScores = filteredScores.filter(ws => !ws.isProperNoun);
+    filteredProperNounsCount = beforeCount - filteredScores.length;
+  }
+  
+  if (filterTechnical) {
+    const beforeCount = filteredScores.length;
+    filteredScores = filteredScores.filter(ws => !ws.isTechnical);
+    filteredTechnicalCount = beforeCount - filteredScores.length;
+  }
+  
+  // Step 8: Sort and return top keywords
+  const sortedScores = filteredScores
     .sort((a, b) => b.score - a.score)
     .slice(0, maxWords);
+  
+  // Step 9: Generate reasons (Bước 5: Xuất kết quả)
+  sortedScores.forEach(ws => {
+    ws.reason = generateReason(ws);
+  });
   
   return {
     vocabulary: sortedScores.map(ws => ws.word),
@@ -444,7 +602,9 @@ export function extractVocabularyEnsemble(
       uniqueWords: new Set(tokens).size,
       sentences: sentences.length,
       method: 'ensemble(freq+tfidf+rake+yake)',
-      weights: weights as Record<string, number>
+      weights: weights as Record<string, number>,
+      filteredProperNouns: filteredProperNounsCount,
+      filteredTechnical: filteredTechnicalCount
     }
   };
 }

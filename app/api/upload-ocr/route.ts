@@ -207,9 +207,13 @@ export async function POST(req: NextRequest) {
               method: ensembleResult.stats.method,
               weights: ensembleResult.stats.weights,
               extractedCount: vocabulary.length,
+              filteredProperNouns: ensembleResult.stats.filteredProperNouns,
+              filteredTechnical: ensembleResult.stats.filteredTechnical,
               topScores: ensembleResult.scores.slice(0, 10).map(s => ({ 
                 word: s.word, 
                 score: s.score.toFixed(3),
+                reason: s.reason,
+                contextRelevance: s.contextRelevance?.toFixed(2),
                 normalized: {
                   freq: s.normalized.frequency.toFixed(3),
                   tfidf: s.normalized.tfidf.toFixed(3),
