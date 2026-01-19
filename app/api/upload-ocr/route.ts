@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractVocabularyFromPDF, removeMetadata, validatePDFContent } from "@/lib/pdfVocabularyExtractor";
 import { extractVocabularyAdvanced } from "@/lib/advancedVocabularyExtractor";
+import { extractVocabularyEnsemble } from "@/lib/ensembleVocabularyExtractor";
 
 // Increase body size limit for this route
 export const config = {
@@ -178,47 +179,94 @@ export async function POST(req: NextRequest) {
           timestamp: Date.now() - startTime 
         });
         
-        // Step 3: Use Advanced Vocabulary Extraction (TF-IDF + RAKE + YAKE)
+        // Step 3: Use Ensemble Vocabulary Extraction (TF-IDF + RAKE + YAKE with weighted scoring)
         try {
-          const advancedResult = extractVocabularyAdvanced(extractedText, {
+          const ensembleResult = extractVocabularyEnsemble(extractedText, {
             maxWords: 100,
             minWordLength: 3,
-            methods: ['tfidf', 'rake', 'yake']
+            weights: {
+              frequency: 0.15,
+              tfidf: 0.35,
+              rake: 0.25,
+              yake: 0.25
+            },
+            includeNgrams: true
           });
           
-          vocabulary = advancedResult.vocabulary;
+          vocabulary = ensembleResult.vocabulary;
           stats = {
-            totalWords: advancedResult.stats.totalWords,
-            uniqueWords: advancedResult.stats.uniqueWords,
-            sentences: advancedResult.stats.sentences,
+            totalWords: ensembleResult.stats.totalWords,
+            uniqueWords: ensembleResult.stats.uniqueWords,
+            sentences: ensembleResult.stats.sentences,
             metadataRemoved: removedCount,
           };
           
           extractionLogs.push({ 
-            step: "Advanced Extraction (TF-IDF+RAKE+YAKE)", 
+            step: "Ensemble Extraction (Freq+TF-IDF+RAKE+YAKE)", 
             data: { 
-              method: advancedResult.stats.method,
+              method: ensembleResult.stats.method,
+              weights: ensembleResult.stats.weights,
               extractedCount: vocabulary.length,
-              topScores: advancedResult.scores.slice(0, 10).map(s => ({ word: s.word, score: s.score.toFixed(3) }))
+              topScores: ensembleResult.scores.slice(0, 10).map(s => ({ 
+                word: s.word, 
+                score: s.score.toFixed(3),
+                normalized: {
+                  freq: s.normalized.frequency.toFixed(3),
+                  tfidf: s.normalized.tfidf.toFixed(3),
+                  rake: s.normalized.rake.toFixed(3),
+                  yake: s.normalized.yake.toFixed(3)
+                }
+              }))
             }, 
             timestamp: Date.now() - startTime 
           });
           
-          console.log(`[upload-ocr] Advanced extraction: ${vocabulary.length} words using ${advancedResult.stats.method}`);
-        } catch (advErr) {
-          console.error("[upload-ocr] Advanced extraction failed, falling back:", advErr);
+          console.log(`[upload-ocr] Ensemble extraction: ${vocabulary.length} words using ${ensembleResult.stats.method}`);
+        } catch (ensembleErr) {
+          console.error("[upload-ocr] Ensemble extraction failed, falling back to advanced:", ensembleErr);
           
-          // Fallback to original extractor
-          const extraction = extractVocabularyFromPDF(rawText);
-          if (extraction.success) {
-            vocabulary = extraction.vocabulary.map(v => v.word);
-            extractionLogs.push(...extraction.logs);
+          // Fallback to advanced extractor
+          try {
+            const advancedResult = extractVocabularyAdvanced(extractedText, {
+              maxWords: 100,
+              minWordLength: 3,
+              methods: ['tfidf', 'rake', 'yake']
+            });
+            
+            vocabulary = advancedResult.vocabulary;
             stats = {
-              totalWords: extraction.stats.originalLength,
-              uniqueWords: extraction.stats.extractedCount,
-              sentences: extraction.stats.sentenceCount,
-              metadataRemoved: extraction.stats.metadataRemoved,
+              totalWords: advancedResult.stats.totalWords,
+              uniqueWords: advancedResult.stats.uniqueWords,
+              sentences: advancedResult.stats.sentences,
+              metadataRemoved: removedCount,
             };
+            
+            extractionLogs.push({ 
+              step: "Fallback: Advanced Extraction (TF-IDF+RAKE+YAKE)", 
+              data: { 
+                method: advancedResult.stats.method,
+                extractedCount: vocabulary.length,
+                topScores: advancedResult.scores.slice(0, 10).map(s => ({ word: s.word, score: s.score.toFixed(3) }))
+              }, 
+              timestamp: Date.now() - startTime 
+            });
+            
+            console.log(`[upload-ocr] Fallback advanced extraction: ${vocabulary.length} words`);
+          } catch (advErr) {
+            console.error("[upload-ocr] Advanced extraction also failed, using basic:", advErr);
+            
+            // Final fallback to original extractor
+            const extraction = extractVocabularyFromPDF(rawText);
+            if (extraction.success) {
+              vocabulary = extraction.vocabulary.map(v => v.word);
+              extractionLogs.push(...extraction.logs);
+              stats = {
+                totalWords: extraction.stats.originalLength,
+                uniqueWords: extraction.stats.extractedCount,
+                sentences: extraction.stats.sentenceCount,
+                metadataRemoved: extraction.stats.metadataRemoved,
+              };
+            }
           }
         }
         
