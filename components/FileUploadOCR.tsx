@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -356,7 +356,7 @@ export default function FileUploadOCR() {
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">📚 T?i l�n ngu?n t�i li?u</h1>
+          <h1 className="text-4xl font-bold text-gray-900">📚 Tải lên nguồn tài liệu</h1>
           {step !== "upload" && step !== "processing" && (
             <button onClick={resetAll} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition">
               <RefreshCw className="w-5 h-5" /> Upload file mới
