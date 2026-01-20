@@ -16,7 +16,10 @@ import {
   AlertTriangle,
   ClipboardList,
   Camera,
+  Shield,
+  Bell,
 } from "lucide-react";
+import NotificationPanel from "./NotificationPanel";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -39,6 +42,9 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [level, setLevel] = useState(userLevel);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     const loadProgress = async () => {
@@ -58,6 +64,43 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
       }
     };
     loadProgress();
+  }, [session]);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (session?.user?.email) {
+        try {
+          const res = await fetch("/api/users/me");
+          const data = await res.json();
+          if (data.success && data.user.role === "admin") {
+            setIsAdmin(true);
+          }
+        } catch (error) {
+          console.error("Check admin error:", error);
+        }
+      }
+    };
+    checkAdmin();
+  }, [session]);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        const data = await res.json();
+        if (data.success) {
+          const unread = data.notifications.filter((n: any) => !n.isRead).length;
+          setUnreadCount(unread);
+        }
+      } catch (error) {
+        console.error("Load notifications error:", error);
+      }
+    };
+    if (session?.user) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 30000);
+      return () => clearInterval(interval);
+    }
   }, [session]);
 
   const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "User";
@@ -172,6 +215,39 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
                 </Link>
               );
             })}
+
+            {/* Notifications Button */}
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-gray-100 relative"
+            >
+              <Bell className="w-5 h-5" />
+              <span className="font-medium">Thông báo</span>
+              {unreadCount > 0 && (
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Admin Section */}
+            {isAdmin && (
+              <>
+                <div className="my-4 border-t border-gray-200" />
+                <Link
+                  href="/admin"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    pathname?.startsWith("/admin")
+                      ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <Shield className="w-5 h-5" />
+                  <span className="font-medium">Admin</span>
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* User Info */}
@@ -208,6 +284,13 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">{children}</main>
+
+      {/* Notification Panel */}
+      <NotificationPanel
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        onNotificationRead={() => setUnreadCount((prev) => Math.max(0, prev - 1))}
+      />
     </div>
   );
 }
