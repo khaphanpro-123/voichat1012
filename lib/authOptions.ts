@@ -27,6 +27,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.fullName,
           image: user.avatar,
+          role: user.role,
         };
       },
     }),
@@ -44,6 +45,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.dbId = user.id;
+        token.role = (user as any).role;
       }
       if (token.email && !token.dbId) {
         try {
@@ -51,6 +53,7 @@ export const authOptions: NextAuthOptions = {
           const dbUser = (await User.findOne({ email: token.email })) as any;
           if (dbUser) {
             token.dbId = dbUser._id.toString();
+            token.role = dbUser.role;
           }
         } catch (error) {
           console.error("JWT callback error:", error);
@@ -61,6 +64,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.dbId || token.id || token.sub;
+        (session.user as any).role = token.role;
       }
       return session;
     },

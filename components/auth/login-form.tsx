@@ -27,24 +27,29 @@ export function LoginForm() {
         return;
       }
 
-      // Check user role to redirect accordingly
-      const userRes = await fetch("/api/users/me");
-      const userData = await userRes.json();
+      // Wait a bit for session to be ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Get session to check role
+      const { getSession } = await import("next-auth/react");
+      const session = await getSession();
       
-      console.log("User data from API:", userData);
+      console.log("Session after login:", session);
       
-      if (userData.success && userData.user) {
-        console.log("User role:", userData.user.role);
-        if (userData.user.role === "admin") {
+      if (session?.user) {
+        const userRole = (session.user as any).role;
+        console.log("User role from session:", userRole);
+        
+        if (userRole === "admin") {
           console.log("Redirecting to admin dashboard");
-          router.push("/admin");
+          window.location.href = "/admin";
         } else {
           console.log("Redirecting to user dashboard");
-          router.push("/dashboard-new");
+          window.location.href = "/dashboard-new";
         }
       } else {
-        console.log("No user data, redirecting to user dashboard");
-        router.push("/dashboard-new");
+        console.log("No session, redirecting to user dashboard");
+        window.location.href = "/dashboard-new";
       }
     } catch (err) {
       console.error(err);
