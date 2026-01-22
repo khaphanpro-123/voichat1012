@@ -31,13 +31,19 @@ export function LoginForm() {
       const userRes = await fetch("/api/users/me");
       const userData = await userRes.json();
       
+      console.log("User data from API:", userData);
+      
       if (userData.success && userData.user) {
+        console.log("User role:", userData.user.role);
         if (userData.user.role === "admin") {
+          console.log("Redirecting to admin dashboard");
           router.push("/admin");
         } else {
+          console.log("Redirecting to user dashboard");
           router.push("/dashboard-new");
         }
       } else {
+        console.log("No user data, redirecting to user dashboard");
         router.push("/dashboard-new");
       }
     } catch (err) {

@@ -30,6 +30,7 @@ export async function GET(req: Request) {
       fullName: user.fullName,
       email: user.email,
       avatar: user.avatar,
+      role: user.role,
       bio: user.bio || "",
     },
   });
