@@ -1,37 +1,45 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyTokenEdge } from "@/lib/verifyToken"
+import { getToken } from "next-auth/jwt"
 
 export async function middleware(request: NextRequest) {
-  const rawToken = request.cookies.get("auth-token")?.value
-  const token = rawToken && rawToken !== "undefined" ? rawToken : null
-
   const { pathname } = request.nextUrl
 
-  const protectedRoutes = ["/dashboard", "/assessment", "/profile", "/admin"]
+  // Get NextAuth token
+  const token = await getToken({ 
+    req: request, 
+    secret: process.env.NEXTAUTH_SECRET 
+  })
+
+  const protectedRoutes = ["/dashboard-new", "/dashboard", "/assessment", "/profile", "/admin"]
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   )
 
-  const authRoutes = ["/login", "/register"]
-  const isAuthRoute = authRoutes.includes(pathname)
+  const authRoutes = ["/auth/login", "/auth/register"]
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
+  // Protect routes - redirect to login if not authenticated
   if (isProtectedRoute) {
     if (!token) {
-      console.log("❌ No token found in cookie")
-      return NextResponse.redirect(new URL("/login", request.url))
+      console.log("❌ No token found, redirecting to login")
+      return NextResponse.redirect(new URL("/auth/login", request.url))
     }
 
-    const payload = await verifyTokenEdge(token)
-    if (!payload || !(payload as any).id) {
-      console.log("❌ Invalid token payload:", payload)
-      return NextResponse.redirect(new URL("/login", request.url))
+    // Check if admin route and user is not admin
+    if (pathname.startsWith("/admin") && token.role !== "admin") {
+      console.log("❌ User is not admin, redirecting to user dashboard")
+      return NextResponse.redirect(new URL("/dashboard-new", request.url))
     }
   }
 
+  // Redirect authenticated users away from auth pages
   if (isAuthRoute && token) {
-    const payload = await verifyTokenEdge(token)
-    if (payload) {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
+    console.log("✅ User already authenticated, redirecting to dashboard")
+    // Redirect based on role
+    if (token.role === "admin") {
+      return NextResponse.redirect(new URL("/admin", request.url))
+    } else {
+      return NextResponse.redirect(new URL("/dashboard-new", request.url))
     }
   }
 
@@ -40,11 +48,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/dashboard-new/:path*",
     "/dashboard/:path*",
     "/assessment/:path*",
     "/profile/:path*",
     "/admin/:path*",
-    "/login",
-    "/register",
+    "/auth/login",
+    "/auth/register",
   ],
 }
