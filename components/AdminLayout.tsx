@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -7,14 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
-  Bell,
-  Settings,
   Menu,
   X,
   LogOut,
   AlertTriangle,
-  BarChart3,
-  UserPlus,
   Send,
 } from "lucide-react";
 
@@ -26,7 +22,6 @@ const adminNavItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
   { href: "/admin/notifications", label: "Gửi thông báo", icon: Send },
-  { href: "/admin/statistics", label: "Thống kê", icon: BarChart3 },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

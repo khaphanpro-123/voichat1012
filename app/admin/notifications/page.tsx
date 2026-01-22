@@ -2,26 +2,25 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowLeft,
   Send,
-  Bell,
   Image as ImageIcon,
   Music,
   Link as LinkIcon,
   FileText,
   Upload,
 } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
 import AdminLayout from "@/components/AdminLayout";
 
 export default function AdminNotificationsPage() {
   const { status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -31,12 +30,70 @@ export default function AdminNotificationsPage() {
     linkUrl: "",
     targetUsers: "all" as "all" | string[],
   });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     }
   }, [status, router]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
+      
+      // Create preview for images
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPreviewUrl("");
+      }
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!uploadedFile) return;
+
+    setUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", uploadedFile);
+      uploadFormData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ASDTEST");
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "djfnfexit"}/auto/upload`,
+        {
+          method: "POST",
+          body: uploadFormData,
+        }
+      );
+
+      const data = await res.json();
+      if (data.secure_url) {
+        // Set the URL based on type
+        if (formData.type === "image") {
+          setFormData(prev => ({ ...prev, mediaUrl: data.secure_url }));
+        } else if (formData.type === "audio") {
+          setFormData(prev => ({ ...prev, mediaUrl: data.secure_url }));
+        } else if (formData.type === "document") {
+          setFormData(prev => ({ ...prev, documentUrl: data.secure_url }));
+        }
+        alert("Upload thành công!");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Lỗi khi upload file");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +118,8 @@ export default function AdminNotificationsPage() {
           linkUrl: "",
           targetUsers: "all",
         });
+        setUploadedFile(null);
+        setPreviewUrl("");
       } else {
         alert(data.message || "Lỗi khi gửi thông báo");
       }
@@ -197,39 +256,114 @@ export default function AdminNotificationsPage() {
                 </div>
               </div>
 
-              {/* Media URL */}
+              {/* File Upload for Image */}
               {formData.type === "image" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL hình ảnh
+                    Hình ảnh
                   </label>
-                  <input
-                    type="url"
-                    value={formData.mediaUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mediaUrl: e.target.value })
-                    }
-                    placeholder="https://example.com/image.jpg"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  />
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                      >
+                        Chọn file
+                      </button>
+                      {uploadedFile && (
+                        <button
+                          type="button"
+                          onClick={handleUploadFile}
+                          disabled={uploading}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50"
+                        >
+                          {uploading ? "Đang upload..." : "Upload"}
+                        </button>
+                      )}
+                    </div>
+                    {uploadedFile && (
+                      <p className="text-sm text-gray-600">
+                        File đã chọn: {uploadedFile.name}
+                      </p>
+                    )}
+                    {previewUrl && (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full max-w-md h-48 object-cover rounded-lg"
+                      />
+                    )}
+                    <div className="text-sm text-gray-500">hoặc</div>
+                    <input
+                      type="url"
+                      value={formData.mediaUrl}
+                      onChange={(e) =>
+                        setFormData({ ...formData, mediaUrl: e.target.value })
+                      }
+                      placeholder="Nhập URL hình ảnh..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
               )}
 
-              {/* Audio URL */}
+              {/* File Upload for Audio */}
               {formData.type === "audio" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL âm thanh
+                    Âm thanh
                   </label>
-                  <input
-                    type="url"
-                    value={formData.mediaUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mediaUrl: e.target.value })
-                    }
-                    placeholder="https://example.com/audio.mp3"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  />
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="audio/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                      >
+                        Chọn file
+                      </button>
+                      {uploadedFile && (
+                        <button
+                          type="button"
+                          onClick={handleUploadFile}
+                          disabled={uploading}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50"
+                        >
+                          {uploading ? "Đang upload..." : "Upload"}
+                        </button>
+                      )}
+                    </div>
+                    {uploadedFile && (
+                      <p className="text-sm text-gray-600">
+                        File đã chọn: {uploadedFile.name}
+                      </p>
+                    )}
+                    <div className="text-sm text-gray-500">hoặc</div>
+                    <input
+                      type="url"
+                      value={formData.mediaUrl}
+                      onChange={(e) =>
+                        setFormData({ ...formData, mediaUrl: e.target.value })
+                      }
+                      placeholder="Nhập URL âm thanh..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -251,21 +385,55 @@ export default function AdminNotificationsPage() {
                 </div>
               )}
 
-              {/* Document URL */}
+              {/* File Upload for Document */}
               {formData.type === "document" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL tài liệu
+                    Tài liệu
                   </label>
-                  <input
-                    type="url"
-                    value={formData.documentUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, documentUrl: e.target.value })
-                    }
-                    placeholder="https://example.com/document.pdf"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  />
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept=".pdf,.doc,.docx,.txt"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                      >
+                        Chọn file
+                      </button>
+                      {uploadedFile && (
+                        <button
+                          type="button"
+                          onClick={handleUploadFile}
+                          disabled={uploading}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50"
+                        >
+                          {uploading ? "Đang upload..." : "Upload"}
+                        </button>
+                      )}
+                    </div>
+                    {uploadedFile && (
+                      <p className="text-sm text-gray-600">
+                        File đã chọn: {uploadedFile.name}
+                      </p>
+                    )}
+                    <div className="text-sm text-gray-500">hoặc</div>
+                    <input
+                      type="url"
+                      value={formData.documentUrl}
+                      onChange={(e) =>
+                        setFormData({ ...formData, documentUrl: e.target.value })
+                      }
+                      placeholder="Nhập URL tài liệu..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
               )}
 
