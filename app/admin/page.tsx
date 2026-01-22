@@ -14,7 +14,7 @@ import {
   UserPlus,
   Activity,
 } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 
 interface Statistics {
   totalUsers: number;
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
 
   if (status === "loading" || loading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
           <motion.div
             className="text-5xl"
@@ -80,12 +80,12 @@ export default function AdminDashboard() {
             👨‍💼
           </motion.div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
@@ -285,6 +285,7 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }
+

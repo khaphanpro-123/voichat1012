@@ -15,7 +15,7 @@ import {
   Activity,
   Clock,
 } from "lucide-react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 
 interface UserDetail {
   _id: string;
@@ -79,7 +79,7 @@ export default function UserDetailPage() {
 
   if (status === "loading" || loading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
           <motion.div
             className="text-5xl"
@@ -89,22 +89,22 @@ export default function UserDetailPage() {
             📊
           </motion.div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   if (!user) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
           <p className="text-gray-600">Không tìm thấy người dùng</p>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
@@ -278,6 +278,6 @@ export default function UserDetailPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

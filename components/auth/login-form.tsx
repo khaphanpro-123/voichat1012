@@ -27,10 +27,19 @@ export function LoginForm() {
         return;
       }
 
-      // Pre-warm DB connection before navigating (fire-and-forget)
-      fetch("/api/health").catch(() => {});
+      // Check user role to redirect accordingly
+      const userRes = await fetch("/api/users/me");
+      const userData = await userRes.json();
       
-      router.push("/dashboard-new");
+      if (userData.success && userData.user) {
+        if (userData.user.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard-new");
+        }
+      } else {
+        router.push("/dashboard-new");
+      }
     } catch (err) {
       console.error(err);
       setError("Lỗi kết nối");

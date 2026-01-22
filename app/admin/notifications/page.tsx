@@ -16,6 +16,7 @@ import {
   Upload,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 
 export default function AdminNotificationsPage() {
   const { status } = useSession();
@@ -73,7 +74,7 @@ export default function AdminNotificationsPage() {
 
   if (status === "loading") {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
           <motion.div
             className="text-5xl"
@@ -83,12 +84,12 @@ export default function AdminNotificationsPage() {
             📢
           </motion.div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-6">
         <div className="max-w-4xl mx-auto">
           {/* Back Button */}
@@ -302,6 +303,6 @@ export default function AdminNotificationsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }
