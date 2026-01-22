@@ -24,11 +24,12 @@ export function LoginForm() {
 
       if (result?.error) {
         setError("Email hoặc mật khẩu không đúng");
+        setIsLoading(false);
         return;
       }
 
-      // Wait a bit for session to be ready
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for session to be ready
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Get session to check role
       const { getSession } = await import("next-auth/react");
@@ -42,19 +43,18 @@ export function LoginForm() {
         
         if (userRole === "admin") {
           console.log("Redirecting to admin dashboard");
-          window.location.href = "/admin";
+          router.replace("/admin");
         } else {
           console.log("Redirecting to user dashboard");
-          window.location.href = "/dashboard-new";
+          router.replace("/dashboard-new");
         }
       } else {
         console.log("No session, redirecting to user dashboard");
-        window.location.href = "/dashboard-new";
+        router.replace("/dashboard-new");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Login error:", err);
       setError("Lỗi kết nối");
-    } finally {
       setIsLoading(false);
     }
   }
