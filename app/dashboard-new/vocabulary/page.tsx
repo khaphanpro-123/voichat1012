@@ -483,11 +483,11 @@ export default function VocabularyPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
+                            <span className="text-sm text-gray-600 font-mono">/{getPronunciation(word)}/</span>
                             <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
                               <Volume2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <p className="text-xs text-gray-500 mb-1">{getPronunciation(word)}</p>
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">{getWordType(word)}</span>
                             {word.source && <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{word.source}</span>}
