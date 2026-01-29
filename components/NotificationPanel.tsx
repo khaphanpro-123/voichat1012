@@ -186,44 +186,90 @@ export default function NotificationPanel({
 
                         {/* Media */}
                         {notification.type === "image" && notification.mediaUrl && (
-                          <img
-                            src={notification.mediaUrl}
-                            alt={notification.title}
-                            className="w-full h-48 object-cover rounded-lg mb-2"
-                          />
+                          <div className="mb-2">
+                            <img
+                              src={notification.mediaUrl}
+                              alt={notification.title}
+                              className="w-full h-48 object-cover rounded-lg mb-2"
+                              onError={(e) => {
+                                e.currentTarget.src = "/placeholder.jpg";
+                              }}
+                            />
+                            <a
+                              href={notification.mediaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 text-sm font-medium transition"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Xem ảnh gốc
+                            </a>
+                          </div>
                         )}
 
                         {/* Audio */}
                         {notification.type === "audio" && notification.mediaUrl && (
-                          <audio controls className="w-full mb-2">
-                            <source src={notification.mediaUrl} />
-                          </audio>
+                          <div className="mb-2">
+                            <audio controls className="w-full mb-2">
+                              <source src={notification.mediaUrl} type="audio/mpeg" />
+                              <source src={notification.mediaUrl} type="audio/wav" />
+                              <source src={notification.mediaUrl} type="audio/ogg" />
+                              Trình duyệt của bạn không hỗ trợ phát audio.
+                            </audio>
+                            <a
+                              href={notification.mediaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              className="inline-flex items-center gap-2 px-3 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 text-sm font-medium transition"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Tải xuống audio
+                            </a>
+                          </div>
                         )}
 
                         {/* Link */}
                         {notification.type === "link" && notification.linkUrl && (
-                          <a
-                            href={notification.linkUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm font-medium"
-                          >
-                            Mở liên kết
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
+                          <div className="mb-2">
+                            <a
+                              href={notification.linkUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium transition break-all"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{notification.linkUrl}</span>
+                            </a>
+                          </div>
                         )}
 
                         {/* Document */}
                         {notification.type === "document" && notification.documentUrl && (
-                          <a
-                            href={notification.documentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 text-sm font-medium"
-                          >
-                            Tải tài liệu
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <a
+                              href={notification.documentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium transition"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Xem tài liệu
+                            </a>
+                            <a
+                              href={notification.documentUrl}
+                              download
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-medium transition"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <FileText className="w-4 h-4" />
+                              Tải xuống
+                            </a>
+                          </div>
                         )}
 
                         <div className="flex items-center justify-between mt-2">

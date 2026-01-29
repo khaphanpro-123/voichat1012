@@ -97,13 +97,55 @@ export default function AdminNotificationsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate URLs based on type
+    if (formData.type === "image" || formData.type === "audio") {
+      if (!formData.mediaUrl) {
+        alert(`Vui lòng upload hoặc nhập URL ${formData.type === "image" ? "hình ảnh" : "âm thanh"}`);
+        return;
+      }
+    } else if (formData.type === "link") {
+      if (!formData.linkUrl) {
+        alert("Vui lòng nhập URL liên kết");
+        return;
+      }
+    } else if (formData.type === "document") {
+      if (!formData.documentUrl) {
+        alert("Vui lòng upload hoặc nhập URL tài liệu");
+        return;
+      }
+    }
+    
     setLoading(true);
 
     try {
+      // Prepare payload based on type
+      const payload: any = {
+        title: formData.title,
+        content: formData.content,
+        type: formData.type,
+        targetUsers: formData.targetUsers,
+      };
+
+      // Add URL based on type
+      if (formData.type === "image" || formData.type === "audio") {
+        if (formData.mediaUrl) {
+          payload.mediaUrl = formData.mediaUrl;
+        }
+      } else if (formData.type === "link") {
+        if (formData.linkUrl) {
+          payload.linkUrl = formData.linkUrl;
+        }
+      } else if (formData.type === "document") {
+        if (formData.documentUrl) {
+          payload.documentUrl = formData.documentUrl;
+        }
+      }
+
       const res = await fetch("/api/admin/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
