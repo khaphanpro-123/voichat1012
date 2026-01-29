@@ -53,6 +53,7 @@ export default function NotificationPanel({
       const res = await fetch("/api/notifications");
       const data = await res.json();
       if (data.success) {
+        console.log("Fetched notifications:", data.notifications); // Debug log
         setNotifications(data.notifications);
       }
     } catch (error) {
@@ -164,7 +165,10 @@ export default function NotificationPanel({
                         ? "bg-gray-50 border-gray-200"
                         : "bg-teal-50 border-teal-200"
                     }`}
-                    onClick={() => !notification.isRead && markAsRead(notification._id)}
+                    onClick={() => {
+                      console.log("Notification clicked:", notification); // Debug log
+                      !notification.isRead && markAsRead(notification._id);
+                    }}
                   >
                     <div className="flex items-start gap-3 mb-2">
                       <div

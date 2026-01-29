@@ -142,6 +142,8 @@ export default function AdminNotificationsPage() {
         }
       }
 
+      console.log("Sending notification payload:", payload); // Debug log
+
       const res = await fetch("/api/admin/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -149,6 +151,8 @@ export default function AdminNotificationsPage() {
       });
 
       const data = await res.json();
+      console.log("Server response:", data); // Debug log
+      
       if (data.success) {
         alert("Gửi thông báo thành công!");
         setFormData({
