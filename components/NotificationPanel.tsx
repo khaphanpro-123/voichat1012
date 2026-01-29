@@ -10,6 +10,7 @@ import {
   Link as LinkIcon,
   FileText,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 
 interface Notification {
@@ -41,6 +42,7 @@ export default function NotificationPanel({
 }: NotificationPanelProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -79,6 +81,34 @@ export default function NotificationPanel({
       onNotificationRead();
     } catch (error) {
       console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const deleteNotification = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent marking as read when deleting
+    
+    if (!confirm("Bạn có chắc muốn xóa thông báo này?")) {
+      return;
+    }
+
+    setDeletingId(notificationId);
+    try {
+      const res = await fetch(`/api/notifications?notificationId=${notificationId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
+        onNotificationRead(); // Update unread count
+      } else {
+        alert(data.message || "Lỗi khi xóa thông báo");
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      alert("Lỗi khi xóa thông báo");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -172,7 +202,7 @@ export default function NotificationPanel({
                   >
                     <div className="flex items-start gap-3 mb-2">
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                           notification.isRead
                             ? "bg-gray-200 text-gray-600"
                             : "bg-teal-500 text-white"
@@ -181,9 +211,19 @@ export default function NotificationPanel({
                         {getTypeIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 mb-1">
-                          {notification.title}
-                        </h3>
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="font-bold text-gray-900 flex-1">
+                            {notification.title}
+                          </h3>
+                          <button
+                            onClick={(e) => deleteNotification(notification._id, e)}
+                            disabled={deletingId === notification._id}
+                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition disabled:opacity-50 flex-shrink-0"
+                            title="Xóa thông báo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                         <p className="text-sm text-gray-600 mb-2">
                           {notification.content}
                         </p>
