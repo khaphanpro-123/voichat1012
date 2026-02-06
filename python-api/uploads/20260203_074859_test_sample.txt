@@ -1,0 +1,8 @@
+
+    Artificial intelligence is transforming the world. Machine learning algorithms 
+    can analyze vast amounts of data to identify patterns and make predictions. 
+    Deep learning, a subset of machine learning, uses neural networks with multiple 
+    layers to process information. Natural language processing enables computers 
+    to understand and generate human language. Computer vision allows machines 
+    to interpret and analyze visual information from the world.
+    

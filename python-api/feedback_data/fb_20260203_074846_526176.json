@@ -1,0 +1,20 @@
+{
+  "feedback_id": "fb_20260203_074846_526176",
+  "word": "algorithm",
+  "document_id": "test_doc_001",
+  "user_id": "test_user_123",
+  "scores": {
+    "tfidf": 0.85,
+    "frequency": 0.3,
+    "pos": 0.9
+  },
+  "final_score": 0.82,
+  "user_action": "keep",
+  "timestamp": "2026-02-03T07:48:46.526176",
+  "weights_used": {
+    "tfidf": 0.25,
+    "frequency": 0.25,
+    "yake": 0.25,
+    "rake": 0.25
+  }
+}

@@ -1,29 +1,46 @@
 """
-Visual Language Tutor - Backend API
-Tích hợp YOLO Custom + OCR + GPT-4o
+Visual Language Tutor - Backend API (Simplified for STAGE 1-5)
+Chỉ bao gồm: Ensemble Extraction + Context Intelligence + Feedback Loop + Knowledge Graph + RAG
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import List, Optional
-import shutil
+from typing import List, Optional, Dict
 import os
-import json
 from datetime import datetime
-import hashlib
+import shutil
+from pathlib import Path
 
-# Import AI modules
-from ultralytics import YOLO
-import easyocr
-from openai import OpenAI
-from PIL import Image
-import numpy as np
+# For document processing
+try:
+    import PyPDF2
+    import docx
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+    print("⚠️  Warning: PyPDF2 or python-docx not installed. PDF/DOCX support disabled.")
+
+# Import custom modules (STAGE 1-5)
+from ensemble_extractor import extract_vocabulary_ensemble
+from context_intelligence import select_vocabulary_contexts
+from feedback_loop import FeedbackLoop, FeedbackMemory
+from knowledge_graph import KnowledgeGraph
+from rag_system import RAGSystem
+from kmeans_clustering import cluster_vocabulary_kmeans
+
+# Import embedding system (STAGE 6)
+try:
+    from document_embedding import DocumentEmbedder, semantic_search, find_similar_documents
+    EMBEDDING_AVAILABLE = True
+except ImportError:
+    EMBEDDING_AVAILABLE = False
+    print("⚠️  Warning: document_embedding not available. Install: pip install sentence-transformers")
 
 # ==================== CONFIGURATION ====================
 
-app = FastAPI(title="Visual Language Tutor API", version="1.0.0")
+app = FastAPI(title="Visual Language Tutor API - STAGE 1-5", version="2.0.0")
 
 # CORS
 app.add_middleware(
@@ -37,319 +54,1001 @@ app.add_middleware(
 # Directories
 os.makedirs("uploads", exist_ok=True)
 os.makedirs("cache", exist_ok=True)
-os.makedirs("models", exist_ok=True)
+os.makedirs("feedback_data", exist_ok=True)
+os.makedirs("knowledge_graph_data", exist_ok=True)
 
-# AI Configuration
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your-api-key-here")
-YOLO_MODEL_PATH = "models/custom_yolo.pt"  # Model custom của bạn
-CONFIDENCE_THRESHOLD = 0.4
+# Initialize systems
+print("🔄 Initializing systems...")
 
-# Initialize AI Models
-print("🔄 Loading AI models...")
+# STAGE 3: Feedback Loop
+feedback_loop = FeedbackLoop(storage_path="feedback_data")
+print("✅ Feedback Loop initialized")
 
-try:
-    yolo_model = YOLO(YOLO_MODEL_PATH)
-    print("✅ YOLO Custom model loaded")
-except:
-    # Fallback to standard YOLO if custom not available
-    yolo_model = YOLO("yolov8n.pt")
-    print("⚠️  Using standard YOLOv8n (replace with custom model)")
+# STAGE 4: Knowledge Graph
+knowledge_graph = KnowledgeGraph(storage_path="knowledge_graph_data")
+print("✅ Knowledge Graph initialized")
 
-ocr_reader = easyocr.Reader(['en', 'vi'], gpu=False)
-print("✅ OCR model loaded")
+# STAGE 5: RAG System
+rag_system = RAGSystem(
+    knowledge_graph=knowledge_graph,
+    llm_api_key=os.getenv("OPENAI_API_KEY"),
+    llm_model="gpt-4"
+)
+print("✅ RAG System initialized")
 
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-print("✅ OpenAI client initialized")
+# STAGE 6: Embedding System (Optional)
+embedder = None
+if EMBEDDING_AVAILABLE:
+    try:
+        embedder = DocumentEmbedder()
+        print("✅ Embedding System initialized")
+    except Exception as e:
+        print(f"⚠️  Embedding System initialization failed: {e}")
+        embedder = None
+
+print("✅ All systems ready!")
 
 
 # ==================== DATA MODELS ====================
 
-class VocabularyItem(BaseModel):
+class SmartVocabularyRequest(BaseModel):
+    text: str
+    max_words: int = 20
+    language: str = "en"
+
+
+class FeedbackRequest(BaseModel):
     word: str
-    ipa: str
-    meaning_vi: str
-    part_of_speech: str
-    example_sentence: str
-    confidence: float = 1.0
+    document_id: str
+    user_id: str
+    scores: Dict[str, float]
+    final_score: float
+    user_action: str  # 'keep', 'drop', 'star'
 
 
-class AnalysisResponse(BaseModel):
-    image_id: str
-    timestamp: str
-    detections: dict
-    vocabulary: List[dict]
-    sentences: List[str]
-    ocr_texts: List[str]
-    cache_hit: bool
+class KnowledgeGraphRequest(BaseModel):
+    document_id: str
+    document_title: str
+    document_content: str
+    vocabulary_contexts: List[Dict]
 
 
-# ==================== HELPER FUNCTIONS ====================
-
-def generate_image_hash(image_path: str) -> str:
-    """Generate unique hash for image caching"""
-    with open(image_path, "rb") as f:
-        return hashlib.md5(f.read()).hexdigest()
+class FlashcardRequest(BaseModel):
+    document_id: Optional[str] = None
+    word: Optional[str] = None
+    max_cards: int = 10
 
 
-def check_cache(image_hash: str) -> Optional[dict]:
-    """Check if analysis exists in cache"""
-    cache_file = f"cache/{image_hash}.json"
-    if os.path.exists(cache_file):
-        with open(cache_file, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return None
+class ExplainRequest(BaseModel):
+    word: str
+    document_id: Optional[str] = None
 
 
-def save_cache(image_hash: str, data: dict):
-    """Save analysis to cache"""
-    cache_file = f"cache/{image_hash}.json"
-    with open(cache_file, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+class RelatedRequest(BaseModel):
+    word: str
+    max_terms: int = 5
 
 
-# ==================== AI PROCESSING ====================
-
-def detect_with_yolo(image_path: str) -> dict:
-    """Nhận dạng vật thể với YOLO"""
-    results = yolo_model(image_path, conf=CONFIDENCE_THRESHOLD)
-    
-    detections = {
-        "objects": [],
-        "total_count": 0
-    }
-    
-    for r in results:
-        for box in r.boxes:
-            label = yolo_model.names[int(box.cls)]
-            confidence = float(box.conf)
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-            
-            detection = {
-                "label": label,
-                "label_vi": translate_label(label),
-                "confidence": round(confidence, 3),
-                "bbox": [int(x1), int(y1), int(x2), int(y2)]
-            }
-            detections["objects"].append(detection)
-    
-    detections["total_count"] = len(detections["objects"])
-    return detections
+class RAGQueryRequest(BaseModel):
+    query: str
+    context: Optional[Dict] = None
 
 
-def translate_label(label: str) -> str:
-    """Dịch label sang tiếng Việt (basic)"""
-    translations = {
-        "person": "người",
-        "car": "xe hơi",
-        "dog": "con chó",
-        "cat": "con mèo",
-        "chair": "ghế",
-        "table": "bàn",
-        "book": "sách",
-        "phone": "điện thoại",
-        "laptop": "máy tính xách tay",
-        "bottle": "chai",
-        "cup": "cốc",
-        "tv": "tivi",
-        "bed": "giường",
-        "clock": "đồng hồ",
-        "keyboard": "bàn phím",
-        "mouse": "chuột máy tính",
-        "backpack": "ba lô",
-        "umbrella": "ô/dù",
-        "handbag": "túi xách",
-        "bicycle": "xe đạp",
-        "motorcycle": "xe máy",
-        "bus": "xe buýt",
-        "train": "tàu hỏa",
-        "airplane": "máy bay",
-        "bird": "chim",
-        "horse": "ngựa",
-        "cow": "bò",
-        "sheep": "cừu",
-        "elephant": "voi",
-        "bear": "gấu",
-        "zebra": "ngựa vằn",
-        "giraffe": "hươu cao cổ",
-    }
-    return translations.get(label.lower(), label)
+class SemanticSearchRequest(BaseModel):
+    query: str
+    documents: List[str]
+    top_k: int = 5
+    threshold: float = 0.0
 
 
-def extract_text_ocr(image_path: str) -> List[str]:
-    """OCR toàn bộ ảnh"""
-    try:
-        results = ocr_reader.readtext(image_path, detail=0)
-        # Filter meaningful text
-        texts = [t.strip() for t in results if len(t.strip()) > 2 and any(c.isalpha() for c in t)]
-        return texts
-    except Exception as e:
-        print(f"OCR Error: {e}")
-        return []
+class DocumentSimilarityRequest(BaseModel):
+    document_id: int
+    documents: List[str]
+    top_k: int = 5
 
 
-def generate_vocabulary_with_gpt(detections: dict, ocr_texts: List[str]) -> dict:
-    """Gọi GPT-4o để sinh từ vựng"""
-    
-    object_labels = [d["label"] for d in detections["objects"]]
-    
-    if not object_labels and not ocr_texts:
-        return {
-            "vocabulary": [],
-            "sentences": [],
-            "summary": "No content detected in image."
-        }
-    
-    prompt = f"""You are an English tutor for Vietnamese A2-B1 learners.
-
-DETECTED IN IMAGE:
-- Objects: {object_labels[:10]}
-- Text (OCR): {ocr_texts[:10]}
-
-TASKS:
-1. Extract 5-8 useful English vocabulary words
-2. For each word provide:
-   - IPA pronunciation
-   - Vietnamese meaning
-   - Part of speech (noun/verb/adj/adv)
-   - One simple example sentence (A2 level)
-3. Create 2-3 simple sentences about the image
-
-RESPONSE FORMAT (JSON only):
-{{
-  "vocabulary": [
-    {{
-      "word": "education",
-      "ipa": "/ˌedʒuˈkeɪʃn/",
-      "meaning_vi": "giáo dục",
-      "part_of_speech": "noun",
-      "example_sentence": "Education is important."
-    }}
-  ],
-  "sentences": [
-    "I can see a person in the image.",
-    "There is a book on the table."
-  ]
-}}
-
-Output valid JSON only. A2 level vocabulary."""
-
-    try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a helpful English tutor. Always respond with valid JSON only."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5,
-            max_tokens=1500
-        )
-        
-        content = response.choices[0].message.content
-        
-        # Remove markdown code blocks if present
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0]
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0]
-        
-        result = json.loads(content.strip())
-        return result
-        
-    except Exception as e:
-        print(f"GPT Error: {e}")
-        return {
-            "vocabulary": [],
-            "sentences": [],
-            "error": str(e)
-        }
-
-
-# ==================== API ENDPOINTS ====================
+# ==================== HEALTH CHECK ====================
 
 @app.get("/")
-def root():
+async def root():
+    """Health check endpoint"""
     return {
-        "message": "Visual Language Tutor API",
-        "version": "1.0.0",
-        "status": "running",
-        "models": {
-            "yolo": "loaded",
-            "ocr": "loaded",
-            "gpt": "connected"
+        "status": "online",
+        "message": "Visual Language Tutor API - STAGE 1-5",
+        "version": "2.0.0",
+        "stages": {
+            "stage1": "Ensemble Extraction",
+            "stage2": "Context Intelligence",
+            "stage3": "Feedback Loop",
+            "stage4": "Knowledge Graph",
+            "stage5": "RAG System"
         }
     }
 
 
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "yolo_model": YOLO_MODEL_PATH,
-        "ocr_languages": ["en", "vi"]
-    }
+# ==================== STAGE 1 & 2: VOCABULARY EXTRACTION ====================
 
-
-@app.post("/api/analyze-image")
-async def analyze_image(file: UploadFile = File(...)):
-    """Main endpoint: Phân tích ảnh và sinh từ vựng"""
+@app.post("/api/smart-vocabulary-extract")
+async def smart_vocabulary_extract(request: SmartVocabularyRequest):
+    """
+    Smart Vocabulary Extraction with Context Intelligence
     
+    STAGE 1: Ensemble extraction (TF-IDF + Frequency + POS + N-grams)
+    STAGE 2: Context selection (best sentence for each word)
+    """
     try:
-        # Save uploaded file
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{timestamp}_{file.filename}"
-        image_path = f"uploads/{filename}"
+        text = request.text
+        max_words = request.max_words
+        language = request.language
         
-        with open(image_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        if not text or len(text) < 50:
+            raise HTTPException(
+                status_code=400,
+                detail="Text quá ngắn (cần ít nhất 50 ký tự)"
+            )
         
-        # Generate hash for caching
-        image_hash = generate_image_hash(image_path)
+        print(f"[Extract] Starting extraction for {len(text)} characters...")
         
-        # Check cache
-        cached_result = check_cache(image_hash)
-        if cached_result:
-            print(f"✅ Cache hit: {image_hash}")
-            cached_result["cache_hit"] = True
-            return JSONResponse(content=cached_result)
+        # STAGE 1: Ensemble Extraction
+        ensemble_result = extract_vocabulary_ensemble(
+            text,
+            max_words=max_words,
+            min_word_length=3,
+            include_ngrams=True,
+            filter_proper_nouns=True,
+            filter_technical=True,
+            context_filtering=True
+        )
         
-        print(f"🔍 Processing new image: {filename}")
+        vocabulary_list = [
+            {'word': score['word'], 'score': score['score']}
+            for score in ensemble_result['scores']
+        ]
         
-        # Step 1: YOLO Detection
-        detections = detect_with_yolo(image_path)
-        print(f"   Found {detections['total_count']} objects")
+        # STAGE 2: Context Selection
+        contexts = select_vocabulary_contexts(
+            text,
+            vocabulary_list,
+            language=language
+        )
         
-        # Step 2: OCR
-        ocr_texts = extract_text_ocr(image_path)
-        print(f"   OCR found {len(ocr_texts)} text segments")
+        # Prepare results
+        results = []
+        for ctx in contexts:
+            score_data = next(
+                (s for s in ensemble_result['scores'] if s['word'] == ctx['word']),
+                None
+            )
+            
+            result = {
+                'word': ctx['word'],
+                'score': ctx['finalScore'],
+                'context': ctx['contextSentence'],
+                'contextPlain': ctx['contextSentence'].replace('<b>', '').replace('</b>', ''),
+                'sentenceId': ctx['sentenceId'],
+                'sentenceScore': ctx['sentenceScore'],
+                'explanation': ctx['explanation'],
+                'features': score_data['features'] if score_data else {}
+            }
+            results.append(result)
         
-        # Step 3: GPT sinh từ vựng
-        learning_content = generate_vocabulary_with_gpt(detections, ocr_texts)
+        return JSONResponse(content={
+            'success': True,
+            'vocabulary': results,
+            'count': len(results),
+            'stats': {
+                'stage1': ensemble_result['stats'],
+                'stage2': {
+                    'totalContexts': len(contexts),
+                    'avgSentenceScore': sum(c['sentenceScore'] for c in contexts) / len(contexts) if contexts else 0
+                }
+            },
+            'pipeline': 'STAGE 1 (Ensemble Extraction) + STAGE 2 (Context Intelligence)'
+        })
         
-        # Prepare response
-        result = {
-            "success": True,
-            "image_id": image_hash,
-            "timestamp": datetime.now().isoformat(),
-            "detections": detections,
-            "ocr_texts": ocr_texts,
-            "vocabulary": learning_content.get("vocabulary", []),
-            "sentences": learning_content.get("sentences", []),
-            "cache_hit": False
-        }
+    except Exception as e:
+        print(f"[Extract] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/smart-vocabulary-extract-adaptive")
+async def smart_vocabulary_extract_adaptive(request: SmartVocabularyRequest):
+    """
+    Smart Vocabulary Extraction with Adaptive Weights (STAGE 3)
+    
+    Uses current adaptive weights from feedback loop
+    """
+    try:
+        text = request.text
+        max_words = request.max_words
+        language = request.language
         
-        # Save to cache
-        save_cache(image_hash, result)
+        if not text or len(text) < 50:
+            raise HTTPException(
+                status_code=400,
+                detail="Text quá ngắn (cần ít nhất 50 ký tự)"
+            )
+        
+        print(f"[Adaptive Extract] Starting with adaptive weights...")
+        
+        # Get current adaptive weights
+        adaptive_weights = feedback_loop.get_current_weights()
+        print(f"[Adaptive Extract] Using weights: {adaptive_weights}")
+        
+        # STAGE 1: Extract with adaptive weights
+        ensemble_result = extract_vocabulary_ensemble(
+            text,
+            max_words=max_words,
+            weights=adaptive_weights,
+            include_ngrams=True
+        )
+        
+        vocabulary_list = [
+            {'word': score['word'], 'score': score['score']}
+            for score in ensemble_result['scores']
+        ]
+        
+        # STAGE 2: Select contexts
+        contexts = select_vocabulary_contexts(text, vocabulary_list, language)
+        
+        # Prepare results
+        results = []
+        for ctx in contexts:
+            score_data = next(
+                (s for s in ensemble_result['scores'] if s['word'] == ctx['word']),
+                None
+            )
+            
+            result = {
+                'word': ctx['word'],
+                'score': ctx['finalScore'],
+                'context': ctx['contextSentence'],
+                'contextPlain': ctx['contextSentence'].replace('<b>', '').replace('</b>', ''),
+                'sentenceId': ctx['sentenceId'],
+                'sentenceScore': ctx['sentenceScore'],
+                'explanation': ctx['explanation'],
+                'features': score_data['features'] if score_data else {}
+            }
+            results.append(result)
+        
+        # Get weights info
+        weights_info = feedback_loop.get_statistics()
+        
+        return JSONResponse(content={
+            'success': True,
+            'vocabulary': results,
+            'count': len(results),
+            'stats': {
+                'stage1': ensemble_result['stats'],
+                'stage2': {
+                    'totalContexts': len(contexts),
+                    'avgSentenceScore': sum(c['sentenceScore'] for c in contexts) / len(contexts) if contexts else 0
+                }
+            },
+            'adaptive_weights': {
+                'weights': adaptive_weights,
+                'version': weights_info.get('weights_version', 0),
+                'feedback_count': weights_info.get('feedback_stats', {}).get('total', 0)
+            },
+            'pipeline': 'STAGE 1 (Adaptive Ensemble) + STAGE 2 (Context Intelligence) + STAGE 3 (Feedback Loop)'
+        })
+        
+    except Exception as e:
+        print(f"[Adaptive Extract] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== STAGE 3: FEEDBACK LOOP ====================
+
+@app.post("/api/vocabulary-feedback")
+async def submit_vocabulary_feedback(request: FeedbackRequest):
+    """Submit user feedback for vocabulary word"""
+    try:
+        if request.user_action not in ['keep', 'drop', 'star']:
+            raise HTTPException(
+                status_code=400,
+                detail="user_action must be 'keep', 'drop', or 'star'"
+            )
+        
+        result = feedback_loop.process_feedback(
+            word=request.word,
+            document_id=request.document_id,
+            user_id=request.user_id,
+            scores=request.scores,
+            final_score=request.final_score,
+            user_action=request.user_action
+        )
+        
+        return JSONResponse(content={
+            'success': True,
+            'feedback_saved': result['feedback_saved'],
+            'weights_updated': result['weights_updated'],
+            'new_weights': result['new_weights'],
+            'explanation': result['explanation']
+        })
+        
+    except Exception as e:
+        print(f"[Feedback] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary-feedback/statistics")
+async def get_feedback_statistics(user_id: Optional[str] = None):
+    """Get feedback statistics"""
+    try:
+        if user_id:
+            memory = FeedbackMemory()
+            user_feedbacks = memory.get_feedback_by_user(user_id)
+            
+            stats = {
+                'total': len(user_feedbacks),
+                'keep': sum(1 for fb in user_feedbacks if fb.user_action == 'keep'),
+                'drop': sum(1 for fb in user_feedbacks if fb.user_action == 'drop'),
+                'star': sum(1 for fb in user_feedbacks if fb.user_action == 'star')
+            }
+        else:
+            stats = feedback_loop.get_statistics()
+        
+        return JSONResponse(content={
+            'success': True,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        print(f"[Feedback Stats] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary-feedback/weights")
+async def get_current_weights():
+    """Get current ensemble weights"""
+    try:
+        weights = feedback_loop.get_current_weights()
+        stats = feedback_loop.get_statistics()
+        
+        return JSONResponse(content={
+            'success': True,
+            'weights': weights,
+            'version': stats.get('weights_version', 0),
+            'last_updated': stats.get('last_updated', ''),
+            'feedback_count': stats.get('feedback_stats', {}).get('total', 0)
+        })
+        
+    except Exception as e:
+        print(f"[Weights] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== STAGE 4: KNOWLEDGE GRAPH ====================
+
+@app.post("/api/knowledge-graph/build")
+async def build_knowledge_graph(request: KnowledgeGraphRequest):
+    """Build Knowledge Graph from vocabulary contexts"""
+    try:
+        stats = knowledge_graph.build_from_vocabulary_contexts(
+            vocabulary_contexts=request.vocabulary_contexts,
+            document_id=request.document_id,
+            document_title=request.document_title,
+            document_content=request.document_content
+        )
+        
+        knowledge_graph.save_graph()
+        graph_stats = knowledge_graph.get_statistics()
+        
+        return JSONResponse(content={
+            'success': True,
+            'build_stats': stats,
+            'graph_stats': graph_stats,
+            'message': f"Knowledge graph built for document: {request.document_id}"
+        })
+        
+    except Exception as e:
+        print(f"[KG Build] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/knowledge-graph/query/vocabulary/{document_id}")
+async def query_vocabulary_by_document(document_id: str):
+    """Query all vocabulary terms in a document"""
+    try:
+        vocab_terms = knowledge_graph.query_vocabulary_by_document(document_id)
+        
+        results = [
+            {
+                'term_id': term.entity_id,
+                'word': term.properties.get('word'),
+                'score': term.properties.get('score'),
+                'context': term.properties.get('context_sentence')
+            }
+            for term in vocab_terms
+        ]
+        
+        return JSONResponse(content={
+            'success': True,
+            'document_id': document_id,
+            'vocabulary_count': len(results),
+            'vocabulary': results
+        })
+        
+    except Exception as e:
+        print(f"[KG Query] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/knowledge-graph/statistics")
+async def get_knowledge_graph_statistics():
+    """Get Knowledge Graph statistics"""
+    try:
+        stats = knowledge_graph.get_statistics()
+        
+        return JSONResponse(content={
+            'success': True,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        print(f"[KG Stats] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== STAGE 5: RAG SYSTEM ====================
+
+@app.post("/api/rag/generate-flashcards")
+async def generate_flashcards(request: FlashcardRequest):
+    """Generate flashcards using RAG"""
+    try:
+        result = rag_system.generate_flashcards(
+            document_id=request.document_id,
+            word=request.word,
+            max_cards=request.max_cards
+        )
         
         return JSONResponse(content=result)
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[RAG Flashcards] Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ==================== RUN SERVER ====================
+@app.post("/api/rag/explain-term")
+async def explain_term(request: ExplainRequest):
+    """Explain term using RAG"""
+    try:
+        result = rag_system.explain_term(
+            word=request.word,
+            document_id=request.document_id
+        )
+        
+        return JSONResponse(content=result)
+        
+    except Exception as e:
+        print(f"[RAG Explain] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/rag/find-related")
+async def find_related_terms(request: RelatedRequest):
+    """Find related terms using RAG"""
+    try:
+        result = rag_system.find_related_terms(
+            word=request.word,
+            max_terms=request.max_terms
+        )
+        
+        return JSONResponse(content=result)
+        
+    except Exception as e:
+        print(f"[RAG Related] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/rag/query")
+async def process_rag_query(request: RAGQueryRequest):
+    """Process custom RAG query"""
+    try:
+        result = rag_system.process_query(
+            query=request.query,
+            context=request.context or {}
+        )
+        
+        return JSONResponse(content=result)
+        
+    except Exception as e:
+        print(f"[RAG Query] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== FILE UPLOAD ====================
+
+def extract_text_from_file(file_path: str) -> str:
+    """Extract text from uploaded file"""
+    file_ext = Path(file_path).suffix.lower()
+    
+    try:
+        if file_ext == '.txt':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        
+        elif file_ext == '.pdf' and PDF_SUPPORT:
+            text = ""
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                for page in pdf_reader.pages:
+                    text += page.extract_text() + "\n"
+            return text
+        
+        elif file_ext in ['.docx', '.doc'] and PDF_SUPPORT:
+            doc = docx.Document(file_path)
+            text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+            return text
+        
+        else:
+            raise ValueError(f"Unsupported file type: {file_ext}")
+    
+    except Exception as e:
+        raise ValueError(f"Error extracting text from file: {str(e)}")
+
+
+@app.post("/api/upload-document")
+async def upload_document(
+    file: UploadFile = File(...),
+    max_words: int = Form(50),      # Tăng default từ 20 lên 50
+    language: str = Form("en"),
+    max_flashcards: int = Form(30)  # Cho phép user chọn số flashcards
+):
+    # Limit max_words to reasonable range
+    if max_words > 100:
+        max_words = 100
+        print(f"[Upload] max_words limited to 100 for performance")
+    elif max_words < 5:
+        max_words = 5
+    """
+    Upload document and extract vocabulary
+    
+    Supports: .txt, .pdf, .docx
+    """
+    try:
+        # Validate file
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+        
+        file_ext = Path(file.filename).suffix.lower()
+        allowed_extensions = ['.txt', '.pdf', '.docx', '.doc']
+        
+        if file_ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not supported. Allowed: {', '.join(allowed_extensions)}"
+            )
+        
+        if file_ext in ['.pdf', '.docx', '.doc'] and not PDF_SUPPORT:
+            raise HTTPException(
+                status_code=400,
+                detail="PDF/DOCX support not available. Please install PyPDF2 and python-docx"
+            )
+        
+        # Save uploaded file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        safe_filename = f"{timestamp}_{file.filename}"
+        file_path = os.path.join("uploads", safe_filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        print(f"[Upload] File saved: {file_path}")
+        
+        # Extract text
+        text = extract_text_from_file(file_path)
+        
+        if not text or len(text) < 50:
+            raise HTTPException(
+                status_code=400,
+                detail="Extracted text is too short (minimum 50 characters)"
+            )
+        
+        print(f"[Upload] Extracted {len(text)} characters from {file.filename}")
+        
+        # Run complete pipeline
+        adaptive_weights = feedback_loop.get_current_weights()
+        
+        # STAGE 1: Ensemble Extraction
+        ensemble_result = extract_vocabulary_ensemble(
+            text,
+            max_words=max_words,
+            weights=adaptive_weights
+        )
+        
+        vocabulary_list = [
+            {'word': score['word'], 'score': score['score']}
+            for score in ensemble_result['scores']
+        ]
+        
+        # STAGE 2: Context Selection
+        contexts = select_vocabulary_contexts(text, vocabulary_list, language)
+        
+        # Prepare vocabulary contexts
+        vocabulary_contexts = []
+        for ctx in contexts:
+            score_data = next(
+                (s for s in ensemble_result['scores'] if s['word'] == ctx['word']),
+                None
+            )
+            
+            vocabulary_contexts.append({
+                'word': ctx['word'],
+                'finalScore': ctx['finalScore'],
+                'contextSentence': ctx['contextSentence'],
+                'sentenceId': ctx['sentenceId'],
+                'sentenceScore': ctx['sentenceScore'],
+                'explanation': ctx['explanation'],
+                'features': score_data['features'] if score_data else {}
+            })
+        
+        # STAGE 4: Build Knowledge Graph
+        document_id = f"doc_{timestamp}"
+        kg_stats = knowledge_graph.build_from_vocabulary_contexts(
+            vocabulary_contexts=vocabulary_contexts,
+            document_id=document_id,
+            document_title=file.filename,
+            document_content=text[:1000]
+        )
+        
+        knowledge_graph.save_graph()
+        
+        # STAGE 5: Generate Flashcards (sử dụng max_flashcards từ user)
+        flashcards_result = rag_system.generate_flashcards(
+            document_id=document_id,
+            max_cards=min(max_flashcards, len(vocabulary_contexts))
+        )
+        
+        # K-MEANS: Cluster vocabulary (if enough words)
+        clustering_result = None
+        if len(vocabulary_contexts) >= 5:
+            try:
+                clustering_result = cluster_vocabulary_kmeans(
+                    vocabulary_list,
+                    text,
+                    use_elbow=True,
+                    max_k=min(10, len(vocabulary_list) // 2),
+                    document_id=document_id  # Pass document_id for unique plot filename
+                )
+                print(f"[Upload] K-Means clustering completed: {clustering_result['n_clusters']} clusters")
+            except Exception as e:
+                print(f"[Upload] K-Means clustering failed: {e}")
+        
+        return JSONResponse(content={
+            'success': True,
+            'document_id': document_id,
+            'filename': file.filename,
+            'file_size': len(text),
+            'vocabulary': vocabulary_contexts,
+            'vocabulary_count': len(vocabulary_contexts),
+            'flashcards': flashcards_result.get('results', []),
+            'flashcards_count': flashcards_result.get('count', 0),
+            'stats': {
+                'stage1': ensemble_result['stats'],
+                'stage2': {
+                    'totalContexts': len(contexts),
+                    'avgSentenceScore': sum(c['sentenceScore'] for c in contexts) / len(contexts) if contexts else 0
+                },
+                'stage4': kg_stats
+            },
+            'adaptive_weights': adaptive_weights,
+            'pipeline': 'File Upload → STAGE 1-5 Complete Pipeline',
+            'kmeans_clustering': clustering_result  # K-Means results (if available)
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Upload] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== K-MEANS CLUSTERING + ELBOW METHOD ====================
+
+@app.post("/api/kmeans-cluster")
+async def kmeans_cluster_vocabulary(request: SmartVocabularyRequest):
+    """
+    K-Means Clustering với Elbow Method
+    
+    Cluster từ vựng thành nhóm dựa trên TF-IDF vectors
+    """
+    try:
+        text = request.text
+        max_words = request.max_words
+        language = request.language
+        
+        print("[K-Means] Starting clustering pipeline...")
+        
+        # STAGE 1: Extract vocabulary
+        adaptive_weights = feedback_loop.get_current_weights()
+        ensemble_result = extract_vocabulary_ensemble(
+            text,
+            max_words=max_words,
+            weights=adaptive_weights
+        )
+        
+        vocabulary_list = [
+            {'word': score['word'], 'score': score['score']}
+            for score in ensemble_result['scores']
+        ]
+        
+        # Generate unique document_id for this request
+        document_id = f"kmeans_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # K-MEANS: Cluster vocabulary
+        clustering_result = cluster_vocabulary_kmeans(
+            vocabulary_list,
+            text,
+            use_elbow=True,
+            max_k=min(10, len(vocabulary_list) // 2),
+            document_id=document_id  # Pass document_id for unique plot filename
+        )
+        
+        return JSONResponse(content={
+            'success': True,
+            'document_id': document_id,
+            'vocabulary_count': len(vocabulary_list),
+            'clustering': clustering_result,
+            'method': 'K-Means with Elbow Method + TF-IDF',
+            'algorithms_used': {
+                'tfidf': True,
+                'bag_of_words': True,
+                'kmeans': True,
+                'elbow_method': True
+            }
+        })
+        
+    except Exception as e:
+        print(f"[K-Means] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== COMPLETE PIPELINE (STAGE 1-5) ====================
+
+@app.post("/api/complete-pipeline")
+async def complete_pipeline(request: SmartVocabularyRequest):
+    """
+    Complete Pipeline: STAGE 1 → 2 → 3 → 4 → 5
+    
+    Extract vocabulary, select contexts, apply feedback, build knowledge graph, generate flashcards
+    """
+    try:
+        text = request.text
+        max_words = request.max_words
+        language = request.language
+        
+        print("[Complete Pipeline] Starting...")
+        
+        # STAGE 1: Ensemble Extraction (with adaptive weights)
+        adaptive_weights = feedback_loop.get_current_weights()
+        ensemble_result = extract_vocabulary_ensemble(
+            text,
+            max_words=max_words,
+            weights=adaptive_weights
+        )
+        
+        vocabulary_list = [
+            {'word': score['word'], 'score': score['score']}
+            for score in ensemble_result['scores']
+        ]
+        
+        # STAGE 2: Context Selection
+        contexts = select_vocabulary_contexts(text, vocabulary_list, language)
+        
+        # Prepare vocabulary contexts
+        vocabulary_contexts = []
+        for ctx in contexts:
+            score_data = next(
+                (s for s in ensemble_result['scores'] if s['word'] == ctx['word']),
+                None
+            )
+            
+            vocabulary_contexts.append({
+                'word': ctx['word'],
+                'finalScore': ctx['finalScore'],
+                'contextSentence': ctx['contextSentence'],
+                'sentenceId': ctx['sentenceId'],
+                'sentenceScore': ctx['sentenceScore'],
+                'explanation': ctx['explanation'],
+                'features': score_data['features'] if score_data else {}
+            })
+        
+        # STAGE 4: Build Knowledge Graph
+        document_id = f"doc_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        kg_stats = knowledge_graph.build_from_vocabulary_contexts(
+            vocabulary_contexts=vocabulary_contexts,
+            document_id=document_id,
+            document_title="Extracted Document",
+            document_content=text[:500]
+        )
+        
+        knowledge_graph.save_graph()
+        
+        # STAGE 5: Generate Flashcards (optional, first 5)
+        flashcards_result = rag_system.generate_flashcards(
+            document_id=document_id,
+            max_cards=min(5, len(vocabulary_contexts))
+        )
+        
+        return JSONResponse(content={
+            'success': True,
+            'document_id': document_id,
+            'vocabulary': vocabulary_contexts,
+            'count': len(vocabulary_contexts),
+            'flashcards': flashcards_result.get('results', []),
+            'flashcards_count': flashcards_result.get('count', 0),
+            'pipeline_stats': {
+                'stage1': ensemble_result['stats'],
+                'stage2': {
+                    'totalContexts': len(contexts),
+                    'avgSentenceScore': sum(c['sentenceScore'] for c in contexts) / len(contexts) if contexts else 0
+                },
+                'stage4': kg_stats,
+                'stage5': {
+                    'flashcards_generated': flashcards_result.get('count', 0)
+                }
+            },
+            'adaptive_weights': adaptive_weights,
+            'pipeline': 'STAGE 1 (Ensemble) + STAGE 2 (Context) + STAGE 3 (Feedback) + STAGE 4 (Knowledge Graph) + STAGE 5 (RAG)'
+        })
+        
+    except Exception as e:
+        print(f"[Complete Pipeline] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 Starting Visual Language Tutor API on port 8000...")
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+# ==================== STAGE 6: EMBEDDING & SEMANTIC SEARCH ====================
+
+@app.post("/api/embedding/create")
+async def create_document_embeddings(request: SemanticSearchRequest):
+    """
+    Tạo embeddings cho documents
+    
+    CHẠY SONG SONG với TF-IDF pipeline
+    """
+    try:
+        if not EMBEDDING_AVAILABLE or embedder is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Embedding system not available. Install: pip install sentence-transformers"
+            )
+        
+        documents = request.documents
+        
+        if not documents:
+            raise HTTPException(status_code=400, detail="No documents provided")
+        
+        print(f"[Embedding] Creating embeddings for {len(documents)} documents...")
+        
+        # Create embeddings
+        embeddings = embedder.encode_documents(documents, show_progress=False)
+        
+        return JSONResponse(content={
+            'success': True,
+            'n_documents': len(documents),
+            'embedding_dim': int(embeddings.shape[1]),
+            'embeddings': embeddings.tolist(),
+            'model': embedder.model_name
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Embedding] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/embedding/search")
+async def semantic_search_documents(request: SemanticSearchRequest):
+    """
+    Semantic search sử dụng embeddings
+    
+    Tìm kiếm documents dựa trên ngữ nghĩa, không cần keyword trùng khớp
+    """
+    try:
+        if not EMBEDDING_AVAILABLE or embedder is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Embedding system not available"
+            )
+        
+        query = request.query
+        documents = request.documents
+        top_k = request.top_k
+        threshold = request.threshold
+        
+        if not query or not documents:
+            raise HTTPException(status_code=400, detail="Query and documents required")
+        
+        print(f"[Semantic Search] Query: '{query}'")
+        print(f"[Semantic Search] Searching {len(documents)} documents...")
+        
+        # Create embeddings
+        query_embedding = embedder.encode_query(query)
+        doc_embeddings = embedder.encode_documents(documents, show_progress=False)
+        
+        # Search
+        results = semantic_search(
+            query_embedding,
+            doc_embeddings,
+            documents,
+            top_k=top_k,
+            threshold=threshold
+        )
+        
+        return JSONResponse(content={
+            'success': True,
+            'query': query,
+            'results': results,
+            'count': len(results),
+            'method': 'Semantic Search with Sentence-BERT'
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Semantic Search] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/embedding/similarity")
+async def find_similar_docs(request: DocumentSimilarityRequest):
+    """
+    Tìm documents tương tự với document cho trước
+    
+    Sử dụng cosine similarity trên embeddings
+    """
+    try:
+        if not EMBEDDING_AVAILABLE or embedder is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Embedding system not available"
+            )
+        
+        document_id = request.document_id
+        documents = request.documents
+        top_k = request.top_k
+        
+        if document_id < 0 or document_id >= len(documents):
+            raise HTTPException(status_code=400, detail="Invalid document_id")
+        
+        print(f"[Similarity] Finding similar documents to document {document_id}...")
+        
+        # Create embeddings
+        doc_embeddings = embedder.encode_documents(documents, show_progress=False)
+        
+        # Find similar
+        results = find_similar_documents(
+            document_id,
+            doc_embeddings,
+            documents,
+            top_k=top_k,
+            exclude_self=True
+        )
+        
+        return JSONResponse(content={
+            'success': True,
+            'source_document_id': document_id,
+            'source_document': documents[document_id],
+            'similar_documents': results,
+            'count': len(results),
+            'method': 'Cosine Similarity on Embeddings'
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Similarity] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
