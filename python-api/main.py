@@ -489,19 +489,35 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/knowledge-graph/vocabulary/{document_id}")
 async def get_vocabulary_by_document(document_id: str):
-    """Get all vocabulary terms for a document"""
+    """
+    Get all vocabulary terms for a document
+    
+    ⚠️  UPDATED: Now uses pipeline cache instead of KG object
+    """
     try:
-        vocabulary = knowledge_graph.query_vocabulary_by_document(document_id)
+        # Get pipeline result from cache
+        result = get_pipeline_result(document_id)
         
-        # Convert Entity objects to dicts
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Document {document_id} not found. Please upload document first."
+            )
+        
+        # Extract vocabulary from result
+        vocabulary = result.get('vocabulary', [])
+        
+        # Convert to simplified format
         vocabulary_dicts = []
         for term in vocabulary:
             vocabulary_dicts.append({
-                'term_id': term.entity_id,
-                'word': term.properties.get('word'),
-                'score': term.properties.get('score'),
-                'context_sentence': term.properties.get('context_sentence'),
-                'features': term.properties.get('features', {})
+                'term_id': f"term_{len(vocabulary_dicts)}",
+                'word': term.get('phrase', ''),
+                'score': term.get('tfidf_score', 0),
+                'frequency': term.get('frequency', 0),
+                'sentence_count': term.get('sentence_count', 0),
+                'cluster_id': term.get('cluster_id', 0),
+                'occurrences': term.get('occurrences', [])
             })
         
         return JSONResponse(content={
@@ -511,23 +527,26 @@ async def get_vocabulary_by_document(document_id: str):
             'count': len(vocabulary_dicts)
         })
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/knowledge-graph/stats")
 async def get_knowledge_graph_stats():
-    """Get Knowledge Graph statistics"""
-    try:
-        stats = knowledge_graph.get_statistics()
-        
-        return JSONResponse(content={
-            'success': True,
-            'statistics': stats
-        })
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """
+    Get Knowledge Graph statistics (DISABLED)
+    
+    This endpoint has been disabled because Knowledge Graph is disabled.
+    Use per-document endpoints instead:
+    - GET /api/knowledge-graph/{document_id}
+    - GET /api/flashcards/{document_id}
+    """
+    raise HTTPException(
+        status_code=501,
+        detail="Knowledge Graph stats endpoint disabled. Use per-document endpoints instead."
+    )
 
 
 @app.post("/api/rag/generate-flashcards")

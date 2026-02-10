@@ -1,0 +1,44 @@
+# Railway ignore file for python-api deployment
+# This tells Railway to ignore Next.js files when deploying python-api
+
+# Ignore root Next.js files
+../package.json
+../package-lock.json
+../node_modules
+../.next
+../next.config.js
+../tsconfig.json
+
+# Ignore app directory (Next.js)
+../app
+
+# Ignore components (Next.js)
+../components
+
+# Ignore lib (Next.js)
+../lib
+
+# Ignore public (Next.js)
+../public
+
+# Ignore styles (Next.js)
+../styles
+
+# Ignore hooks (Next.js)
+../hooks
+
+# Ignore types (Next.js)
+../types
+
+# Ignore tests
+../__tests__
+
+# Ignore scripts
+../scripts
+
+# Keep only python-api files
+!*.py
+!requirements.txt
+!Procfile
+!railway.json
+!runtime.txt
