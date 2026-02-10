@@ -75,6 +75,8 @@ export default function FlashcardClusterView({ documentId }: Props) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
+  const API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000'
+
   useEffect(() => {
     fetchFlashcards()
   }, [documentId])
@@ -83,7 +85,7 @@ export default function FlashcardClusterView({ documentId }: Props) {
     try {
       setLoading(true)
       const response = await fetch(
-        `http://localhost:8000/api/flashcards/${documentId}?group_by_cluster=true`
+        `${API_URL}/api/flashcards/${documentId}?group_by_cluster=true`
       )
       
       if (!response.ok) {

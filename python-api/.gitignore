@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Uploads & Cache
+uploads/
+cache/
+knowledge_graph_data/
+feedback_data/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Documentation (keep only essential)
+*.md
+!README.md
+!QUICK_START*.md
+!TOM_TAT*.md
+
+# Test files
+test_*.py
+fix_*.py
+add_*.py
+insert_*.py
+disable_*.py
+remove_*.py
+FORCE_*.py
+
+# Batch files
+*.bat
+!setup.bat
+!RESTART*.bat
+
+# Temporary files
+*.tmp
+*.temp

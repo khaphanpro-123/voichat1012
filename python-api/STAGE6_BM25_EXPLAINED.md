@@ -243,77 +243,6 @@ Carbon emissions must be reduced by 45% by 2030.
 
 ### Kết Quả Có BM25 (use_bm25=True, weight=0.2)
 
-**Extracted Phrases**:
-1. "climate change" (semantic: 0.95, BM25: 8.5) → Final: 0.93 ✅
-2. "environmental crisis" (semantic: 0.88, BM25: 0.0) → Final: 0.70 ❌ LOẠI
-3. "global warming" (semantic: 0.85, BM25: 0.0) → Final: 0.68 ❌ LOẠI
-4. "1.5°C" (semantic: 0.60, BM25: 9.2) → Final: 0.66 ✅ GIỮ LẠI
-5. "carbon emissions" (semantic: 0.78, BM25: 8.8) → Final: 0.80 ✅
-6. "45% by 2030" (semantic: 0.55, BM25: 9.5) → Final: 0.63 ✅ GIỮ LẠI
-
-**Cải thiện**:
-- ✅ Loại bỏ "environmental crisis" (ảo giác)
-- ✅ Loại bỏ "global warming" (ảo giác)
-- ✅ Giữ lại "1.5°C" (số liệu quan trọng)
-- ✅ Giữ lại "45% by 2030" (số liệu quan trọng)
-
----
-
-## 📈 Hiệu Suất
-
-### Thời Gian Xử Lý
-
-| Stage | Không BM25 | Có BM25 | Chênh lệch |
-|-------|------------|---------|------------|
-| STAGE 4 | 2.5s | 2.5s | 0s |
-| STAGE 5 | 0.8s | 0.8s | 0s |
-| STAGE 6 | 0s | 0.5s | +0.5s ⚠️ |
-| STAGE 7 | 1.2s | 1.2s | 0s |
-| **Total** | **4.5s** | **5.0s** | **+0.5s** |
-
-**Trade-off**: +0.5s để có độ chính xác cao hơn
-
----
-
-### Độ Chính Xác
-
-| Metric | Không BM25 | Có BM25 | Cải thiện |
-|--------|------------|---------|-----------|
-| Precision | 85% | 92% | +7% ✅ |
-| Recall | 90% | 88% | -2% ⚠️ |
-| F1-Score | 87.4% | 90.0% | +2.6% ✅ |
-| Hallucination | 15% | 5% | -10% ✅ |
-
-**Kết luận**: BM25 giảm "ảo giác" từ 15% → 5%
-
----
-
-## 🎛️ Cấu Hình BM25
-
-### Tham Số Chính
-
-```python
-# Trong complete_pipeline_12_stages.py
-result = pipeline.process_document(
-    text=text,
-    document_id="doc_123",
-    document_title="My Document",
-    use_bm25=True,        # Bật/tắt BM25
-    bm25_weight=0.2,      # Weight cho BM25 (≤ 0.2)
-    ...
-)
-```
-
-### Giải Thích Tham Số
-
-**1. use_bm25** (True/False)
-- `True`: Bật BM25 filter (recommended)
-- `False`: Tắt BM25 filter (faster, less accurate)
-
-**2. bm25_weight** (0.0 - 0.2)
-- `0.2`: Maximum (recommended) - 20% BM25, 80% semantic
-- `0.1`: Moderate - 10% BM25, 90% semantic
-- `0.0`: Minimum - 0% BM25, 100% semantic (= tắt BM25)
 
 **⚠️ Lưu ý**: `bm25_weight` không được vượt quá 0.2 (20%)
 
@@ -408,3 +337,75 @@ use_bm25=False
 **Tác giả**: Kiro AI
 **Ngày**: 2026-02-10
 **Version**: 5.1.0-enhanced-flashcards
+
+**Extracted Phrases**:
+1. "climate change" (semantic: 0.95, BM25: 8.5) → Final: 0.93 ✅
+2. "environmental crisis" (semantic: 0.88, BM25: 0.0) → Final: 0.70 ❌ LOẠI
+3. "global warming" (semantic: 0.85, BM25: 0.0) → Final: 0.68 ❌ LOẠI
+4. "1.5°C" (semantic: 0.60, BM25: 9.2) → Final: 0.66 ✅ GIỮ LẠI
+5. "carbon emissions" (semantic: 0.78, BM25: 8.8) → Final: 0.80 ✅
+6. "45% by 2030" (semantic: 0.55, BM25: 9.5) → Final: 0.63 ✅ GIỮ LẠI
+
+**Cải thiện**:
+- ✅ Loại bỏ "environmental crisis" (ảo giác)
+- ✅ Loại bỏ "global warming" (ảo giác)
+- ✅ Giữ lại "1.5°C" (số liệu quan trọng)
+- ✅ Giữ lại "45% by 2030" (số liệu quan trọng)
+
+---
+
+## 📈 Hiệu Suất
+
+### Thời Gian Xử Lý
+
+| Stage | Không BM25 | Có BM25 | Chênh lệch |
+|-------|------------|---------|------------|
+| STAGE 4 | 2.5s | 2.5s | 0s |
+| STAGE 5 | 0.8s | 0.8s | 0s |
+| STAGE 6 | 0s | 0.5s | +0.5s ⚠️ |
+| STAGE 7 | 1.2s | 1.2s | 0s |
+| **Total** | **4.5s** | **5.0s** | **+0.5s** |
+
+**Trade-off**: +0.5s để có độ chính xác cao hơn
+
+---
+
+### Độ Chính Xác
+
+| Metric | Không BM25 | Có BM25 | Cải thiện |
+|--------|------------|---------|-----------|
+| Precision | 85% | 92% | +7% ✅ |
+| Recall | 90% | 88% | -2% ⚠️ |
+| F1-Score | 87.4% | 90.0% | +2.6% ✅ |
+| Hallucination | 15% | 5% | -10% ✅ |
+
+**Kết luận**: BM25 giảm "ảo giác" từ 15% → 5%
+
+---
+
+## 🎛️ Cấu Hình BM25
+
+### Tham Số Chính
+
+```python
+# Trong complete_pipeline_12_stages.py
+result = pipeline.process_document(
+    text=text,
+    document_id="doc_123",
+    document_title="My Document",
+    use_bm25=True,        # Bật/tắt BM25
+    bm25_weight=0.2,      # Weight cho BM25 (≤ 0.2)
+    ...
+)
+```
+
+### Giải Thích Tham Số
+
+**1. use_bm25** (True/False)
+- `True`: Bật BM25 filter (recommended)
+- `False`: Tắt BM25 filter (faster, less accurate)
+
+**2. bm25_weight** (0.0 - 0.2)
+- `0.2`: Maximum (recommended) - 20% BM25, 80% semantic
+- `0.1`: Moderate - 10% BM25, 90% semantic
+- `0.0`: Minimum - 0% BM25, 100% semantic (= tắt BM25)

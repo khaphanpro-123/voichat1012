@@ -130,7 +130,7 @@ export default function DashboardHome() {
   const [showVideoModal, setShowVideoModal] = useState(false);
 
   // Video hướng dẫn - file trong thư mục public
-  const TUTORIAL_VIDEO_URL = "/0115.mp4";
+  const TUTORIAL_VIDEO_URL = "https://youtube.com/shorts/1bW10HRrjy0?feature=share";
 
   // Check if user is new (first time)
   useEffect(() => {

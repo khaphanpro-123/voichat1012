@@ -665,7 +665,7 @@ class SingleWordExtractor:
         self,
         words: List[Dict],
         main_heading: str,
-        threshold: float = 0.3
+        threshold: float = 0.1
     ) -> List[Dict]:
         """
         7.5 Heading-aware semantic filter

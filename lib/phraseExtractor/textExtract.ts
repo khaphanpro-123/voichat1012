@@ -83,7 +83,7 @@ export async function extractText(
 export function validateFile(
   fileName: string,
   fileSize: number,
-  maxSizeBytes: number = 5 * 1024 * 1024 // 5MB default
+  maxSizeBytes: number = 10 * 1024 * 1024 // 5MB default
 ): { valid: boolean; error?: string } {
   // Check file extension
   const ext = fileName.toLowerCase().split(".").pop();

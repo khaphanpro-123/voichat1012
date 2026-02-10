@@ -189,16 +189,44 @@ class BM25Filter:
         Returns:
             BM25 score
         """
-        # Find sentence index
+        # Normalize sentence text (remove HTML tags, extra spaces)
+        normalized_sentence = sentence_text.replace('<b>', '').replace('</b>', '').strip()
+        normalized_phrase = phrase.lower().strip()
+        
+        # SIMPLE CHECK: If phrase appears in sentence, it's in document
+        # This is more reliable than BM25 for exact phrase matching
+        if normalized_phrase in normalized_sentence.lower():
+            # Return a positive score to indicate presence
+            # Use length as proxy for importance
+            return float(len(normalized_phrase.split()))
+        
+        # Try to find best matching sentence
+        sent_idx = -1
+        
+        # First try exact match
         try:
-            sent_idx = self.sentences.index(sentence_text)
+            sent_idx = self.sentences.index(normalized_sentence)
         except ValueError:
-            return 0.0
+            # Try fuzzy match - find sentence with highest overlap
+            best_overlap = 0
+            phrase_words = set(normalized_phrase.split())
+            
+            for idx, sent in enumerate(self.sentences):
+                sent_words = set(sent.lower().split())
+                overlap = len(phrase_words & sent_words)
+                
+                if overlap > best_overlap:
+                    best_overlap = overlap
+                    sent_idx = idx
+            
+            # If no overlap found, phrase not in document
+            if best_overlap == 0:
+                return 0.0
         
         # Calculate BM25 score
         scores = self.bm25_sentences.get_scores(phrase)
         
-        return float(scores[sent_idx])
+        return float(scores[sent_idx]) if sent_idx >= 0 else 0.0
     
     def score_phrase_to_heading(
         self,

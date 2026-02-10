@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
         {
           success: false,
-          error: `File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum size is 5MB.`,
+          error: `File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum size is 10MB.`,
         },
         { status: 400 }
       );
@@ -138,7 +138,7 @@ export async function GET() {
     request: {
       contentType: "multipart/form-data",
       fields: {
-        file: "PDF or DOCX file (required, max 5MB)",
+        file: "PDF or DOCX file (required, max 10MB)",
         minFreq: "Minimum frequency threshold (optional, default: 2)",
         maxPhrases: "Maximum phrases to return (optional, default: 200)",
         maxExamples: "Maximum example sentences per phrase (optional, default: 3)",

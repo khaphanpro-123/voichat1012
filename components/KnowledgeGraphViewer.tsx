@@ -57,6 +57,8 @@ export default function KnowledgeGraphViewer({ documentId }: Props) {
   const [selectedNode, setSelectedNode] = useState<KnowledgeGraphNode | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  const API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000'
+
   useEffect(() => {
     fetchKnowledgeGraph()
   }, [documentId])
@@ -64,7 +66,7 @@ export default function KnowledgeGraphViewer({ documentId }: Props) {
   const fetchKnowledgeGraph = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8000/api/knowledge-graph/${documentId}`)
+      const response = await fetch(`${API_URL}/api/knowledge-graph/${documentId}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch knowledge graph')
