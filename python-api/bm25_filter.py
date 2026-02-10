@@ -291,20 +291,33 @@ class BM25Filter:
     def rerank_phrases(
         self,
         phrases: List[Dict],
-        weight_bm25: float = 0.3,
-        weight_original: float = 0.7
+        weight_bm25: float = 0.2,
+        weight_original: float = 0.8
     ) -> List[Dict]:
         """
         Re-rank phrases combining original score + BM25 score
         
+        ⚠️ IMPORTANT: BM25 is SECONDARY SIGNAL ONLY (weight ≤ 0.2)
+        
+        Role of BM25:
+        - Sanity check for keyword presence
+        - NOT for primary ranking
+        - Helps retain numbers, definitions, technical terms
+        - Penalizes semantic hallucination
+        
         Args:
             phrases: List of phrase dicts with 'finalScore' and BM25 scores
-            weight_bm25: Weight for BM25 score
-            weight_original: Weight for original score
+            weight_bm25: Weight for BM25 score (DEFAULT: 0.2, MAX: 0.2)
+            weight_original: Weight for original score (DEFAULT: 0.8, MIN: 0.8)
         
         Returns:
             Re-ranked list of phrases
         """
+        # Enforce BM25 weight limit
+        if weight_bm25 > 0.2:
+            print(f"  ⚠️  BM25 weight {weight_bm25} exceeds limit 0.2, capping to 0.2")
+            weight_bm25 = 0.2
+            weight_original = 0.8
         for phrase_dict in phrases:
             original_score = phrase_dict.get('finalScore', 0.0)
             bm25_score = phrase_dict.get('bm25_combined', 0.0)

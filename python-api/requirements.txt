@@ -31,3 +31,6 @@ nltk>=3.8.0
 
 # BM25 for lexical filtering (STAGE 5)
 rank-bm25==0.2.2
+
+# IPA Phonetics for STAGE 12 (Optional - for flashcard phonetics)
+eng-to-ipa>=0.0.2
