@@ -1,0 +1,41 @@
+# Python API (deployed separately on Railway)
+python-api/
+
+# Development files
+*.log
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+ts-jest.log
+
+# Documentation
+*.md
+!README.md
+
+# Deployment scripts
+deploy.bat
+check-deploy-ready.bat
+install-railway.bat
+
+# Uploads
+uploads/
