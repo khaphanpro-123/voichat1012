@@ -18,14 +18,17 @@ scikit-learn==1.3.2
 PyPDF2==3.0.1
 python-docx==1.1.0
 
-# Lightweight embeddings
-# Note: sentence-transformers will install torch automatically
+# Lightweight embeddings - CPU only
+# Install torch CPU-only first to avoid GPU dependencies
+transformers==4.36.0
+tokenizers==0.15.0
 sentence-transformers==2.2.0
 
 # BM25
 rank-bm25==0.2.2
 
 # REMOVED (saves ~6GB):
+# - torch (will be installed as dependency of sentence-transformers)
 # - ultralytics (500MB) - OCR not critical
 # - easyocr (500MB) - OCR not critical  
 # - matplotlib (200MB) - visualization not needed in production

@@ -1,92 +1,42 @@
-# AGGRESSIVE .dockerignore for minimal image size
-
-# Python cache and compiled
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-*.egg
-*.egg-info/
-dist/
-build/
+.Python
 
 # Virtual environments
 venv/
 env/
 ENV/
 
-# Testing (EXCLUDE ALL)
-test_*.py
-*_test.py
-*.test.py
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
-.tox/
-
-# Documentation (EXCLUDE ALL except README)
-*.md
-!README.md
-docs/
-INTRODUCTION/
-
-# Git
-.git/
-.gitignore
+*.log
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
 
-# Cache directories
-cache/
-*.cache
-.cache/
-
-# Data directories (EXCLUDE ALL)
+# Uploads
 uploads/
-feedback_data/
-knowledge_graph_data/
 
-# Media files (EXCLUDE ALL)
-*.mp4
-*.avi
-*.mov
-*.pdf
-*.docx
-*.xlsx
+# Documentation
+*.md
+!README.md
 
-# Logs
-*.log
-logs/
-
-# Temporary
-*.tmp
-*.temp
-tmp/
-
-# Backup
-*.bak
-*.backup
-*~
-
-# Scripts (EXCLUDE non-essential)
-fix_*.py
-add_*.py
-test_*.py
-insert_*.py
-disable_*.py
-remove_*.py
-api_endpoints_*.py
+# Scripts
 *.bat
-!setup.bat
+*.sh
 
-# Config backups
-*.json.bak
-requirements-full.txt
-requirements-optimized.txt
-
-# Railway
-.railway/
+# Git
+.git/
+.gitignore
