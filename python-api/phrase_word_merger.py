@@ -134,17 +134,93 @@ class PhraseSingleWordMerger:
         for cluster_id, cluster_phrases in grouped_phrases.items():
             for phrase in cluster_phrases:
                 phrase['type'] = 'phrase'
-                phrase['cluster'] = cluster_id
+                # CRITICAL: Preserve cluster_id
+                if 'cluster_id' not in phrase and 'cluster' not in phrase:
+                    print(f"  ⚠️  WARNING: phrase '{phrase.get('phrase', 'unknown')}' missing cluster, assigning to {cluster_id}")
+                    phrase['cluster_id'] = cluster_id
+                    phrase['cluster'] = cluster_id
+                elif 'cluster_id' not in phrase:
+                    phrase['cluster_id'] = phrase.get('cluster', cluster_id)
+                elif 'cluster' not in phrase:
+                    phrase['cluster'] = phrase.get('cluster_id', cluster_id)
                 merged_vocabulary.append(phrase)
         
         # Add words second (by POS)
+        # Assign cluster to words based on semantic similarity to phrases
         for pos, pos_words in grouped_words.items():
             for word in pos_words:
                 word['type'] = 'single_word'
                 word['pos_group'] = pos
+                
+                # Assign cluster_id to words based on phrase clusters
+                if 'cluster_id' not in word:
+                    # Find most similar phrase cluster using embeddings
+                    if 'embedding' in word and kept_phrases:
+                        # Get word embedding
+                        word_emb = word['embedding']
+                        
+                        # Calculate similarity to each cluster's representative phrases
+                        cluster_similarities = {}
+                        for phrase in kept_phrases:
+                            if 'embedding' in phrase and 'cluster_id' in phrase:
+                                phrase_cluster = phrase['cluster_id']
+                                phrase_emb = phrase['embedding']
+                                
+                                # Cosine similarity
+                                similarity = np.dot(word_emb, phrase_emb) / (
+                                    np.linalg.norm(word_emb) * np.linalg.norm(phrase_emb)
+                                )
+                                
+                                # Track max similarity per cluster
+                                if phrase_cluster not in cluster_similarities:
+                                    cluster_similarities[phrase_cluster] = similarity
+                                else:
+                                    cluster_similarities[phrase_cluster] = max(
+                                        cluster_similarities[phrase_cluster],
+                                        similarity
+                                    )
+                        
+                        # Assign to most similar cluster
+                        if cluster_similarities:
+                            best_cluster = max(cluster_similarities.items(), key=lambda x: x[1])[0]
+                            word['cluster_id'] = best_cluster
+                            word['cluster'] = best_cluster
+                        else:
+                            # Fallback to cluster 0
+                            word['cluster_id'] = 0
+                            word['cluster'] = 0
+                    else:
+                        # No embedding, assign to cluster 0
+                        word['cluster_id'] = 0
+                        word['cluster'] = 0
+                
                 merged_vocabulary.append(word)
         
         print(f"  ✓ Ordered output: {len(merged_vocabulary)} items")
+        
+        # VALIDATION: Check cluster_id preservation
+        missing_cluster = [v for v in merged_vocabulary if 'cluster_id' not in v and 'cluster' not in v]
+        if missing_cluster:
+            print(f"  ❌ ERROR: {len(missing_cluster)} items missing cluster_id!")
+            for item in missing_cluster[:5]:  # Show first 5
+                print(f"     - {item.get('phrase', item.get('word', 'unknown'))}")
+        else:
+            print(f"  ✅ All items have cluster_id")
+            
+            # Show cluster distribution after word assignment
+            cluster_counts = {}
+            for v in merged_vocabulary:
+                cid = v.get('cluster_id', v.get('cluster', -1))
+                vtype = v.get('type', 'unknown')
+                key = (cid, vtype)
+                cluster_counts[key] = cluster_counts.get(key, 0) + 1
+            
+            print(f"  📊 Cluster distribution after word assignment:")
+            for cid in sorted(set(k[0] for k in cluster_counts.keys())):
+                phrase_count = cluster_counts.get((cid, 'phrase'), 0)
+                word_count = cluster_counts.get((cid, 'single_word'), 0)
+                total = phrase_count + word_count
+                print(f"     Cluster {cid}: {total} items ({phrase_count} phrases + {word_count} words)")
         
         # ====================================================================
         # STEP 5: Add Metadata
@@ -268,24 +344,19 @@ class PhraseSingleWordMerger:
         """
         Group phrases by cluster/topic
         
-        If cluster info available, group by cluster
-        Otherwise, group by heading or score range
+        IMPORTANT: Preserve cluster_id from K-Means clustering
+        DO NOT fallback to score-based clustering
         """
         grouped = defaultdict(list)
         
         for phrase in phrases:
-            # Try to get cluster ID
-            cluster_id = phrase.get('cluster', phrase.get('cluster_id', 'default'))
+            # Get cluster_id from K-Means - MUST exist
+            cluster_id = phrase.get('cluster_id')
             
-            # If no cluster, group by score range
-            if cluster_id == 'default':
-                score = phrase.get('importance_score', phrase.get('finalScore', 0))
-                if score >= 0.8:
-                    cluster_id = 'high_importance'
-                elif score >= 0.6:
-                    cluster_id = 'medium_importance'
-                else:
-                    cluster_id = 'low_importance'
+            # If cluster_id is missing, assign to cluster 0 (should not happen)
+            if cluster_id is None:
+                print(f"  ⚠️  WARNING: phrase '{phrase.get('phrase', 'unknown')}' missing cluster_id, assigning to 0")
+                cluster_id = 0
             
             grouped[cluster_id].append(phrase)
         

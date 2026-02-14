@@ -26,6 +26,7 @@ Version: 5.2.0-filter-only-mode
 from typing import List, Dict, Optional
 from datetime import datetime
 import os
+import numpy as np
 
 # Import all stage modules
 from phrase_centric_extractor import PhraseCentricExtractor
@@ -173,6 +174,15 @@ class CompletePipeline12Stages:
         )
         results['stages']['stage4'] = stage4_result
         
+        # DEBUG: Check cluster distribution after phrase extraction
+        phrase_clusters = {}
+        for p in stage4_result['phrases']:
+            cid = p.get('cluster_id', p.get('cluster', 'MISSING'))
+            phrase_clusters[cid] = phrase_clusters.get(cid, 0) + 1
+        print(f"\n  📊 DEBUG - Phrase clusters after STAGE 4:")
+        for cid in sorted(phrase_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
+            print(f"     Cluster {cid}: {phrase_clusters[cid]} phrases")
+        
         print(f"  ✓ Extracted {stage4_result['phrase_count']} phrases")
         print(f"  ✓ Multi-word: {stage4_result['multi_word_percentage']:.1f}%")
         
@@ -238,6 +248,15 @@ class CompletePipeline12Stages:
             max_phrases + max_words
         )
         results['stages']['stage8'] = stage8_result
+        
+        # DEBUG: Check cluster distribution after merge
+        merge_clusters = {}
+        for v in stage8_result['vocabulary']:
+            cid = v.get('cluster_id', v.get('cluster', 'MISSING'))
+            merge_clusters[cid] = merge_clusters.get(cid, 0) + 1
+        print(f"\n  📊 DEBUG - Clusters after STAGE 8 (merge):")
+        for cid in sorted(merge_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
+            print(f"     Cluster {cid}: {merge_clusters[cid]} items")
         
         print(f"  ✓ Merged vocabulary: {stage8_result['total_count']} items")
         print(f"  ✓ Phrases: {stage8_result['phrase_count']} ({stage8_result['phrase_percentage']:.1f}%)")
@@ -466,50 +485,55 @@ class CompletePipeline12Stages:
         - BM25 score > 0 → Keep (in document, preserve original score)
         
         NO RE-RANKING: Original semantic scores are preserved
+        CRITICAL: Preserve ALL fields including cluster_id, embeddings, etc.
         """
         # Initialize BM25 filter
         headings_text = [h['text'] for h in headings]
         bm25_filter = BM25Filter(sentences, headings_text)
         
-        # Convert phrases to context format
-        contexts = []
-        for phrase in phrases:
-            contexts.append({
-                'word': phrase['phrase'],
-                'finalScore': phrase['importance_score'],
-                'contextSentence': phrase.get('supporting_sentence', ''),
-                'sentenceId': f"S{len(contexts)}",
-                'heading_text': headings_text[0] if headings_text else ''
-            })
-        
         # Calculate BM25 scores for all phrases
         filtered_phrases = []
         removed_count = 0
         
-        for phrase_dict in contexts:
-            phrase = phrase_dict['word']
-            sentence_text = phrase_dict.get('contextSentence', '').replace('<b>', '').replace('</b>', '')
+        for i, phrase_obj in enumerate(phrases):
+            phrase = phrase_obj['phrase']
+            sentence_text = phrase_obj.get('supporting_sentence', '').replace('<b>', '').replace('</b>', '')
             
             # Calculate BM25 score
             bm25_score = bm25_filter.score_phrase_to_sentence(
                 phrase,
-                phrase_dict.get('sentenceId', ''),
+                f"S{i}",
                 sentence_text
             )
             
             # FILTER ONLY: Remove if BM25 = 0 (not in document)
             if bm25_score > 0:
-                # Keep phrase with ORIGINAL score (no re-ranking)
-                filtered_phrases.append({
-                    'phrase': phrase,
-                    'importance_score': phrase_dict['finalScore'],  # Original score preserved
-                    'supporting_sentence': phrase_dict.get('contextSentence', ''),
-                    'bm25_score': bm25_score  # For debugging only
-                })
+                # CRITICAL: Keep ALL original fields (cluster_id, embeddings, etc.)
+                filtered_phrase = {**phrase_obj}  # Copy ALL fields
+                filtered_phrase['bm25_score'] = bm25_score  # Add BM25 for debugging
+                filtered_phrases.append(filtered_phrase)
             else:
                 # Remove phrase (hallucination)
                 removed_count += 1
                 print(f"  ⚠️  Removed hallucination: '{phrase}' (BM25=0, not in document)")
+        
+        # VALIDATION: Check cluster_id preservation
+        print(f"\n  🔍 DEBUG - Validating cluster_id after BM25 filter:")
+        missing_cluster = [p for p in filtered_phrases if 'cluster_id' not in p and 'cluster' not in p]
+        if missing_cluster:
+            print(f"  ❌ ERROR: {len(missing_cluster)} phrases missing cluster_id after filter!")
+            for p in missing_cluster[:3]:
+                print(f"     - '{p.get('phrase', 'unknown')}'")
+        else:
+            # Show cluster distribution
+            cluster_counts = {}
+            for p in filtered_phrases:
+                cid = p.get('cluster_id', p.get('cluster', -1))
+                cluster_counts[cid] = cluster_counts.get(cid, 0) + 1
+            print(f"  ✅ All phrases have cluster_id")
+            print(f"  📊 Cluster distribution after filter:")
+            for cid in sorted(cluster_counts.keys()):
+                print(f"     Cluster {cid}: {cluster_counts[cid]} phrases")
         
         return {
             'filtered_count': len(filtered_phrases),
@@ -546,12 +570,47 @@ class CompletePipeline12Stages:
         max_total: int
     ) -> Dict:
         """Stage 8: Merge Phrase & Word"""
+        # Validate cluster_id BEFORE merge
+        print(f"\n  🔍 DEBUG - Validating cluster_id BEFORE merge:")
+        missing_before = [p for p in phrases if 'cluster_id' not in p and 'cluster' not in p]
+        if missing_before:
+            print(f"  ❌ ERROR: {len(missing_before)} phrases missing cluster_id before merge!")
+            for p in missing_before[:3]:
+                print(f"     - '{p.get('phrase', 'unknown')}'")
+        else:
+            cluster_counts = {}
+            for p in phrases:
+                cid = p.get('cluster_id', p.get('cluster', -1))
+                cluster_counts[cid] = cluster_counts.get(cid, 0) + 1
+            print(f"  ✅ All {len(phrases)} phrases have cluster_id before merge")
+            print(f"  📊 Cluster distribution before merge:")
+            for cid in sorted(cluster_counts.keys()):
+                print(f"     Cluster {cid}: {cluster_counts[cid]} phrases")
+        
         merged = self.merger.merge(
             phrases=phrases,
             single_words=words,
             max_total=max_total,
             phrase_ratio=0.7
         )
+        
+        # Validate cluster_id AFTER merge
+        print(f"\n  🔍 DEBUG - Validating cluster_id AFTER merge:")
+        vocabulary = merged.get('vocabulary', [])
+        missing_after = [v for v in vocabulary if 'cluster_id' not in v and 'cluster' not in v]
+        if missing_after:
+            print(f"  ❌ ERROR: {len(missing_after)} items missing cluster_id after merge!")
+            for v in missing_after[:3]:
+                print(f"     - '{v.get('phrase', v.get('word', 'unknown'))}'")
+        else:
+            cluster_counts = {}
+            for v in vocabulary:
+                cid = v.get('cluster_id', v.get('cluster', -1))
+                cluster_counts[cid] = cluster_counts.get(cid, 0) + 1
+            print(f"  ✅ All {len(vocabulary)} items have cluster_id after merge")
+            print(f"  📊 Cluster distribution after merge:")
+            for cid in sorted(cluster_counts.keys()):
+                print(f"     Cluster {cid}: {cluster_counts[cid]} items")
         
         return merged
     
@@ -578,14 +637,137 @@ class CompletePipeline12Stages:
         self,
         vocabulary: List[Dict]
     ) -> Dict:
-        """Stage 10: Synonym Collapse"""
-        # TODO: Implement full synonym collapse
-        # For now, return as-is
+        """
+        Stage 10: Synonym Collapse
+        Group semantically similar phrases using SBERT embeddings
+        """
+        print(f"  ℹ️  Grouping synonyms with similarity > 0.80...")
+        
+        if not vocabulary or len(vocabulary) < 2:
+            print(f"  ⚠️  Not enough items for synonym detection ({len(vocabulary)} items)")
+            return {
+                'vocabulary': vocabulary,
+                'collapsed_count': 0,
+                'final_count': len(vocabulary)
+            }
+        
+        # Extract or generate embeddings
+        embeddings = []
+        phrases_with_embeddings = []
+        phrases_to_encode = []
+        
+        for item in vocabulary:
+            if 'embedding' in item and item['embedding']:
+                embeddings.append(item['embedding'])
+                phrases_with_embeddings.append(item)
+            else:
+                # Need to generate embedding
+                phrases_to_encode.append(item)
+        
+        # Generate missing embeddings
+        if phrases_to_encode:
+            print(f"  ℹ️  Generating embeddings for {len(phrases_to_encode)} items...")
+            try:
+                from sentence_transformers import SentenceTransformer
+                model = SentenceTransformer('all-MiniLM-L6-v2')
+                
+                texts = [item.get('phrase', item.get('word', '')) for item in phrases_to_encode]
+                new_embeddings = model.encode(texts, show_progress_bar=False)
+                
+                for item, emb in zip(phrases_to_encode, new_embeddings):
+                    item['embedding'] = emb.tolist()
+                    embeddings.append(emb.tolist())
+                    phrases_with_embeddings.append(item)
+            except Exception as e:
+                print(f"  ⚠️  Failed to generate embeddings: {e}")
+                return {
+                    'vocabulary': vocabulary,
+                    'collapsed_count': 0,
+                    'final_count': len(vocabulary)
+                }
+        
+        if len(embeddings) < 2:
+            print(f"  ⚠️  Not enough embeddings for synonym detection")
+            return {
+                'vocabulary': vocabulary,
+                'collapsed_count': 0,
+                'final_count': len(vocabulary)
+            }
+        
+        # Convert to numpy array
+        embeddings = np.array(embeddings)
+        
+        # Compute similarity matrix
+        from sklearn.metrics.pairwise import cosine_similarity
+        similarity_matrix = cosine_similarity(embeddings)
+        
+        # Group synonyms using threshold
+        synonym_threshold = 0.85  # Increased to 0.85 for stricter matching
+        visited = set()
+        synonym_groups = []
+        
+        for i in range(len(phrases_with_embeddings)):
+            if i in visited:
+                continue
+            
+            # Start new group
+            group = [i]
+            visited.add(i)
+            
+            # Find similar phrases
+            for j in range(i + 1, len(phrases_with_embeddings)):
+                if j in visited:
+                    continue
+                
+                if similarity_matrix[i][j] >= synonym_threshold:
+                    group.append(j)
+                    visited.add(j)
+            
+            synonym_groups.append(group)
+        
+        # Create collapsed vocabulary
+        collapsed_vocabulary = []
+        collapsed_count = 0
+        
+        for group_indices in synonym_groups:
+            # Get all items in group
+            group_items = [phrases_with_embeddings[idx] for idx in group_indices]
+            
+            # Choose representative (highest frequency or importance)
+            representative = max(
+                group_items,
+                key=lambda x: (
+                    x.get('frequency', 0) * 0.5 +
+                    x.get('importance_score', 0) * 0.5
+                )
+            )
+            
+            # Make a copy to avoid modifying original
+            representative = dict(representative)
+            
+            # Add synonyms list
+            if len(group_items) > 1:
+                representative['synonyms'] = [
+                    {
+                        'phrase': item.get('phrase', item.get('word', '')),
+                        'similarity': float(similarity_matrix[group_indices[0]][idx])
+                    }
+                    for idx, item in zip(group_indices[1:], group_items[1:])
+                ]
+                collapsed_count += len(group_items) - 1
+            else:
+                if 'synonyms' not in representative:
+                    representative['synonyms'] = []
+            
+            collapsed_vocabulary.append(representative)
+        
+        print(f"  ✓ Grouped {len(vocabulary)} items into {len(collapsed_vocabulary)} groups")
+        print(f"  ✓ Collapsed {collapsed_count} synonyms")
         
         return {
-            'vocabulary': vocabulary,
-            'collapsed_count': 0,
-            'final_count': len(vocabulary)
+            'vocabulary': collapsed_vocabulary,
+            'collapsed_count': collapsed_count,
+            'final_count': len(collapsed_vocabulary)
         }
     
     
@@ -605,6 +787,16 @@ class CompletePipeline12Stages:
         3. Semantic relations (từ gần nghĩa - dựa trên embeddings)
         """
         print(f"  ℹ️  Building knowledge graph with semantic relations...")
+        
+        # DEBUG: Check cluster distribution in vocabulary
+        cluster_counts = {}
+        for item in vocabulary:
+            cluster_id = item.get('cluster_id', item.get('cluster', 'MISSING'))
+            cluster_counts[cluster_id] = cluster_counts.get(cluster_id, 0) + 1
+        
+        print(f"  📊 Vocabulary cluster distribution:")
+        for cid in sorted(cluster_counts.keys(), key=lambda x: (isinstance(x, str), x)):
+            print(f"     Cluster {cid}: {cluster_counts[cid]} items")
         
         # Group vocabulary by cluster
         clusters = {}
@@ -628,12 +820,16 @@ class CompletePipeline12Stages:
         
         # Create cluster nodes
         for cluster_id, items in clusters.items():
+            # Handle both int and string cluster_id
+            cluster_label = f'Topic {cluster_id}' if isinstance(cluster_id, str) else f'Topic {cluster_id + 1}'
+            cluster_index = hash(str(cluster_id)) if isinstance(cluster_id, str) else cluster_id
+            
             cluster_node = {
                 'id': f'cluster_{cluster_id}',
                 'type': 'topic',
-                'label': f'Topic {cluster_id + 1}',
+                'label': cluster_label,
                 'size': len(items),
-                'color': ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'][cluster_id % 5]
+                'color': ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'][cluster_index % 5]
             }
             entities.append(cluster_node)
         
@@ -704,6 +900,9 @@ class CompletePipeline12Stages:
         # Generate mindmap (Markdown format)
         mindmap_md = self._generate_mindmap_markdown(clusters, vocabulary)
         
+        # Generate hierarchical mindmap structure (JSON)
+        mindmap_json = self._generate_mindmap_json(clusters, vocabulary, document_title)
+        
         return {
             'entities': entities,
             'relations': relations,
@@ -712,7 +911,8 @@ class CompletePipeline12Stages:
             'semantic_relations': len([r for r in relations if r['type'] == 'similar_to']),
             'clusters_count': len(clusters),
             'vocabulary_terms': len(vocabulary),
-            'mindmap_markdown': mindmap_md,  # NEW: Mindmap in Markdown format
+            'mindmap_markdown': mindmap_md,
+            'mindmap_json': mindmap_json,  # NEW: Hierarchical mindmap structure
             'status': 'enabled'
         }
     
@@ -732,11 +932,15 @@ class CompletePipeline12Stages:
         lines = []
         lines.append("# Vocabulary Mind Map\n")
         
-        for cluster_id in sorted(clusters.keys()):
+        # Sort cluster_ids - handle mixed int/string types
+        sorted_cluster_ids = sorted(clusters.keys(), key=lambda x: (isinstance(x, str), x))
+        
+        for cluster_id in sorted_cluster_ids:
             items = clusters[cluster_id]
             
-            # Cluster header
-            lines.append(f"## Topic {cluster_id + 1} ({len(items)} items)\n")
+            # Cluster header - handle both int and string cluster_id
+            cluster_label = f"Topic {cluster_id}" if isinstance(cluster_id, str) else f"Topic {cluster_id + 1}"
+            lines.append(f"## {cluster_label} ({len(items)} items)\n")
             
             # Sort items by importance
             sorted_items = sorted(
@@ -762,17 +966,87 @@ class CompletePipeline12Stages:
         
         return ''.join(lines)
     
+    def _generate_mindmap_json(self, clusters: Dict, vocabulary: List[Dict], document_title: str) -> Dict:
+        """
+        Generate hierarchical mindmap structure in JSON format
+        
+        Structure:
+        {
+            "root": "Document Title",
+            "children": [
+                {
+                    "topic": "Cluster 1",
+                    "cluster_id": 0,
+                    "phrases": [
+                        {
+                            "main": "climate change",
+                            "synonyms": ["global warming"],
+                            "role": "core",
+                            "score": 0.95
+                        }
+                    ]
+                }
+            ]
+        }
+        """
+        mindmap = {
+            "root": document_title or "Document",
+            "children": []
+        }
+        
+        # Sort cluster_ids
+        sorted_cluster_ids = sorted(clusters.keys(), key=lambda x: (isinstance(x, str), x))
+        
+        for cluster_id in sorted_cluster_ids:
+            items = clusters[cluster_id]
+            
+            # Cluster label
+            cluster_label = f"Topic {cluster_id}" if isinstance(cluster_id, str) else f"Topic {cluster_id + 1}"
+            
+            # Sort items by importance
+            sorted_items = sorted(
+                items,
+                key=lambda x: x.get('importance_score', 0),
+                reverse=True
+            )
+            
+            # Build phrases list
+            phrases = []
+            for item in sorted_items:
+                phrase_obj = {
+                    "main": item.get('phrase', item.get('word', '')),
+                    "synonyms": [s['phrase'] for s in item.get('synonyms', [])],
+                    "role": item.get('semantic_role', 'unknown'),
+                    "score": float(item.get('importance_score', 0)),
+                    "rank": item.get('cluster_rank', 999),
+                    "tfidf": float(item.get('tfidf_score', 0)),
+                    "is_representative": item.get('is_representative', False)
+                }
+                phrases.append(phrase_obj)
+            
+            # Add cluster to mindmap
+            cluster_node = {
+                "topic": cluster_label,
+                "cluster_id": cluster_id,
+                "phrase_count": len(phrases),
+                "phrases": phrases
+            }
+            mindmap["children"].append(cluster_node)
+        
+        return mindmap
+    
     def _stage12_flashcard_generation(
         self,
         vocabulary: List[Dict],
         document_title: str,
-        similarity_matrix: Optional[Dict] = None
+        similarity_matrix: Optional[Dict] = None,
+        group_by_cluster: bool = True  # NEW: Group by cluster instead of synonym
     ) -> Dict:
         """
         Stage 12: Enhanced Flashcard Generation
         
         Features:
-        1. Synonym grouping (similarity > 0.85)
+        1. Group by cluster (topic-based) OR synonym grouping
         2. Cluster information (cluster_name, related_words)
         3. IPA phonetics (using eng-to-ipa)
         4. Audio URLs (placeholder or gTTS)
@@ -781,15 +1055,21 @@ class CompletePipeline12Stages:
             vocabulary: List of vocabulary items with embeddings
             document_title: Document title for context
             similarity_matrix: Optional pre-computed similarity matrix
+            group_by_cluster: If True, group by cluster; else by synonym
         
         Returns:
             Enhanced flashcards with synonyms, IPA, audio, related words
         """
         print(f"  ℹ️  Generating enhanced flashcards...")
         
-        # Step 1: Group synonyms (similarity > 0.85)
-        flashcard_groups = self._group_synonyms(vocabulary, threshold=0.85)
-        print(f"  ✓ Grouped {len(vocabulary)} items into {len(flashcard_groups)} flashcard groups")
+        if group_by_cluster:
+            # Group by cluster (topic-based flashcards)
+            flashcard_groups = self._group_by_cluster(vocabulary)
+            print(f"  ✓ Grouped {len(vocabulary)} items into {len(flashcard_groups)} cluster-based flashcards")
+        else:
+            # Group by synonym (similarity > 0.85)
+            flashcard_groups = self._group_synonyms(vocabulary, threshold=0.85)
+            print(f"  ✓ Grouped {len(vocabulary)} items into {len(flashcard_groups)} synonym-based flashcards")
         
         # Step 2: Generate flashcards
         flashcards = []
@@ -806,9 +1086,9 @@ class CompletePipeline12Stages:
         return {
             'flashcards': flashcards,
             'flashcard_count': len(flashcards),
-            'synonym_groups': len([g for g in flashcard_groups if len(g['synonyms']) > 0]),
+            'synonym_groups': len([g for g in flashcard_groups if len(g.get('synonyms', [])) > 0]),
             'status': 'enabled',
-            'message': 'Enhanced flashcards with synonyms, IPA, audio, and related words'
+            'message': 'Enhanced flashcards with cluster grouping'
         }
     
     def _group_synonyms(self, vocabulary: List[Dict], threshold: float = 0.85) -> List[Dict]:
@@ -869,6 +1149,54 @@ class CompletePipeline12Stages:
             groups.append({
                 'primary': primary,
                 'synonyms': synonyms
+            })
+        
+        return groups
+    
+    def _group_by_cluster(self, vocabulary: List[Dict]) -> List[Dict]:
+        """
+        Group vocabulary items by cluster for topic-based flashcards
+        
+        Returns:
+            List of flashcard groups with primary term and cluster members
+        """
+        from collections import defaultdict
+        
+        # Group by cluster_id
+        clusters = defaultdict(list)
+        for item in vocabulary:
+            cluster_id = item.get('cluster_id', item.get('cluster', 0))
+            clusters[cluster_id].append(item)
+        
+        # Create flashcard groups (1 per cluster)
+        groups = []
+        for cluster_id, items in clusters.items():
+            if not items:
+                continue
+            
+            # Choose primary (highest importance or is_representative)
+            primary = max(
+                items,
+                key=lambda x: (
+                    x.get('is_representative', False),
+                    x.get('importance_score', 0),
+                    x.get('frequency', 0)
+                )
+            )
+            
+            # Other items become synonyms/related terms
+            synonyms = [
+                {
+                    'item': item,
+                    'similarity': 1.0  # Same cluster
+                }
+                for item in items if item != primary
+            ]
+            
+            groups.append({
+                'primary': primary,
+                'synonyms': synonyms,
+                'cluster_id': cluster_id
             })
         
         return groups
