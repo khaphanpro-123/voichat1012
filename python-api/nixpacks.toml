@@ -9,9 +9,6 @@ cmds = [
     "python download_nltk_data.py"
 ]
 
-[phases.build]
-cmds = ["echo 'Build complete'"]
-
 [start]
 cmd = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1"
 
