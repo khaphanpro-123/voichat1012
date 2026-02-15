@@ -697,17 +697,48 @@ class CompletePipeline12Stages:
                 'final_count': len(vocabulary)
             }
         
+        # Debug: Check embeddings structure
+        print(f"  🔍 DEBUG: Number of embeddings: {len(embeddings)}")
+        print(f"  🔍 DEBUG: First embedding type: {type(embeddings[0])}")
+        if len(embeddings) > 0:
+            first_emb = embeddings[0]
+            if isinstance(first_emb, np.ndarray):
+                print(f"  🔍 DEBUG: First embedding shape: {first_emb.shape}")
+            else:
+                print(f"  🔍 DEBUG: First embedding length: {len(first_emb) if hasattr(first_emb, '__len__') else 'N/A'}")
+        
         # Convert to numpy array (embeddings are already numpy arrays, just stack them)
         try:
-            embeddings = np.vstack(embeddings)
-        except ValueError as e:
+            # Ensure all embeddings are numpy arrays first
+            embeddings_arrays = []
+            for i, emb in enumerate(embeddings):
+                if isinstance(emb, np.ndarray):
+                    embeddings_arrays.append(emb.flatten())
+                elif isinstance(emb, (list, tuple)):
+                    embeddings_arrays.append(np.array(emb, dtype=np.float32).flatten())
+                else:
+                    print(f"  ⚠️  Unexpected embedding type at index {i}: {type(emb)}")
+                    embeddings_arrays.append(np.array([0.0] * 384, dtype=np.float32))  # Fallback
+            
+            embeddings = np.vstack(embeddings_arrays)
+            print(f"  ✅ Embeddings stacked successfully: shape {embeddings.shape}")
+        except Exception as e:
             print(f"  ⚠️  Failed to stack embeddings: {e}")
             # Fallback: ensure all have same shape
-            max_len = max(len(emb) for emb in embeddings)
-            embeddings = np.array([
-                np.pad(emb, (0, max_len - len(emb))) if len(emb) < max_len else emb[:max_len]
-                for emb in embeddings
-            ], dtype=np.float32)
+            try:
+                max_len = max(len(emb) if hasattr(emb, '__len__') else 0 for emb in embeddings)
+                embeddings = np.array([
+                    np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
+                    for emb in embeddings
+                ], dtype=np.float32)
+                print(f"  ✅ Embeddings padded successfully: shape {embeddings.shape}")
+            except Exception as e2:
+                print(f"  ❌ Failed to create embeddings array: {e2}")
+                return {
+                    'vocabulary': vocabulary,
+                    'collapsed_count': 0,
+                    'final_count': len(vocabulary)
+                }
         
         # Compute similarity matrix
         from sklearn.metrics.pairwise import cosine_similarity
@@ -885,36 +916,51 @@ class CompletePipeline12Stages:
             
             # Convert to numpy array (embeddings are lists, need to convert)
             try:
-                embeddings_array = np.vstack([
-                    np.array(emb, dtype=np.float32).flatten() 
-                    for emb in embeddings_list
-                ])
-            except ValueError as e:
+                # Ensure all embeddings are numpy arrays first
+                embeddings_arrays = []
+                for i, emb in enumerate(embeddings_list):
+                    if isinstance(emb, np.ndarray):
+                        embeddings_arrays.append(emb.flatten())
+                    elif isinstance(emb, (list, tuple)):
+                        embeddings_arrays.append(np.array(emb, dtype=np.float32).flatten())
+                    else:
+                        print(f"  ⚠️  Unexpected embedding type at index {i}: {type(emb)}")
+                        embeddings_arrays.append(np.array([0.0] * 384, dtype=np.float32))
+                
+                embeddings_array = np.vstack(embeddings_arrays)
+            except Exception as e:
                 print(f"  ⚠️  Failed to stack embeddings: {e}")
                 # Fallback: pad to same length
-                max_len = max(len(emb) if isinstance(emb, (list, np.ndarray)) else 0 for emb in embeddings_list)
-                embeddings_array = np.array([
-                    np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
-                    for emb in embeddings_list
-                ], dtype=np.float32)
+                try:
+                    max_len = max(len(emb) if hasattr(emb, '__len__') else 0 for emb in embeddings_list)
+                    embeddings_array = np.array([
+                        np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
+                        for emb in embeddings_list
+                    ], dtype=np.float32)
+                except Exception as e2:
+                    print(f"  ❌ Failed to create embeddings array: {e2}")
+                    embeddings_array = None
             
-            # Calculate pairwise cosine similarity
-            similarity_matrix = cosine_similarity(embeddings_array)
-            
-            # Create relations for similar phrases (similarity > 0.7)
-            for i in range(len(phrases_list)):
-                for j in range(i + 1, len(phrases_list)):
-                    similarity = similarity_matrix[i][j]
-                    
-                    if similarity > 0.7:  # Threshold for "gần nghĩa"
-                        relation = {
-                            'source': f'phrase_{phrases_list[i].replace(" ", "_")}',
-                            'target': f'phrase_{phrases_list[j].replace(" ", "_")}',
-                            'type': 'similar_to',
-                            'weight': float(similarity),
-                            'label': f'{similarity:.2f}'
-                        }
-                        relations.append(relation)
+            if embeddings_array is None:
+                print(f"  ⚠️  Skipping semantic relations due to embedding errors")
+            else:
+                # Calculate pairwise cosine similarity
+                similarity_matrix = cosine_similarity(embeddings_array)
+                
+                # Create relations for similar phrases (similarity > 0.7)
+                for i in range(len(phrases_list)):
+                    for j in range(i + 1, len(phrases_list)):
+                        similarity = similarity_matrix[i][j]
+                        
+                        if similarity > 0.7:  # Threshold for "gần nghĩa"
+                            relation = {
+                                'source': f'phrase_{phrases_list[i].replace(" ", "_")}',
+                                'target': f'phrase_{phrases_list[j].replace(" ", "_")}',
+                                'type': 'similar_to',
+                                'weight': float(similarity),
+                                'label': f'{similarity:.2f}'
+                            }
+                            relations.append(relation)
         
         print(f"  ✓ Knowledge graph built")
         print(f"  ✓ Entities: {len(entities)}")
@@ -1144,18 +1190,31 @@ class CompletePipeline12Stages:
         
         # Convert to numpy array (cluster_centroid are lists, need to convert)
         try:
-            embeddings_array = np.vstack([
-                np.array(emb, dtype=np.float32).flatten() 
-                for emb in embeddings
-            ])
-        except ValueError as e:
+            # Ensure all embeddings are numpy arrays first
+            embeddings_arrays = []
+            for i, emb in enumerate(embeddings):
+                if isinstance(emb, np.ndarray):
+                    embeddings_arrays.append(emb.flatten())
+                elif isinstance(emb, (list, tuple)):
+                    embeddings_arrays.append(np.array(emb, dtype=np.float32).flatten())
+                else:
+                    print(f"  ⚠️  Unexpected embedding type at index {i}: {type(emb)}")
+                    embeddings_arrays.append(np.array([0.0] * 384, dtype=np.float32))
+            
+            embeddings_array = np.vstack(embeddings_arrays)
+        except Exception as e:
             print(f"  ⚠️  Failed to stack embeddings: {e}")
             # Fallback: pad to same length
-            max_len = max(len(emb) if isinstance(emb, (list, np.ndarray)) else 0 for emb in embeddings)
-            embeddings_array = np.array([
-                np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
-                for emb in embeddings
-            ], dtype=np.float32)
+            try:
+                max_len = max(len(emb) if hasattr(emb, '__len__') else 0 for emb in embeddings)
+                embeddings_array = np.array([
+                    np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
+                    for emb in embeddings
+                ], dtype=np.float32)
+            except Exception as e2:
+                print(f"  ❌ Failed to create embeddings array: {e2}")
+                # Return each item as separate group
+                return [{'primary': item, 'synonyms': []} for item in vocabulary]
         
         similarity_matrix = cosine_similarity(embeddings_array)
         
