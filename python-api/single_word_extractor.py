@@ -32,13 +32,9 @@ except:
     HAS_EMBEDDINGS = False
     print("⚠️  sentence-transformers not available. Semantic filtering disabled.")
 
-# Load spaCy
-try:
-    nlp = spacy.load("en_core_web_sm")
-except:
-    import os
-    os.system("python -m spacy download en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+# spaCy DISABLED for Railway
+nlp = None
+print("⚠️  spaCy disabled for Railway, using NLTK fallback")
 
 
 class SingleWordExtractor:
@@ -252,37 +248,48 @@ class SingleWordExtractor:
     def _extract_by_pos(self, text: str) -> List[Dict]:
         """
         7.1 Extract words by POS tags (NOUN, VERB, ADJ only)
+        NLTK-based implementation (NO spaCy)
         """
-        doc = self.nlp(text)
+        from nltk import word_tokenize, pos_tag, sent_tokenize
+        from nltk.stem import WordNetLemmatizer
+        
+        lemmatizer = WordNetLemmatizer()
         
         candidates = []
         word_freq = Counter()
         word_sentences = {}
         
-        for sent in doc.sents:
-            for token in sent:
-                # Only NOUN, VERB, ADJ
-                if token.pos_ not in ['NOUN', 'VERB', 'ADJ', 'PROPN']:
+        # Split into sentences
+        sentences = sent_tokenize(text)
+        
+        for sent_text in sentences:
+            # Tokenize and POS tag
+            tokens = word_tokenize(sent_text)
+            pos_tags = pos_tag(tokens)
+            
+            for word, pos in pos_tags:
+                # Only NOUN, VERB, ADJ (NLTK tags: NN*, VB*, JJ*)
+                if not (pos.startswith('NN') or pos.startswith('VB') or pos.startswith('JJ')):
                     continue
                 
-                # Lemmatize
-                word = token.lemma_.lower()
+                # Lemmatize (simplified)
+                word_lower = word.lower()
                 
                 # Skip if too short
-                if len(word) < 3:
+                if len(word_lower) < 3:
                     continue
                 
                 # Skip if contains numbers
-                if any(c.isdigit() for c in word):
+                if any(c.isdigit() for c in word_lower):
                     continue
                 
                 # Count frequency
-                word_freq[word] += 1
+                word_freq[word_lower] += 1
                 
                 # Store sentence
-                if word not in word_sentences:
-                    word_sentences[word] = []
-                word_sentences[word].append(sent.text)
+                if word_lower not in word_sentences:
+                    word_sentences[word_lower] = []
+                word_sentences[word_lower].append(sent_text)
         
         # Convert to list
         for word, freq in word_freq.items():
@@ -331,9 +338,9 @@ class SingleWordExtractor:
         High IDF (rare) → low penalty
         Low IDF (common) → high penalty
         """
-        # Split into sentences
-        doc = self.nlp(text)
-        sentences = [sent.text.lower() for sent in doc.sents]
+        # Split into sentences using NLTK
+        from nltk import sent_tokenize
+        sentences = [sent.lower() for sent in sent_tokenize(text)]
         N = len(sentences)
         
         # Calculate IDF for all words
@@ -537,13 +544,6 @@ class SingleWordExtractor:
         MEDIUM: learning, education, development (0.4-0.7)
         LOW: impact, important, significant (0.1-0.3)
         """
-        # Check if word has specific meaning
-        doc = self.nlp(word)
-        if not doc:
-            return 0.5
-        
-        token = doc[0]
-        
         # 1. Technical terms (in whitelist) → very concrete
         if word in self.technical_whitelist:
             return 1.0
@@ -551,8 +551,8 @@ class SingleWordExtractor:
         # 2. Longer words tend to be more specific
         length_score = min(len(word) / 15.0, 1.0)
         
-        # 3. Words with specific POS patterns
-        if token.pos_ == 'NOUN' and len(word) > 6:
+        # 3. Words with specific POS patterns (simplified without spaCy)
+        if len(word) > 6:
             return 0.8
         
         # 4. Generic words → low concreteness
