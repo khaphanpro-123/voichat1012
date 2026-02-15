@@ -658,7 +658,9 @@ class CompletePipeline12Stages:
         
         for item in vocabulary:
             if 'embedding' in item and item['embedding']:
-                embeddings.append(item['embedding'])
+                # Convert to numpy array immediately
+                emb = np.array(item['embedding'], dtype=np.float32).flatten()
+                embeddings.append(emb)
                 phrases_with_embeddings.append(item)
             else:
                 # Need to generate embedding
@@ -676,7 +678,8 @@ class CompletePipeline12Stages:
                 
                 for item, emb in zip(phrases_to_encode, new_embeddings):
                     item['embedding'] = emb.tolist()
-                    embeddings.append(emb.tolist())
+                    # Append as numpy array, not list
+                    embeddings.append(np.array(emb, dtype=np.float32).flatten())
                     phrases_with_embeddings.append(item)
             except Exception as e:
                 print(f"  ⚠️  Failed to generate embeddings: {e}")
@@ -694,13 +697,17 @@ class CompletePipeline12Stages:
                 'final_count': len(vocabulary)
             }
         
-        # Convert to numpy array (handle nested lists)
+        # Convert to numpy array (embeddings are already numpy arrays, just stack them)
         try:
-            embeddings = np.array(embeddings, dtype=np.float32)
+            embeddings = np.vstack(embeddings)
         except ValueError as e:
-            print(f"  ⚠️  Embeddings have inconsistent shapes: {e}")
-            # Try to stack them manually
-            embeddings = np.vstack([np.array(emb).flatten() for emb in embeddings])
+            print(f"  ⚠️  Failed to stack embeddings: {e}")
+            # Fallback: ensure all have same shape
+            max_len = max(len(emb) for emb in embeddings)
+            embeddings = np.array([
+                np.pad(emb, (0, max_len - len(emb))) if len(emb) < max_len else emb[:max_len]
+                for emb in embeddings
+            ], dtype=np.float32)
         
         # Compute similarity matrix
         from sklearn.metrics.pairwise import cosine_similarity
@@ -876,12 +883,20 @@ class CompletePipeline12Stages:
             phrases_list = list(phrase_to_embedding.keys())
             embeddings_list = [phrase_to_embedding[p] for p in phrases_list]
             
-            # Convert to numpy array (handle nested lists)
+            # Convert to numpy array (embeddings are lists, need to convert)
             try:
-                embeddings_array = np.array(embeddings_list, dtype=np.float32)
+                embeddings_array = np.vstack([
+                    np.array(emb, dtype=np.float32).flatten() 
+                    for emb in embeddings_list
+                ])
             except ValueError as e:
-                print(f"  ⚠️  Embeddings have inconsistent shapes: {e}")
-                embeddings_array = np.vstack([np.array(emb).flatten() for emb in embeddings_list])
+                print(f"  ⚠️  Failed to stack embeddings: {e}")
+                # Fallback: pad to same length
+                max_len = max(len(emb) if isinstance(emb, (list, np.ndarray)) else 0 for emb in embeddings_list)
+                embeddings_array = np.array([
+                    np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
+                    for emb in embeddings_list
+                ], dtype=np.float32)
             
             # Calculate pairwise cosine similarity
             similarity_matrix = cosine_similarity(embeddings_array)
@@ -1127,12 +1142,20 @@ class CompletePipeline12Stages:
         # Build similarity matrix
         embeddings = [item['cluster_centroid'] for item in items_with_embeddings]
         
-        # Convert to numpy array (handle nested lists)
+        # Convert to numpy array (cluster_centroid are lists, need to convert)
         try:
-            embeddings_array = np.array(embeddings, dtype=np.float32)
+            embeddings_array = np.vstack([
+                np.array(emb, dtype=np.float32).flatten() 
+                for emb in embeddings
+            ])
         except ValueError as e:
-            print(f"  ⚠️  Embeddings have inconsistent shapes: {e}")
-            embeddings_array = np.vstack([np.array(emb).flatten() for emb in embeddings])
+            print(f"  ⚠️  Failed to stack embeddings: {e}")
+            # Fallback: pad to same length
+            max_len = max(len(emb) if isinstance(emb, (list, np.ndarray)) else 0 for emb in embeddings)
+            embeddings_array = np.array([
+                np.pad(np.array(emb).flatten(), (0, max_len - len(np.array(emb).flatten())))
+                for emb in embeddings
+            ], dtype=np.float32)
         
         similarity_matrix = cosine_similarity(embeddings_array)
         
