@@ -694,8 +694,13 @@ class CompletePipeline12Stages:
                 'final_count': len(vocabulary)
             }
         
-        # Convert to numpy array
-        embeddings = np.array(embeddings)
+        # Convert to numpy array (handle nested lists)
+        try:
+            embeddings = np.array(embeddings, dtype=np.float32)
+        except ValueError as e:
+            print(f"  ⚠️  Embeddings have inconsistent shapes: {e}")
+            # Try to stack them manually
+            embeddings = np.vstack([np.array(emb).flatten() for emb in embeddings])
         
         # Compute similarity matrix
         from sklearn.metrics.pairwise import cosine_similarity
@@ -871,8 +876,12 @@ class CompletePipeline12Stages:
             phrases_list = list(phrase_to_embedding.keys())
             embeddings_list = [phrase_to_embedding[p] for p in phrases_list]
             
-            # Convert to numpy array
-            embeddings_array = np.array(embeddings_list)
+            # Convert to numpy array (handle nested lists)
+            try:
+                embeddings_array = np.array(embeddings_list, dtype=np.float32)
+            except ValueError as e:
+                print(f"  ⚠️  Embeddings have inconsistent shapes: {e}")
+                embeddings_array = np.vstack([np.array(emb).flatten() for emb in embeddings_list])
             
             # Calculate pairwise cosine similarity
             similarity_matrix = cosine_similarity(embeddings_array)
@@ -1117,7 +1126,14 @@ class CompletePipeline12Stages:
         
         # Build similarity matrix
         embeddings = [item['cluster_centroid'] for item in items_with_embeddings]
-        embeddings_array = np.array(embeddings)
+        
+        # Convert to numpy array (handle nested lists)
+        try:
+            embeddings_array = np.array(embeddings, dtype=np.float32)
+        except ValueError as e:
+            print(f"  ⚠️  Embeddings have inconsistent shapes: {e}")
+            embeddings_array = np.vstack([np.array(emb).flatten() for emb in embeddings])
+        
         similarity_matrix = cosine_similarity(embeddings_array)
         
         # Group by similarity
