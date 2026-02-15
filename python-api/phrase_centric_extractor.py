@@ -29,20 +29,6 @@ from nltk import pos_tag, word_tokenize
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 
-# Try to load spaCy (optional)
-try:
-    import spacy
-    try:
-        nlp = spacy.load("en_core_web_sm")
-        HAS_SPACY = True
-        print("✅ Using spaCy for phrase extraction")
-    except:
-        HAS_SPACY = False
-        print("⚠️  spaCy model not found, using NLTK fallback")
-except ImportError:
-    HAS_SPACY = False
-    print("⚠️  spaCy not installed, using NLTK fallback")
-
 # Download NLTK data if needed
 try:
     nltk.data.find('tokenizers/punkt')
@@ -51,15 +37,16 @@ except LookupError:
     nltk.download('averaged_perceptron_tagger')
     nltk.download('stopwords')
 
+print("✅ Using NLTK for phrase extraction (Railway-compatible)")
+
 
 class PhraseCentricExtractor:
     """
     Phrase-centric vocabulary extractor following 8 critical fixes
-    Uses NLTK fallback if spaCy not available (Railway-compatible)
+    Uses NLTK only (NO spaCy) for Railway compatibility
     """
     
     def __init__(self):
-        self.nlp = nlp if HAS_SPACY else None
         self.embedding_model = None
         
         # Discourse stopwords (Step 5)
@@ -702,45 +689,12 @@ class PhraseCentricExtractor:
     
     def _phrase_pos_structure_filter(self, phrases: List[Dict]) -> List[Dict]:
         """
-        4.1 Filter phrases by POS structure
+        4.1 Filter phrases by POS structure (DISABLED - requires spaCy)
         
-        Keep only:
-        - ADJ + NOUN (environmental protection)
-        - NOUN + NOUN (climate change)
-        - VERB + NOUN (reduce emissions)
-        - NOUN + PREP + NOUN (causes of pollution)
-        
-        Drop:
-        - DET + NOUN (the problem, this issue)
-        - PRON + NOUN (my opinion, their view)
+        Railway-compatible: Skip POS filtering, return all phrases
         """
-        valid_patterns = [
-            ['ADJ', 'NOUN'],
-            ['NOUN', 'NOUN'],
-            ['VERB', 'NOUN'],
-            ['NOUN', 'ADP', 'NOUN'],
-            ['ADJ', 'NOUN', 'NOUN'],
-            ['NOUN', 'NOUN', 'NOUN'],
-            ['ADJ', 'ADJ', 'NOUN'],
-            ['VERB', 'ADJ', 'NOUN'],
-            ['PROPN', 'NOUN'],  # Proper noun + noun
-            ['NOUN', 'PROPN']   # Noun + proper noun
-        ]
-        
-        filtered = []
-        for phrase_dict in phrases:
-            phrase = phrase_dict['phrase']
-            doc = self.nlp(phrase)
-            
-            pos_pattern = [token.pos_ for token in doc]
-            
-            # Check if matches any valid pattern
-            if self._pattern_matches(pos_pattern, valid_patterns):
-                # Additional check: no DET or PRON at start
-                if doc[0].pos_ not in ['DET', 'PRON']:
-                    filtered.append(phrase_dict)
-        
-        return filtered
+        print("  ⚠️  POS structure filter disabled (no spaCy)")
+        return phrases  # Return all phrases without filtering
     
     def _pattern_matches(self, pos_pattern: List[str], valid_patterns: List[List[str]]) -> bool:
         """
@@ -754,7 +708,7 @@ class PhraseCentricExtractor:
     
     def _phrase_lexical_specificity_filter(self, phrases: List[Dict]) -> List[Dict]:
         """
-        4.2 Filter phrases by lexical specificity
+        4.2 Filter phrases by lexical specificity (NLTK version)
         
         Drop if:
         - Head noun is generic (thing, problem, way...)
@@ -788,14 +742,14 @@ class PhraseCentricExtractor:
             if any(template in phrase for template in discourse_templates):
                 continue
             
-            # Check head noun
-            doc = self.nlp(phrase)
+            # Check head noun (rightmost noun) using NLTK
+            tokens_pos = self._nltk_pos_tag(phrase)
             head_noun = None
             
             # Find head noun (rightmost noun)
-            for token in reversed(list(doc)):
-                if token.pos_ in ['NOUN', 'PROPN']:
-                    head_noun = token.lemma_.lower()
+            for word, pos in reversed(tokens_pos):
+                if pos.startswith('NN'):  # Noun
+                    head_noun = word.lower()
                     break
             
             if head_noun and head_noun in generic_head_nouns:
@@ -807,13 +761,14 @@ class PhraseCentricExtractor:
     
     def _phrase_rarity_filter(self, phrases: List[Dict], text: str, threshold: float = 1.5) -> List[Dict]:
         """
-        4.3 Filter phrases by IDF (rarity)
+        4.3 Filter phrases by IDF (rarity) - NLTK version
         
         Keep only phrases with IDF >= threshold
         Phrases must be distinctive in the document
         """
-        doc = self.nlp(text)
-        sentences = [sent.text.lower() for sent in doc.sents]
+        # Use NLTK for sentence splitting
+        sentences = sent_tokenize(text)
+        sentences = [sent.lower() for sent in sentences]
         N = len(sentences)
         
         if N == 0:
@@ -863,14 +818,14 @@ class PhraseCentricExtractor:
     
     def _is_meaningful_concept(self, phrase: str) -> bool:
         """
-        Check if phrase forms a meaningful standalone concept
+        Check if phrase forms a meaningful standalone concept (NLTK version)
         """
         # Must contain at least one noun or verb
-        doc = self.nlp(phrase)
+        tokens_pos = self._nltk_pos_tag(phrase)
         
         has_content_word = any(
-            token.pos_ in ['NOUN', 'VERB', 'ADJ', 'PROPN']
-            for token in doc
+            pos.startswith('NN') or pos.startswith('VB') or pos.startswith('JJ') or pos.startswith('NNP')
+            for word, pos in tokens_pos
         )
         
         return has_content_word

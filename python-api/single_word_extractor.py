@@ -19,7 +19,7 @@ Date: 2026-02-07
 """
 
 import re
-import spacy
+# import spacy  # DISABLED for Railway
 import math
 from typing import List, Dict, Set, Tuple, Optional
 from collections import Counter

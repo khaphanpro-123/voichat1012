@@ -21,7 +21,7 @@ import re
 import math
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field
-import spacy
+# import spacy  # DISABLED for Railway
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 import nltk
@@ -37,12 +37,9 @@ try:
 except LookupError:
     nltk.download('stopwords')
 
-# Load spaCy models
-try:
-    nlp_en = spacy.load("en_core_web_sm")
-except OSError:
-    print("⚠️  English model not found. Run: python -m spacy download en_core_web_sm")
-    nlp_en = None
+# spaCy DISABLED for Railway
+nlp_en = None
+print("⚠️  spaCy disabled for Railway, using NLTK only")
 
 # Vietnamese support (optional)
 try:
