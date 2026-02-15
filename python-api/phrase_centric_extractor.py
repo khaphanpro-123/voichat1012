@@ -585,16 +585,6 @@ class PhraseCentricExtractor:
                             'sentence_text': sent_text,
                             'phrase_type': 'verb_noun'
                         })
-                        if child.dep_ in ['dobj', 'pobj']:
-                            phrase_text = f"{token.text} {child.text}".lower()
-                            word_count = len(phrase_text.split())
-                            
-                            if word_count >= min_length and word_count <= max_length:
-                                phrase_to_sentences[phrase_text].append({
-                                    'sentence_id': sent_id,
-                                    'sentence_text': sent_text,
-                                    'phrase_type': 'verb_object'
-                                })
         
         # Convert to list format
         for phrase_text, occurrences in phrase_to_sentences.items():
