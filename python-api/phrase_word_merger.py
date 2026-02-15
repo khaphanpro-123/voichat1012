@@ -23,7 +23,7 @@ from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 
 try:
-    from sentence_transformers import SentenceTransformer
+    from embedding_utils import SentenceTransformer
     HAS_EMBEDDINGS = True
 except:
     HAS_EMBEDDINGS = False

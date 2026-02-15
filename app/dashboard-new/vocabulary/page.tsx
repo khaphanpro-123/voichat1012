@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import VocabularyQuiz from "@/components/VocabularyQuiz";
+import { KnowledgeGraphViewer } from "@/components/knowledge-graph-viewer";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIPA } from "@/lib/ipaDict";
 import {
@@ -22,6 +23,7 @@ import {
   Trash2,
   Languages,
   AlertCircle,
+  Network,
 } from "lucide-react";
 
 interface VocabularyWord {
@@ -53,7 +55,21 @@ interface QuizQuestion {
   words?: string[];
 }
 
-type TabType = "vocabulary" | "structures" | "errors";
+type TabType = "vocabulary" | "structures" | "errors" | "mindmap";
+
+interface KnowledgeGraphData {
+  nodes: Array<{
+    id: string;
+    label: string;
+    type: 'root' | 'cluster' | 'phrase' | 'word';
+    cluster_id?: number;
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    relation: string;
+  }>;
+}
 
 const WORD_TYPES = [
   { key: "all", label: "Tất cả" },
@@ -76,6 +92,9 @@ export default function VocabularyPage() {
   const [selectedType, setSelectedType] = useState("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("vocabulary");
+  const [knowledgeGraphData, setKnowledgeGraphData] = useState<KnowledgeGraphData | null>(null);
+  const [loadingGraph, setLoadingGraph] = useState(false);
+  const [latestDocumentId, setLatestDocumentId] = useState<string | null>(null);
 
   // Quiz state
   const [quizMode, setQuizMode] = useState(false);
@@ -117,6 +136,11 @@ export default function VocabularyPage() {
         setVocabulary(allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error"));
         setStructures(allWords.filter((w: VocabularyWord) => w.type === "structure"));
         setErrors(allWords.filter((w: VocabularyWord) => w.type === "error"));
+        
+        // Store latest document ID if available
+        if (data.document_id) {
+          setLatestDocumentId(data.document_id);
+        }
       }
     } catch (error) {
       console.error("Load vocabulary error:", error);
@@ -128,6 +152,34 @@ export default function VocabularyPage() {
   useEffect(() => {
     if (userId) loadVocabulary();
   }, [userId]);
+
+  const loadKnowledgeGraph = async (documentId: string) => {
+    setLoadingGraph(true);
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://perceptive-charm-production-eb6c.up.railway.app';
+      const res = await fetch(`${backendUrl}/api/knowledge-graph/${documentId}`);
+      const data = await res.json();
+      
+      if (data.nodes && data.edges) {
+        setKnowledgeGraphData({
+          nodes: data.nodes,
+          edges: data.edges
+        });
+      }
+    } catch (error) {
+      console.error("Load knowledge graph error:", error);
+      alert("Không thể tải knowledge graph. Vui lòng thử lại sau.");
+    } finally {
+      setLoadingGraph(false);
+    }
+  };
+
+  // Load knowledge graph when switching to mindmap tab
+  useEffect(() => {
+    if (activeTab === "mindmap" && latestDocumentId && !knowledgeGraphData) {
+      loadKnowledgeGraph(latestDocumentId);
+    }
+  }, [activeTab, latestDocumentId]);
 
   const normalizeType = (type: string): string => {
     const t = type?.toLowerCase() || "";
@@ -423,6 +475,11 @@ export default function VocabularyPage() {
             Cấu trúc câu
             <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">{structures.length}</span>
           </button>
+          <button onClick={() => setActiveTab("mindmap")}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition ${activeTab === "mindmap" ? "bg-white text-blue-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
+            <Network className="w-5 h-5" />
+            Sơ đồ tư duy
+          </button>
         </div>
 
         {/* Quiz Button - only for vocabulary tab */}
@@ -565,6 +622,48 @@ export default function VocabularyPage() {
                       </div>
                     </motion.div>
                   ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === "mindmap" && (
+            <motion.div key="mindmap" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              {loadingGraph ? (
+                <div className="text-center py-12 bg-white rounded-2xl shadow-md">
+                  <RefreshCw className="w-16 h-16 text-blue-500 mx-auto mb-4 animate-spin" />
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Đang tải sơ đồ tư duy...</h3>
+                  <p className="text-gray-500">Vui lòng đợi trong giây lát</p>
+                </div>
+              ) : !latestDocumentId ? (
+                <div className="text-center py-12 bg-white rounded-2xl shadow-md">
+                  <Network className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Chưa có tài liệu</h3>
+                  <p className="text-gray-500 mb-4">Upload tài liệu để xem sơ đồ tư duy</p>
+                  <button 
+                    onClick={() => router.push("/dashboard-new/documents")}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+                  >
+                    <Upload className="w-5 h-5 inline mr-2" />
+                    Upload tài liệu
+                  </button>
+                </div>
+              ) : !knowledgeGraphData ? (
+                <div className="text-center py-12 bg-white rounded-2xl shadow-md">
+                  <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Không thể tải sơ đồ</h3>
+                  <p className="text-gray-500 mb-4">Vui lòng thử lại hoặc upload tài liệu mới</p>
+                  <button 
+                    onClick={() => latestDocumentId && loadKnowledgeGraph(latestDocumentId)}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+                  >
+                    <RefreshCw className="w-5 h-5 inline mr-2" />
+                    Thử lại
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl shadow-md p-4" style={{ height: '700px' }}>
+                  <KnowledgeGraphViewer data={knowledgeGraphData} />
                 </div>
               )}
             </motion.div>

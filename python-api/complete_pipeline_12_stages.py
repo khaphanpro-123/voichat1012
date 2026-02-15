@@ -668,7 +668,7 @@ class CompletePipeline12Stages:
         if phrases_to_encode:
             print(f"  ℹ️  Generating embeddings for {len(phrases_to_encode)} items...")
             try:
-                from sentence_transformers import SentenceTransformer
+                from embedding_utils import SentenceTransformer
                 model = SentenceTransformer('all-MiniLM-L6-v2')
                 
                 texts = [item.get('phrase', item.get('word', '')) for item in phrases_to_encode]

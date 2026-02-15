@@ -20,7 +20,8 @@ from typing import List, Dict, Tuple, Optional
 from collections import Counter, defaultdict
 import numpy as np
 from rank_bm25 import BM25Okapi
-from sentence_transformers import SentenceTransformer
+# Use embedding_utils for compatibility
+from embedding_utils import SentenceTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity

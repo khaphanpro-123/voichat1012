@@ -27,21 +27,18 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Uploads
+# Uploads (will be created at runtime)
 uploads/
 
-# Documentation
-*.md
-!README.md
+# Backup files
+*.bak
+*.txt.bak
 
 # Scripts
 *.bat
 
-# Keep only essential files
-!*.py
-!requirements-railway.txt
-!nixpacks.toml
-!.nixpacks
-!.dockerignore
-!runtime.txt
-!download_nltk_data.py
+# Config files (Railway auto-detects)
+.nixpacks
+railway.json
+railway.toml
+nixpacks.toml
