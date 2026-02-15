@@ -15,7 +15,6 @@ PHRASE-CENTRIC ACADEMIC VOCABULARY EXTRACTOR
 
 import re
 import math
-import spacy
 from typing import List, Dict, Tuple, Optional
 from collections import Counter, defaultdict
 import numpy as np
@@ -25,23 +24,42 @@ from embedding_utils import SentenceTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
+import nltk
+from nltk import pos_tag, word_tokenize
+from nltk.corpus import stopwords
+from nltk.tokenize import sent_tokenize
 
-# Load spaCy model for phrase extraction
+# Try to load spaCy (optional)
 try:
-    nlp = spacy.load("en_core_web_sm")
-except:
-    import os
-    os.system("python -m spacy download en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+    import spacy
+    try:
+        nlp = spacy.load("en_core_web_sm")
+        HAS_SPACY = True
+        print("✅ Using spaCy for phrase extraction")
+    except:
+        HAS_SPACY = False
+        print("⚠️  spaCy model not found, using NLTK fallback")
+except ImportError:
+    HAS_SPACY = False
+    print("⚠️  spaCy not installed, using NLTK fallback")
+
+# Download NLTK data if needed
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+    nltk.download('averaged_perceptron_tagger')
+    nltk.download('stopwords')
 
 
 class PhraseCentricExtractor:
     """
     Phrase-centric vocabulary extractor following 8 critical fixes
+    Uses NLTK fallback if spaCy not available (Railway-compatible)
     """
     
     def __init__(self):
-        self.nlp = nlp
+        self.nlp = nlp if HAS_SPACY else None
         self.embedding_model = None
         
         # Discourse stopwords (Step 5)
@@ -58,6 +76,47 @@ class PhraseCentricExtractor:
             'deforestation', 'biodiversity', 'sustainability',
             'globalization', 'urbanization', 'industrialization'
         }
+    
+    def _nltk_pos_tag(self, text: str) -> List[Tuple[str, str]]:
+        """
+        POS tagging using NLTK (replaces spaCy)
+        
+        Returns:
+            List of (word, pos_tag) tuples
+        """
+        tokens = word_tokenize(text)
+        return pos_tag(tokens)
+    
+    def _extract_noun_phrases_nltk(self, text: str) -> List[str]:
+        """
+        Extract noun phrases using NLTK (replaces spaCy)
+        
+        Simple pattern: (DT)? (JJ)* (NN)+
+        """
+        tokens_pos = self._nltk_pos_tag(text)
+        
+        noun_phrases = []
+        current_phrase = []
+        
+        for word, pos in tokens_pos:
+            # Noun phrase pattern: optional determiner, adjectives, nouns
+            if pos.startswith('NN'):  # Noun
+                current_phrase.append(word)
+            elif pos.startswith('JJ') and current_phrase:  # Adjective (if after noun)
+                current_phrase.append(word)
+            elif pos in ['DT'] and not current_phrase:  # Determiner (start of phrase)
+                current_phrase.append(word)
+            else:
+                # End of phrase
+                if len(current_phrase) >= 2:  # At least 2 words
+                    noun_phrases.append(' '.join(current_phrase))
+                current_phrase = []
+        
+        # Add last phrase
+        if len(current_phrase) >= 2:
+            noun_phrases.append(' '.join(current_phrase))
+        
+        return noun_phrases
     
     def _is_english_text(self, text: str) -> bool:
         """
@@ -399,18 +458,27 @@ class PhraseCentricExtractor:
     
     def _split_sentences(self, text: str) -> List[Dict]:
         """
-        Split text into sentences WITHOUT tokenization
+        Split text into sentences using NLTK (replaces spaCy)
         Preserve sentence integrity
         """
-        doc = self.nlp(text)
+        from nltk.tokenize import sent_tokenize
+        
+        # Split into sentences using NLTK
+        sentences_text = sent_tokenize(text)
         
         sentences = []
-        for i, sent in enumerate(doc.sents):
+        current_pos = 0
+        for i, sent_text in enumerate(sentences_text):
+            # Find sentence position in original text
+            start = text.find(sent_text, current_pos)
+            end = start + len(sent_text)
+            current_pos = end
+            
             sentences.append({
                 'id': f'S{i}',
-                'text': sent.text.strip(),
-                'start': sent.start_char,
-                'end': sent.end_char
+                'text': sent_text.strip(),
+                'start': start,
+                'end': end
             })
         
         return sentences
@@ -483,11 +551,11 @@ class PhraseCentricExtractor:
             sent_text = sent_dict['text']
             sent_id = sent_dict['id']
             
-            doc = self.nlp(sent_text)
+            # Extract noun phrases using NLTK
+            noun_phrases = self._extract_noun_phrases_nltk(sent_text)
             
-            # Extract noun phrases
-            for chunk in doc.noun_chunks:
-                phrase_text = chunk.text.lower().strip()
+            for phrase_text in noun_phrases:
+                phrase_text = phrase_text.lower().strip()
                 word_count = len(phrase_text.split())
                 
                 # Must be multi-word
@@ -498,10 +566,14 @@ class PhraseCentricExtractor:
                         'phrase_type': 'noun_phrase'
                     })
             
-            # Extract Adj + Noun patterns
-            for token in doc:
-                if token.pos_ == 'ADJ' and token.head.pos_ == 'NOUN':
-                    phrase_text = f"{token.text} {token.head.text}".lower()
+            # Extract Adj + Noun patterns using POS tags
+            tokens_pos = self._nltk_pos_tag(sent_text)
+            for i in range(len(tokens_pos) - 1):
+                word1, pos1 = tokens_pos[i]
+                word2, pos2 = tokens_pos[i + 1]
+                
+                if pos1.startswith('JJ') and pos2.startswith('NN'):  # ADJ + NOUN
+                    phrase_text = f"{word1} {word2}".lower()
                     word_count = len(phrase_text.split())
                     
                     if word_count >= min_length and word_count <= max_length:
@@ -511,10 +583,21 @@ class PhraseCentricExtractor:
                             'phrase_type': 'adj_noun'
                         })
             
-            # Extract Verb + Object patterns
-            for token in doc:
-                if token.pos_ == 'VERB':
-                    for child in token.children:
+            # Extract Verb + Noun patterns (simplified)
+            for i in range(len(tokens_pos) - 1):
+                word1, pos1 = tokens_pos[i]
+                word2, pos2 = tokens_pos[i + 1]
+                
+                if pos1.startswith('VB') and pos2.startswith('NN'):  # VERB + NOUN
+                    phrase_text = f"{word1} {word2}".lower()
+                    word_count = len(phrase_text.split())
+                    
+                    if word_count >= min_length and word_count <= max_length:
+                        phrase_to_sentences[phrase_text].append({
+                            'sentence_id': sent_id,
+                            'sentence_text': sent_text,
+                            'phrase_type': 'verb_noun'
+                        })
                         if child.dep_ in ['dobj', 'pobj']:
                             phrase_text = f"{token.text} {child.text}".lower()
                             word_count = len(phrase_text.split())
