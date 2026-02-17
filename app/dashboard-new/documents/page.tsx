@@ -1,24 +1,11 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { Upload, FileText, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import dynamic from "next/dynamic"
-
-// Dynamically import components to avoid SSR issues
-const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer-wrapper"), {
-  ssr: false,
-  loading: () => (
-    <Card>
-      <CardContent className="p-12 text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-        <p className="text-muted-foreground">Đang tải flashcards...</p>
-      </CardContent>
-    </Card>
-  ),
-})
+import FlashcardViewerWrapper from "@/components/flashcard-viewer-wrapper"
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -146,25 +133,18 @@ export default function DocumentsPage() {
 
       {/* Results Section */}
       {mounted && result && (
-        <Suspense fallback={
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-              <p className="text-muted-foreground">Đang tải kết quả...</p>
-            </CardContent>
-          </Card>
-        }>
+        <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Flashcards ({result.flashcards?.length || 0})</CardTitle>
             </CardHeader>
             <CardContent>
-              <FlashcardViewer flashcards={result.flashcards || []} />
+              <FlashcardViewerWrapper flashcards={result.flashcards || []} />
             </CardContent>
           </Card>
           
           {/* Knowledge Graph - Temporarily disabled */}
-          <Card className="mt-6">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span>Sơ đồ tư duy</span>
@@ -188,7 +168,7 @@ export default function DocumentsPage() {
               </div>
             </CardContent>
           </Card>
-        </Suspense>
+        </div>
       )}
     </div>
   )
