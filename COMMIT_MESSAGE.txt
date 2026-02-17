@@ -1,0 +1,34 @@
+fix: Remove all graph visualization to fix build errors
+
+BREAKING CHANGES:
+- Removed Cytoscape.js (hydration errors)
+- Removed D3.js (build errors)
+- Removed all knowledge-graph-* components
+
+CHANGES:
+- Deleted: components/knowledge-graph-d3.tsx
+- Deleted: components/knowledge-graph-viewer.tsx
+- Deleted: components/knowledge-graph-viewer-wrapper.tsx
+- Modified: app/dashboard-new/documents/page.tsx (placeholder)
+- Modified: app/dashboard-new/vocabulary/page.tsx (placeholder)
+- Modified: package.json (removed d3, cytoscape deps)
+
+FEATURES WORKING:
+✅ Upload documents
+✅ Extract vocabulary
+✅ Display flashcards with all features
+✅ Vocabulary list and quiz
+
+FEATURES DISABLED (temporarily):
+🔄 Knowledge graph visualization (coming soon with Canvas API)
+
+WHY:
+- Cytoscape and D3 cause hydration/build errors with Next.js 15 + React 19
+- Flashcards are the main feature and work perfectly
+- Graph visualization will be reimplemented with Canvas API (no dependencies)
+
+BUILD STATUS:
+- Bundle size reduced
+- No more module not found errors
+- No more hydration errors
+- Stable and deployable
