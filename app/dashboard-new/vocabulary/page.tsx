@@ -5,15 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import VocabularyQuiz from "@/components/VocabularyQuiz";
-import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIPA } from "@/lib/ipaDict";
-
-// Dynamic import to avoid SSR issues
-const KnowledgeGraphViewer = dynamic(
-  () => import("@/components/knowledge-graph-d3").then(mod => ({ default: mod.default })),
-  { ssr: false }
-);
 import {
   BookOpen,
   Search,
@@ -668,8 +661,21 @@ export default function VocabularyPage() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl shadow-md p-4" style={{ height: '700px' }}>
-                  <KnowledgeGraphViewer data={knowledgeGraphData} />
+                <div className="bg-white rounded-2xl shadow-md p-8" style={{ height: '700px' }}>
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <Network className="w-16 h-16 text-blue-500 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">Sơ đồ tư duy</h3>
+                    <p className="text-gray-500 mb-4 text-center max-w-md">
+                      Tính năng visualization đang được cập nhật để tương thích với phiên bản mới
+                    </p>
+                    {knowledgeGraphData && (
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>✓ Dữ liệu đã sẵn sàng</p>
+                        <p>• {knowledgeGraphData.nodes?.length || 0} nodes</p>
+                        <p>• {knowledgeGraphData.edges?.length || 0} edges</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </motion.div>
