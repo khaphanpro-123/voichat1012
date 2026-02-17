@@ -54,7 +54,7 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
   }
 
   const speakText = (text: string) => {
-    if (typeof window === "undefined") return
+    if (!mounted || typeof window === "undefined") return
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.lang = "en-US"

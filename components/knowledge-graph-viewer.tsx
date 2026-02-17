@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import dynamic from "next/dynamic"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,18 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ZoomIn, ZoomOut, Maximize2, Download } from "lucide-react"
-
-// Dynamically import Cytoscape to avoid SSR issues
-let cytoscape: any = null
-let dagre: any = null
-
-if (typeof window !== "undefined") {
-  cytoscape = require("cytoscape")
-  dagre = require("cytoscape-dagre")
-  if (cytoscape && dagre) {
-    cytoscape.use(dagre)
-  }
-}
 
 interface KnowledgeGraphViewerProps {
   graphData?: {
@@ -54,9 +41,25 @@ export default function KnowledgeGraphViewer({
   const [layout, setLayout] = useState("dagre")
   const [selectedNode, setSelectedNode] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const [cytoscape, setCytoscape] = useState<any>(null)
 
   useEffect(() => {
     setMounted(true)
+    
+    // Load Cytoscape only on client side
+    if (typeof window !== "undefined") {
+      Promise.all([
+        import("cytoscape"),
+        import("cytoscape-dagre")
+      ]).then(([cytoscapeModule, dagreModule]) => {
+        const cy = cytoscapeModule.default
+        const dagre = dagreModule.default
+        cy.use(dagre)
+        setCytoscape(() => cy)
+      }).catch(err => {
+        console.error("Failed to load Cytoscape:", err)
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -188,7 +191,7 @@ export default function KnowledgeGraphViewer({
         cyRef.current.destroy()
       }
     }
-  }, [graphData, layout, mounted])
+  }, [graphData, layout, mounted, cytoscape])
 
   const handleZoomIn = () => {
     cyRef.current?.zoom(cyRef.current.zoom() * 1.2)
@@ -235,11 +238,11 @@ export default function KnowledgeGraphViewer({
     )
   }
 
-  if (!mounted) {
+  if (!mounted || !cytoscape) {
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <p className="text-muted-foreground">Đang tải...</p>
+          <p className="text-muted-foreground">Đang tải knowledge graph...</p>
         </CardContent>
       </Card>
     )

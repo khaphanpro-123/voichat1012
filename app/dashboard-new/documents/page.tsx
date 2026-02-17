@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Upload, FileText, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,14 +10,12 @@ import dynamic from "next/dynamic"
 // Dynamically import components to avoid SSR issues
 const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer"), {
   ssr: false,
-  loading: () => <div className="p-12 text-center">Đang tải flashcards...</div>,
 })
 
 const KnowledgeGraphViewer = dynamic(
   () => import("@/components/knowledge-graph-viewer"),
   {
     ssr: false,
-    loading: () => <div className="p-12 text-center">Đang tải knowledge graph...</div>,
   }
 )
 
@@ -26,6 +24,11 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string>("")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -56,7 +59,7 @@ export default function DocumentsPage() {
       const apiUrl =
         process.env.NEXT_PUBLIC_API_URL ||
         "https://voichat1012-production.up.railway.app"
-      const response = await fetch(`${apiUrl}/api/upload-document-complete`, {
+      const response = await fetch(`/api/upload-document-complete`, {
         method: "POST",
         body: formData,
       })
@@ -141,7 +144,7 @@ export default function DocumentsPage() {
       </Card>
 
       {/* Results Section */}
-      {result && (
+      {mounted && result && (
         <Tabs defaultValue="flashcards" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="flashcards">
