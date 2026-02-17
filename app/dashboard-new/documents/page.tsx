@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import dynamic from "next/dynamic"
 
-// Dynamically import WRAPPER components to avoid SSR issues
+// Dynamically import components to avoid SSR issues
 const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer-wrapper"), {
   ssr: false,
   loading: () => (
@@ -21,7 +21,7 @@ const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer-wrap
 })
 
 const KnowledgeGraphViewer = dynamic(
-  () => import("@/components/knowledge-graph-viewer-wrapper"),
+  () => import("@/components/knowledge-graph-d3"),
   {
     ssr: false,
     loading: () => (
