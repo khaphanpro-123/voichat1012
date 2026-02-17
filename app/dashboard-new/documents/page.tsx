@@ -1,21 +1,37 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Upload, FileText, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import dynamic from "next/dynamic"
 
-// Dynamically import components to avoid SSR issues
-const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer"), {
+// Dynamically import WRAPPER components to avoid SSR issues
+const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer-wrapper"), {
   ssr: false,
+  loading: () => (
+    <Card>
+      <CardContent className="p-12 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+        <p className="text-muted-foreground">Đang tải flashcards...</p>
+      </CardContent>
+    </Card>
+  ),
 })
 
 const KnowledgeGraphViewer = dynamic(
-  () => import("@/components/knowledge-graph-viewer"),
+  () => import("@/components/knowledge-graph-viewer-wrapper"),
   {
     ssr: false,
+    loading: () => (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p className="text-muted-foreground">Đang tải knowledge graph...</p>
+        </CardContent>
+      </Card>
+    ),
   }
 )
 
@@ -145,25 +161,34 @@ export default function DocumentsPage() {
 
       {/* Results Section */}
       {mounted && result && (
-        <Tabs defaultValue="flashcards" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="flashcards">
-              Flashcards ({result.flashcards?.length || 0})
-            </TabsTrigger>
-            <TabsTrigger value="knowledge-graph">Sơ đồ tư duy</TabsTrigger>
-          </TabsList>
+        <Suspense fallback={
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+              <p className="text-muted-foreground">Đang tải kết quả...</p>
+            </CardContent>
+          </Card>
+        }>
+          <Tabs defaultValue="flashcards" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="flashcards">
+                Flashcards ({result.flashcards?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="knowledge-graph">Sơ đồ tư duy</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="flashcards" className="mt-6">
-            <FlashcardViewer flashcards={result.flashcards || []} />
-          </TabsContent>
+            <TabsContent value="flashcards" className="mt-6">
+              <FlashcardViewer flashcards={result.flashcards || []} />
+            </TabsContent>
 
-          <TabsContent value="knowledge-graph" className="mt-6">
-            <KnowledgeGraphViewer
-              graphData={result.knowledge_graph}
-              documentTitle={result.document_title || file?.name || "Document"}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="knowledge-graph" className="mt-6">
+              <KnowledgeGraphViewer
+                graphData={result.knowledge_graph}
+                documentTitle={result.document_title || file?.name || "Document"}
+              />
+            </TabsContent>
+          </Tabs>
+        </Suspense>
       )}
     </div>
   )
