@@ -3,8 +3,8 @@
 import { useState, useEffect, Suspense } from "react"
 import { Upload, FileText, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import dynamic from "next/dynamic"
 
 // Dynamically import components to avoid SSR issues
@@ -19,21 +19,6 @@ const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer-wrap
     </Card>
   ),
 })
-
-const KnowledgeGraphViewer = dynamic(
-  () => import("@/components/knowledge-graph-d3"),
-  {
-    ssr: false,
-    loading: () => (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-          <p className="text-muted-foreground">Đang tải knowledge graph...</p>
-        </CardContent>
-      </Card>
-    ),
-  }
-)
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -169,25 +154,40 @@ export default function DocumentsPage() {
             </CardContent>
           </Card>
         }>
-          <Tabs defaultValue="flashcards" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="flashcards">
-                Flashcards ({result.flashcards?.length || 0})
-              </TabsTrigger>
-              <TabsTrigger value="knowledge-graph">Sơ đồ tư duy</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="flashcards" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Flashcards ({result.flashcards?.length || 0})</CardTitle>
+            </CardHeader>
+            <CardContent>
               <FlashcardViewer flashcards={result.flashcards || []} />
-            </TabsContent>
-
-            <TabsContent value="knowledge-graph" className="mt-6">
-              <KnowledgeGraphViewer
-                graphData={result.knowledge_graph}
-                documentTitle={result.document_title || file?.name || "Document"}
-              />
-            </TabsContent>
-          </Tabs>
+            </CardContent>
+          </Card>
+          
+          {/* Knowledge Graph - Temporarily disabled */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Sơ đồ tư duy</span>
+                <Badge variant="secondary">Đang phát triển</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-8 text-center border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground mb-4">
+                  Tính năng visualization đang được cập nhật
+                </p>
+                {result.knowledge_graph && (
+                  <div className="text-sm text-left max-w-md mx-auto">
+                    <p className="font-medium mb-2">Dữ liệu có sẵn:</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• {result.knowledge_graph.entities?.length || 0} entities</li>
+                      <li>• {result.knowledge_graph.relations?.length || 0} relations</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </Suspense>
       )}
     </div>
