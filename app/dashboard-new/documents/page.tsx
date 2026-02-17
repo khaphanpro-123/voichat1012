@@ -3,10 +3,23 @@
 import { useState } from "react"
 import { Upload, FileText, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import FlashcardViewer from "@/components/flashcard-viewer"
-import KnowledgeGraphViewer from "@/components/knowledge-graph-viewer"
+import dynamic from "next/dynamic"
+
+// Dynamically import components to avoid SSR issues
+const FlashcardViewer = dynamic(() => import("@/components/flashcard-viewer"), {
+  ssr: false,
+  loading: () => <div className="p-12 text-center">Đang tải flashcards...</div>,
+})
+
+const KnowledgeGraphViewer = dynamic(
+  () => import("@/components/knowledge-graph-viewer"),
+  {
+    ssr: false,
+    loading: () => <div className="p-12 text-center">Đang tải knowledge graph...</div>,
+  }
+)
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -40,7 +53,9 @@ export default function DocumentsPage() {
       formData.append("bm25_weight", "0.2")
       formData.append("generate_flashcards", "true")
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://voichat1012-production.up.railway.app"
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL ||
+        "https://voichat1012-production.up.railway.app"
       const response = await fetch(`${apiUrl}/api/upload-document-complete`, {
         method: "POST",
         body: formData,
@@ -71,56 +86,58 @@ export default function DocumentsPage() {
       </div>
 
       {/* Upload Section */}
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label
-                htmlFor="file-upload"
-                className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent transition-colors"
-              >
-                <div className="text-center">
-                  <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    {file ? file.name : "Click để chọn file PDF/DOCX"}
-                  </p>
-                </div>
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.docx,.doc"
-                  onChange={handleFileChange}
-                />
-              </label>
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label
+                  htmlFor="file-upload"
+                  className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                >
+                  <div className="text-center">
+                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      {file ? file.name : "Click để chọn file PDF/DOCX"}
+                    </p>
+                  </div>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.docx,.doc"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
             </div>
-          </div>
 
-          {error && (
-            <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          <Button
-            onClick={handleUpload}
-            disabled={!file || uploading}
-            className="w-full"
-            size="lg"
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang xử lý...
-              </>
-            ) : (
-              <>
-                <FileText className="mr-2 h-4 w-4" />
-                Trích xuất từ vựng
-              </>
+            {error && (
+              <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+                {error}
+              </div>
             )}
-          </Button>
-        </div>
+
+            <Button
+              onClick={handleUpload}
+              disabled={!file || uploading}
+              className="w-full"
+              size="lg"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Trích xuất từ vựng
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Results Section */}
@@ -130,9 +147,7 @@ export default function DocumentsPage() {
             <TabsTrigger value="flashcards">
               Flashcards ({result.flashcards?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="knowledge-graph">
-              Sơ đồ tư duy
-            </TabsTrigger>
+            <TabsTrigger value="knowledge-graph">Sơ đồ tư duy</TabsTrigger>
           </TabsList>
 
           <TabsContent value="flashcards" className="mt-6">
