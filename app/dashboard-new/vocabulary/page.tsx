@@ -5,9 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import VocabularyQuiz from "@/components/VocabularyQuiz";
-import { KnowledgeGraphViewer } from "@/components/knowledge-graph-viewer";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIPA } from "@/lib/ipaDict";
+
+// Dynamic import to avoid SSR issues
+const KnowledgeGraphViewer = dynamic(
+  () => import("@/components/knowledge-graph-d3").then(mod => ({ default: mod.default })),
+  { ssr: false }
+);
 import {
   BookOpen,
   Search,
