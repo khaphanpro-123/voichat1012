@@ -1,163 +1,170 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
-import cytoscape from 'cytoscape'
-import dagre from 'cytoscape-dagre'
+import { useEffect, useRef, useState } from "react"
+import cytoscape, { Core, ElementDefinition } from "cytoscape"
+import dagre from "cytoscape-dagre"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ZoomIn, ZoomOut, Maximize2, Download } from "lucide-react"
 
 // Register dagre layout
-if (typeof cytoscape !== 'undefined') {
+if (typeof cytoscape !== "undefined") {
   cytoscape.use(dagre)
 }
 
 interface KnowledgeGraphViewerProps {
-  data: {
-    nodes: Array<{
+  graphData?: {
+    entities: Array<{
       id: string
       label: string
-      type: 'root' | 'cluster' | 'phrase' | 'word'
-      cluster_id?: number
+      type: string
+      importance?: number
     }>
-    edges: Array<{
+    relations: Array<{
       source: string
       target: string
-      relation: string
+      type: string
+      weight?: number
+      label?: string
     }>
   }
+  documentTitle?: string
 }
 
-export function KnowledgeGraphViewer({ data }: KnowledgeGraphViewerProps) {
+export default function KnowledgeGraphViewer({
+  graphData,
+  documentTitle = "Document",
+}: KnowledgeGraphViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const cyRef = useRef<any>(null)
+  const cyRef = useRef<Core | null>(null)
+  const [layout, setLayout] = useState("dagre")
   const [selectedNode, setSelectedNode] = useState<any>(null)
 
   useEffect(() => {
-    if (!containerRef.current || !data) return
+    if (!containerRef.current || !graphData) return
+
+    // Convert backend data to Cytoscape format
+    const elements: ElementDefinition[] = [
+      // Nodes
+      ...graphData.entities.map((entity) => ({
+        data: {
+          id: entity.id,
+          label: entity.label,
+          type: entity.type,
+          importance: entity.importance || 0.5,
+        },
+      })),
+      // Edges
+      ...graphData.relations.map((relation, idx) => ({
+        data: {
+          id: `edge-${idx}`,
+          source: relation.source,
+          target: relation.target,
+          type: relation.type,
+          weight: relation.weight || 0.5,
+          label: relation.label || relation.type,
+        },
+      })),
+    ]
 
     // Initialize Cytoscape
     const cy = cytoscape({
       container: containerRef.current,
-      
-      elements: {
-        nodes: data.nodes.map(node => ({
-          data: {
-            id: node.id,
-            label: node.label,
-            type: node.type,
-            cluster_id: node.cluster_id
-          }
-        })),
-        edges: data.edges.map(edge => ({
-          data: {
-            source: edge.source,
-            target: edge.target,
-            label: edge.relation
-          }
-        }))
-      },
-
+      elements,
       style: [
         {
-          selector: 'node',
+          selector: "node",
           style: {
-            'background-color': '#666',
-            'label': 'data(label)',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'font-size': '12px',
-            'color': '#fff',
-            'text-outline-color': '#666',
-            'text-outline-width': 2,
-            'width': 60,
-            'height': 60
-          }
+            "background-color": (ele: any) => {
+              const type = ele.data("type")
+              if (type === "cluster") return "#3b82f6"
+              if (type === "phrase") return "#10b981"
+              if (type === "word") return "#f59e0b"
+              return "#6b7280"
+            },
+            label: "data(label)",
+            color: "#fff",
+            "text-valign": "center",
+            "text-halign": "center",
+            "font-size": "12px",
+            "font-weight": "bold",
+            width: (ele: any) => {
+              const importance = ele.data("importance") || 0.5
+              return 30 + importance * 40
+            },
+            height: (ele: any) => {
+              const importance = ele.data("importance") || 0.5
+              return 30 + importance * 40
+            },
+            "border-width": 2,
+            "border-color": "#fff",
+          },
         },
         {
-          selector: 'node[type="root"]',
+          selector: "node:selected",
           style: {
-            'background-color': '#FF6B6B',
-            'width': 80,
-            'height': 80,
-            'font-size': '14px',
-            'font-weight': 'bold'
-          }
+            "border-width": 4,
+            "border-color": "#ef4444",
+          },
         },
         {
-          selector: 'node[type="cluster"]',
+          selector: "edge",
           style: {
-            'background-color': '#4ECDC4',
-            'width': 70,
-            'height': 70,
-            'font-size': '13px'
-          }
+            width: (ele: any) => {
+              const weight = ele.data("weight") || 0.5
+              return 1 + weight * 3
+            },
+            "line-color": (ele: any) => {
+              const type = ele.data("type")
+              if (type === "contains") return "#3b82f6"
+              if (type === "similar_to") return "#10b981"
+              if (type === "related_to") return "#f59e0b"
+              return "#6b7280"
+            },
+            "target-arrow-color": (ele: any) => {
+              const type = ele.data("type")
+              if (type === "contains") return "#3b82f6"
+              if (type === "similar_to") return "#10b981"
+              if (type === "related_to") return "#f59e0b"
+              return "#6b7280"
+            },
+            "target-arrow-shape": "triangle",
+            "curve-style": "bezier",
+            label: "data(label)",
+            "font-size": "10px",
+            "text-rotation": "autorotate",
+            "text-margin-y": -10,
+          },
         },
-        {
-          selector: 'node[type="phrase"]',
-          style: {
-            'background-color': '#45B7D1',
-            'width': 50,
-            'height': 50
-          }
-        },
-        {
-          selector: 'node[type="word"]',
-          style: {
-            'background-color': '#96CEB4',
-            'width': 40,
-            'height': 40,
-            'font-size': '10px'
-          }
-        },
-        {
-          selector: 'edge',
-          style: {
-            'width': 2,
-            'line-color': '#ccc',
-            'target-arrow-color': '#ccc',
-            'target-arrow-shape': 'triangle',
-            'curve-style': 'bezier',
-            'label': 'data(label)',
-            'font-size': '10px',
-            'text-rotation': 'autorotate',
-            'text-margin-y': -10
-          }
-        },
-        {
-          selector: ':selected',
-          style: {
-            'background-color': '#FFA07A',
-            'line-color': '#FFA07A',
-            'target-arrow-color': '#FFA07A',
-            'border-width': 3,
-            'border-color': '#FFA07A'
-          }
-        }
       ],
-
       layout: {
-        name: 'dagre',
-        rankDir: 'TB', // Top to Bottom
+        name: layout,
+        rankDir: "TB",
         nodeSep: 50,
         rankSep: 100,
-        padding: 30
       },
-
-      minZoom: 0.3,
-      maxZoom: 3,
-      wheelSensitivity: 0.2
     })
 
     // Event handlers
-    cy.on('tap', 'node', (evt: any) => {
+    cy.on("tap", "node", (evt) => {
       const node = evt.target
       setSelectedNode({
-        id: node.id(),
-        label: node.data('label'),
-        type: node.data('type'),
-        cluster_id: node.data('cluster_id')
+        id: node.data("id"),
+        label: node.data("label"),
+        type: node.data("type"),
+        importance: node.data("importance"),
       })
     })
 
-    cy.on('tap', (evt: any) => {
+    cy.on("tap", (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null)
       }
@@ -168,91 +175,172 @@ export function KnowledgeGraphViewer({ data }: KnowledgeGraphViewerProps) {
     return () => {
       cy.destroy()
     }
-  }, [data])
+  }, [graphData, layout])
 
-  const handleResetView = () => {
+  const handleZoomIn = () => {
+    cyRef.current?.zoom(cyRef.current.zoom() * 1.2)
+  }
+
+  const handleZoomOut = () => {
+    cyRef.current?.zoom(cyRef.current.zoom() * 0.8)
+  }
+
+  const handleFit = () => {
+    cyRef.current?.fit(undefined, 50)
+  }
+
+  const handleDownload = () => {
+    if (!cyRef.current) return
+    const png = cyRef.current.png({ scale: 2 })
+    const link = document.createElement("a")
+    link.href = png
+    link.download = `${documentTitle}-knowledge-graph.png`
+    link.click()
+  }
+
+  const handleLayoutChange = (newLayout: string) => {
+    setLayout(newLayout)
     if (cyRef.current) {
-      cyRef.current.fit()
+      cyRef.current
+        .layout({
+          name: newLayout,
+          rankDir: "TB",
+          nodeSep: 50,
+          rankSep: 100,
+        })
+        .run()
     }
   }
 
-  const handleChangeLayout = (layoutName: string) => {
-    if (cyRef.current) {
-      cyRef.current.layout({
-        name: layoutName,
-        rankDir: 'TB',
-        nodeSep: 50,
-        rankSep: 100,
-        padding: 30
-      }).run()
-    }
+  if (!graphData) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <p className="text-muted-foreground">Không có dữ liệu knowledge graph</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="space-y-4">
       {/* Controls */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <button
-          onClick={handleResetView}
-          className="px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 text-sm"
-        >
-          Reset View
-        </button>
-        <select
-          onChange={(e) => handleChangeLayout(e.target.value)}
-          className="px-3 py-2 bg-white rounded-lg shadow-md text-sm"
-        >
-          <option value="dagre">Tree (Dagre)</option>
-          <option value="breadthfirst">Breadth First</option>
-          <option value="circle">Circle</option>
-          <option value="grid">Grid</option>
-          <option value="cose">Force Directed</option>
-        </select>
-      </div>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Select value={layout} onValueChange={handleLayoutChange}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dagre">Hierarchical</SelectItem>
+                  <SelectItem value="breadthfirst">Breadth First</SelectItem>
+                  <SelectItem value="circle">Circle</SelectItem>
+                  <SelectItem value="grid">Grid</SelectItem>
+                  <SelectItem value="cose">Force Directed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      {/* Graph Container */}
-      <div
-        ref={containerRef}
-        className="w-full h-full bg-gray-50 rounded-lg"
-        style={{ minHeight: '600px' }}
-      />
-
-      {/* Node Info Panel */}
-      {selectedNode && (
-        <div className="absolute bottom-4 left-4 z-10 bg-white p-4 rounded-lg shadow-lg max-w-xs">
-          <h3 className="font-bold text-lg mb-2">{selectedNode.label}</h3>
-          <div className="space-y-1 text-sm">
-            <p><span className="font-semibold">Type:</span> {selectedNode.type}</p>
-            {selectedNode.cluster_id !== undefined && (
-              <p><span className="font-semibold">Cluster:</span> {selectedNode.cluster_id}</p>
-            )}
-            <p><span className="font-semibold">ID:</span> {selectedNode.id}</p>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handleZoomIn}>
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleZoomOut}>
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleFit}>
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDownload}>
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Graph */}
+      <Card>
+        <CardContent className="p-0">
+          <div ref={containerRef} className="w-full h-[600px]" />
+        </CardContent>
+      </Card>
+
+      {/* Selected Node Info */}
+      {selectedNode && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Chi tiết node</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm text-muted-foreground">Label:</span>
+                <p className="font-medium">{selectedNode.label}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Type:</span>
+                <Badge variant="outline" className="ml-2">
+                  {selectedNode.type}
+                </Badge>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Importance:</span>
+                <p className="font-medium">
+                  {(selectedNode.importance * 100).toFixed(0)}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Legend */}
-      <div className="absolute top-4 left-4 z-10 bg-white p-3 rounded-lg shadow-md text-xs">
-        <h4 className="font-bold mb-2">Legend</h4>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[#FF6B6B]"></div>
-            <span>Root (Document)</span>
+      <Card>
+        <CardHeader>
+          <CardTitle>Chú thích</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Node Types:</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-blue-500" />
+                  <span className="text-sm">Cluster</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-green-500" />
+                  <span className="text-sm">Phrase</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-orange-500" />
+                  <span className="text-sm">Word</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Edge Types:</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 bg-blue-500" />
+                  <span className="text-sm">Contains</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 bg-green-500" />
+                  <span className="text-sm">Similar to</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 bg-orange-500" />
+                  <span className="text-sm">Related to</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[#4ECDC4]"></div>
-            <span>Cluster (Topic)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[#45B7D1]"></div>
-            <span>Phrase</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[#96CEB4]"></div>
-            <span>Word</span>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
