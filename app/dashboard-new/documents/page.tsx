@@ -260,108 +260,37 @@ export default function DocumentsPage() {
               </div>
             </div>
 
-            {/* Knowledge Graph with SVG */}
+            {/* Knowledge Graph - Simple display */}
             {result.knowledge_graph && (
-              <KnowledgeGraphSVG graphData={result.knowledge_graph} />
+              <div className="border rounded-lg p-4">
+                <h3 className="font-bold text-lg mb-3">Sơ đồ tư duy</h3>
+                <div className="bg-gray-50 rounded-lg p-6 text-center">
+                  <p className="text-gray-600 mb-4">
+                    Dữ liệu knowledge graph đã được trích xuất
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                    <div className="bg-white p-4 rounded-lg">
+                      <div className="text-3xl font-bold text-blue-600">
+                        {result.knowledge_graph.entities?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Entities</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg">
+                      <div className="text-3xl font-bold text-green-600">
+                        {result.knowledge_graph.relations?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Relations</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4">
+                    Visualization sẽ được thêm trong phiên bản tiếp theo
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// Simple SVG Knowledge Graph Component
-function KnowledgeGraphSVG({ graphData }: { graphData: any }) {
-  const entities = graphData.entities || []
-  const relations = graphData.relations || []
-  
-  // Simple circular layout
-  const centerX = 400
-  const centerY = 300
-  const radius = 200
-  
-  const nodes = entities.map((entity: any, idx: number) => {
-    const angle = (idx / entities.length) * 2 * Math.PI
-    return {
-      ...entity,
-      x: centerX + radius * Math.cos(angle),
-      y: centerY + radius * Math.sin(angle),
-    }
-  })
-
-  const getNodeColor = (type: string) => {
-    if (type === "cluster") return "#3b82f6"
-    if (type === "phrase") return "#10b981"
-    if (type === "word") return "#f59e0b"
-    return "#6b7280"
-  }
-
-  return (
-    <div className="border rounded-lg p-4">
-      <h3 className="font-bold text-lg mb-3">Sơ đồ tư duy</h3>
-      <div className="bg-gray-50 rounded-lg p-4">
-        <svg width="800" height="600" className="mx-auto">
-          {/* Draw edges */}
-          {relations.map((rel: any, idx: number) => {
-            const source = nodes.find((n: any) => n.id === rel.source)
-            const target = nodes.find((n: any) => n.id === rel.target)
-            if (!source || !target) return null
-            
-            return (
-              <line
-                key={`edge-${idx}`}
-                x1={source.x}
-                y1={source.y}
-                x2={target.x}
-                y2={target.y}
-                stroke="#cbd5e1"
-                strokeWidth="2"
-                opacity="0.6"
-              />
-            )
-          })}
-          
-          {/* Draw nodes */}
-          {nodes.map((node: any, idx: number) => (
-            <g key={`node-${idx}`}>
-              <circle
-                cx={node.x}
-                cy={node.y}
-                r={15 + (node.importance || 0.5) * 15}
-                fill={getNodeColor(node.type)}
-                stroke="#fff"
-                strokeWidth="2"
-              />
-              <text
-                x={node.x}
-                y={node.y + 35}
-                textAnchor="middle"
-                fontSize="12"
-                fill="#374151"
-              >
-                {node.label.length > 15 ? node.label.substring(0, 15) + "..." : node.label}
-              </text>
-            </g>
-          ))}
-        </svg>
-        
-        {/* Legend */}
-        <div className="mt-4 flex justify-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-blue-500" />
-            <span>Cluster</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-green-500" />
-            <span>Phrase</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-orange-500" />
-            <span>Word</span>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
