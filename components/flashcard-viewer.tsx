@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +24,11 @@ interface FlashcardViewerProps {
 export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Sort flashcards by importance score (descending)
   const sortedFlashcards = [...flashcards].sort(
@@ -49,6 +54,7 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
   }
 
   const speakText = (text: string) => {
+    if (typeof window === "undefined") return
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.lang = "en-US"
@@ -81,6 +87,16 @@ export default function FlashcardViewer({ flashcards }: FlashcardViewerProps) {
       <Card>
         <CardContent className="p-12 text-center">
           <p className="text-muted-foreground">Không có flashcards</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!mounted) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <p className="text-muted-foreground">Đang tải...</p>
         </CardContent>
       </Card>
     )

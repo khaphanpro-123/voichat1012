@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import cytoscape, { Core, ElementDefinition } from "cytoscape"
-import dagre from "cytoscape-dagre"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,9 +14,16 @@ import {
 } from "@/components/ui/select"
 import { ZoomIn, ZoomOut, Maximize2, Download } from "lucide-react"
 
-// Register dagre layout
-if (typeof cytoscape !== "undefined") {
-  cytoscape.use(dagre)
+// Dynamically import Cytoscape to avoid SSR issues
+let cytoscape: any = null
+let dagre: any = null
+
+if (typeof window !== "undefined") {
+  cytoscape = require("cytoscape")
+  dagre = require("cytoscape-dagre")
+  if (cytoscape && dagre) {
+    cytoscape.use(dagre)
+  }
 }
 
 interface KnowledgeGraphViewerProps {
@@ -44,15 +50,20 @@ export default function KnowledgeGraphViewer({
   documentTitle = "Document",
 }: KnowledgeGraphViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const cyRef = useRef<Core | null>(null)
+  const cyRef = useRef<any>(null)
   const [layout, setLayout] = useState("dagre")
   const [selectedNode, setSelectedNode] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!containerRef.current || !graphData) return
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || !containerRef.current || !graphData || !cytoscape) return
 
     // Convert backend data to Cytoscape format
-    const elements: ElementDefinition[] = [
+    const elements: any[] = [
       // Nodes
       ...graphData.entities.map((entity) => ({
         data: {
@@ -173,9 +184,11 @@ export default function KnowledgeGraphViewer({
     cyRef.current = cy
 
     return () => {
-      cy.destroy()
+      if (cyRef.current) {
+        cyRef.current.destroy()
+      }
     }
-  }, [graphData, layout])
+  }, [graphData, layout, mounted])
 
   const handleZoomIn = () => {
     cyRef.current?.zoom(cyRef.current.zoom() * 1.2)
@@ -217,6 +230,16 @@ export default function KnowledgeGraphViewer({
       <Card>
         <CardContent className="p-12 text-center">
           <p className="text-muted-foreground">Không có dữ liệu knowledge graph</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!mounted) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <p className="text-muted-foreground">Đang tải...</p>
         </CardContent>
       </Card>
     )
