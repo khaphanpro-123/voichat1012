@@ -65,16 +65,27 @@ export default function DocumentsPage() {
         body: formData,
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`)
+        // Handle 502 error (backend cold start)
+        if (response.status === 502) {
+          setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại...")
+          return
+        }
+        
+        throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
 
-      const data = await response.json()
       setResult(data)
       
-      // Auto-save to database
-      await handleSaveToDatabase(data)
+      // Auto-save to database (don't block on errors)
+      handleSaveToDatabase(data).catch(err => {
+        console.error("Save error:", err)
+        // Don't show error to user, data is already displayed
+      })
     } catch (err: any) {
+      console.error("Upload error:", err)
       setError(err.message || "Có lỗi xảy ra khi upload")
     } finally {
       setUploading(false)
@@ -265,8 +276,17 @@ export default function DocumentsPage() {
             </label>
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                ❌ {error}
+              <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                <p className="text-sm mb-2">❌ {error}</p>
+                {error.includes("502") || error.includes("khởi động") ? (
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading}
+                    className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 text-sm font-medium"
+                  >
+                    🔄 Thử lại
+                  </button>
+                ) : null}
               </div>
             )}
 
