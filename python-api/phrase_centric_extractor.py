@@ -1119,9 +1119,10 @@ class PhraseCentricExtractor:
         Use Elbow method to find optimal K and cluster phrases
         Returns: (optimal_k, phrases_with_cluster_ids)
         """
-        print(f"  🔍 DEBUG - Clustering input:")
-        print(f"     Phrases: {len(phrases)}")
-        print(f"     Embeddings shape: {embeddings.shape}")
+        # DEBUG logging disabled to reduce Railway rate limit
+        # print(f"  🔍 DEBUG - Clustering input:")
+        # print(f"     Phrases: {len(phrases)}")
+        # print(f"     Embeddings shape: {embeddings.shape}")
         print(f"     K range: {min_k} to {max_k}")
         
         if len(phrases) < min_k:

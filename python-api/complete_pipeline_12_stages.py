@@ -697,15 +697,15 @@ class CompletePipeline12Stages:
                 'final_count': len(vocabulary)
             }
         
-        # Debug: Check embeddings structure
-        print(f"  🔍 DEBUG: Number of embeddings: {len(embeddings)}")
-        print(f"  🔍 DEBUG: First embedding type: {type(embeddings[0])}")
-        if len(embeddings) > 0:
-            first_emb = embeddings[0]
-            if isinstance(first_emb, np.ndarray):
-                print(f"  🔍 DEBUG: First embedding shape: {first_emb.shape}")
-            else:
-                print(f"  🔍 DEBUG: First embedding length: {len(first_emb) if hasattr(first_emb, '__len__') else 'N/A'}")
+        # Debug: Check embeddings structure (DISABLED to reduce Railway logging)
+        # print(f"  🔍 DEBUG: Number of embeddings: {len(embeddings)}")
+        # print(f"  🔍 DEBUG: First embedding type: {type(embeddings[0])}")
+        # if len(embeddings) > 0:
+        #     first_emb = embeddings[0]
+        #     if isinstance(first_emb, np.ndarray):
+        #         print(f"  🔍 DEBUG: First embedding shape: {first_emb.shape}")
+        #     else:
+        #         print(f"  🔍 DEBUG: First embedding length: {len(first_emb) if hasattr(first_emb, '__len__') else 'N/A'}")
         
         # Convert to numpy array (embeddings are already numpy arrays, just stack them)
         try:
