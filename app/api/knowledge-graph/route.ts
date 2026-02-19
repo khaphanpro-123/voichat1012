@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import getClientPromise from "@/lib/mongodb"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("knowledge_graphs")
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const document_id = searchParams.get("document_id")
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("knowledge_graphs")
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import getClientPromise from "@/lib/mongodb"
 
 // Save vocabulary item
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("vocabulary")
 
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get("level")
     const source = searchParams.get("source")
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("vocabulary")
 

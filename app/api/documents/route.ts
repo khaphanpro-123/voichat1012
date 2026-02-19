@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import getClientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
 // Save document metadata
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("documents")
 
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20")
     const uploaded_by = searchParams.get("uploaded_by")
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("documents")
 
@@ -99,7 +99,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const client = await clientPromise
+    const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("documents")
 
