@@ -28,6 +28,15 @@ from datetime import datetime
 import os
 import numpy as np
 
+# Import centralized logger
+try:
+    from utils.logger import get_logger, log_stage_start, log_stage_complete, log_summary
+    logger = get_logger(__name__)
+    USE_LOGGER = True
+except ImportError:
+    USE_LOGGER = False
+    logger = None
+
 # Import all stage modules
 from phrase_centric_extractor import PhraseCentricExtractor
 from single_word_extractor import SingleWordExtractor
@@ -107,11 +116,21 @@ class CompletePipeline12Stages:
         Returns:
             Complete pipeline results with vocabulary, knowledge graph, and flashcards
         """
-        print(f"\n{'='*80}")
-        print(f"COMPLETE 12-STAGE PIPELINE")
-        print(f"Document: {document_id}")
-        print(f"Title: {document_title}")
-        print(f"{'='*80}\n")
+        # ✅ Use centralized logging
+        if USE_LOGGER:
+            logger.info("="*80)
+            logger.info("COMPLETE 12-STAGE PIPELINE")
+            log_summary(logger, "PIPELINE_START", {
+                'document_id': document_id,
+                'document_title': document_title
+            })
+            logger.info("="*80)
+        else:
+            print(f"\n{'='*80}")
+            print(f"COMPLETE 12-STAGE PIPELINE")
+            print(f"Document: {document_id}")
+            print(f"Title: {document_title}")
+            print(f"{'='*80}\n")
         
         results = {
             'document_id': document_id,
@@ -124,18 +143,30 @@ class CompletePipeline12Stages:
         # ====================================================================
         # STAGE 1: Document Ingestion & OCR
         # ====================================================================
-        print(f"[STAGE 1] Document Ingestion & OCR...")
+        if USE_LOGGER:
+            log_stage_start(logger, "STAGE_1_INGESTION")
+        else:
+            print(f"[STAGE 1] Document Ingestion & OCR...")
         
         stage1_result = self._stage1_document_ingestion(text)
         results['stages']['stage1'] = stage1_result
         
-        print(f"  ✓ Text length: {stage1_result['text_length']} chars")
-        print(f"  ✓ Word count: {stage1_result['word_count']} words")
+        if USE_LOGGER:
+            log_stage_complete(logger, "STAGE_1_INGESTION", {
+                'text_length': stage1_result['text_length'],
+                'word_count': stage1_result['word_count']
+            })
+        else:
+            print(f"  ✓ Text length: {stage1_result['text_length']} chars")
+            print(f"  ✓ Word count: {stage1_result['word_count']} words")
         
         # ====================================================================
         # STAGE 2: Layout & Heading Detection
         # ====================================================================
-        print(f"\n[STAGE 2] Layout & Heading Detection...")
+        if USE_LOGGER:
+            log_stage_start(logger, "STAGE_2_HEADING_DETECTION")
+        else:
+            print(f"\n[STAGE 2] Layout & Heading Detection...")
         
         stage2_result = self._stage2_heading_detection(text)
         results['stages']['stage2'] = {
@@ -147,12 +178,20 @@ class CompletePipeline12Stages:
         # Keep doc_structure for internal use only
         doc_structure = stage2_result['doc_structure']
         
-        print(f"  ✓ Detected {stage2_result['heading_count']} headings")
+        if USE_LOGGER:
+            log_stage_complete(logger, "STAGE_2_HEADING_DETECTION", {
+                'heading_count': stage2_result['heading_count']
+            })
+        else:
+            print(f"  ✓ Detected {stage2_result['heading_count']} headings")
         
         # ====================================================================
         # STAGE 3: Context Intelligence
         # ====================================================================
-        print(f"\n[STAGE 3] Context Intelligence...")
+        if USE_LOGGER:
+            log_stage_start(logger, "STAGE_3_CONTEXT_INTELLIGENCE")
+        else:
+            print(f"\n[STAGE 3] Context Intelligence...")
         
         stage3_result = self._stage3_context_intelligence(
             text,
@@ -160,12 +199,20 @@ class CompletePipeline12Stages:
         )
         results['stages']['stage3'] = stage3_result
         
-        print(f"  ✓ Built {stage3_result['sentence_count']} sentences with context")
+        if USE_LOGGER:
+            log_stage_complete(logger, "STAGE_3_CONTEXT_INTELLIGENCE", {
+                'sentence_count': stage3_result['sentence_count']
+            })
+        else:
+            print(f"  ✓ Built {stage3_result['sentence_count']} sentences with context")
         
         # ====================================================================
         # STAGE 4: Phrase Extraction (PRIMARY PIPELINE)
         # ====================================================================
-        print(f"\n[STAGE 4] Phrase Extraction (PRIMARY PIPELINE)...")
+        if USE_LOGGER:
+            log_stage_start(logger, "STAGE_4_PHRASE_EXTRACTION")
+        else:
+            print(f"\n[STAGE 4] Phrase Extraction (PRIMARY PIPELINE)...")
         
         stage4_result = self._stage4_phrase_extraction(
             text,
@@ -174,17 +221,14 @@ class CompletePipeline12Stages:
         )
         results['stages']['stage4'] = stage4_result
         
-        # DEBUG: Check cluster distribution after phrase extraction (DISABLED)
-        # phrase_clusters = {}
-        # for p in stage4_result['phrases']:
-        #     cid = p.get('cluster_id', p.get('cluster', 'MISSING'))
-        #     phrase_clusters[cid] = phrase_clusters.get(cid, 0) + 1
-        # print(f"\n  📊 DEBUG - Phrase clusters after STAGE 4:")
-        # for cid in sorted(phrase_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
-        #     print(f"     Cluster {cid}: {phrase_clusters[cid]} phrases")
-        
-        print(f"  ✓ Extracted {stage4_result['phrase_count']} phrases")
-        print(f"  ✓ Multi-word: {stage4_result['multi_word_percentage']:.1f}%")
+        if USE_LOGGER:
+            log_stage_complete(logger, "STAGE_4_PHRASE_EXTRACTION", {
+                'phrase_count': stage4_result['phrase_count'],
+                'multi_word_percentage': stage4_result['multi_word_percentage']
+            })
+        else:
+            print(f"  ✓ Extracted {stage4_result['phrase_count']} phrases")
+            print(f"  ✓ Multi-word: {stage4_result['multi_word_percentage']:.1f}%")
         
         # ====================================================================
         # STAGE 5: Dense Retrieval (Sentence-Level)

@@ -15,6 +15,7 @@ PHRASE-CENTRIC ACADEMIC VOCABULARY EXTRACTOR
 
 import re
 import math
+import os
 from typing import List, Dict, Tuple, Optional
 from collections import Counter, defaultdict
 import numpy as np
@@ -29,6 +30,16 @@ from nltk import pos_tag, word_tokenize
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 
+# Import centralized logger
+try:
+    from utils.logger import get_logger, log_summary, log_debug
+    logger = get_logger(__name__)
+    USE_LOGGER = True
+except ImportError:
+    # Fallback if logger not available
+    USE_LOGGER = False
+    logger = None
+
 # Download NLTK data if needed
 try:
     nltk.data.find('tokenizers/punkt')
@@ -37,7 +48,11 @@ except LookupError:
     nltk.download('averaged_perceptron_tagger')
     nltk.download('stopwords')
 
-print("✅ Using NLTK for phrase extraction (Railway-compatible)")
+# Only log initialization in INFO mode
+if USE_LOGGER:
+    logger.info("✅ Using NLTK for phrase extraction (Railway-compatible)")
+else:
+    print("✅ Using NLTK for phrase extraction (Railway-compatible)")
 
 
 class PhraseCentricExtractor:
@@ -170,13 +185,23 @@ class PhraseCentricExtractor:
         sentences = self._split_sentences(text)
         headings = self._detect_headings(text)
         
-        print(f"  ✓ Extracted {len(sentences)} sentences")
-        print(f"  ✓ Detected {len(headings)} headings")
+        # ✅ Use logger for summary only
+        if USE_LOGGER:
+            log_summary(logger, "STEP_1_ANALYSIS", {
+                'sentences': len(sentences),
+                'headings': len(headings)
+            })
+        else:
+            print(f"  ✓ Extracted {len(sentences)} sentences")
+            print(f"  ✓ Detected {len(headings)} headings")
         
         # ====================================================================
         # STEP 2: Candidate Phrase Extraction (CRITICAL)
         # ====================================================================
-        print("[STEP 2] Candidate Phrase Extraction...")
+        if USE_LOGGER:
+            logger.info("[STEP 2] Candidate Phrase Extraction...")
+        else:
+            print("[STEP 2] Candidate Phrase Extraction...")
         
         candidate_phrases = self._extract_phrases(
             sentences,
@@ -184,66 +209,96 @@ class PhraseCentricExtractor:
             max_length=max_phrase_length
         )
         
-        
-        # DEBUG: Print ALL candidate phrases BEFORE the summary line
-        print(f"📋 DEBUG - ALL CANDIDATE PHRASES ({len(candidate_phrases)} total):")
-        for i, p in enumerate(candidate_phrases, 1):
-            print(f"     {i}. '{p['phrase']}' (freq: {p['frequency']})")
-        
-        print(f"  ✓ Extracted {len(candidate_phrases)} candidate phrases")
+        # ✅ LOG SUMMARY ONLY - Not individual phrases
+        if USE_LOGGER:
+            log_summary(logger, "CANDIDATE_PHRASES", {
+                'total': len(candidate_phrases),
+                'top_10': [p['phrase'] for p in candidate_phrases[:10]]
+            })
+            # Only log all phrases in DEBUG mode
+            log_debug(logger, "All candidate phrases", candidate_phrases)
+        else:
+            print(f"  ✓ Extracted {len(candidate_phrases)} candidate phrases")
         
         # ====================================================================
         # STEP 3: HARD FILTERING RULES (NON-NEGOTIABLE)
         # ====================================================================
-        print(f"[STEP 3] Hard Filtering Rules...")
+        if USE_LOGGER:
+            logger.info("[STEP 3] Hard Filtering Rules...")
+        else:
+            print(f"[STEP 3] Hard Filtering Rules...")
         
         filtered_phrases = self._hard_filter(
             candidate_phrases,
             min_words=min_phrase_length
         )
         
-        # DEBUG: Print ALL phrases BEFORE summary
-        print(f"📋 DEBUG - ALL PHRASES AFTER HARD FILTER ({len(filtered_phrases)} total):")
-        for i, p in enumerate(filtered_phrases, 1):
-            print(f"     {i}. '{p['phrase']}' (freq: {p['frequency']})")
-        
-        print(f"✓ After hard filtering: {len(filtered_phrases)} phrases")
+        # ✅ LOG SUMMARY ONLY
         removed = len(candidate_phrases) - len(filtered_phrases)
-        if removed > 0:
-            print(f"  ❌ Removed {removed} phrases (discourse/template/single-word)")
+        if USE_LOGGER:
+            log_summary(logger, "HARD_FILTER", {
+                'before': len(candidate_phrases),
+                'after': len(filtered_phrases),
+                'removed': removed,
+                'top_10': [p['phrase'] for p in filtered_phrases[:10]]
+            })
+            log_debug(logger, "All filtered phrases", filtered_phrases)
+        else:
+            print(f"✓ After hard filtering: {len(filtered_phrases)} phrases")
+            if removed > 0:
+                print(f"  ❌ Removed {removed} phrases (discourse/template/single-word)")
         
         # ====================================================================
         # STEP 3.1: Phrase POS Structure Filter (NEW)
         # ====================================================================
-        print(f"[STEP 3.1] Phrase POS Structure Filter...")
+        if USE_LOGGER:
+            logger.info("[STEP 3.1] Phrase POS Structure Filter...")
+        else:
+            print(f"[STEP 3.1] Phrase POS Structure Filter...")
         before_pos = len(filtered_phrases)
         
         filtered_phrases = self._phrase_pos_structure_filter(filtered_phrases)
         
-        # DEBUG: Print ALL phrases BEFORE summary
-        print(f"📋 DEBUG - ALL PHRASES AFTER POS FILTER ({len(filtered_phrases)} total):")
-        for i, p in enumerate(filtered_phrases, 1):
-            print(f"     {i}. '{p['phrase']}' (freq: {p['frequency']})")
-        
-        print(f"  ✓ After POS filter: {len(filtered_phrases)} phrases")
+        # ✅ LOG SUMMARY ONLY
         removed = before_pos - len(filtered_phrases)
-        if removed > 0:
-            print(f"  ❌ Removed {removed} phrases (invalid POS structure)")
+        if USE_LOGGER:
+            log_summary(logger, "POS_FILTER", {
+                'before': before_pos,
+                'after': len(filtered_phrases),
+                'removed': removed,
+                'top_10': [p['phrase'] for p in filtered_phrases[:10]]
+            })
+            log_debug(logger, "All POS filtered phrases", filtered_phrases)
+        else:
+            print(f"  ✓ After POS filter: {len(filtered_phrases)} phrases")
+            if removed > 0:
+                print(f"  ❌ Removed {removed} phrases (invalid POS structure)")
+        
         # ====================================================================
         # STEP 3.2: Phrase Lexical Specificity Filter (NEW)
         # ====================================================================
-        print(f"[STEP 3.2] Phrase Lexical Specificity Filter...")
+        if USE_LOGGER:
+            logger.info("[STEP 3.2] Phrase Lexical Specificity Filter...")
+        else:
+            print(f"[STEP 3.2] Phrase Lexical Specificity Filter...")
         before_spec = len(filtered_phrases)
         
         filtered_phrases = self._phrase_lexical_specificity_filter(filtered_phrases)
         
-        print(f"  ✓ After specificity filter: {len(filtered_phrases)} phrases")
+        # ✅ LOG SUMMARY ONLY
         removed = before_spec - len(filtered_phrases)
-        if removed > 0:
-            print(f"  ❌ Removed {removed} phrases (generic head nouns/templates)")
-            print(f"  📋 DEBUG - AFTER SPECIFICITY FILTER (All {len(filtered_phrases)} phrases):")
-            for i, p in enumerate(filtered_phrases, 1):
-                print(f"     {i}. '{p['phrase']}' (freq: {p['frequency']})")
+        if USE_LOGGER:
+            log_summary(logger, "SPECIFICITY_FILTER", {
+                'before': before_spec,
+                'after': len(filtered_phrases),
+                'removed': removed,
+                'top_10': [p['phrase'] for p in filtered_phrases[:10]]
+            })
+            log_debug(logger, "All specificity filtered phrases", filtered_phrases)
+        else:
+            print(f"  ✓ After specificity filter: {len(filtered_phrases)} phrases")
+            if removed > 0:
+                print(f"  ❌ Removed {removed} phrases (generic head nouns/templates)")
         
         # ====================================================================
         # ====================================================================
@@ -399,8 +454,11 @@ class PhraseCentricExtractor:
         # ====================================================================
         # STEP 7: Final Ranking - REMOVED
         # ====================================================================
-        print("[STEP 7] Final Ranking - SKIPPED (disabled by user)")
-        print(f"  ℹ️  Using phrases directly without ranking")
+        if USE_LOGGER:
+            logger.info("[STEP 7] Final Ranking - SKIPPED (disabled by user)")
+        else:
+            print("[STEP 7] Final Ranking - SKIPPED (disabled by user)")
+            print(f"  ℹ️  Using phrases directly without ranking")
         
         # Use semantic_filtered directly, limit to max_phrases
         final_phrases = semantic_filtered[:max_phrases]
@@ -416,30 +474,38 @@ class PhraseCentricExtractor:
             else:
                 phrase_dict['supporting_sentence'] = ""
         
-        print(f"  ✓ Final output: {len(final_phrases)} phrases")
-        print(f"📋 DEBUG - FINAL PHRASES (All {len(final_phrases)} phrases):")
-        for i, p in enumerate(final_phrases, 1):
-            freq = p.get('frequency', 0)
-            role = p.get('semantic_role', 'unknown')
-            print(f"     {i}. '{p['phrase']}' (freq: {freq}, role: {role})")
+        # ✅ LOG SUMMARY ONLY
+        if USE_LOGGER:
+            log_summary(logger, "FINAL_PHRASES", {
+                'total': len(final_phrases),
+                'top_10': [{'phrase': p['phrase'], 'freq': p.get('frequency', 0)} for p in final_phrases[:10]]
+            })
+            log_debug(logger, "All final phrases", final_phrases)
+        else:
+            print(f"  ✓ Final output: {len(final_phrases)} phrases")
         
         # ====================================================================
         # STEP 8: Validation Check - REMOVED
         # ====================================================================
-        print("[STEP 8] Validation Check - SKIPPED (disabled by user)")
-        print(f"  ℹ️  No validation performed")
+        if USE_LOGGER:
+            logger.info("[STEP 8] Validation Check - SKIPPED (disabled by user)")
+            log_summary(logger, "EXTRACTION_COMPLETE", {
+                'total_phrases': len(final_phrases)
+            })
+        else:
+            print("[STEP 8] Validation Check - SKIPPED (disabled by user)")
+            print(f"  ℹ️  No validation performed")
+            print(f"{'='*80}")
+            print(f"EXTRACTION COMPLETE")
+            print(f"  Total phrases: {len(final_phrases)}")
+            print(f"{'='*80}")
         
-        print(f"{'='*80}")
-        print(f"EXTRACTION COMPLETE")
-        print(f"  Total phrases: {len(final_phrases)}")
-        print(f"{'='*80}")
-        
-        # DEBUG: Check cluster_id before return
-        print(f"\n🔍 DEBUG - Checking cluster_id before return:")
-        for i, p in enumerate(final_phrases[:5], 1):  # Check first 5
-            cid = p.get('cluster_id', 'MISSING')
-            c = p.get('cluster', 'MISSING')
-            print(f"  {i}. '{p['phrase']}': cluster_id={cid}, cluster={c}")
+        # ✅ LOG DEBUG INFO ONLY IN DEBUG MODE
+        if USE_LOGGER:
+            log_debug(logger, "Cluster IDs check", [
+                {'phrase': p['phrase'], 'cluster_id': p.get('cluster_id'), 'cluster': p.get('cluster')}
+                for p in final_phrases[:5]
+            ])
         
         return final_phrases
     

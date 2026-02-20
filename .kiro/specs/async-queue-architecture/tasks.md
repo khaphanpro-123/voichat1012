@@ -29,7 +29,7 @@ This implementation plan breaks down the async queue architecture into discrete,
     - Handle storage errors and return appropriate error codes
     - _Requirements: 1.1, 1.2, 1.5, 11.2_
   
-  - [~] 2.3 Write property test for file upload acceptance
+  - [x] 2.3 Write property test for file upload acceptance
     - **Property 1: File Upload Acceptance**
     - **Validates: Requirements 1.1, 1.2**
   

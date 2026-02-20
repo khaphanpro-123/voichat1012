@@ -1,9 +1,77 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Component, ReactNode } from "react"
 import { Upload, FileText, Loader2, CheckCircle, Volume2 } from "lucide-react"
 
-export default function DocumentsPage() {
+// Error Boundary Component
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('❌ Document page error:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    })
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <svg className="w-6 h-6 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h2 className="text-xl font-bold text-gray-900">Something went wrong</h2>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">Error details:</p>
+              <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-40 whitespace-pre-wrap">
+                {this.state.error?.message}
+              </pre>
+            </div>
+            
+            {this.state.error?.stack && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Stack trace:</p>
+                <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-40 whitespace-pre-wrap">
+                  {this.state.error.stack}
+                </pre>
+              </div>
+            )}
+            
+            <button
+              onClick={() => {
+                this.setState({ hasError: false, error: null })
+                window.location.reload()
+              }}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+function DocumentsPageContent() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -63,11 +131,17 @@ export default function DocumentsPage() {
         throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
 
+      // ✅ Validate response data
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from server')
+      }
+
       setResult(data)
       
       // Auto-save to database
       handleSaveToDatabase(data).catch(err => console.error("Save error:", err))
     } catch (err: any) {
+      console.error('❌ Upload error:', err)
       setError(err.message || "Có lỗi xảy ra khi upload")
     } finally {
       setUploading(false)
@@ -75,11 +149,21 @@ export default function DocumentsPage() {
   }
 
   const handleSaveToDatabase = async (data: any) => {
-    if (!data.flashcards || data.flashcards.length === 0) return
+    // ✅ Validate data before processing
+    if (!data || !Array.isArray(data.flashcards) || data.flashcards.length === 0) {
+      console.warn('⚠️ No flashcards to save')
+      return
+    }
 
     setSaving(true)
     try {
       const savePromises = data.flashcards.map(async (card: any) => {
+        // ✅ Validate each card
+        if (!card || (!card.word && !card.phrase)) {
+          console.warn('⚠️ Skipping invalid card:', card)
+          return
+        }
+
         const level = (card.importance_score || 0) > 0.7 ? "advanced" : 
                      (card.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
         
@@ -452,5 +536,15 @@ export default function DocumentsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+
+// Wrap with Error Boundary
+export default function DocumentsPage() {
+  return (
+    <ErrorBoundary>
+      <DocumentsPageContent />
+    </ErrorBoundary>
   )
 }
