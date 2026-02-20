@@ -174,14 +174,14 @@ class CompletePipeline12Stages:
         )
         results['stages']['stage4'] = stage4_result
         
-        # DEBUG: Check cluster distribution after phrase extraction
-        phrase_clusters = {}
-        for p in stage4_result['phrases']:
-            cid = p.get('cluster_id', p.get('cluster', 'MISSING'))
-            phrase_clusters[cid] = phrase_clusters.get(cid, 0) + 1
-        print(f"\n  📊 DEBUG - Phrase clusters after STAGE 4:")
-        for cid in sorted(phrase_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
-            print(f"     Cluster {cid}: {phrase_clusters[cid]} phrases")
+        # DEBUG: Check cluster distribution after phrase extraction (DISABLED)
+        # phrase_clusters = {}
+        # for p in stage4_result['phrases']:
+        #     cid = p.get('cluster_id', p.get('cluster', 'MISSING'))
+        #     phrase_clusters[cid] = phrase_clusters.get(cid, 0) + 1
+        # print(f"\n  📊 DEBUG - Phrase clusters after STAGE 4:")
+        # for cid in sorted(phrase_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
+        #     print(f"     Cluster {cid}: {phrase_clusters[cid]} phrases")
         
         print(f"  ✓ Extracted {stage4_result['phrase_count']} phrases")
         print(f"  ✓ Multi-word: {stage4_result['multi_word_percentage']:.1f}%")
@@ -249,14 +249,14 @@ class CompletePipeline12Stages:
         )
         results['stages']['stage8'] = stage8_result
         
-        # DEBUG: Check cluster distribution after merge
-        merge_clusters = {}
-        for v in stage8_result['vocabulary']:
-            cid = v.get('cluster_id', v.get('cluster', 'MISSING'))
-            merge_clusters[cid] = merge_clusters.get(cid, 0) + 1
-        print(f"\n  📊 DEBUG - Clusters after STAGE 8 (merge):")
-        for cid in sorted(merge_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
-            print(f"     Cluster {cid}: {merge_clusters[cid]} items")
+        # DEBUG: Check cluster distribution after merge (DISABLED)
+        # merge_clusters = {}
+        # for v in stage8_result['vocabulary']:
+        #     cid = v.get('cluster_id', v.get('cluster', 'MISSING'))
+        #     merge_clusters[cid] = merge_clusters.get(cid, 0) + 1
+        # print(f"\n  📊 DEBUG - Clusters after STAGE 8 (merge):")
+        # for cid in sorted(merge_clusters.keys(), key=lambda x: (isinstance(x, str), x)):
+        #     print(f"     Cluster {cid}: {merge_clusters[cid]} items")
         
         print(f"  ✓ Merged vocabulary: {stage8_result['total_count']} items")
         print(f"  ✓ Phrases: {stage8_result['phrase_count']} ({stage8_result['phrase_percentage']:.1f}%)")
@@ -1110,7 +1110,7 @@ class CompletePipeline12Stages:
         vocabulary: List[Dict],
         document_title: str,
         similarity_matrix: Optional[Dict] = None,
-        group_by_cluster: bool = True  # NEW: Group by cluster instead of synonym
+        group_by_cluster: bool = False  # FIXED: Generate individual flashcards (one per vocabulary item)
     ) -> Dict:
         """
         Stage 12: Enhanced Flashcard Generation
