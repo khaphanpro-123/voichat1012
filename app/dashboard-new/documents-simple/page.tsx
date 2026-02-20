@@ -1,77 +1,9 @@
 "use client"
 
-import { useState, Component, ReactNode } from "react"
+import { useState } from "react"
 import { Upload, FileText, Loader2, CheckCircle, Volume2 } from "lucide-react"
 
-// Error Boundary Component
-class ErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: any) {
-    super(props)
-    this.state = { hasError: false, error: null }
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('❌ Document page error:', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
-    })
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <svg className="w-6 h-6 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <h2 className="text-xl font-bold text-gray-900">Something went wrong</h2>
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">Error details:</p>
-              <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-40 whitespace-pre-wrap">
-                {this.state.error?.message}
-              </pre>
-            </div>
-            
-            {this.state.error?.stack && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Stack trace:</p>
-                <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-40 whitespace-pre-wrap">
-                  {this.state.error.stack}
-                </pre>
-              </div>
-            )}
-            
-            <button
-              onClick={() => {
-                this.setState({ hasError: false, error: null })
-                window.location.reload()
-              }}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-
-function DocumentsPageContent() {
+export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -131,7 +63,7 @@ function DocumentsPageContent() {
         throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
 
-      // ✅ Validate response data
+      // Validate response data
       if (!data || typeof data !== 'object') {
         throw new Error('Invalid response format from server')
       }
@@ -141,7 +73,7 @@ function DocumentsPageContent() {
       // Auto-save to database
       handleSaveToDatabase(data).catch(err => console.error("Save error:", err))
     } catch (err: any) {
-      console.error('❌ Upload error:', err)
+      console.error('Upload error:', err)
       setError(err.message || "Có lỗi xảy ra khi upload")
     } finally {
       setUploading(false)
@@ -149,18 +81,18 @@ function DocumentsPageContent() {
   }
 
   const handleSaveToDatabase = async (data: any) => {
-    // ✅ Validate data before processing
+    // Validate data before processing
     if (!data || !Array.isArray(data.flashcards) || data.flashcards.length === 0) {
-      console.warn('⚠️ No flashcards to save')
+      console.warn('No flashcards to save')
       return
     }
 
     setSaving(true)
     try {
       const savePromises = data.flashcards.map(async (card: any) => {
-        // ✅ Validate each card
+        // Validate each card
         if (!card || (!card.word && !card.phrase)) {
-          console.warn('⚠️ Skipping invalid card:', card)
+          console.warn('Skipping invalid card:', card)
           return
         }
 
@@ -203,7 +135,7 @@ function DocumentsPageContent() {
 
   // Generate Markmap link (markdown mindmap)
   const generateMarkmapLink = (graph: any) => {
-    if (!graph.entities || !graph.relations) return "#"
+    if (!graph || !graph.entities || !graph.relations) return "#"
     
     // Find center node (most connected)
     const connectionCount = new Map<string, number>()
@@ -232,7 +164,7 @@ function DocumentsPageContent() {
 
   // Generate Mermaid link (flowchart)
   const generateMermaidLink = (graph: any) => {
-    if (!graph.entities || !graph.relations) return "#"
+    if (!graph || !graph.entities || !graph.relations) return "#"
     
     // Generate Mermaid syntax
     let mermaid = "graph TD\n"
@@ -262,7 +194,7 @@ function DocumentsPageContent() {
 
   // Generate Excalidraw link (JSON format)
   const generateExcalidrawLink = (graph: any) => {
-    if (!graph.entities || !graph.relations) return "#"
+    if (!graph || !graph.entities || !graph.relations) return "#"
     
     // Generate Excalidraw JSON
     const elements: any[] = []
@@ -459,7 +391,11 @@ function DocumentsPageContent() {
             <div className="border rounded-lg p-4">
               <h3 className="font-bold mb-3 text-lg">Danh sách từ vựng ({result.flashcards?.length || 0} từ):</h3>
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {result.flashcards?.map((card: any, idx: number) => (
+                {Array.isArray(result.flashcards) && result.flashcards.map((card: any, idx: number) => {
+                  // Skip invalid cards
+                  if (!card || (!card.word && !card.phrase)) return null
+                  
+                  return (
                   <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -529,22 +465,13 @@ function DocumentsPageContent() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
-
-
-// Wrap with Error Boundary
-export default function DocumentsPage() {
-  return (
-    <ErrorBoundary>
-      <DocumentsPageContent />
-    </ErrorBoundary>
   )
 }
