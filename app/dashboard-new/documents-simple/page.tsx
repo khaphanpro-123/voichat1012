@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, FileText, Loader2, CheckCircle, Volume2 } from "lucide-react"
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -63,14 +62,12 @@ export default function DocumentsPage() {
         throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
 
-      // Validate response data
       if (!data || typeof data !== 'object') {
         throw new Error('Invalid response format from server')
       }
 
       setResult(data)
       
-      // Auto-save to database
       handleSaveToDatabase(data).catch(err => console.error("Save error:", err))
     } catch (err: any) {
       console.error('Upload error:', err)
@@ -81,7 +78,6 @@ export default function DocumentsPage() {
   }
 
   const handleSaveToDatabase = async (data: any) => {
-    // Validate data before processing
     if (!data || !Array.isArray(data.flashcards) || data.flashcards.length === 0) {
       console.warn('No flashcards to save')
       return
@@ -90,7 +86,6 @@ export default function DocumentsPage() {
     setSaving(true)
     try {
       const savePromises = data.flashcards.map(async (card: any) => {
-        // Validate each card
         if (!card || (!card.word && !card.phrase)) {
           console.warn('Skipping invalid card:', card)
           return
@@ -133,11 +128,9 @@ export default function DocumentsPage() {
     }
   }
 
-  // Generate Markmap link (markdown mindmap)
   const generateMarkmapLink = (graph: any) => {
     if (!graph || !graph.entities || !graph.relations) return "#"
     
-    // Find center node (most connected)
     const connectionCount = new Map<string, number>()
     graph.relations.forEach((rel: any) => {
       connectionCount.set(rel.source, (connectionCount.get(rel.source) || 0) + 1)
@@ -151,25 +144,20 @@ export default function DocumentsPage() {
     const centerNode = sortedEntities[0]
     const childNodes = sortedEntities.slice(1, 13)
     
-    // Generate markdown
     let markdown = `# ${centerNode.label}\n\n`
     childNodes.forEach((node: any) => {
       markdown += `## ${node.label}\n`
     })
     
-    // Encode and create Markmap link
     const encoded = encodeURIComponent(markdown)
     return `https://markmap.js.org/repl#?d=${encoded}`
   }
 
-  // Generate Mermaid link (flowchart)
   const generateMermaidLink = (graph: any) => {
     if (!graph || !graph.entities || !graph.relations) return "#"
     
-    // Generate Mermaid syntax
     let mermaid = "graph TD\n"
     
-    // Add nodes (limit to 15 for readability)
     const entities = graph.entities.slice(0, 15)
     entities.forEach((entity: any, idx: number) => {
       const nodeId = `N${idx}`
@@ -177,7 +165,6 @@ export default function DocumentsPage() {
       mermaid += `  ${nodeId}["${label}"]\n`
     })
     
-    // Add relations (limit to 20)
     const relations = graph.relations.slice(0, 20)
     relations.forEach((rel: any) => {
       const sourceIdx = entities.findIndex((e: any) => e.id === rel.source)
@@ -187,20 +174,16 @@ export default function DocumentsPage() {
       }
     })
     
-    // Encode and create Mermaid Live link
     const encoded = btoa(mermaid)
     return `https://mermaid.live/edit#pako:${encoded}`
   }
 
-  // Generate Excalidraw link (JSON format)
   const generateExcalidrawLink = (graph: any) => {
     if (!graph || !graph.entities || !graph.relations) return "#"
     
-    // Generate Excalidraw JSON
     const elements: any[] = []
     const entities = graph.entities.slice(0, 12)
     
-    // Create nodes in circular layout
     const centerX = 400
     const centerY = 400
     const radius = 200
@@ -253,7 +236,6 @@ export default function DocumentsPage() {
         <p className="text-gray-600">Upload tài liệu để trích xuất từ vựng</p>
       </div>
 
-      {/* Upload Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="space-y-4">
           <label
@@ -261,7 +243,9 @@ export default function DocumentsPage() {
             className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
           >
             <div className="text-center">
-              <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+              <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
               <p className="text-sm text-gray-600">
                 {file ? file.name : "Click để chọn file PDF/DOCX"}
               </p>
@@ -297,12 +281,17 @@ export default function DocumentsPage() {
           >
             {uploading ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
                 Đang xử lý...
               </>
             ) : (
               <>
-                <FileText className="h-5 w-5" />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
                 Trích xuất từ vựng
               </>
             )}
@@ -310,11 +299,12 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {/* Results Section */}
       {result && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="h-6 w-6 text-green-500" />
+            <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <h2 className="text-2xl font-bold">Kết quả</h2>
           </div>
           
@@ -333,7 +323,6 @@ export default function DocumentsPage() {
               )}
             </div>
 
-            {/* Knowledge Graph Stats */}
             {result.knowledge_graph && (
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h3 className="font-bold text-lg mb-2">📊 Sơ đồ tư duy</h3>
@@ -352,7 +341,6 @@ export default function DocumentsPage() {
                   </div>
                 </div>
                 
-                {/* Mindmap Links */}
                 <div className="space-y-2">
                   <p className="text-sm text-gray-600 mb-2">
                     🔗 Xem sơ đồ tư duy trực quan:
@@ -387,19 +375,16 @@ export default function DocumentsPage() {
               </div>
             )}
 
-            {/* Vocabulary list - SHOW ALL */}
             <div className="border rounded-lg p-4">
               <h3 className="font-bold mb-3 text-lg">Danh sách từ vựng ({result.flashcards?.length || 0} từ):</h3>
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
                 {Array.isArray(result.flashcards) && result.flashcards.map((card: any, idx: number) => {
-                  // Skip invalid cards
                   if (!card || (!card.word && !card.phrase)) return null
                   
                   return (
                   <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        {/* Word with TTS */}
                         <div className="flex items-center gap-2 mb-2">
                           <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
                           <button
@@ -407,23 +392,22 @@ export default function DocumentsPage() {
                             className="p-1 hover:bg-blue-100 rounded-full transition-colors"
                             title="Phát âm từ"
                           >
-                            <Volume2 className="h-4 w-4 text-blue-600" />
+                            <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                            </svg>
                           </button>
                         </div>
 
-                        {/* Phonetic */}
                         {card.phonetic && (
                           <p className="text-sm text-gray-600 mb-2">/{card.phonetic}/</p>
                         )}
 
-                        {/* Definition */}
                         {card.definition && (
                           <p className="text-sm text-gray-700 mb-2">
                             <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
                           </p>
                         )}
 
-                        {/* Context Sentence */}
                         {card.context_sentence && (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
                             <div className="flex items-start gap-2">
@@ -435,13 +419,14 @@ export default function DocumentsPage() {
                                 className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0"
                                 title="Phát âm câu"
                               >
-                                <Volume2 className="h-4 w-4 text-yellow-700" />
+                                <svg className="h-4 w-4 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                </svg>
                               </button>
                             </div>
                           </div>
                         )}
 
-                        {/* Synonyms */}
                         {card.synonyms && card.synonyms.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             <span className="text-xs font-semibold text-gray-600">🔄 Từ đồng nghĩa:</span>
@@ -457,7 +442,6 @@ export default function DocumentsPage() {
                         )}
                       </div>
 
-                      {/* Score Badge */}
                       <div className="ml-4 text-right flex-shrink-0">
                         <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-bold">
                           {(card.importance_score || 0).toFixed(2)}
