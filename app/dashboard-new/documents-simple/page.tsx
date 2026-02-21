@@ -146,109 +146,154 @@ export default function DocumentsPage() {
   }
 
   const generateMarkmapLink = (graph: any) => {
-    if (!graph || !graph.entities || !graph.relations) {
-      console.warn('Invalid graph structure:', graph)
-      return "#"
+    // Validate graph data
+    if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
+      console.warn('⚠️ Markmap: No entities data available')
+      return null // Return null to disable link
     }
     
-    const connectionCount = new Map<string, number>()
-    graph.relations.forEach((rel: any) => {
-      connectionCount.set(rel.source, (connectionCount.get(rel.source) || 0) + 1)
-      connectionCount.set(rel.target, (connectionCount.get(rel.target) || 0) + 1)
-    })
+    if (!graph.relations || !Array.isArray(graph.relations)) {
+      console.warn('⚠️ Markmap: No relations data available')
+    }
     
-    const sortedEntities = [...graph.entities].sort((a: any, b: any) => 
-      (connectionCount.get(b.id) || 0) - (connectionCount.get(a.id) || 0)
-    )
-    
-    const centerNode = sortedEntities[0]
-    if (!centerNode) return "#"
-    
-    const childNodes = sortedEntities.slice(1, 13)
-    
-    let markdown = `# ${centerNode.label}\n\n`
-    childNodes.forEach((node: any) => {
-      markdown += `## ${node.label}\n`
-    })
-    
-    const encoded = encodeURIComponent(markdown)
-    return `https://markmap.js.org/repl#?d=${encoded}`
+    try {
+      const connectionCount = new Map<string, number>()
+      if (graph.relations) {
+        graph.relations.forEach((rel: any) => {
+          connectionCount.set(rel.source, (connectionCount.get(rel.source) || 0) + 1)
+          connectionCount.set(rel.target, (connectionCount.get(rel.target) || 0) + 1)
+        })
+      }
+      
+      const sortedEntities = [...graph.entities].sort((a: any, b: any) => 
+        (connectionCount.get(b.id) || 0) - (connectionCount.get(a.id) || 0)
+      )
+      
+      const centerNode = sortedEntities[0]
+      if (!centerNode || !centerNode.label) {
+        console.warn('⚠️ Markmap: No valid center node')
+        return null
+      }
+      
+      const childNodes = sortedEntities.slice(1, 13)
+      
+      let markdown = `# ${centerNode.label}\n\n`
+      childNodes.forEach((node: any) => {
+        if (node && node.label) {
+          markdown += `## ${node.label}\n`
+        }
+      })
+      
+      const encoded = encodeURIComponent(markdown)
+      const url = `https://markmap.js.org/repl#?d=${encoded}`
+      console.log('✅ Markmap URL generated:', url.substring(0, 100) + '...')
+      return url
+    } catch (error) {
+      console.error('❌ Markmap generation error:', error)
+      return null
+    }
   }
 
   const generateMermaidLink = (graph: any) => {
-    if (!graph || !graph.entities || !graph.relations) return "#"
+    if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
+      console.warn('⚠️ Mermaid: No entities data')
+      return null
+    }
     
-    let mermaid = "graph TD\n"
-    
-    const entities = graph.entities.slice(0, 15)
-    entities.forEach((entity: any, idx: number) => {
-      const nodeId = `N${idx}`
-      const label = entity.label.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 20)
-      mermaid += `  ${nodeId}["${label}"]\n`
-    })
-    
-    const relations = graph.relations.slice(0, 20)
-    relations.forEach((rel: any) => {
-      const sourceIdx = entities.findIndex((e: any) => e.id === rel.source)
-      const targetIdx = entities.findIndex((e: any) => e.id === rel.target)
-      if (sourceIdx >= 0 && targetIdx >= 0) {
-        mermaid += `  N${sourceIdx} --> N${targetIdx}\n`
+    try {
+      let mermaid = "graph TD\n"
+      
+      const entities = graph.entities.slice(0, 15)
+      entities.forEach((entity: any, idx: number) => {
+        if (entity && entity.label) {
+          const nodeId = `N${idx}`
+          const label = entity.label.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 20)
+          mermaid += `  ${nodeId}["${label}"]\n`
+        }
+      })
+      
+      if (graph.relations && Array.isArray(graph.relations)) {
+        const relations = graph.relations.slice(0, 20)
+        relations.forEach((rel: any) => {
+          const sourceIdx = entities.findIndex((e: any) => e.id === rel.source)
+          const targetIdx = entities.findIndex((e: any) => e.id === rel.target)
+          if (sourceIdx >= 0 && targetIdx >= 0) {
+            mermaid += `  N${sourceIdx} --> N${targetIdx}\n`
+          }
+        })
       }
-    })
-    
-    const encoded = btoa(mermaid)
-    return `https://mermaid.live/edit#pako:${encoded}`
+      
+      const encoded = btoa(mermaid)
+      const url = `https://mermaid.live/edit#pako:${encoded}`
+      console.log('✅ Mermaid URL generated')
+      return url
+    } catch (error) {
+      console.error('❌ Mermaid generation error:', error)
+      return null
+    }
   }
 
   const generateExcalidrawLink = (graph: any) => {
-    if (!graph || !graph.entities || !graph.relations) return "#"
-    
-    const elements: any[] = []
-    const entities = graph.entities.slice(0, 12)
-    
-    const centerX = 400
-    const centerY = 400
-    const radius = 200
-    
-    entities.forEach((entity: any, idx: number) => {
-      const angle = (idx / entities.length) * 2 * Math.PI
-      const x = centerX + Math.cos(angle) * radius
-      const y = centerY + Math.sin(angle) * radius
-      
-      elements.push({
-        type: "ellipse",
-        x: x - 50,
-        y: y - 30,
-        width: 100,
-        height: 60,
-        strokeColor: "#1e40af",
-        backgroundColor: "#dbeafe",
-        fillStyle: "solid",
-        strokeWidth: 2,
-        id: `node-${idx}`,
-      })
-      
-      elements.push({
-        type: "text",
-        x: x - 40,
-        y: y - 10,
-        width: 80,
-        height: 20,
-        text: entity.label.substring(0, 15),
-        fontSize: 14,
-        id: `text-${idx}`,
-      })
-    })
-    
-    const excalidrawData = {
-      type: "excalidraw",
-      version: 2,
-      source: "voichat1012",
-      elements: elements,
+    if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
+      console.warn('⚠️ Excalidraw: No entities data')
+      return null
     }
     
-    const encoded = encodeURIComponent(JSON.stringify(excalidrawData))
-    return `https://excalidraw.com/#json=${encoded}`
+    try {
+      const elements: any[] = []
+      const entities = graph.entities.slice(0, 12)
+      
+      const centerX = 400
+      const centerY = 400
+      const radius = 200
+      
+      entities.forEach((entity: any, idx: number) => {
+        if (entity && entity.label) {
+          const angle = (idx / entities.length) * 2 * Math.PI
+          const x = centerX + Math.cos(angle) * radius
+          const y = centerY + Math.sin(angle) * radius
+          
+          elements.push({
+            type: "ellipse",
+            x: x - 50,
+            y: y - 30,
+            width: 100,
+            height: 60,
+            strokeColor: "#1e40af",
+            backgroundColor: "#dbeafe",
+            fillStyle: "solid",
+            strokeWidth: 2,
+            id: `node-${idx}`,
+          })
+          
+          elements.push({
+            type: "text",
+            x: x - 40,
+            y: y - 10,
+            width: 80,
+            height: 20,
+            text: entity.label.substring(0, 15),
+            fontSize: 14,
+            id: `text-${idx}`,
+          })
+        }
+      })
+      
+      const excalidrawData = {
+        type: "excalidraw",
+        version: 2,
+        source: "voichat1012",
+        elements: elements,
+      }
+      
+      const encoded = encodeURIComponent(JSON.stringify(excalidrawData))
+      const url = `https://excalidraw.com/#json=${encoded}`
+      console.log('✅ Excalidraw URL generated')
+      return url
+    } catch (error) {
+      console.error('❌ Excalidraw generation error:', error)
+      return null
+    }
   }
 
   return (
@@ -351,10 +396,13 @@ export default function DocumentsPage() {
                 ✅ Đã trích xuất thành công!
               </p>
               <p className="text-green-700 mt-2">
-                Số từ vựng: {result.vocabulary?.length || result.flashcards?.length || 0}
+                📚 Vocabulary: {result.vocabulary?.length || 0} từ
               </p>
               <p className="text-green-700 text-sm">
-                Flashcards: {result.flashcards?.length || 0}
+                🎴 Flashcards: {result.flashcards?.length || 0} thẻ học
+              </p>
+              <p className="text-gray-600 text-xs mt-1">
+                💡 Vocabulary = tất cả từ trích xuất | Flashcards = thẻ học có định nghĩa đầy đủ
               </p>
               {saving && (
                 <p className="text-green-600 mt-1 text-sm">
@@ -386,30 +434,61 @@ export default function DocumentsPage() {
                     🔗 Xem sơ đồ tư duy trực quan:
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <a
-                      href={generateMarkmapLink(result.knowledge_graph_stats || result.knowledge_graph)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
-                    >
-                      🗺️ Markmap (Interactive)
-                    </a>
-                    <a
-                      href={generateMermaidLink(result.knowledge_graph_stats || result.knowledge_graph)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-2"
-                    >
-                      📊 Mermaid (Flowchart)
-                    </a>
-                    <a
-                      href={generateExcalidrawLink(result.knowledge_graph_stats || result.knowledge_graph)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-2"
-                    >
-                      ✏️ Excalidraw (Draw)
-                    </a>
+                    {(() => {
+                      const graphData = result.knowledge_graph_stats || result.knowledge_graph
+                      const markmapUrl = generateMarkmapLink(graphData)
+                      const mermaidUrl = generateMermaidLink(graphData)
+                      const excalidrawUrl = generateExcalidrawLink(graphData)
+                      
+                      return (
+                        <>
+                          {markmapUrl ? (
+                            <a
+                              href={markmapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
+                            >
+                              🗺️ Markmap (Interactive)
+                            </a>
+                          ) : (
+                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu để tạo mindmap">
+                              🗺️ Markmap (Không khả dụng)
+                            </div>
+                          )}
+                          
+                          {mermaidUrl ? (
+                            <a
+                              href={mermaidUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-2"
+                            >
+                              📊 Mermaid (Flowchart)
+                            </a>
+                          ) : (
+                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu để tạo flowchart">
+                              📊 Mermaid (Không khả dụng)
+                            </div>
+                          )}
+                          
+                          {excalidrawUrl ? (
+                            <a
+                              href={excalidrawUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-2"
+                            >
+                              ✏️ Excalidraw (Draw)
+                            </a>
+                          ) : (
+                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu để tạo diagram">
+                              ✏️ Excalidraw (Không khả dụng)
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               </div>
@@ -417,9 +496,12 @@ export default function DocumentsPage() {
 
             <div className="border rounded-lg p-4">
               <h3 className="font-bold mb-3 text-lg">
-                Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ):
+                📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ):
               </h3>
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <p className="text-sm text-gray-600 mb-3">
+                Hiển thị tất cả từ vựng được trích xuất từ tài liệu
+              </p>
+              <div className="space-y-3">
                 {Array.isArray(result.vocabulary || result.flashcards) && 
                  (result.vocabulary || result.flashcards).map((card: any, idx: number) => {
                   if (!card || (!card.word && !card.phrase)) return null
