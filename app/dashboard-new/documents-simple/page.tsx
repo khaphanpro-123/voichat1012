@@ -81,6 +81,10 @@ export default function DocumentsPage() {
 
       setResult(data)
       
+      // Debug: Show what we're rendering
+      console.log('Flashcards to render:', data.flashcards?.length || 0)
+      console.log('Vocabulary to render:', data.vocabulary?.length || 0)
+      
       handleSaveToDatabase(data).catch(err => console.error("Save error:", err))
     } catch (err: any) {
       console.error('Upload error:', err)
@@ -319,6 +323,21 @@ export default function DocumentsPage() {
 
       {result && (
         <div className="bg-white rounded-lg shadow p-6">
+          {/* Debug Info */}
+          <details className="mb-4 p-2 bg-gray-100 rounded text-xs">
+            <summary className="cursor-pointer font-bold">🔍 Debug Info (click to expand)</summary>
+            <pre className="mt-2 overflow-auto max-h-40">
+              {JSON.stringify({
+                has_flashcards: !!result.flashcards,
+                flashcards_length: result.flashcards?.length,
+                has_vocabulary: !!result.vocabulary,
+                vocabulary_length: result.vocabulary?.length,
+                has_knowledge_graph: !!(result.knowledge_graph_stats || result.knowledge_graph),
+                success: result.success
+              }, null, 2)}
+            </pre>
+          </details>
+
           <div className="flex items-center gap-2 mb-4">
             <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -332,7 +351,10 @@ export default function DocumentsPage() {
                 ✅ Đã trích xuất thành công!
               </p>
               <p className="text-green-700 mt-2">
-                Số từ vựng: {result.flashcards?.length || 0}
+                Số từ vựng: {result.vocabulary?.length || result.flashcards?.length || 0}
+              </p>
+              <p className="text-green-700 text-sm">
+                Flashcards: {result.flashcards?.length || 0}
               </p>
               {saving && (
                 <p className="text-green-600 mt-1 text-sm">
@@ -394,9 +416,12 @@ export default function DocumentsPage() {
             )}
 
             <div className="border rounded-lg p-4">
-              <h3 className="font-bold mb-3 text-lg">Danh sách từ vựng ({result.flashcards?.length || 0} từ):</h3>
+              <h3 className="font-bold mb-3 text-lg">
+                Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ):
+              </h3>
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {Array.isArray(result.flashcards) && result.flashcards.map((card: any, idx: number) => {
+                {Array.isArray(result.vocabulary || result.flashcards) && 
+                 (result.vocabulary || result.flashcards).map((card: any, idx: number) => {
                   if (!card || (!card.word && !card.phrase)) return null
                   
                   return (
