@@ -54,6 +54,11 @@ export default function DocumentsPage() {
 
       const data = await response.json()
 
+      // Debug: Log the response
+      console.log('API Response:', data)
+      console.log('Response type:', typeof data)
+      console.log('Has flashcards:', Array.isArray(data?.flashcards))
+
       if (!response.ok) {
         if (response.status === 502) {
           setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại...")
@@ -62,8 +67,16 @@ export default function DocumentsPage() {
         throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
 
+      // Validate response structure
       if (!data || typeof data !== 'object') {
+        console.error('Invalid response:', data)
         throw new Error('Invalid response format from server')
+      }
+
+      // Check if response has expected fields
+      if (!data.flashcards && !data.vocabulary) {
+        console.error('Missing expected fields:', data)
+        throw new Error('Response missing flashcards or vocabulary data')
       }
 
       setResult(data)
@@ -111,13 +124,13 @@ export default function DocumentsPage() {
 
       await Promise.all(savePromises)
 
-      if (data.knowledge_graph) {
+      if (data.knowledge_graph_stats || data.knowledge_graph) {
         await fetch("/api/knowledge-graph", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             document_id: data.document_id || Date.now().toString(),
-            graph_data: data.knowledge_graph,
+            graph_data: data.knowledge_graph_stats || data.knowledge_graph,
           }),
         })
       }
@@ -129,7 +142,10 @@ export default function DocumentsPage() {
   }
 
   const generateMarkmapLink = (graph: any) => {
-    if (!graph || !graph.entities || !graph.relations) return "#"
+    if (!graph || !graph.entities || !graph.relations) {
+      console.warn('Invalid graph structure:', graph)
+      return "#"
+    }
     
     const connectionCount = new Map<string, number>()
     graph.relations.forEach((rel: any) => {
@@ -142,6 +158,8 @@ export default function DocumentsPage() {
     )
     
     const centerNode = sortedEntities[0]
+    if (!centerNode) return "#"
+    
     const childNodes = sortedEntities.slice(1, 13)
     
     let markdown = `# ${centerNode.label}\n\n`
@@ -323,19 +341,19 @@ export default function DocumentsPage() {
               )}
             </div>
 
-            {result.knowledge_graph && (
+            {(result.knowledge_graph_stats || result.knowledge_graph) && (
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h3 className="font-bold text-lg mb-2">📊 Sơ đồ tư duy</h3>
                 <div className="flex gap-4 mb-3">
                   <div className="px-4 py-2 bg-blue-100 rounded-lg">
                     <div className="text-2xl font-bold text-blue-700">
-                      {result.knowledge_graph.entities?.length || 0}
+                      {result.knowledge_graph_stats?.entities?.length || result.knowledge_graph?.entities?.length || 0}
                     </div>
                     <div className="text-sm text-blue-600">Entities</div>
                   </div>
                   <div className="px-4 py-2 bg-green-100 rounded-lg">
                     <div className="text-2xl font-bold text-green-700">
-                      {result.knowledge_graph.relations?.length || 0}
+                      {result.knowledge_graph_stats?.relations?.length || result.knowledge_graph?.relations?.length || 0}
                     </div>
                     <div className="text-sm text-green-600">Relations</div>
                   </div>
@@ -347,7 +365,7 @@ export default function DocumentsPage() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <a
-                      href={generateMarkmapLink(result.knowledge_graph)}
+                      href={generateMarkmapLink(result.knowledge_graph_stats || result.knowledge_graph)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
@@ -355,7 +373,7 @@ export default function DocumentsPage() {
                       🗺️ Markmap (Interactive)
                     </a>
                     <a
-                      href={generateMermaidLink(result.knowledge_graph)}
+                      href={generateMermaidLink(result.knowledge_graph_stats || result.knowledge_graph)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-2"
@@ -363,7 +381,7 @@ export default function DocumentsPage() {
                       📊 Mermaid (Flowchart)
                     </a>
                     <a
-                      href={generateExcalidrawLink(result.knowledge_graph)}
+                      href={generateExcalidrawLink(result.knowledge_graph_stats || result.knowledge_graph)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-2"
