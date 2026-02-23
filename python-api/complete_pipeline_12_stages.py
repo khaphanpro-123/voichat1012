@@ -684,8 +684,18 @@ class CompletePipeline12Stages:
         """
         Stage 10: Synonym Collapse
         Group semantically similar phrases using SBERT embeddings
+        ALSO: Add IPA phonetics to all vocabulary items
         """
         print(f"  ℹ️  Grouping synonyms with similarity > 0.80...")
+        
+        # Add IPA phonetics to all vocabulary items FIRST
+        print(f"  ℹ️  Adding IPA phonetics to vocabulary items...")
+        for item in vocabulary:
+            word = item.get('phrase', item.get('word', ''))
+            if word and not item.get('phonetic'):
+                ipa = self._get_ipa_phonetics(word)
+                if ipa:
+                    item['phonetic'] = ipa
         
         if not vocabulary or len(vocabulary) < 2:
             print(f"  ⚠️  Not enough items for synonym detection ({len(vocabulary)} items)")

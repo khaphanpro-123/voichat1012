@@ -27,6 +27,9 @@ sentence-transformers==2.2.0
 # BM25
 rank-bm25==0.2.2
 
+# IPA Phonetics (REQUIRED for vocabulary display)
+eng-to-ipa>=0.0.2
+
 # REMOVED (saves ~6GB):
 # - torch (will be installed as dependency of sentence-transformers)
 # - ultralytics (500MB) - OCR not critical
@@ -34,4 +37,3 @@ rank-bm25==0.2.2
 # - matplotlib (200MB) - visualization not needed in production
 # - underthesea (100MB) - Vietnamese NLP not critical
 # - openai (50MB) - can be added back if needed
-# - eng-to-ipa (20MB) - phonetics not critical

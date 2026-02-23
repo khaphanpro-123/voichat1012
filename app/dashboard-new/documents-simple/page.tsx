@@ -147,6 +147,15 @@ export default function DocumentsPage() {
 
   const generateMarkmapLink = (graph: any) => {
     // Validate graph data
+    console.log('🔍 Markmap Debug:', {
+      hasGraph: !!graph,
+      hasEntities: !!graph?.entities,
+      entitiesLength: graph?.entities?.length,
+      hasRelations: !!graph?.relations,
+      relationsLength: graph?.relations?.length,
+      firstEntity: graph?.entities?.[0]
+    })
+    
     if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
       console.warn('⚠️ Markmap: No entities data available')
       return null // Return null to disable link
@@ -183,6 +192,8 @@ export default function DocumentsPage() {
           markdown += `## ${node.label}\n`
         }
       })
+      
+      console.log('✅ Markmap markdown generated:', markdown.substring(0, 100))
       
       const encoded = encodeURIComponent(markdown)
       const url = `https://markmap.js.org/repl#?d=${encoded}`
@@ -523,8 +534,10 @@ export default function DocumentsPage() {
                           </button>
                         </div>
 
-                        {card.phonetic && (
-                          <p className="text-sm text-gray-600 mb-2">/{card.phonetic}/</p>
+                        {(card.phonetic || card.ipa) && (
+                          <p className="text-sm text-blue-600 mb-2 font-mono">
+                            /{card.phonetic || card.ipa}/
+                          </p>
                         )}
 
                         {card.definition && (
