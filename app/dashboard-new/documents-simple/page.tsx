@@ -95,7 +95,7 @@ export default function DocumentsPage() {
         const level = (item.importance_score || 0) > 0.7 ? "advanced" : 
                      (item.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
         
-        await fetch("/api/vocabulary", {
+        const response = await fetch("/api/vocabulary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -104,11 +104,14 @@ export default function DocumentsPage() {
             example: item.context_sentence || item.supporting_sentence || "",
             level: level,
             pronunciation: item.phonetic || item.ipa || "",
-            ipa: item.phonetic || item.ipa || "",
             source: `document_${data.document_id || Date.now()}`,
             synonyms: item.synonyms || [],
           }),
         })
+        
+        if (!response.ok) {
+          console.error(`Failed to save word: ${item.word || item.phrase}`, await response.text())
+        }
       })
 
       await Promise.all(savePromises)
