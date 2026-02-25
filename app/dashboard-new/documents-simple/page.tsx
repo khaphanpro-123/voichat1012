@@ -1,22 +1,18 @@
 "use client"
 
-import { useState } from "react"
-import dynamic from 'next/dynamic'
-
-// Use Next.js dynamic import for client-side only component
-const SimpleMindmap = dynamic(
-  () => import('@/components/SimpleMindmap'),
-  { 
-    ssr: false,
-    loading: () => <div className="p-8 text-center text-gray-500">Đang tải sơ đồ...</div>
-  }
-)
+import { useState, useEffect } from "react"
+import SimpleMindmap from '@/components/SimpleMindmap'
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string>("")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -200,16 +196,35 @@ export default function DocumentsPage() {
           
           <div className="space-y-4">
             {/* Mindmap Section */}
-            {(result.knowledge_graph_stats || result.knowledge_graph) && (
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="font-bold text-lg mb-3">📊 Sơ đồ tư duy</h3>
+            {mounted && (result.knowledge_graph_stats || result.knowledge_graph) && (() => {
+              try {
+                const graphData = result.knowledge_graph_stats || result.knowledge_graph
+                const entities = graphData?.entities || []
+                const relations = graphData?.relations || []
                 
-                <SimpleMindmap 
-                  entities={(result.knowledge_graph_stats || result.knowledge_graph)?.entities || []}
-                  relations={(result.knowledge_graph_stats || result.knowledge_graph)?.relations || []}
-                />
-              </div>
-            )}
+                if (entities.length === 0) {
+                  return (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-gray-500 text-center">Không có dữ liệu sơ đồ tư duy</p>
+                    </div>
+                  )
+                }
+                
+                return (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 className="font-bold text-lg mb-3">📊 Sơ đồ tư duy</h3>
+                    <SimpleMindmap entities={entities} relations={relations} />
+                  </div>
+                )
+              } catch (err) {
+                console.error('Mindmap render error:', err)
+                return (
+                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                    <p className="text-red-600 text-center">Lỗi hiển thị sơ đồ tư duy</p>
+                  </div>
+                )
+              }
+            })()}
 
             {/* Vocabulary List */}
             <div className="border rounded-lg p-4">

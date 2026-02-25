@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface Entity {
   id: string
@@ -19,7 +19,7 @@ interface MindmapProps {
   relations: Relation[]
 }
 
-const SimpleMindmap: React.FC<MindmapProps> = ({ entities, relations }) => {
+function SimpleMindmap({ entities, relations }: MindmapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
