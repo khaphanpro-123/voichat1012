@@ -10,7 +10,6 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string>("")
-  const [saving, setSaving] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -57,11 +56,6 @@ export default function DocumentsPage() {
 
       const data = await response.json()
 
-      // Debug: Log the response
-      console.log('API Response:', data)
-      console.log('Response type:', typeof data)
-      console.log('Has flashcards:', Array.isArray(data?.flashcards))
-
       if (!response.ok) {
         if (response.status === 502) {
           setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại...")
@@ -70,27 +64,19 @@ export default function DocumentsPage() {
         throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
 
-      // Validate response structure
       if (!data || typeof data !== 'object') {
-        console.error('Invalid response:', data)
         throw new Error('Invalid response format from server')
       }
 
-      // Check if response has expected fields
       if (!data.flashcards && !data.vocabulary) {
-        console.error('Missing expected fields:', data)
         throw new Error('Response missing flashcards or vocabulary data')
       }
 
       setResult(data)
       
-      // Debug: Show what we're rendering
-      console.log('Flashcards to render:', data.flashcards?.length || 0)
-      console.log('Vocabulary to render:', data.vocabulary?.length || 0)
-      
-      handleSaveToDatabase(data).catch(err => console.error("Save error:", err))
+      // Auto-save vocabulary to database
+      await handleSaveToDatabase(data)
     } catch (err: any) {
-      console.error('Upload error:', err)
       setError(err.message || "Có lỗi xảy ra khi upload")
     } finally {
       setUploading(false)
@@ -98,21 +84,13 @@ export default function DocumentsPage() {
   }
 
   const handleSaveToDatabase = async (data: any) => {
-    setSaving(true)
     try {
-      // Save ALL vocabulary items (not just flashcards)
       const vocabularyToSave = data.vocabulary || data.flashcards || []
       
-      if (vocabularyToSave.length === 0) {
-        console.warn('No vocabulary to save')
-        return
-      }
+      if (vocabularyToSave.length === 0) return
 
       const savePromises = vocabularyToSave.map(async (item: any) => {
-        if (!item || (!item.word && !item.phrase)) {
-          console.warn('Skipping invalid item:', item)
-          return
-        }
+        if (!item || (!item.word && !item.phrase)) return
 
         const level = (item.importance_score || 0) > 0.7 ? "advanced" : 
                      (item.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
@@ -125,8 +103,8 @@ export default function DocumentsPage() {
             meaning: item.definition || "",
             example: item.context_sentence || item.supporting_sentence || "",
             level: level,
-            pronunciation: item.phonetic || item.ipa || "",  // Save IPA
-            ipa: item.phonetic || item.ipa || "",  // Also save as ipa field
+            pronunciation: item.phonetic || item.ipa || "",
+            ipa: item.phonetic || item.ipa || "",
             source: `document_${data.document_id || Date.now()}`,
             synonyms: item.synonyms || [],
           }),
@@ -134,183 +112,8 @@ export default function DocumentsPage() {
       })
 
       await Promise.all(savePromises)
-
-      if (data.knowledge_graph_stats || data.knowledge_graph) {
-        await fetch("/api/knowledge-graph", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            document_id: data.document_id || Date.now().toString(),
-            graph_data: data.knowledge_graph_stats || data.knowledge_graph,
-          }),
-        })
-      }
     } catch (err) {
       console.error("Save error:", err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const generateMarkmapLink = (graph: any) => {
-    // Validate graph data
-    console.log('🔍 Markmap Debug:', {
-      hasGraph: !!graph,
-      hasEntities: !!graph?.entities,
-      entitiesLength: graph?.entities?.length,
-      hasRelations: !!graph?.relations,
-      relationsLength: graph?.relations?.length,
-      firstEntity: graph?.entities?.[0]
-    })
-    
-    if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
-      console.warn('⚠️ Markmap: No entities data available')
-      return null // Return null to disable link
-    }
-    
-    if (!graph.relations || !Array.isArray(graph.relations)) {
-      console.warn('⚠️ Markmap: No relations data available')
-    }
-    
-    try {
-      const connectionCount = new Map<string, number>()
-      if (graph.relations) {
-        graph.relations.forEach((rel: any) => {
-          connectionCount.set(rel.source, (connectionCount.get(rel.source) || 0) + 1)
-          connectionCount.set(rel.target, (connectionCount.get(rel.target) || 0) + 1)
-        })
-      }
-      
-      const sortedEntities = [...graph.entities].sort((a: any, b: any) => 
-        (connectionCount.get(b.id) || 0) - (connectionCount.get(a.id) || 0)
-      )
-      
-      const centerNode = sortedEntities[0]
-      if (!centerNode || !centerNode.label) {
-        console.warn('⚠️ Markmap: No valid center node')
-        return null
-      }
-      
-      const childNodes = sortedEntities.slice(1, 13)
-      
-      let markdown = `# ${centerNode.label}\n\n`
-      childNodes.forEach((node: any) => {
-        if (node && node.label) {
-          markdown += `## ${node.label}\n`
-        }
-      })
-      
-      console.log('✅ Markmap markdown generated:', markdown.substring(0, 100))
-      
-      const encoded = encodeURIComponent(markdown)
-      const url = `https://markmap.js.org/repl#?d=${encoded}`
-      console.log('✅ Markmap URL generated:', url.substring(0, 100) + '...')
-      return url
-    } catch (error) {
-      console.error('❌ Markmap generation error:', error)
-      return null
-    }
-  }
-
-  const generateMermaidLink = (graph: any) => {
-    if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
-      console.warn('⚠️ Mermaid: No entities data')
-      return null
-    }
-    
-    try {
-      let mermaid = "graph TD\n"
-      
-      const entities = graph.entities.slice(0, 15)
-      entities.forEach((entity: any, idx: number) => {
-        if (entity && entity.label) {
-          const nodeId = `N${idx}`
-          const label = entity.label.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 20)
-          mermaid += `  ${nodeId}["${label}"]\n`
-        }
-      })
-      
-      if (graph.relations && Array.isArray(graph.relations)) {
-        const relations = graph.relations.slice(0, 20)
-        relations.forEach((rel: any) => {
-          const sourceIdx = entities.findIndex((e: any) => e.id === rel.source)
-          const targetIdx = entities.findIndex((e: any) => e.id === rel.target)
-          if (sourceIdx >= 0 && targetIdx >= 0) {
-            mermaid += `  N${sourceIdx} --> N${targetIdx}\n`
-          }
-        })
-      }
-      
-      const encoded = btoa(mermaid)
-      const url = `https://mermaid.live/edit#pako:${encoded}`
-      console.log('✅ Mermaid URL generated')
-      return url
-    } catch (error) {
-      console.error('❌ Mermaid generation error:', error)
-      return null
-    }
-  }
-
-  const generateExcalidrawLink = (graph: any) => {
-    if (!graph || !graph.entities || !Array.isArray(graph.entities) || graph.entities.length === 0) {
-      console.warn('⚠️ Excalidraw: No entities data')
-      return null
-    }
-    
-    try {
-      const elements: any[] = []
-      const entities = graph.entities.slice(0, 12)
-      
-      const centerX = 400
-      const centerY = 400
-      const radius = 200
-      
-      entities.forEach((entity: any, idx: number) => {
-        if (entity && entity.label) {
-          const angle = (idx / entities.length) * 2 * Math.PI
-          const x = centerX + Math.cos(angle) * radius
-          const y = centerY + Math.sin(angle) * radius
-          
-          elements.push({
-            type: "ellipse",
-            x: x - 50,
-            y: y - 30,
-            width: 100,
-            height: 60,
-            strokeColor: "#1e40af",
-            backgroundColor: "#dbeafe",
-            fillStyle: "solid",
-            strokeWidth: 2,
-            id: `node-${idx}`,
-          })
-          
-          elements.push({
-            type: "text",
-            x: x - 40,
-            y: y - 10,
-            width: 80,
-            height: 20,
-            text: entity.label.substring(0, 15),
-            fontSize: 14,
-            id: `text-${idx}`,
-          })
-        }
-      })
-      
-      const excalidrawData = {
-        type: "excalidraw",
-        version: 2,
-        source: "voichat1012",
-        elements: elements,
-      }
-      
-      const encoded = encodeURIComponent(JSON.stringify(excalidrawData))
-      const url = `https://excalidraw.com/#json=${encoded}`
-      console.log('✅ Excalidraw URL generated')
-      return url
-    } catch (error) {
-      console.error('❌ Excalidraw generation error:', error)
-      return null
     }
   }
 
@@ -386,147 +189,26 @@ export default function DocumentsPage() {
 
       {result && (
         <div className="bg-white rounded-lg shadow p-6">
-          {/* Debug Info */}
-          <details className="mb-4 p-2 bg-gray-100 rounded text-xs">
-            <summary className="cursor-pointer font-bold">🔍 Debug Info (click to expand)</summary>
-            <pre className="mt-2 overflow-auto max-h-40">
-              {JSON.stringify({
-                has_flashcards: !!result.flashcards,
-                flashcards_length: result.flashcards?.length,
-                has_vocabulary: !!result.vocabulary,
-                vocabulary_length: result.vocabulary?.length,
-                has_knowledge_graph: !!(result.knowledge_graph_stats || result.knowledge_graph),
-                success: result.success
-              }, null, 2)}
-            </pre>
-          </details>
-
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h2 className="text-2xl font-bold">Kết quả</h2>
-          </div>
+          <h2 className="text-2xl font-bold mb-4">Kết quả trích xuất</h2>
           
           <div className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <p className="text-green-800 font-medium">
-                ✅ Đã trích xuất thành công!
-              </p>
-              <p className="text-green-700 mt-2">
-                📚 Vocabulary: {result.vocabulary?.length || 0} từ
-              </p>
-              <p className="text-green-700 text-sm">
-                🎴 Flashcards: {result.flashcards?.length || 0} thẻ học
-              </p>
-              <p className="text-gray-600 text-xs mt-1">
-                💡 Vocabulary = tất cả từ trích xuất | Flashcards = thẻ học có định nghĩa đầy đủ
-              </p>
-              {saving && (
-                <p className="text-green-600 mt-1 text-sm">
-                  💾 Đang lưu vào database...
-                </p>
-              )}
-            </div>
-
+            {/* Mindmap Section */}
             {(result.knowledge_graph_stats || result.knowledge_graph) && (
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="font-bold text-lg mb-2">📊 Sơ đồ tư duy</h3>
-                <div className="flex gap-4 mb-3">
-                  <div className="px-4 py-2 bg-blue-100 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-700">
-                      {result.knowledge_graph_stats?.entities?.length || result.knowledge_graph?.entities?.length || 0}
-                    </div>
-                    <div className="text-sm text-blue-600">Entities</div>
-                  </div>
-                  <div className="px-4 py-2 bg-green-100 rounded-lg">
-                    <div className="text-2xl font-bold text-green-700">
-                      {result.knowledge_graph_stats?.relations?.length || result.knowledge_graph?.relations?.length || 0}
-                    </div>
-                    <div className="text-sm text-green-600">Relations</div>
-                  </div>
-                </div>
+                <h3 className="font-bold text-lg mb-3">📊 Sơ đồ tư duy</h3>
                 
-                {/* Inline Mindmap Viewer */}
-                <div className="mb-4">
-                  <SimpleMindmap 
-                    entities={(result.knowledge_graph_stats || result.knowledge_graph)?.entities || []}
-                    relations={(result.knowledge_graph_stats || result.knowledge_graph)?.relations || []}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600 mb-2">
-                    🔗 Hoặc xem với công cụ bên ngoài:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(() => {
-                      const graphData = result.knowledge_graph_stats || result.knowledge_graph
-                      const markmapUrl = generateMarkmapLink(graphData)
-                      const mermaidUrl = generateMermaidLink(graphData)
-                      const excalidrawUrl = generateExcalidrawLink(graphData)
-                      
-                      return (
-                        <>
-                          {markmapUrl ? (
-                            <a
-                              href={markmapUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
-                            >
-                              🗺️ Markmap
-                            </a>
-                          ) : (
-                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu">
-                              🗺️ Markmap
-                            </div>
-                          )}
-                          
-                          {mermaidUrl ? (
-                            <a
-                              href={mermaidUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-2"
-                            >
-                              📊 Mermaid
-                            </a>
-                          ) : (
-                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu">
-                              📊 Mermaid
-                            </div>
-                          )}
-                          
-                          {excalidrawUrl ? (
-                            <a
-                              href={excalidrawUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-2"
-                            >
-                              ✏️ Excalidraw
-                            </a>
-                          ) : (
-                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu">
-                              ✏️ Excalidraw
-                            </div>
-                          )}
-                        </>
-                      )
-                    })()}
-                  </div>
-                </div>
+                <SimpleMindmap 
+                  entities={(result.knowledge_graph_stats || result.knowledge_graph)?.entities || []}
+                  relations={(result.knowledge_graph_stats || result.knowledge_graph)?.relations || []}
+                />
               </div>
             )}
 
+            {/* Vocabulary List */}
             <div className="border rounded-lg p-4">
               <h3 className="font-bold mb-3 text-lg">
-                📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ):
+                📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ)
               </h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Hiển thị tất cả từ vựng được trích xuất từ tài liệu
-              </p>
               <div className="space-y-3">
                 {Array.isArray(result.vocabulary || result.flashcards) && 
                  (result.vocabulary || result.flashcards).map((card: any, idx: number) => {
@@ -561,14 +243,14 @@ export default function DocumentsPage() {
                           </p>
                         )}
 
-                        {card.context_sentence && (
+                        {(card.context_sentence || card.supporting_sentence) && (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
                             <div className="flex items-start gap-2">
                               <p className="text-sm text-gray-700 italic flex-1">
-                                "{card.context_sentence.replace(/<[^>]*>/g, '')}"
+                                "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, '')}"
                               </p>
                               <button
-                                onClick={() => speakText(card.context_sentence?.replace(/<[^>]*>/g, '') || "")}
+                                onClick={() => speakText((card.context_sentence || card.supporting_sentence)?.replace(/<[^>]*>/g, '') || "")}
                                 className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0"
                                 title="Phát âm câu"
                               >
