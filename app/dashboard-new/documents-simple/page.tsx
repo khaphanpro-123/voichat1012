@@ -7,6 +7,8 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string>("")
+  const [maxPhrases, setMaxPhrases] = useState(40)
+  const [maxWords, setMaxWords] = useState(10)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -40,7 +42,8 @@ export default function DocumentsPage() {
       const formData = new FormData()
       formData.append("file", file)
       formData.append("title", file.name)
-      formData.append("max_phrases", "40")
+      formData.append("max_phrases", maxPhrases.toString())
+      formData.append("max_words", maxWords.toString())
       formData.append("min_phrase_length", "2")
       formData.append("max_phrase_length", "5")
       formData.append("bm25_weight", "0.2")
@@ -143,6 +146,41 @@ export default function DocumentsPage() {
               onChange={handleFileChange}
             />
           </label>
+
+          {/* Tùy chọn số lượng từ */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Số cụm từ (phrases)
+              </label>
+              <input
+                type="number"
+                min="10"
+                max="100"
+                value={maxPhrases}
+                onChange={(e) => setMaxPhrases(parseInt(e.target.value) || 40)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">Mặc định: 40</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Số từ đơn (words)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="50"
+                value={maxWords}
+                onChange={(e) => setMaxWords(parseInt(e.target.value) || 10)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">Mặc định: 10</p>
+            </div>
+          </div>
+          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+            💡 Tổng số từ vựng sẽ trích xuất: <span className="font-bold text-blue-600">{maxPhrases + maxWords}</span> từ
+          </div>
 
           {error && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
