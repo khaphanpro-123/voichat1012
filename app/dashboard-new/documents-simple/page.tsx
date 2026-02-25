@@ -1,18 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import SimpleMindmap from '@/components/SimpleMindmap'
+import { useState } from "react"
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string>("")
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -195,37 +189,6 @@ export default function DocumentsPage() {
           <h2 className="text-2xl font-bold mb-4">Kết quả trích xuất</h2>
           
           <div className="space-y-4">
-            {/* Mindmap Section */}
-            {mounted && (result.knowledge_graph_stats || result.knowledge_graph) && (() => {
-              try {
-                const graphData = result.knowledge_graph_stats || result.knowledge_graph
-                const entities = graphData?.entities || []
-                const relations = graphData?.relations || []
-                
-                if (entities.length === 0) {
-                  return (
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-gray-500 text-center">Không có dữ liệu sơ đồ tư duy</p>
-                    </div>
-                  )
-                }
-                
-                return (
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="font-bold text-lg mb-3">📊 Sơ đồ tư duy</h3>
-                    <SimpleMindmap entities={entities} relations={relations} />
-                  </div>
-                )
-              } catch (err) {
-                console.error('Mindmap render error:', err)
-                return (
-                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                    <p className="text-red-600 text-center">Lỗi hiển thị sơ đồ tư duy</p>
-                  </div>
-                )
-              }
-            })()}
-
             {/* Vocabulary List */}
             <div className="border rounded-lg p-4">
               <h3 className="font-bold mb-3 text-lg">
