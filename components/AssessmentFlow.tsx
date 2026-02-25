@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Sparkles } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { surveyQuestions, likertOptions } from "@/lib/assessmentData";
 
 interface AssessmentFlowProps {
@@ -92,7 +92,7 @@ export default function AssessmentFlow({ onComplete }: AssessmentFlowProps) {
 
           {/* Category Badge */}
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-teal-500" />
+            <div className="w-5 h-5 bg-teal-500 rounded-full" />
             <span className="text-sm font-semibold text-teal-600 uppercase tracking-wide">
               {currentQuestion.category}
             </span>

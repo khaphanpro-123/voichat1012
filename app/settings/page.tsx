@@ -7,7 +7,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Key, Play, ExternalLink, CheckCircle, 
-  Copy, Eye, EyeOff, Loader2, AlertCircle, Sparkles,
+  Copy, Eye, EyeOff, Loader2, AlertCircle,
   Video, ChevronDown, ChevronUp, Trash2, LogIn
 } from "lucide-react";
 
@@ -358,7 +358,7 @@ export default function SettingsPage() {
         {/* Why API Keys */}
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-yellow-500" />
+            <div className="w-6 h-6 bg-yellow-500 rounded-full" />
             Tại sao cần API key riêng?
           </h2>
           <div className="grid md:grid-cols-2 gap-4">

@@ -1,6 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from 'next/dynamic'
+
+const SimpleMindmap = dynamic(() => import('@/components/SimpleMindmap'), { ssr: false })
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -95,33 +98,37 @@ export default function DocumentsPage() {
   }
 
   const handleSaveToDatabase = async (data: any) => {
-    if (!data || !Array.isArray(data.flashcards) || data.flashcards.length === 0) {
-      console.warn('No flashcards to save')
-      return
-    }
-
     setSaving(true)
     try {
-      const savePromises = data.flashcards.map(async (card: any) => {
-        if (!card || (!card.word && !card.phrase)) {
-          console.warn('Skipping invalid card:', card)
+      // Save ALL vocabulary items (not just flashcards)
+      const vocabularyToSave = data.vocabulary || data.flashcards || []
+      
+      if (vocabularyToSave.length === 0) {
+        console.warn('No vocabulary to save')
+        return
+      }
+
+      const savePromises = vocabularyToSave.map(async (item: any) => {
+        if (!item || (!item.word && !item.phrase)) {
+          console.warn('Skipping invalid item:', item)
           return
         }
 
-        const level = (card.importance_score || 0) > 0.7 ? "advanced" : 
-                     (card.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
+        const level = (item.importance_score || 0) > 0.7 ? "advanced" : 
+                     (item.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
         
         await fetch("/api/vocabulary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            word: card.word || card.phrase,
-            meaning: card.definition || "",
-            example: card.context_sentence || "",
+            word: item.word || item.phrase,
+            meaning: item.definition || "",
+            example: item.context_sentence || item.supporting_sentence || "",
             level: level,
-            pronunciation: card.phonetic || "",
+            pronunciation: item.phonetic || item.ipa || "",  // Save IPA
+            ipa: item.phonetic || item.ipa || "",  // Also save as ipa field
             source: `document_${data.document_id || Date.now()}`,
-            synonyms: card.synonyms || [],
+            synonyms: item.synonyms || [],
           }),
         })
       })
@@ -440,9 +447,17 @@ export default function DocumentsPage() {
                   </div>
                 </div>
                 
+                {/* Inline Mindmap Viewer */}
+                <div className="mb-4">
+                  <SimpleMindmap 
+                    entities={(result.knowledge_graph_stats || result.knowledge_graph)?.entities || []}
+                    relations={(result.knowledge_graph_stats || result.knowledge_graph)?.relations || []}
+                  />
+                </div>
+                
                 <div className="space-y-2">
                   <p className="text-sm text-gray-600 mb-2">
-                    🔗 Xem sơ đồ tư duy trực quan:
+                    🔗 Hoặc xem với công cụ bên ngoài:
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {(() => {
@@ -460,11 +475,11 @@ export default function DocumentsPage() {
                               rel="noopener noreferrer"
                               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
                             >
-                              🗺️ Markmap (Interactive)
+                              🗺️ Markmap
                             </a>
                           ) : (
-                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu để tạo mindmap">
-                              🗺️ Markmap (Không khả dụng)
+                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu">
+                              🗺️ Markmap
                             </div>
                           )}
                           
@@ -475,11 +490,11 @@ export default function DocumentsPage() {
                               rel="noopener noreferrer"
                               className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-2"
                             >
-                              📊 Mermaid (Flowchart)
+                              📊 Mermaid
                             </a>
                           ) : (
-                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu để tạo flowchart">
-                              📊 Mermaid (Không khả dụng)
+                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu">
+                              📊 Mermaid
                             </div>
                           )}
                           
@@ -490,11 +505,11 @@ export default function DocumentsPage() {
                               rel="noopener noreferrer"
                               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-2"
                             >
-                              ✏️ Excalidraw (Draw)
+                              ✏️ Excalidraw
                             </a>
                           ) : (
-                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu để tạo diagram">
-                              ✏️ Excalidraw (Không khả dụng)
+                            <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Không đủ dữ liệu">
+                              ✏️ Excalidraw
                             </div>
                           )}
                         </>

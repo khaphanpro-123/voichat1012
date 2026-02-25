@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/DashboardLayout';
 import { 
   Upload, FileText, CheckCircle, Loader, AlertCircle, 
-  BookOpen, ArrowRight, Sparkles 
+  BookOpen, ArrowRight 
 } from 'lucide-react';
 
 interface ExtractedVocab {
@@ -245,7 +245,7 @@ export default function UploadPage() {
                     onClick={processFile}
                     className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition flex items-center gap-2"
                   >
-                    <Sparkles className="w-5 h-5" />
+                    <BookOpen className="w-5 h-5" />
                     Trích xuất từ vựng
                   </button>
                 </motion.div>
