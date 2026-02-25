@@ -104,6 +104,7 @@ export default function DocumentsPage() {
             example: item.context_sentence || item.supporting_sentence || "",
             level: level,
             pronunciation: item.phonetic || item.ipa || "",
+            ipa: item.ipa || item.phonetic || "",
             source: `document_${data.document_id || Date.now()}`,
             synonyms: item.synonyms || [],
           }),
