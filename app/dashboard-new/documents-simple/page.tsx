@@ -3,7 +3,14 @@
 import { useState } from "react"
 import dynamic from 'next/dynamic'
 
-const SimpleMindmap = dynamic(() => import('@/components/SimpleMindmap'), { ssr: false })
+// Use Next.js dynamic import for client-side only component
+const SimpleMindmap = dynamic(
+  () => import('@/components/SimpleMindmap'),
+  { 
+    ssr: false,
+    loading: () => <div className="p-8 text-center text-gray-500">Đang tải sơ đồ...</div>
+  }
+)
 
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
