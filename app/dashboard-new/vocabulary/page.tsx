@@ -118,11 +118,6 @@ export default function VocabularyPage() {
         setVocabulary(allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error"));
         setStructures(allWords.filter((w: VocabularyWord) => w.type === "structure"));
         setErrors(allWords.filter((w: VocabularyWord) => w.type === "error"));
-        
-        // Store latest document ID if available
-        if (data.document_id) {
-          setLatestDocumentId(data.document_id);
-        }
       }
     } catch (error) {
       console.error("Load vocabulary error:", error);
@@ -575,8 +570,6 @@ export default function VocabularyPage() {
               )}
             </motion.div>
           )}
-
-          {activeTab === "mindmap" && (
         </AnimatePresence>
       </div>
     </DashboardLayout>
