@@ -12,7 +12,16 @@ export default function DocumentsPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+      const selectedFile = e.target.files[0]
+      
+      // Check file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024 // 50MB
+      if (selectedFile.size > maxSize) {
+        setError(`File quá lớn (${(selectedFile.size / 1024 / 1024).toFixed(2)}MB). Vui lòng chọn file nhỏ hơn 50MB`)
+        return
+      }
+      
+      setFile(selectedFile)
       setError("")
     }
   }
@@ -57,6 +66,14 @@ export default function DocumentsPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status === 413) {
+          setError("File quá lớn (tối đa 50MB). Vui lòng chọn file nhỏ hơn")
+          return
+        }
+        if (response.status === 504) {
+          setError("Xử lý quá lâu. File có thể quá lớn hoặc phức tạp. Vui lòng thử file nhỏ hơn")
+          return
+        }
         if (response.status === 502) {
           setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại...")
           return
@@ -139,7 +156,16 @@ export default function DocumentsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <p className="text-sm text-gray-600">
-                {file ? file.name : "Click để chọn file PDF/DOCX"}
+                {file ? (
+                  <>
+                    {file.name}
+                    <span className="block text-xs text-gray-500 mt-1">
+                      ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                    </span>
+                  </>
+                ) : (
+                  "Click để chọn file PDF/DOCX (tối đa 50MB)"
+                )}
               </p>
             </div>
             <input
