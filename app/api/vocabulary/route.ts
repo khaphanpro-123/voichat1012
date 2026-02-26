@@ -114,3 +114,43 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+// Delete vocabulary item
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const wordId = searchParams.get("id")
+
+    if (!wordId) {
+      return NextResponse.json(
+        { error: "Missing word ID" },
+        { status: 400 }
+      )
+    }
+
+    const client = await getClientPromise()
+    const db = client.db("viettalk")
+    const collection = db.collection("vocabulary")
+
+    const { ObjectId } = require("mongodb")
+    const result = await collection.deleteOne({ _id: new ObjectId(wordId) })
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Word not found" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Word deleted successfully"
+    })
+  } catch (error: any) {
+    console.error("Vocabulary delete error:", error)
+    return NextResponse.json(
+      { error: error.message || "Failed to delete vocabulary" },
+      { status: 500 }
+    )
+  }
+}

@@ -78,6 +78,17 @@ export default function VocabularyPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("vocabulary");
 
+  // New word form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newWord, setNewWord] = useState({
+    word: "",
+    meaning: "",
+    example: "",
+    type: "noun",
+    level: "intermediate"
+  });
+  const [saving, setSaving] = useState(false);
+
   // Quiz state
   const [quizMode, setQuizMode] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -110,14 +121,37 @@ export default function VocabularyPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/generate-flashcard?userId=${userId}`);
+      // Load from vocabulary API (where documents-simple saves to)
+      const res = await fetch(`/api/vocabulary?limit=1000`);
       const data = await res.json();
-      if (data.success) {
-        const allWords = data.vocabulary || [];
-        // Separate vocabulary, structures, and errors
+      
+      console.log("📚 Loaded vocabulary:", data.length, "items");
+      
+      if (Array.isArray(data)) {
+        // Separate vocabulary, structures, and errors based on type or source
+        const allWords = data.map((item: any) => ({
+          _id: item._id,
+          word: item.word,
+          meaning: item.meaning,
+          example: item.example || "",
+          type: item.type || "other",
+          level: item.level || "intermediate",
+          timesReviewed: item.timesReviewed || 0,
+          isLearned: item.isLearned || false,
+          source: item.source || "",
+          pronunciation: item.pronunciation || "",
+          ipa: item.ipa || item.pronunciation || "", // Use ipa field or fallback to pronunciation
+        }));
+        
         setVocabulary(allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error"));
         setStructures(allWords.filter((w: VocabularyWord) => w.type === "structure"));
         setErrors(allWords.filter((w: VocabularyWord) => w.type === "error"));
+        
+        console.log("📊 Vocabulary stats:", {
+          total: allWords.length,
+          vocabulary: allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error").length,
+          withIPA: allWords.filter((w: VocabularyWord) => w.ipa).length
+        });
       }
     } catch (error) {
       console.error("Load vocabulary error:", error);
@@ -186,18 +220,69 @@ export default function VocabularyPage() {
     if (!confirm("Bạn có chắc muốn xóa?")) return;
     setDeletingId(wordId);
     try {
-      const res = await fetch("/api/generate-flashcard", {
+      const res = await fetch(`/api/vocabulary?id=${wordId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wordId, userId }),
       });
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         setVocabulary((prev) => prev.filter((w) => w._id !== wordId));
         setStructures((prev) => prev.filter((w) => w._id !== wordId));
         setErrors((prev) => prev.filter((w) => w._id !== wordId));
       }
     } catch (error) {
+      console.error("Delete error:", error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleAddWord = async () => {
+    if (!newWord.word || !newWord.meaning) {
+      alert("Vui lòng nhập từ và nghĩa");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          word: newWord.word,
+          meaning: newWord.meaning,
+          example: newWord.example,
+          type: newWord.type,
+          level: newWord.level,
+          source: "manual",
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("✅ Word saved:", data);
+        
+        // Reset form
+        setNewWord({
+          word: "",
+          meaning: "",
+          example: "",
+          type: "noun",
+          level: "intermediate"
+        });
+        setShowAddForm(false);
+        
+        // Reload vocabulary
+        await loadVocabulary();
+      } else {
+        const error = await res.json();
+        alert(`Lỗi: ${error.error || "Không thể lưu từ"}`);
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("Lỗi khi lưu từ vựng");
+    } finally {
+      setSaving(false);
+    }
+  };
       console.error("Delete error:", error);
     } finally {
       setDeletingId(null);
@@ -404,8 +489,17 @@ export default function VocabularyPage() {
             <button onClick={loadVocabulary} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200">
               <RefreshCw className="w-5 h-5" /> Làm mới
             </button>
-            <button onClick={() => router.push("/dashboard-new/documents")} className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700">
-              <Upload className="w-5 h-5" /> Upload
+            <button 
+              onClick={() => setShowAddForm(!showAddForm)} 
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Thêm từ mới
+            </button>
+            <button onClick={() => router.push("/dashboard-new/documents-simple")} className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700">
+              <Upload className="w-5 h-5" /> Upload tài liệu
             </button>
           </div>
         </div>
@@ -464,6 +558,136 @@ export default function VocabularyPage() {
           <input type="text" placeholder="Tìm kiếm..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500" />
         </div>
+
+        {/* Add New Word Form */}
+        {showAddForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 bg-white rounded-xl shadow-lg p-6 border-2 border-green-200"
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Thêm từ vựng mới
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Từ vựng <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newWord.word}
+                  onChange={(e) => setNewWord({ ...newWord, word: e.target.value })}
+                  placeholder="Nhập từ tiếng Anh..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nghĩa tiếng Việt <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newWord.meaning}
+                  onChange={(e) => setNewWord({ ...newWord, meaning: e.target.value })}
+                  placeholder="Nhập nghĩa..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Câu ví dụ
+              </label>
+              <input
+                type="text"
+                value={newWord.example}
+                onChange={(e) => setNewWord({ ...newWord, example: e.target.value })}
+                placeholder="Nhập câu ví dụ..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Loại từ
+                </label>
+                <select
+                  value={newWord.type}
+                  onChange={(e) => setNewWord({ ...newWord, type: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="noun">Danh từ</option>
+                  <option value="verb">Động từ</option>
+                  <option value="adjective">Tính từ</option>
+                  <option value="adverb">Trạng từ</option>
+                  <option value="preposition">Giới từ</option>
+                  <option value="other">Khác</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cấp độ
+                </label>
+                <select
+                  value={newWord.level}
+                  onChange={(e) => setNewWord({ ...newWord, level: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="beginner">Cơ bản</option>
+                  <option value="intermediate">Trung cấp</option>
+                  <option value="advanced">Nâng cao</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewWord({
+                    word: "",
+                    meaning: "",
+                    example: "",
+                    type: "noun",
+                    level: "intermediate"
+                  });
+                }}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleAddWord}
+                disabled={saving || !newWord.word || !newWord.meaning}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Lưu từ vựng
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Content based on active tab */}
         <AnimatePresence mode="wait">
@@ -539,6 +763,9 @@ export default function VocabularyPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-xl font-bold text-purple-700 font-mono">{structure.word}</h3>
+                            {getPronunciation(structure) && (
+                              <span className="text-sm text-purple-600 font-mono">/{getPronunciation(structure)}/</span>
+                            )}
                             <span className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded-full">Cấu trúc</span>
                           </div>
                           <p className="text-gray-700 mb-2">{getMeaning(structure)}</p>
