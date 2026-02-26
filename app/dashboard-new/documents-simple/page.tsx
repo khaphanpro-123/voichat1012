@@ -89,12 +89,27 @@ export default function DocumentsPage() {
         throw new Error('Response missing flashcards or vocabulary data')
       }
 
+      // DEBUG: Log response data structure
+      console.log("📊 Backend response:", data)
+      console.log("📊 Vocabulary items:", data.vocabulary?.length || 0)
+      console.log("📊 First vocabulary item:", data.vocabulary?.[0])
+      console.log("📊 IPA field check:", {
+        hasPhonetic: !!data.vocabulary?.[0]?.phonetic,
+        hasIpa: !!data.vocabulary?.[0]?.ipa,
+        phoneticValue: data.vocabulary?.[0]?.phonetic,
+        ipaValue: data.vocabulary?.[0]?.ipa
+      })
+
       setResult(data)
       
       // Auto-save vocabulary to database
+      console.log("💾 Starting auto-save to database...")
       await handleSaveToDatabase(data)
+      console.log("✅ Auto-save completed")
     } catch (err: any) {
-      setError(err.message || "Có lỗi xảy ra khi upload")
+      console.error("Upload error:", err)
+      // Hiển thị thông báo lỗi chung
+      setError("Hệ thống xử lý tài liệu đã xảy ra lỗi, vui lòng tải tệp khác")
     } finally {
       setUploading(false)
     }
@@ -104,37 +119,71 @@ export default function DocumentsPage() {
     try {
       const vocabularyToSave = data.vocabulary || data.flashcards || []
       
-      if (vocabularyToSave.length === 0) return
+      console.log("💾 Vocabulary to save:", vocabularyToSave.length, "items")
+      
+      if (vocabularyToSave.length === 0) {
+        console.log("⚠️ No vocabulary to save")
+        return
+      }
 
-      const savePromises = vocabularyToSave.map(async (item: any) => {
-        if (!item || (!item.word && !item.phrase)) return
+      let savedCount = 0
+      let failedCount = 0
+
+      const savePromises = vocabularyToSave.map(async (item: any, index: number) => {
+        if (!item || (!item.word && !item.phrase)) {
+          console.log(`⚠️ Skipping item ${index}: no word/phrase`)
+          return
+        }
 
         const level = (item.importance_score || 0) > 0.7 ? "advanced" : 
                      (item.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
         
+        const payload = {
+          word: item.word || item.phrase,
+          meaning: item.definition || "",
+          example: item.context_sentence || item.supporting_sentence || "",
+          level: level,
+          pronunciation: item.phonetic || item.ipa || "",
+          ipa: item.ipa || item.phonetic || "",
+          source: `document_${data.document_id || Date.now()}`,
+          synonyms: item.synonyms || [],
+        }
+
+        // DEBUG: Log first item
+        if (index === 0) {
+          console.log("💾 First item payload:", payload)
+          console.log("💾 IPA check:", {
+            hasPhonetic: !!item.phonetic,
+            hasIpa: !!item.ipa,
+            phoneticValue: item.phonetic,
+            ipaValue: item.ipa,
+            finalIpa: payload.ipa
+          })
+        }
+        
         const response = await fetch("/api/vocabulary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            word: item.word || item.phrase,
-            meaning: item.definition || "",
-            example: item.context_sentence || item.supporting_sentence || "",
-            level: level,
-            pronunciation: item.phonetic || item.ipa || "",
-            ipa: item.ipa || item.phonetic || "",
-            source: `document_${data.document_id || Date.now()}`,
-            synonyms: item.synonyms || [],
-          }),
+          body: JSON.stringify(payload),
         })
         
         if (!response.ok) {
-          console.error(`Failed to save word: ${item.word || item.phrase}`, await response.text())
+          failedCount++
+          const errorText = await response.text()
+          console.error(`❌ Failed to save word: ${item.word || item.phrase}`, errorText)
+        } else {
+          savedCount++
+          if (index === 0) {
+            const result = await response.json()
+            console.log("✅ First item saved successfully:", result)
+          }
         }
       })
 
       await Promise.all(savePromises)
+      console.log(`✅ Save complete: ${savedCount} saved, ${failedCount} failed`)
     } catch (err) {
-      console.error("Save error:", err)
+      console.error("❌ Save error:", err)
     }
   }
 
@@ -157,12 +206,12 @@ export default function DocumentsPage() {
               </svg>
               <p className="text-sm text-gray-600">
                 {file ? (
-                  <>
+                  <span>
                     {file.name}
                     <span className="block text-xs text-gray-500 mt-1">
                       ({(file.size / 1024 / 1024).toFixed(2)}MB)
                     </span>
-                  </>
+                  </span>
                 ) : (
                   "Click để chọn file PDF/DOCX (tối đa 50MB)"
                 )}
@@ -233,20 +282,20 @@ export default function DocumentsPage() {
             className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {uploading ? (
-              <>
+              <span className="flex items-center gap-2">
                 <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Đang xử lý...
-              </>
+              </span>
             ) : (
-              <>
+              <span className="flex items-center gap-2">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Trích xuất từ vựng
-              </>
+              </span>
             )}
           </button>
         </div>

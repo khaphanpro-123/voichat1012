@@ -690,12 +690,24 @@ class CompletePipeline12Stages:
         
         # Add IPA phonetics to all vocabulary items FIRST
         print(f"  ℹ️  Adding IPA phonetics to vocabulary items...")
+        ipa_added_count = 0
         for item in vocabulary:
             word = item.get('phrase', item.get('word', ''))
-            if word and not item.get('phonetic'):
-                ipa = self._get_ipa_phonetics(word)
-                if ipa:
-                    item['phonetic'] = ipa
+            if word:
+                # Get IPA if not already present
+                if not item.get('phonetic') and not item.get('ipa'):
+                    ipa = self._get_ipa_phonetics(word)
+                    if ipa:
+                        item['phonetic'] = ipa
+                        item['ipa'] = ipa  # Add to both fields
+                        ipa_added_count += 1
+                # Sync phonetic and ipa fields
+                elif item.get('phonetic') and not item.get('ipa'):
+                    item['ipa'] = item['phonetic']
+                elif item.get('ipa') and not item.get('phonetic'):
+                    item['phonetic'] = item['ipa']
+        
+        print(f"  ✅ Added IPA to {ipa_added_count} items")
         
         if not vocabulary or len(vocabulary) < 2:
             print(f"  ⚠️  Not enough items for synonym detection ({len(vocabulary)} items)")
@@ -1541,12 +1553,21 @@ class CompletePipeline12Stages:
         """
         try:
             import eng_to_ipa as ipa
-            return ipa.convert(word)
-        except ImportError:
-            # Library not installed - return empty string
+            result = ipa.convert(word)
+            # DEBUG: Log first few conversions
+            if not hasattr(self, '_ipa_debug_count'):
+                self._ipa_debug_count = 0
+            if self._ipa_debug_count < 3:
+                print(f"  🔊 IPA: '{word}' → '{result}'")
+                self._ipa_debug_count += 1
+            return result
+        except ImportError as e:
+            # Library not installed - log warning
+            print(f"  ⚠️  eng_to_ipa library not installed: {e}")
             return ""
-        except Exception:
-            # Conversion failed - return empty string
+        except Exception as e:
+            # Conversion failed - log error
+            print(f"  ⚠️  IPA conversion failed for '{word}': {e}")
             return ""
     
     def _generate_audio_url(self, text: str, audio_type: str) -> str:
