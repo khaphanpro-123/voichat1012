@@ -217,12 +217,17 @@ export default function VocabularyPage() {
   };
 
   const deleteWord = async (wordId: string) => {
-    if (!confirm("Bạn có chắc muốn xóa?")) return;
+    if (!confirm("Bạn có chắc muốn xóa?")) {
+      return;
+    }
+    
     setDeletingId(wordId);
+    
     try {
       const res = await fetch(`/api/vocabulary?id=${wordId}`, {
         method: "DELETE",
       });
+      
       if (res.ok) {
         setVocabulary((prev) => prev.filter((w) => w._id !== wordId));
         setStructures((prev) => prev.filter((w) => w._id !== wordId));
