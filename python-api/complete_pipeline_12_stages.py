@@ -1,27 +1,3 @@
-"""
-COMPLETE 12-STAGE PIPELINE
-Semantic Knowledge Mining + Explainable RAG
-
-Pipeline Architecture:
-Stage 1:  Document Ingestion & OCR
-Stage 2:  Layout & Heading Detection
-Stage 3:  Context Intelligence (Sentence ↔ Heading)
-Stage 4:  Phrase Extraction (PRIMARY PIPELINE) ✅
-Stage 5:  Dense Retrieval (Sentence-Level)
-Stage 6:  BM25 Sanity Filter (SECONDARY)
-Stage 7:  Single-Word Extraction (SECONDARY PIPELINE) ✅
-Stage 8:  Merge Phrase & Word ✅
-Stage 9:  Contrastive Scoring (Heading-Aware)
-Stage 10: Synonym Collapse
-Stage 11: Knowledge Graph ✅
-Stage 12: Flashcard Generation ✅
-
-Note: LLM Validation removed - validation integrated into STEP 3B
-
-Author: Kiro AI
-Date: 2026-02-10
-Version: 5.2.0-filter-only-mode
-"""
 
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -49,33 +25,12 @@ from bm25_filter import BM25Filter
 # from rag_system import RAGSystem
 
 
-class CompletePipeline12Stages:
-    """
-    Complete 12-stage pipeline for semantic knowledge mining
-    
-    Features:
-    - Phrase-first approach
-    - Single-word supplementation
-    - Heading-aware extraction
-    - BM25 as sanity check only (≤20%)
-    - Validation integrated into STEP 3B (no separate LLM stage)
-    - Knowledge Graph with semantic relations
-    - Flashcard generation
-    - Full traceability
-    """
-    
+class CompletePipeline12Stages: 
     def __init__(
         self,
         knowledge_graph = None,  # DISABLED
         rag_system = None  # DISABLED
     ):
-        """
-        Initialize complete pipeline
-        
-        Args:
-            knowledge_graph: KnowledgeGraph instance (DISABLED)
-            rag_system: RAGSystem instance (DISABLED)
-        """
         self.kg = knowledge_graph
         self.rag = rag_system
         
@@ -99,23 +54,6 @@ class CompletePipeline12Stages:
         bm25_weight: float = 0.2,
         generate_flashcards: bool = True
     ) -> Dict:
-        """
-        Process document through complete 12-stage pipeline
-        
-        Args:
-            text: Document text
-            document_id: Document ID
-            document_title: Document title
-            max_phrases: Maximum phrases to extract
-            max_words: Maximum single words to extract
-            language: Language code
-            use_bm25: Enable BM25 filtering
-            bm25_weight: Weight for BM25 scores (default: 0.2)
-            generate_flashcards: Generate flashcards (default: True)
-        
-        Returns:
-            Complete pipeline results with vocabulary, knowledge graph, and flashcards
-        """
         # ✅ Use centralized logging
         if USE_LOGGER:
             logger.info("="*80)
@@ -505,14 +443,67 @@ class CompletePipeline12Stages:
         sentences: List[str],
         headings: List[Dict]
     ) -> Dict:
-        """Stage 5: Dense Retrieval (Sentence-Level)"""
-        # TODO: Implement full dense retrieval
-        # For now, return basic info
-        return {
-            'embedding_count': len(sentences),
-            'method': 'sentence_transformers',
-            'model': 'all-MiniLM-L6-v2'
-        }
+        """
+        Stage 5: Dense Retrieval (Sentence-Level)
+        Create sentence embeddings for semantic search
+        """
+        try:
+            from embedding_utils import EmbeddingModel
+            
+            # Initialize embedding model
+            model = EmbeddingModel('all-MiniLM-L6-v2')
+            
+            # Generate sentence embeddings
+            print(f"  ℹ️  Generating embeddings for {len(sentences)} sentences...")
+            sentence_embeddings = model.encode(sentences, show_progress_bar=False)
+            
+            # Generate heading embeddings
+            heading_texts = [h['text'] for h in headings]
+            heading_embeddings = []
+            if heading_texts:
+                print(f"  ℹ️  Generating embeddings for {len(heading_texts)} headings...")
+                heading_embeddings = model.encode(heading_texts, show_progress_bar=False)
+            
+            # Store embeddings (in-memory for now, can be extended to vector DB)
+            embeddings_store = {
+                'sentences': {
+                    f'S{i}': {
+                        'text': sent,
+                        'embedding': emb.tolist() if hasattr(emb, 'tolist') else emb
+                    }
+                    for i, (sent, emb) in enumerate(zip(sentences, sentence_embeddings))
+                },
+                'headings': {
+                    h['heading_id']: {
+                        'text': h['text'],
+                        'embedding': emb.tolist() if hasattr(emb, 'tolist') else emb
+                    }
+                    for h, emb in zip(headings, heading_embeddings)
+                } if heading_embeddings else {}
+            }
+            
+            print(f"  ✅ Generated {len(sentence_embeddings)} sentence embeddings")
+            print(f"  ✅ Generated {len(heading_embeddings)} heading embeddings")
+            
+            return {
+                'embedding_count': len(sentence_embeddings),
+                'heading_embedding_count': len(heading_embeddings),
+                'method': 'sentence_transformers',
+                'model': 'all-MiniLM-L6-v2',
+                'embedding_dim': 384,
+                'embeddings_store': embeddings_store,
+                'status': 'enabled'
+            }
+            
+        except Exception as e:
+            print(f"  ⚠️  Dense retrieval failed: {e}")
+            return {
+                'embedding_count': 0,
+                'method': 'fallback',
+                'model': 'none',
+                'status': 'disabled',
+                'error': str(e)
+            }
     
     def _stage6_bm25_filter(
         self,
@@ -1416,6 +1407,10 @@ class CompletePipeline12Stages:
         if example:
             audio_example_url = self._generate_audio_url(example, 'example')
         
+        # Generate image URL
+        definition = primary.get('definition', '')
+        image_url = self._generate_image_url(word, definition)
+        
         # Build flashcard
         flashcard = {
             'id': f"fc_{cluster_id}_{cluster_rank}",
@@ -1436,21 +1431,29 @@ class CompletePipeline12Stages:
             'importance_score': float(importance_score),
             
             # Definition
-            'meaning': f"Academic term from {document_title}",
-            'definition_source': 'generated',
+            'definition': definition or f"Academic term from {document_title}",
+            'meaning': definition or f"Academic term from {document_title}",
+            'definition_source': 'document' if definition else 'generated',
             
             # Example
             'example': example[:200] if example else '',
+            'context_sentence': example[:200] if example else '',
+            'supporting_sentence': example[:200] if example else '',
             'example_source': 'document',
             
             # Phonetics
             'ipa': ipa,
+            'phonetic': ipa,
             'ipa_uk': ipa,  # Same for now
             'ipa_us': ipa,  # Same for now
             
             # Audio
             'audio_word_url': audio_word_url,
             'audio_example_url': audio_example_url,
+            'audio_url': audio_word_url,  # Alias
+            
+            # Image
+            'image_url': image_url,
             
             # Metadata
             'word_type': 'phrase' if len(word.split()) > 1 else 'word',
@@ -1570,27 +1573,84 @@ class CompletePipeline12Stages:
             print(f"  ⚠️  IPA conversion failed for '{word}': {e}")
             return ""
     
-    def _generate_audio_url(self, text: str, audio_type: str) -> str:
+    def _generate_audio_url(self, text: str, audio_type: str = 'word') -> str:
         """
-        Generate audio URL for text
+        Generate audio URL for text using Google Translate TTS
         
         Args:
             text: Text to generate audio for
-            audio_type: 'word' or 'example'
+            audio_type: 'word' or 'example' (for future use)
         
         Returns:
-            Audio URL (placeholder or gTTS URL)
+            Audio URL from Google Translate TTS
         """
-        # Option 1: Placeholder URL
-        # return f"https://tts.google.com/{audio_type}/{text.replace(' ', '-')}.mp3"
+        try:
+            import urllib.parse
+            
+            # Clean text
+            text_clean = text.strip()
+            if not text_clean:
+                return ""
+            
+            # Encode for URL
+            encoded_text = urllib.parse.quote(text_clean)
+            
+            # Google Translate TTS URL
+            # Parameters:
+            # - ie=UTF-8: input encoding
+            # - q=text: text to speak
+            # - tl=en: target language (English)
+            # - client=tw-ob: client type
+            audio_url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={encoded_text}&tl=en&client=tw-ob"
+            
+            return audio_url
+            
+        except Exception as e:
+            print(f"  ⚠️  Audio URL generation failed for '{text}': {e}")
+            return ""
+    
+    def _generate_image_url(self, word: str, definition: str = "") -> str:
+        """
+        Generate image URL for vocabulary word
         
-        # Option 2: Generate with gTTS (requires file storage)
-        # This would need to be implemented with actual file storage
+        Uses Unsplash API for free, high-quality images
         
-        # For now, return placeholder
-        import urllib.parse
-        encoded_text = urllib.parse.quote(text)
-        return f"https://translate.google.com/translate_tts?ie=UTF-8&q={encoded_text}&tl=en&client=tw-ob"
+        Args:
+            word: Word or phrase
+            definition: Definition (for better search)
+        
+        Returns:
+            Image URL from Unsplash
+        """
+        try:
+            import urllib.parse
+            
+            # Clean word for search
+            word_clean = word.strip().lower()
+            if not word_clean:
+                return ""
+            
+            # Create search query
+            # Use word + first few words of definition for better results
+            search_query = word_clean
+            if definition:
+                # Take first 3 words of definition
+                def_words = definition.split()[:3]
+                search_query = f"{word_clean} {' '.join(def_words)}"
+            
+            # Encode for URL
+            encoded_query = urllib.parse.quote(search_query)
+            
+            # Unsplash Source API (free, no API key needed)
+            # Returns a random image matching the query
+            # Size: 800x600 (good for flashcards)
+            image_url = f"https://source.unsplash.com/800x600/?{encoded_query}"
+            
+            return image_url
+            
+        except Exception as e:
+            print(f"  ⚠️  Image URL generation failed for '{word}': {e}")
+            return ""
     
     def _estimate_difficulty(self, importance_score: float) -> str:
         """
@@ -1654,69 +1714,3 @@ class CompletePipeline12Stages:
         else:
             return obj
 
-
-# ============================================================================
-# TESTING
-# ============================================================================
-
-if __name__ == "__main__":
-    print("=" * 80)
-    print("TESTING COMPLETE 12-STAGE PIPELINE")
-    print("=" * 80)
-    
-    test_text = """
-# Climate Change and Environmental Protection
-
-Climate change is one of the most pressing issues facing humanity today. 
-The burning of fossil fuels releases greenhouse gases into the atmosphere, 
-leading to global warming and extreme weather events.
-
-## Causes of Climate Change
-
-Human activities such as deforestation and industrial pollution contribute 
-significantly to environmental degradation. Cutting down trees reduces the 
-planet's capacity to absorb carbon dioxide. Photosynthesis is essential 
-for maintaining atmospheric balance.
-
-## Solutions and Mitigation
-
-To address climate change, we must adopt renewable energy sources and 
-implement sustainable practices. Protecting natural habitats and reducing 
-carbon emissions are essential steps toward environmental conservation.
-
-Biodiversity loss threatens ecosystem stability. Urbanization and 
-industrialization must be managed carefully to minimize environmental impact.
-"""
-    
-    # Initialize systems (DISABLED - KG and RAG)
-    # kg = KnowledgeGraph(storage_path="test_kg_complete")
-    # rag = RAGSystem(kg, llm_api_key=os.getenv("OPENAI_API_KEY"))
-    
-    # Initialize complete pipeline (without KG/RAG)
-    pipeline = CompletePipeline12Stages(knowledge_graph=None, rag_system=None)
-    
-    # Process document
-    result = pipeline.process_document(
-        text=test_text,
-        document_id="doc_test_complete",
-        document_title="Climate Change and Environmental Protection",
-        max_phrases=15,
-        max_words=5,
-        use_bm25=True,
-        bm25_weight=0.2,
-        generate_flashcards=True
-    )
-    
-    print("\n📊 FINAL RESULTS:")
-    print("-" * 80)
-    print(f"Vocabulary: {result['vocabulary_count']} items")
-    print(f"Flashcards: {result['flashcards_count']} cards")
-    
-    print("\n📊 TOP VOCABULARY:")
-    for i, item in enumerate(result['vocabulary'][:10], 1):
-        text = item.get('phrase', item.get('word', ''))
-        score = item.get('importance_score', 0)
-        item_type = item.get('type', 'unknown')
-        print(f"{i}. {text} (score: {score:.3f}, type: {item_type})")
-    
-    print("\n✅ Test completed!")

@@ -1,0 +1,1734 @@
+{
+  "vocabulary": [
+    {
+      "phrase": "machine learning",
+      "occurrences": [
+        {
+          "sentence_id": "S0",
+          "sentence_text": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 4,
+      "sentence_count": 1,
+      "semantic_score": 0.502851460455608,
+      "freq_score": 1.0,
+      "length_score": 0.4,
+      "final_score": 0.6459400373597983,
+      "cluster_id": 1,
+      "semantic_theme": "Machine Learning",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.8308819457562282,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "artificial intelligence machine learning",
+      "occurrences": [
+        {
+          "sentence_id": "S0",
+          "sentence_text": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.5382246651808966,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.8,
+      "final_score": 0.7684704888870069,
+      "cluster_id": 1,
+      "semantic_theme": "Machine Learning",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.7432860637947615,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "neural networks",
+      "occurrences": [
+        {
+          "sentence_id": "S1",
+          "sentence_text": "Neural networks are a fundamental component of modern machine learning systems.",
+          "phrase_type": "adj_noun"
+        },
+        {
+          "sentence_id": "S2",
+          "sentence_text": "Deep Learning Deep learning uses neural networks with multiple layers to process complex patterns.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 2,
+      "sentence_count": 2,
+      "semantic_score": 0.5378457145655341,
+      "freq_score": 0.6826061944859854,
+      "length_score": 0.4,
+      "final_score": 0.7166043172655838,
+      "cluster_id": 1,
+      "semantic_theme": "Machine Learning",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.8213642185349342,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "artificial intelligence",
+      "occurrences": [
+        {
+          "sentence_id": "S0",
+          "sentence_text": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 2,
+      "sentence_count": 1,
+      "semantic_score": 0.4460538647927638,
+      "freq_score": 0.6826061944859854,
+      "length_score": 0.4,
+      "final_score": 0.702454971382569,
+      "cluster_id": 1,
+      "semantic_theme": "Machine Learning",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.7654232781264583,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "gradient descent",
+      "occurrences": [
+        {
+          "sentence_id": "S4",
+          "sentence_text": "Gradient descent optimization helps minimize the loss function.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.5916562226280322,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7767067493966189,
+      "cluster_id": 1,
+      "semantic_theme": "Gradient Descent",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.7198219536580412,
+      "semantic_role": "core"
+    },
+    {
+      "phrase": "applications machine learning",
+      "occurrences": [
+        {
+          "sentence_id": "S5",
+          "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.5108963933375734,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.6,
+      "final_score": 0.7642579452717138,
+      "cluster_id": 1,
+      "semantic_theme": "Applications Machine",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.6558849580430052,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "the loss function",
+      "occurrences": [
+        {
+          "sentence_id": "S4",
+          "sentence_text": "Gradient descent optimization helps minimize the loss function.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.408560319961544,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.6,
+      "final_score": 0.7484832495651612,
+      "cluster_id": 1,
+      "semantic_theme": "The Loss",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.5468736224087942,
+      "semantic_role": "peripheral"
+    },
+    {
+      "phrase": "descent optimization",
+      "occurrences": [
+        {
+          "sentence_id": "S4",
+          "sentence_text": "Gradient descent optimization helps minimize the loss function.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.43714344825752516,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.752889224275112,
+      "cluster_id": 1,
+      "semantic_theme": "Gradient Descent",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.6480070176885842,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "reinforcement learning",
+      "occurrences": [
+        {
+          "sentence_id": "S5",
+          "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.4052079065396712,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7479664884674564,
+      "cluster_id": 1,
+      "semantic_theme": "Machine Learning",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.7894058799054466,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "learning systems",
+      "occurrences": [
+        {
+          "sentence_id": "S1",
+          "sentence_text": "Neural networks are a fundamental component of modern machine learning systems.",
+          "phrase_type": "verb_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.36547098557192403,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7418412013042656,
+      "cluster_id": 1,
+      "semantic_theme": "Learning Systems",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.7001975524354329,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "the key algorithm",
+      "occurrences": [
+        {
+          "sentence_id": "S3",
+          "sentence_text": "Backpropagation is the key algorithm for training these networks.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.2680914352121351,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.6,
+      "final_score": 0.7268305337626049,
+      "cluster_id": 0,
+      "semantic_theme": "The Key",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.976890079078621,
+      "semantic_role": "core"
+    },
+    {
+      "phrase": "computer vision",
+      "occurrences": [
+        {
+          "sentence_id": "S5",
+          "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.3247226851278869,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7355600140468461,
+      "cluster_id": 2,
+      "semantic_theme": "Computer Vision",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.5773946641502502,
+      "semantic_role": "core"
+    },
+    {
+      "phrase": "numerous applications",
+      "occurrences": [
+        {
+          "sentence_id": "S5",
+          "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.28384970131126697,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7292596073470806,
+      "cluster_id": 2,
+      "semantic_theme": "Applications Machine",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.6382233335002128,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "multiple layers",
+      "occurrences": [
+        {
+          "sentence_id": "S2",
+          "sentence_text": "Deep Learning Deep learning uses neural networks with multiple layers to process complex patterns.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.26586628779734905,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7264875362035575,
+      "cluster_id": 1,
+      "semantic_theme": "Multiple Layers",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.38784740553099367,
+      "semantic_role": "peripheral"
+    },
+    {
+      "phrase": "key algorithm",
+      "occurrences": [
+        {
+          "sentence_id": "S3",
+          "sentence_text": "Backpropagation is the key algorithm for training these networks.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.24965927963490395,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7239892908278847,
+      "cluster_id": 0,
+      "semantic_theme": "The Key",
+      "is_cluster_representative": false,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.976890080754329,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "these networks",
+      "occurrences": [
+        {
+          "sentence_id": "S3",
+          "sentence_text": "Backpropagation is the key algorithm for training these networks.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.2481803471646976,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7237613193128714,
+      "cluster_id": 1,
+      "semantic_theme": "These Networks",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.5505739389435124,
+      "semantic_role": "peripheral"
+    },
+    {
+      "phrase": "natural language",
+      "occurrences": [
+        {
+          "sentence_id": "S5",
+          "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.23927754284429625,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.722388987695522,
+      "cluster_id": 1,
+      "semantic_theme": "Natural Language",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.5307268074681025,
+      "semantic_role": "peripheral"
+    },
+    {
+      "phrase": "modern machine",
+      "occurrences": [
+        {
+          "sentence_id": "S1",
+          "sentence_text": "Neural networks are a fundamental component of modern machine learning systems.",
+          "phrase_type": "adj_noun"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.2233379596944348,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7199319648141139,
+      "cluster_id": 2,
+      "semantic_theme": "Modern Machine",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.553062299085009,
+      "semantic_role": "supporting"
+    },
+    {
+      "phrase": "language processing",
+      "occurrences": [
+        {
+          "sentence_id": "S5",
+          "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.21851210724293005,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7191880789932511,
+      "cluster_id": 2,
+      "semantic_theme": "Language Processing",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.5883814633435515,
+      "semantic_role": "peripheral"
+    },
+    {
+      "phrase": "these technologies",
+      "occurrences": [
+        {
+          "sentence_id": "S6",
+          "sentence_text": "These technologies are transforming industries worldwide.",
+          "phrase_type": "noun_phrase"
+        }
+      ],
+      "frequency": 1,
+      "sentence_count": 1,
+      "semantic_score": 0.20190218636351845,
+      "freq_score": 0.43067655807339306,
+      "length_score": 0.4,
+      "final_score": 0.7166277262365075,
+      "cluster_id": 2,
+      "semantic_theme": "These Technologies",
+      "is_cluster_representative": true,
+      "learning_value": 0.5,
+      "rarity_score": 1.0,
+      "type": "phrase",
+      "centrality": 0.6823466738843672,
+      "semantic_role": "supporting"
+    },
+    {
+      "word": "backpropagation",
+      "original": "Backpropagation",
+      "pos": "NN",
+      "sentence": "Backpropagation is the key algorithm for training these networks.",
+      "frequency": 1,
+      "sentences": [
+        "Backpropagation is the key algorithm for training these networks."
+      ],
+      "semantic_score": 0.5466432571411133,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 1.0,
+      "morphological_score": 0.9,
+      "final_score": 0.7755765281507363,
+      "importance_score": 1.2176127858050962,
+      "supporting_sentence": "Backpropagation is the key algorithm for training these networks.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 1,
+      "centrality": 0.6391806291134424,
+      "semantic_role": "supporting"
+    },
+    {
+      "word": "reinforcement",
+      "original": "reinforcement",
+      "pos": "NN",
+      "sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+      "frequency": 1,
+      "sentences": [
+        "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning."
+      ],
+      "semantic_score": 0.17214202880859375,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.8666666666666667,
+      "morphological_score": 0.9,
+      "final_score": 0.7178486642237293,
+      "importance_score": 1.1084454528175074,
+      "supporting_sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 1,
+      "centrality": 0.5221177964163108,
+      "semantic_role": "peripheral"
+    },
+    {
+      "word": "transforming",
+      "original": "transforming",
+      "pos": "VBG",
+      "sentence": "These technologies are transforming industries worldwide.",
+      "frequency": 1,
+      "sentences": [
+        "These technologies are transforming industries worldwide."
+      ],
+      "semantic_score": 0.08990659564733505,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.6833333333333332,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.8,
+      "morphological_score": 0.7,
+      "final_score": 0.6904882868969296,
+      "importance_score": 1.0642859999857501,
+      "supporting_sentence": "These technologies are transforming industries worldwide.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.5254789484967443,
+      "semantic_role": "peripheral"
+    },
+    {
+      "word": "intelligence",
+      "original": "Intelligence",
+      "pos": "NNP",
+      "sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+      "frequency": 2,
+      "sentences": [
+        "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+        "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data."
+      ],
+      "semantic_score": 0.2090194672346115,
+      "frequency_score": 0.2857142857142857,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.5,
+      "word_length": 0.8,
+      "morphological_score": 0.9,
+      "final_score": 0.6476361801148348,
+      "importance_score": 1.030908296565155,
+      "supporting_sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+      "freq_score": 1.0,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.5676578971627926,
+      "semantic_role": "peripheral"
+    },
+    {
+      "word": "optimization",
+      "original": "optimization",
+      "pos": "NN",
+      "sentence": "Gradient descent optimization helps minimize the loss function.",
+      "frequency": 1,
+      "sentences": [
+        "Gradient descent optimization helps minimize the loss function."
+      ],
+      "semantic_score": 0.30407947301864624,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.8,
+      "morphological_score": 0.9,
+      "final_score": 0.7381862926479339,
+      "importance_score": 1.0245324782554752,
+      "supporting_sentence": "Gradient descent optimization helps minimize the loss function.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 1,
+      "centrality": 0.6605244567067381,
+      "semantic_role": "supporting"
+    },
+    {
+      "word": "fundamental",
+      "original": "fundamental",
+      "pos": "JJ",
+      "sentence": "Neural networks are a fundamental component of modern machine learning systems.",
+      "frequency": 1,
+      "sentences": [
+        "Neural networks are a fundamental component of modern machine learning systems."
+      ],
+      "semantic_score": 0.09522511810064316,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.7333333333333333,
+      "morphological_score": 0.7,
+      "final_score": 0.7059922306018566,
+      "importance_score": 1.0214241459515985,
+      "supporting_sentence": "Neural networks are a fundamental component of modern machine learning systems.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.5817917648252704,
+      "semantic_role": "peripheral"
+    },
+    {
+      "word": "application",
+      "original": "Applications",
+      "pos": "NNS",
+      "sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+      "frequency": 2,
+      "sentences": [
+        "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+        "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning."
+      ],
+      "semantic_score": 0.21885356307029724,
+      "frequency_score": 0.2857142857142857,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.7333333333333333,
+      "morphological_score": 0.9,
+      "final_score": 0.6491520665880923,
+      "importance_score": 0.9582150610461573,
+      "supporting_sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+      "freq_score": 1.0,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.6437467906131474,
+      "semantic_role": "supporting"
+    },
+    {
+      "word": "developing",
+      "original": "developing",
+      "pos": "VBG",
+      "sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+      "frequency": 1,
+      "sentences": [
+        "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data."
+      ],
+      "semantic_score": 0.1273210346698761,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.6666666666666666,
+      "morphological_score": 0.7,
+      "final_score": 0.7109396875503184,
+      "importance_score": 0.9466853332835827,
+      "supporting_sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.5952636770459044,
+      "semantic_role": "peripheral"
+    },
+    {
+      "word": "artificial",
+      "original": "Artificial",
+      "pos": "NNP",
+      "sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+      "frequency": 2,
+      "sentences": [
+        "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+        "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data."
+      ],
+      "semantic_score": 0.161919966340065,
+      "frequency_score": 0.2857142857142857,
+      "learning_value": 0.7666666666666666,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.5,
+      "word_length": 0.6666666666666666,
+      "morphological_score": 0.7,
+      "final_score": 0.6403759807537364,
+      "importance_score": 0.941147150362327,
+      "supporting_sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+      "freq_score": 1.0,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.5963847584256419,
+      "semantic_role": "peripheral"
+    },
+    {
+      "word": "processing",
+      "original": "processing",
+      "pos": "NN",
+      "sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+      "frequency": 1,
+      "sentences": [
+        "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning."
+      ],
+      "semantic_score": 0.21697171032428741,
+      "frequency_score": 0.14285714285714285,
+      "learning_value": 0.6833333333333332,
+      "rarity_penalty": 0.0,
+      "coverage_penalty": 0.0,
+      "word_length": 0.6666666666666666,
+      "morphological_score": 0.7,
+      "final_score": 0.7100748652443516,
+      "importance_score": 0.9090311226657823,
+      "supporting_sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+      "freq_score": 0.6309297535714574,
+      "rarity_score": 1.0,
+      "type": "word",
+      "cluster_id": 2,
+      "centrality": 0.7729443191668031,
+      "semantic_role": "supporting"
+    }
+  ],
+  "topics": [
+    {
+      "topic_id": 0,
+      "topic_name": "The Key Algorithm",
+      "items": [
+        {
+          "phrase": "the key algorithm",
+          "occurrences": [
+            {
+              "sentence_id": "S3",
+              "sentence_text": "Backpropagation is the key algorithm for training these networks.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.2680914352121351,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.6,
+          "final_score": 0.7268305337626049,
+          "cluster_id": 0,
+          "semantic_theme": "The Key",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.976890079078621,
+          "semantic_role": "core"
+        },
+        {
+          "phrase": "key algorithm",
+          "occurrences": [
+            {
+              "sentence_id": "S3",
+              "sentence_text": "Backpropagation is the key algorithm for training these networks.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.24965927963490395,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7239892908278847,
+          "cluster_id": 0,
+          "semantic_theme": "The Key",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.976890080754329,
+          "semantic_role": "supporting"
+        }
+      ]
+    },
+    {
+      "topic_id": 1,
+      "topic_name": "Gradient Descent",
+      "items": [
+        {
+          "phrase": "gradient descent",
+          "occurrences": [
+            {
+              "sentence_id": "S4",
+              "sentence_text": "Gradient descent optimization helps minimize the loss function.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.5916562226280322,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7767067493966189,
+          "cluster_id": 1,
+          "semantic_theme": "Gradient Descent",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.7198219536580412,
+          "semantic_role": "core"
+        },
+        {
+          "word": "backpropagation",
+          "original": "Backpropagation",
+          "pos": "NN",
+          "sentence": "Backpropagation is the key algorithm for training these networks.",
+          "frequency": 1,
+          "sentences": [
+            "Backpropagation is the key algorithm for training these networks."
+          ],
+          "semantic_score": 0.5466432571411133,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 1.0,
+          "morphological_score": 0.9,
+          "final_score": 0.7755765281507363,
+          "importance_score": 1.2176127858050962,
+          "supporting_sentence": "Backpropagation is the key algorithm for training these networks.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 1,
+          "centrality": 0.6391806291134424,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "artificial intelligence machine learning",
+          "occurrences": [
+            {
+              "sentence_id": "S0",
+              "sentence_text": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.5382246651808966,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.8,
+          "final_score": 0.7684704888870069,
+          "cluster_id": 1,
+          "semantic_theme": "Machine Learning",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.7432860637947615,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "applications machine learning",
+          "occurrences": [
+            {
+              "sentence_id": "S5",
+              "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.5108963933375734,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.6,
+          "final_score": 0.7642579452717138,
+          "cluster_id": 1,
+          "semantic_theme": "Applications Machine",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.6558849580430052,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "descent optimization",
+          "occurrences": [
+            {
+              "sentence_id": "S4",
+              "sentence_text": "Gradient descent optimization helps minimize the loss function.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.43714344825752516,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.752889224275112,
+          "cluster_id": 1,
+          "semantic_theme": "Gradient Descent",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.6480070176885842,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "the loss function",
+          "occurrences": [
+            {
+              "sentence_id": "S4",
+              "sentence_text": "Gradient descent optimization helps minimize the loss function.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.408560319961544,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.6,
+          "final_score": 0.7484832495651612,
+          "cluster_id": 1,
+          "semantic_theme": "The Loss",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.5468736224087942,
+          "semantic_role": "peripheral"
+        },
+        {
+          "phrase": "reinforcement learning",
+          "occurrences": [
+            {
+              "sentence_id": "S5",
+              "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.4052079065396712,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7479664884674564,
+          "cluster_id": 1,
+          "semantic_theme": "Machine Learning",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.7894058799054466,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "learning systems",
+          "occurrences": [
+            {
+              "sentence_id": "S1",
+              "sentence_text": "Neural networks are a fundamental component of modern machine learning systems.",
+              "phrase_type": "verb_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.36547098557192403,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7418412013042656,
+          "cluster_id": 1,
+          "semantic_theme": "Learning Systems",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.7001975524354329,
+          "semantic_role": "supporting"
+        },
+        {
+          "word": "optimization",
+          "original": "optimization",
+          "pos": "NN",
+          "sentence": "Gradient descent optimization helps minimize the loss function.",
+          "frequency": 1,
+          "sentences": [
+            "Gradient descent optimization helps minimize the loss function."
+          ],
+          "semantic_score": 0.30407947301864624,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.8,
+          "morphological_score": 0.9,
+          "final_score": 0.7381862926479339,
+          "importance_score": 1.0245324782554752,
+          "supporting_sentence": "Gradient descent optimization helps minimize the loss function.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 1,
+          "centrality": 0.6605244567067381,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "multiple layers",
+          "occurrences": [
+            {
+              "sentence_id": "S2",
+              "sentence_text": "Deep Learning Deep learning uses neural networks with multiple layers to process complex patterns.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.26586628779734905,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7264875362035575,
+          "cluster_id": 1,
+          "semantic_theme": "Multiple Layers",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.38784740553099367,
+          "semantic_role": "peripheral"
+        },
+        {
+          "phrase": "these networks",
+          "occurrences": [
+            {
+              "sentence_id": "S3",
+              "sentence_text": "Backpropagation is the key algorithm for training these networks.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.2481803471646976,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7237613193128714,
+          "cluster_id": 1,
+          "semantic_theme": "These Networks",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.5505739389435124,
+          "semantic_role": "peripheral"
+        },
+        {
+          "phrase": "natural language",
+          "occurrences": [
+            {
+              "sentence_id": "S5",
+              "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.23927754284429625,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.722388987695522,
+          "cluster_id": 1,
+          "semantic_theme": "Natural Language",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.5307268074681025,
+          "semantic_role": "peripheral"
+        },
+        {
+          "word": "reinforcement",
+          "original": "reinforcement",
+          "pos": "NN",
+          "sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "frequency": 1,
+          "sentences": [
+            "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning."
+          ],
+          "semantic_score": 0.17214202880859375,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.8666666666666667,
+          "morphological_score": 0.9,
+          "final_score": 0.7178486642237293,
+          "importance_score": 1.1084454528175074,
+          "supporting_sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 1,
+          "centrality": 0.5221177964163108,
+          "semantic_role": "peripheral"
+        },
+        {
+          "phrase": "neural networks",
+          "occurrences": [
+            {
+              "sentence_id": "S1",
+              "sentence_text": "Neural networks are a fundamental component of modern machine learning systems.",
+              "phrase_type": "adj_noun"
+            },
+            {
+              "sentence_id": "S2",
+              "sentence_text": "Deep Learning Deep learning uses neural networks with multiple layers to process complex patterns.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 2,
+          "sentence_count": 2,
+          "semantic_score": 0.5378457145655341,
+          "freq_score": 0.6826061944859854,
+          "length_score": 0.4,
+          "final_score": 0.7166043172655838,
+          "cluster_id": 1,
+          "semantic_theme": "Machine Learning",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.8213642185349342,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "artificial intelligence",
+          "occurrences": [
+            {
+              "sentence_id": "S0",
+              "sentence_text": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 2,
+          "sentence_count": 1,
+          "semantic_score": 0.4460538647927638,
+          "freq_score": 0.6826061944859854,
+          "length_score": 0.4,
+          "final_score": 0.702454971382569,
+          "cluster_id": 1,
+          "semantic_theme": "Machine Learning",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.7654232781264583,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "machine learning",
+          "occurrences": [
+            {
+              "sentence_id": "S0",
+              "sentence_text": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 4,
+          "sentence_count": 1,
+          "semantic_score": 0.502851460455608,
+          "freq_score": 1.0,
+          "length_score": 0.4,
+          "final_score": 0.6459400373597983,
+          "cluster_id": 1,
+          "semantic_theme": "Machine Learning",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.8308819457562282,
+          "semantic_role": "supporting"
+        }
+      ]
+    },
+    {
+      "topic_id": 2,
+      "topic_name": "Computer Vision",
+      "items": [
+        {
+          "phrase": "computer vision",
+          "occurrences": [
+            {
+              "sentence_id": "S5",
+              "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.3247226851278869,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7355600140468461,
+          "cluster_id": 2,
+          "semantic_theme": "Computer Vision",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.5773946641502502,
+          "semantic_role": "core"
+        },
+        {
+          "phrase": "numerous applications",
+          "occurrences": [
+            {
+              "sentence_id": "S5",
+              "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.28384970131126697,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7292596073470806,
+          "cluster_id": 2,
+          "semantic_theme": "Applications Machine",
+          "is_cluster_representative": false,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.6382233335002128,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "modern machine",
+          "occurrences": [
+            {
+              "sentence_id": "S1",
+              "sentence_text": "Neural networks are a fundamental component of modern machine learning systems.",
+              "phrase_type": "adj_noun"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.2233379596944348,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7199319648141139,
+          "cluster_id": 2,
+          "semantic_theme": "Modern Machine",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.553062299085009,
+          "semantic_role": "supporting"
+        },
+        {
+          "phrase": "language processing",
+          "occurrences": [
+            {
+              "sentence_id": "S5",
+              "sentence_text": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.21851210724293005,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7191880789932511,
+          "cluster_id": 2,
+          "semantic_theme": "Language Processing",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.5883814633435515,
+          "semantic_role": "peripheral"
+        },
+        {
+          "phrase": "these technologies",
+          "occurrences": [
+            {
+              "sentence_id": "S6",
+              "sentence_text": "These technologies are transforming industries worldwide.",
+              "phrase_type": "noun_phrase"
+            }
+          ],
+          "frequency": 1,
+          "sentence_count": 1,
+          "semantic_score": 0.20190218636351845,
+          "freq_score": 0.43067655807339306,
+          "length_score": 0.4,
+          "final_score": 0.7166277262365075,
+          "cluster_id": 2,
+          "semantic_theme": "These Technologies",
+          "is_cluster_representative": true,
+          "learning_value": 0.5,
+          "rarity_score": 1.0,
+          "type": "phrase",
+          "centrality": 0.6823466738843672,
+          "semantic_role": "supporting"
+        },
+        {
+          "word": "developing",
+          "original": "developing",
+          "pos": "VBG",
+          "sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "frequency": 1,
+          "sentences": [
+            "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data."
+          ],
+          "semantic_score": 0.1273210346698761,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.6666666666666666,
+          "morphological_score": 0.7,
+          "final_score": 0.7109396875503184,
+          "importance_score": 0.9466853332835827,
+          "supporting_sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.5952636770459044,
+          "semantic_role": "peripheral"
+        },
+        {
+          "word": "processing",
+          "original": "processing",
+          "pos": "NN",
+          "sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "frequency": 1,
+          "sentences": [
+            "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning."
+          ],
+          "semantic_score": 0.21697171032428741,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.6833333333333332,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.6666666666666666,
+          "morphological_score": 0.7,
+          "final_score": 0.7100748652443516,
+          "importance_score": 0.9090311226657823,
+          "supporting_sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.7729443191668031,
+          "semantic_role": "supporting"
+        },
+        {
+          "word": "fundamental",
+          "original": "fundamental",
+          "pos": "JJ",
+          "sentence": "Neural networks are a fundamental component of modern machine learning systems.",
+          "frequency": 1,
+          "sentences": [
+            "Neural networks are a fundamental component of modern machine learning systems."
+          ],
+          "semantic_score": 0.09522511810064316,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.7333333333333333,
+          "morphological_score": 0.7,
+          "final_score": 0.7059922306018566,
+          "importance_score": 1.0214241459515985,
+          "supporting_sentence": "Neural networks are a fundamental component of modern machine learning systems.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.5817917648252704,
+          "semantic_role": "peripheral"
+        },
+        {
+          "word": "transforming",
+          "original": "transforming",
+          "pos": "VBG",
+          "sentence": "These technologies are transforming industries worldwide.",
+          "frequency": 1,
+          "sentences": [
+            "These technologies are transforming industries worldwide."
+          ],
+          "semantic_score": 0.08990659564733505,
+          "frequency_score": 0.14285714285714285,
+          "learning_value": 0.6833333333333332,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.8,
+          "morphological_score": 0.7,
+          "final_score": 0.6904882868969296,
+          "importance_score": 1.0642859999857501,
+          "supporting_sentence": "These technologies are transforming industries worldwide.",
+          "freq_score": 0.6309297535714574,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.5254789484967443,
+          "semantic_role": "peripheral"
+        },
+        {
+          "word": "application",
+          "original": "Applications",
+          "pos": "NNS",
+          "sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "frequency": 2,
+          "sentences": [
+            "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+            "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning."
+          ],
+          "semantic_score": 0.21885356307029724,
+          "frequency_score": 0.2857142857142857,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.0,
+          "word_length": 0.7333333333333333,
+          "morphological_score": 0.9,
+          "final_score": 0.6491520665880923,
+          "importance_score": 0.9582150610461573,
+          "supporting_sentence": "Applications Machine learning has numerous applications including natural language processing, computer vision, and reinforcement learning.",
+          "freq_score": 1.0,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.6437467906131474,
+          "semantic_role": "supporting"
+        },
+        {
+          "word": "intelligence",
+          "original": "Intelligence",
+          "pos": "NNP",
+          "sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "frequency": 2,
+          "sentences": [
+            "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+            "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data."
+          ],
+          "semantic_score": 0.2090194672346115,
+          "frequency_score": 0.2857142857142857,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.5,
+          "word_length": 0.8,
+          "morphological_score": 0.9,
+          "final_score": 0.6476361801148348,
+          "importance_score": 1.030908296565155,
+          "supporting_sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "freq_score": 1.0,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.5676578971627926,
+          "semantic_role": "peripheral"
+        },
+        {
+          "word": "artificial",
+          "original": "Artificial",
+          "pos": "NNP",
+          "sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "frequency": 2,
+          "sentences": [
+            "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+            "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data."
+          ],
+          "semantic_score": 0.161919966340065,
+          "frequency_score": 0.2857142857142857,
+          "learning_value": 0.7666666666666666,
+          "rarity_penalty": 0.0,
+          "coverage_penalty": 0.5,
+          "word_length": 0.6666666666666666,
+          "morphological_score": 0.7,
+          "final_score": 0.6403759807537364,
+          "importance_score": 0.941147150362327,
+          "supporting_sentence": "Machine Learning and Artificial Intelligence Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data.",
+          "freq_score": 1.0,
+          "rarity_score": 1.0,
+          "type": "word",
+          "cluster_id": 2,
+          "centrality": 0.5963847584256419,
+          "semantic_role": "peripheral"
+        }
+      ]
+    }
+  ],
+  "flashcards": [
+    {
+      "text": "the key algorithm",
+      "type": "phrase",
+      "topic_id": 0,
+      "topic_name": "The Key Algorithm",
+      "semantic_role": "core",
+      "final_score": 0.7268305337626049,
+      "semantic_score": 0.2680914352121351,
+      "learning_value": 0.5,
+      "related_terms": [
+        "key algorithm"
+      ],
+      "difficulty": "intermediate",
+      "tags": [
+        "The Key Algorithm",
+        "core",
+        "phrase"
+      ]
+    },
+    {
+      "text": "key algorithm",
+      "type": "phrase",
+      "topic_id": 0,
+      "topic_name": "The Key Algorithm",
+      "semantic_role": "supporting",
+      "final_score": 0.7239892908278847,
+      "semantic_score": 0.24965927963490395,
+      "learning_value": 0.5,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "The Key Algorithm",
+        "supporting",
+        "phrase"
+      ]
+    },
+    {
+      "text": "gradient descent",
+      "type": "phrase",
+      "topic_id": 1,
+      "topic_name": "Gradient Descent",
+      "semantic_role": "core",
+      "final_score": 0.7767067493966189,
+      "semantic_score": 0.5916562226280322,
+      "learning_value": 0.5,
+      "related_terms": [
+        "backpropagation",
+        "artificial intelligence machine learning",
+        "applications machine learning",
+        "descent optimization",
+        "reinforcement learning"
+      ],
+      "difficulty": "intermediate",
+      "tags": [
+        "Gradient Descent",
+        "core",
+        "phrase"
+      ]
+    },
+    {
+      "text": "backpropagation",
+      "type": "word",
+      "topic_id": 1,
+      "topic_name": "Gradient Descent",
+      "semantic_role": "supporting",
+      "final_score": 0.7755765281507363,
+      "semantic_score": 0.5466432571411133,
+      "learning_value": 0.7666666666666666,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "Gradient Descent",
+        "supporting",
+        "word"
+      ]
+    },
+    {
+      "text": "artificial intelligence machine learning",
+      "type": "phrase",
+      "topic_id": 1,
+      "topic_name": "Gradient Descent",
+      "semantic_role": "supporting",
+      "final_score": 0.7684704888870069,
+      "semantic_score": 0.5382246651808966,
+      "learning_value": 0.5,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "Gradient Descent",
+        "supporting",
+        "phrase"
+      ]
+    },
+    {
+      "text": "applications machine learning",
+      "type": "phrase",
+      "topic_id": 1,
+      "topic_name": "Gradient Descent",
+      "semantic_role": "supporting",
+      "final_score": 0.7642579452717138,
+      "semantic_score": 0.5108963933375734,
+      "learning_value": 0.5,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "Gradient Descent",
+        "supporting",
+        "phrase"
+      ]
+    },
+    {
+      "text": "computer vision",
+      "type": "phrase",
+      "topic_id": 2,
+      "topic_name": "Computer Vision",
+      "semantic_role": "core",
+      "final_score": 0.7355600140468461,
+      "semantic_score": 0.3247226851278869,
+      "learning_value": 0.5,
+      "related_terms": [
+        "numerous applications",
+        "modern machine",
+        "these technologies",
+        "processing",
+        "application"
+      ],
+      "difficulty": "intermediate",
+      "tags": [
+        "Computer Vision",
+        "core",
+        "phrase"
+      ]
+    },
+    {
+      "text": "numerous applications",
+      "type": "phrase",
+      "topic_id": 2,
+      "topic_name": "Computer Vision",
+      "semantic_role": "supporting",
+      "final_score": 0.7292596073470806,
+      "semantic_score": 0.28384970131126697,
+      "learning_value": 0.5,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "Computer Vision",
+        "supporting",
+        "phrase"
+      ]
+    },
+    {
+      "text": "modern machine",
+      "type": "phrase",
+      "topic_id": 2,
+      "topic_name": "Computer Vision",
+      "semantic_role": "supporting",
+      "final_score": 0.7199319648141139,
+      "semantic_score": 0.2233379596944348,
+      "learning_value": 0.5,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "Computer Vision",
+        "supporting",
+        "phrase"
+      ]
+    },
+    {
+      "text": "these technologies",
+      "type": "phrase",
+      "topic_id": 2,
+      "topic_name": "Computer Vision",
+      "semantic_role": "supporting",
+      "final_score": 0.7166277262365075,
+      "semantic_score": 0.20190218636351845,
+      "learning_value": 0.5,
+      "related_terms": [],
+      "difficulty": "intermediate",
+      "tags": [
+        "Computer Vision",
+        "supporting",
+        "phrase"
+      ]
+    }
+  ],
+  "statistics": {
+    "total_items": 30,
+    "phrases": 20,
+    "words": 10,
+    "num_topics": 3,
+    "num_flashcards": 10,
+    "document_title": "Machine Learning Introduction",
+    "document_length": 671,
+    "num_headings": 0,
+    "num_sections": 0
+  },
+  "metadata": {
+    "pipeline_version": "2.0",
+    "pipeline_type": "learned_scoring",
+    "stages": [
+      "Document Ingestion",
+      "Heading Detection",
+      "Context Intelligence",
+      "Phrase Extraction (L2R)",
+      "Single Word Extraction (L2R)",
+      "Independent Scoring",
+      "Merge",
+      "Learned Final Scoring",
+      "Topic Modeling",
+      "Within-Topic Ranking",
+      "Flashcard Generation"
+    ]
+  }
+}

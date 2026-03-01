@@ -25,7 +25,7 @@ except ImportError:
 
 # Import extractors
 from phrase_centric_extractor import PhraseCentricExtractor
-from complete_pipeline_12_stages import CompletePipeline12Stages
+from complete_pipeline import CompletePipelineNew
 
 # Import RAG systems (DISABLED - commented out by user)
 # from knowledge_graph import KnowledgeGraph
@@ -263,21 +263,18 @@ async def upload_document_complete(
         # Initialize complete pipeline
         document_id = f"doc_{timestamp}"
         
-        pipeline = CompletePipeline12Stages(
-            knowledge_graph=knowledge_graph,
-            rag_system=rag_system
+        pipeline = CompletePipelineNew(
+            n_topics=5
         )
         
-        print(f"[Upload Complete] Processing through 12-stage pipeline...")
+        print(f"[Upload Complete] Processing through new pipeline...")
         
         # Process document through complete pipeline
         result = pipeline.process_document(
             text=text,
-            document_id=document_id,
             document_title=file.filename,
             max_phrases=max_phrases,
             max_words=max_words,
-            language="en",
             use_bm25=use_bm25,
             bm25_weight=bm25_weight,
             generate_flashcards=generate_flashcards
@@ -745,23 +742,17 @@ if __name__ == "__main__":
     import uvicorn
     
     print("\n" + "="*80)
-    print("🚀 VISUAL LANGUAGE TUTOR API")
+    print("VISUAL LANGUAGE TUTOR API")
     print("="*80)
     print("Version: 5.2.0-filter-only-mode")
     print("Pipeline: Complete 12-Stage + Phrase-Centric")
     print("")
-    print("📍 Main Endpoints:")
-    print("  POST /api/upload-document-complete  (Phrases + Words) ✅ RECOMMENDED")
+    print("  Main Endpoints:")
+    print("  POST /api/upload-document-complete  (Phrases + Words)")
     print("  POST /api/upload-document           (Phrases Only)")
     print("  GET  /api/knowledge-graph/{doc_id}  (STAGE 11 Visualization)")
     print("  GET  /api/flashcards/{doc_id}       (STAGE 12 Flashcards)")
     print("")
-    print("⚠️  Disabled Endpoints:")
-    print("  POST /api/rag/generate-flashcards   (DISABLED - use upload endpoints)")
-    print("  POST /api/rag/query                 (DISABLED)")
-    print("  GET  /api/knowledge-graph/stats     (DISABLED)")
-    print("")
-    print("📖 Documentation: http://localhost:8000/docs")
+    print("Documentation: http://localhost:8000/docs")
     print("="*80 + "\n")
-    
     uvicorn.run(app, host="0.0.0.0", port=8000)

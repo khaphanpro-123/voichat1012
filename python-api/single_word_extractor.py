@@ -1,22 +1,3 @@
-"""
-STAGE 7 – Single-Word Extraction (SECONDARY PIPELINE – SONG SONG)
-
-Mục tiêu:
-- Trích từ đơn có giá trị học tập
-- KHÔNG cạnh tranh với phrase
-- Chỉ bổ sung những từ đơn có giá trị mà phrase không cover
-
-Pipeline:
-7.1 POS Constraint (BẮT BUỘC) - Chỉ NOUN, VERB, ADJ
-7.2 Stopword & Function-word Removal
-7.3 IDF-based Rarity Filter (CHỐNG TỪ QUÁ PHỔ BIẾN)
-7.4 Phrase Coverage Rule (CỰC KỲ QUAN TRỌNG)
-7.5 Heading-aware Semantic Filter
-7.6 Lexical Specificity Check
-
-Author: Kiro AI
-Date: 2026-02-07
-"""
 
 import re
 # import spacy  # DISABLED for Railway
@@ -38,16 +19,6 @@ print("⚠️  spaCy disabled for Railway, using NLTK fallback")
 
 
 class SingleWordExtractor:
-    """
-    Extract valuable single words that supplement phrases
-    
-    Rules:
-    - Phrase > Word (always)
-    - Word only supplements
-    - No overlap with phrases
-    - Academic value only
-    """
-    
     def __init__(self):
         self.nlp = nlp
         self.embedding_model = None
@@ -117,22 +88,6 @@ class SingleWordExtractor:
         idf_threshold: float = 1.5,  # ✅ LOWERED from 2.0 to 1.5
         semantic_threshold: float = 0.2  # ✅ LOWERED from 0.3 to 0.2
     ) -> List[Dict]:
-        """
-        Extract valuable single words that supplement phrases
-        
-        NEW APPROACH: Soft filtering with Learning Value Score
-        
-        Args:
-            text: Document text
-            phrases: List of extracted phrases
-            headings: List of headings
-            max_words: Maximum single words to return
-            idf_threshold: Minimum IDF score (for hard stopword filter only)
-            semantic_threshold: Minimum heading similarity
-        
-        Returns:
-            List of single word dictionaries
-        """
         print(f"\n{'='*80}")
         print(f"SINGLE-WORD EXTRACTION (SOFT FILTERING APPROACH)")
         print(f"{'='*80}\n")
@@ -793,80 +748,3 @@ class SingleWordExtractor:
         words.sort(key=lambda x: x['final_score'], reverse=True)
         
         return words
-
-
-# ============================================================================
-# TESTING
-# ============================================================================
-
-if __name__ == "__main__":
-    print("=" * 80)
-    print("TESTING SINGLE-WORD EXTRACTOR (SOFT FILTERING)")
-    print("=" * 80)
-    
-    test_text = """
-# Climate Change and Environmental Protection
-
-Climate change is one of the most pressing issues facing humanity today. 
-The burning of fossil fuels releases greenhouse gases into the atmosphere, 
-leading to global warming and extreme weather events.
-
-Deforestation contributes significantly to environmental degradation. 
-Photosynthesis is essential for carbon dioxide absorption. Biodiversity 
-loss threatens ecosystem stability. Mitigation strategies are crucial.
-
-## Solutions
-
-Sustainability requires renewable energy adoption. Urbanization must be 
-managed carefully. Industrialization should prioritize environmental protection.
-The impact of climate change is significant and requires immediate action.
-"""
-    
-    # Mock phrases (from Stage 4)
-    test_phrases = [
-        {'phrase': 'climate change', 'importance_score': 0.95},
-        {'phrase': 'environmental protection', 'importance_score': 0.90},
-        {'phrase': 'fossil fuels', 'importance_score': 0.85},
-        {'phrase': 'greenhouse gases', 'importance_score': 0.85},
-        {'phrase': 'global warming', 'importance_score': 0.80},
-        {'phrase': 'renewable energy', 'importance_score': 0.80},
-        {'phrase': 'environmental degradation', 'importance_score': 0.75}
-    ]
-    
-    # Mock headings
-    test_headings = [
-        {'level': 1, 'text': 'Climate Change and Environmental Protection'},
-        {'level': 2, 'text': 'Solutions'}
-    ]
-    
-    # Initialize extractor
-    extractor = SingleWordExtractor()
-    
-    # Extract single words
-    result = extractor.extract_single_words(
-        text=test_text,
-        phrases=test_phrases,
-        headings=test_headings,
-        max_words=10
-    )
-    
-    print("\n📊 EXTRACTED SINGLE WORDS (WITH SOFT FILTERING):")
-    print("-" * 80)
-    for i, word in enumerate(result, 1):
-        print(f"\n{i}. {word['word']}")
-        print(f"   Final Score: {word.get('final_score', 0):.3f}")
-        print(f"   Learning Value: {word.get('learning_value', 0):.3f}")
-        print(f"     - Concreteness: {word.get('concreteness', 0):.3f}")
-        print(f"     - Domain Specificity: {word.get('domain_specificity', 0):.3f}")
-        print(f"     - Morphological Richness: {word.get('morphological_richness', 0):.3f}")
-        print(f"     - Generality Penalty: {word.get('generality_penalty', 0):.3f}")
-        print(f"   Penalties:")
-        print(f"     - Rarity Penalty: {word.get('rarity_penalty', 0):.3f}")
-        print(f"     - Coverage Penalty: {word.get('coverage_penalty', 0):.3f}")
-        print(f"   IDF: {word.get('idf_score', 0):.3f}")
-        print(f"   Frequency: {word.get('frequency', 0)}")
-        if word.get('supporting_sentence'):
-            print(f"   Example: {word.get('supporting_sentence', '')[:80]}...")
-    
-    print("\n✅ Test completed!")
-

@@ -1,21 +1,3 @@
-"""
-STAGE 2 – Context Intelligence Engine
-Chọn câu ngữ cảnh tốt nhất cho mỗi từ vựng
-
-Pipeline:
-1. Build Sentence objects với metadata
-2. Map từ vựng → danh sách câu chứa từ
-3. Lọc câu không hợp lệ (quá ngắn/dài, không có động từ)
-4. Chấm điểm câu theo công thức weighted
-5. Chọn câu tốt nhất cho mỗi từ
-6. Highlight từ vựng trong câu
-
-Thư viện sử dụng:
-- spaCy: Phân tích cú pháp, POS tagging, dependency parsing
-- NLTK: Sentence tokenization, stopwords
-- scikit-learn: TF-IDF vectorization
-- underthesea: Vietnamese NLP (nếu cần)
-"""
 
 import re
 import math
