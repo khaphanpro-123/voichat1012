@@ -284,8 +284,8 @@ async def upload_document_complete(
         store_pipeline_result(document_id, result)
         
         print(f"[Upload Complete] Pipeline complete!")
-        print(f"  Vocabulary: {result['vocabulary_count']} items")
-        print(f"  Flashcards: {result['flashcards_count']} cards")
+        print(f"  Vocabulary: {len(result['vocabulary'])} items")
+        print(f"  Flashcards: {len(result['flashcards'])} cards")
         
         # Prepare response
         return JSONResponse(content={
@@ -294,21 +294,14 @@ async def upload_document_complete(
             'filename': file.filename,
             'text_length': len(text),
             'vocabulary': result['vocabulary'],
-            'vocabulary_count': result['vocabulary_count'],
+            'vocabulary_count': len(result['vocabulary']),
             'flashcards': result.get('flashcards', []),
-            'flashcards_count': result.get('flashcards_count', 0),
-            'knowledge_graph_stats': result['stages'].get('stage11', {}),
-            'pipeline': 'Complete 12-Stage Pipeline',
-            'pipeline_version': result['pipeline_version'],
-            'stages': {
-                'stage1': result['stages'].get('stage1', {}),
-                'stage2': result['stages'].get('stage2', {}),
-                'stage4': result['stages'].get('stage4', {}),
-                'stage7': result['stages'].get('stage7', {}),
-                'stage8': result['stages'].get('stage8', {}),
-                'stage11': result['stages'].get('stage11', {})
-            },
-            'timestamp': result['timestamp']
+            'flashcards_count': len(result.get('flashcards', [])),
+            'topics': result.get('topics', []),
+            'statistics': result.get('statistics', {}),
+            'pipeline': 'Complete Pipeline (New)',
+            'pipeline_version': result.get('metadata', {}).get('pipeline_version', '2.0'),
+            'timestamp': datetime.now().isoformat()
         })
         
     except HTTPException:
