@@ -92,7 +92,10 @@ class CompletePipelineNew:
         text: str,
         max_phrases: int = 30,
         max_words: int = 20,
-        document_title: str = "Document"
+        document_title: str = "Document",
+        use_bm25: bool = False,
+        bm25_weight: float = 0.2,
+        generate_flashcards: bool = True
     ) -> Dict:
         """
         Process document through complete pipeline
@@ -102,6 +105,9 @@ class CompletePipelineNew:
             max_phrases: Maximum phrases to extract
             max_words: Maximum words to extract
             document_title: Document title
+            use_bm25: Enable BM25 filtering (deprecated, kept for compatibility)
+            bm25_weight: BM25 weight (deprecated, kept for compatibility)
+            generate_flashcards: Generate flashcards (always True in new pipeline)
         
         Returns:
             {
