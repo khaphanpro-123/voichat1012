@@ -283,11 +283,6 @@ export default function VocabularyPage() {
       setSaving(false);
     }
   };
-      console.error("Delete error:", error);
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
   // Quiz functions - Enhanced with multiple question types
   const startQuiz = () => {

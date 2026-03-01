@@ -336,18 +336,19 @@ export default function DocumentsPage() {
               <div className="space-y-3">
                 {Array.isArray(result.vocabulary || result.flashcards) && 
                  (result.vocabulary || result.flashcards).map((card: any, idx: number) => {
-                  if (!card || (!card.word && !card.phrase)) return null
+                  if (!card || (!card.word && !card.phrase)) return null;
                   
                   return (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
-                          <button
-                            onClick={() => speakText(card.word || card.phrase || "")}
-                            className="p-1 hover:bg-blue-100 rounded-full transition-colors"
-                            title="Phát âm từ"
+                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
+                            <button
+                              onClick={() => speakText(card.word || card.phrase || "")}
+                              className="p-1 hover:bg-blue-100 rounded-full transition-colors"
+                              title="Phát âm từ"
+                            >
                           >
                             <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
