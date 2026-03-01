@@ -303,7 +303,12 @@ class PhraseScorer:
             # Not enough phrases to cluster
             for phrase in phrases:
                 phrase['cluster_id'] = 0
-            return phrases, [{'cluster_id': 0, 'phrases': phrases, 'top_phrase': phrases[0]['phrase'] if phrases else ''}]
+            return phrases, [{
+                'cluster_id': 0,
+                'phrases': [p['phrase'] for p in phrases],
+                'top_phrase': phrases[0]['phrase'] if phrases else '',
+                'semantic_theme': 'General'
+            }]
         
         try:
             # Extract embeddings
@@ -361,7 +366,12 @@ class PhraseScorer:
             # Fallback: single cluster
             for phrase in phrases:
                 phrase['cluster_id'] = 0
-            return phrases, [{'cluster_id': 0, 'phrases': [p['phrase'] for p in phrases], 'top_phrase': phrases[0]['phrase']}]
+            return phrases, [{
+                'cluster_id': 0,
+                'phrases': [p['phrase'] for p in phrases],
+                'top_phrase': phrases[0]['phrase'] if phrases else '',
+                'semantic_theme': 'General'
+            }]
     
     def _infer_theme(self, cluster_phrases: List[Dict]) -> str:
         """

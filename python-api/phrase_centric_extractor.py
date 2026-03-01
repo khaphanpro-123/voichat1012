@@ -262,8 +262,12 @@ class PhraseCentricExtractor:
                 cid = phrase.get('cluster_id', 0)
                 matching_cluster = next((c for c in cluster_info if c['cluster_id'] == cid), None)
                 if matching_cluster:
-                    phrase['semantic_theme'] = matching_cluster['semantic_theme']
-                    phrase['is_cluster_representative'] = (phrase['phrase'] == matching_cluster['top_phrase'])
+                    phrase['semantic_theme'] = matching_cluster.get('semantic_theme', 'General')
+                    phrase['is_cluster_representative'] = (phrase['phrase'] == matching_cluster.get('top_phrase', ''))
+                else:
+                    # Fallback if no matching cluster found
+                    phrase['semantic_theme'] = 'General'
+                    phrase['is_cluster_representative'] = False
         else:
             print(f"  ⚠️  Too few phrases ({len(filtered_phrases)}) for clustering, skipping")
             # Assign default cluster
