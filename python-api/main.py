@@ -14,6 +14,19 @@ from datetime import datetime
 import shutil
 from pathlib import Path
 
+# Download NLTK data on startup
+import nltk
+try:
+    print("📥 Downloading NLTK data...")
+    nltk.download('wordnet', quiet=True)
+    nltk.download('omw-1.4', quiet=True)
+    nltk.download('punkt', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    print("✅ NLTK data downloaded successfully")
+except Exception as e:
+    print(f"⚠️  NLTK download warning: {e}")
+
 # Document processing
 try:
     import PyPDF2
