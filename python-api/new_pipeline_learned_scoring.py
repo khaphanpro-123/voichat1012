@@ -266,15 +266,30 @@ class NewPipelineLearnedScoring:
         
         # Normalize freq_score and rarity_score to [0, 1]
         if items:
-            freq_scores = [item['freq_score'] for item in items]
-            rarity_scores = [item['rarity_score'] for item in items]
+            freq_scores = [item.get('freq_score', 0.0) for item in items]
+            rarity_scores = [item.get('rarity_score', 0.0) for item in items]
+            
+            # Remove NaN values before finding max
+            freq_scores = [f for f in freq_scores if not np.isnan(f)]
+            rarity_scores = [r for r in rarity_scores if not np.isnan(r)]
             
             max_freq = max(freq_scores) if freq_scores else 1.0
             max_rarity = max(rarity_scores) if rarity_scores else 1.0
             
             for item in items:
-                item['freq_score'] = item['freq_score'] / max_freq if max_freq > 0 else 0.0
-                item['rarity_score'] = item['rarity_score'] / max_rarity if max_rarity > 0 else 0.0
+                freq = item.get('freq_score', 0.0)
+                rarity = item.get('rarity_score', 0.0)
+                
+                # Handle NaN and division by zero
+                if np.isnan(freq) or max_freq == 0:
+                    item['freq_score'] = 0.0
+                else:
+                    item['freq_score'] = freq / max_freq
+                
+                if np.isnan(rarity) or max_rarity == 0:
+                    item['rarity_score'] = 0.0
+                else:
+                    item['rarity_score'] = rarity / max_rarity
         
         return items
     
@@ -314,9 +329,16 @@ class NewPipelineLearnedScoring:
                 item.get('freq_score', 0.5),
                 item.get('rarity_score', 0.5)
             ]
+            # Replace NaN with default value
+            features = [0.5 if np.isnan(f) or f is None else f for f in features]
             X.append(features)
         
         X = np.array(X)
+        
+        # Additional NaN check
+        if np.any(np.isnan(X)):
+            print("  ⚠️  Found NaN values in features, replacing with 0.5")
+            X = np.nan_to_num(X, nan=0.5)
         
         # Normalize features
         try:
