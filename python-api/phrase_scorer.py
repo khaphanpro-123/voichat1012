@@ -201,17 +201,29 @@ class PhraseScorer:
         """
         print(f"[SCORER] Training weights with {len(phrases)} labeled examples...")
         
-        # Prepare features
-        X = np.array([
-            [
+        # Prepare features with NaN handling
+        X = []
+        for p in phrases:
+            features = [
                 p.get('semantic_score', 0.5),
                 p.get('freq_score', 0.5),
                 p.get('length_score', 0.5)
             ]
-            for p in phrases
-        ])
+            # Replace NaN with default value
+            features = [0.5 if np.isnan(f) or f is None else f for f in features]
+            X.append(features)
         
+        X = np.array(X)
         y = np.array(labels)
+        
+        # Additional NaN check
+        if np.any(np.isnan(X)):
+            print("  ⚠️  Found NaN values in features, replacing with 0.5")
+            X = np.nan_to_num(X, nan=0.5)
+        
+        if np.any(np.isnan(y)):
+            print("  ⚠️  Found NaN values in labels, replacing with 0.5")
+            y = np.nan_to_num(y, nan=0.5)
         
         # Train linear regression
         self.regression_model = LinearRegression()

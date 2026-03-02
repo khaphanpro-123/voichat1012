@@ -470,8 +470,23 @@ class WordRanker:
         X = self._prepare_feature_matrix(candidates)
         y = np.array(labels)
         
+        # Check for NaN in features
+        if np.any(np.isnan(X)):
+            print("  ⚠️  Found NaN values in features, replacing with 0.5")
+            X = np.nan_to_num(X, nan=0.5)
+        
+        # Check for NaN in labels
+        if np.any(np.isnan(y)):
+            print("  ⚠️  Found NaN values in labels, replacing with 0.5")
+            y = np.nan_to_num(y, nan=0.5)
+        
         # Normalize features
         X_normalized = self.scaler.fit_transform(X)
+        
+        # Check for NaN after normalization
+        if np.any(np.isnan(X_normalized)):
+            print("  ⚠️  Found NaN values after normalization, replacing with 0.5")
+            X_normalized = np.nan_to_num(X_normalized, nan=0.5)
         
         # Train linear regression
         self.regression_model = LinearRegression()
@@ -516,9 +531,18 @@ class WordRanker:
                 candidate.get('word_length', 0.5),
                 candidate.get('morphological_score', 0.5)
             ]
+            # Replace NaN with default values
+            features = [0.5 if np.isnan(f) or f is None else f for f in features]
             X.append(features)
         
-        return np.array(X)
+        X = np.array(X)
+        
+        # Additional NaN check
+        if np.any(np.isnan(X)):
+            print("  ⚠️  Found NaN in feature matrix, replacing with 0.5")
+            X = np.nan_to_num(X, nan=0.5)
+        
+        return X
     
     # ========================================================================
     # STEP 5: INFERENCE & RANKING
