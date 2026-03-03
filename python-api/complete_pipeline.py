@@ -372,6 +372,10 @@ class CompletePipelineNew:
         try:
             from nltk import word_tokenize, pos_tag
             
+            # Handle empty or invalid input
+            if not word or not isinstance(word, str):
+                return ""
+            
             # Tokenize and get POS
             tokens = word_tokenize(word)
             if not tokens:
@@ -379,6 +383,8 @@ class CompletePipelineNew:
             
             # Get POS tags
             pos_tags = pos_tag(tokens)
+            if not pos_tags:
+                return ""
             
             # For phrases, use the POS of the main word (usually the last noun/verb/adj)
             # Priority: NOUN > VERB > ADJ
@@ -395,7 +401,8 @@ class CompletePipelineNew:
             else:
                 # Return first token's POS
                 return pos_tags[0][1] if pos_tags else ""
-        except Exception:
+        except Exception as e:
+            print(f"  ⚠️  POS tagging error for '{word}': {e}")
             return ""
     
     def _get_pos_label(self, pos: str) -> str:

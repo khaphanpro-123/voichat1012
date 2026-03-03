@@ -265,18 +265,36 @@ class PhraseScorer:
         for phrase in phrases:
             if self.regression_model is not None:
                 # Use trained model
-                X = np.array([[
+                features = [
                     phrase.get('semantic_score', 0.5),
                     phrase.get('freq_score', 0.5),
                     phrase.get('length_score', 0.5)
-                ]])
+                ]
+                # Replace NaN with default value
+                features = [0.5 if np.isnan(f) or f is None else f for f in features]
+                
+                X = np.array([features])
+                
+                # Additional NaN check
+                if np.any(np.isnan(X)):
+                    X = np.nan_to_num(X, nan=0.5)
+                
                 final_score = self.regression_model.predict(X)[0]
             else:
                 # Use manual weights
+                semantic = phrase.get('semantic_score', 0.5)
+                freq = phrase.get('freq_score', 0.5)
+                length = phrase.get('length_score', 0.5)
+                
+                # Handle NaN in manual calculation
+                semantic = 0.5 if np.isnan(semantic) else semantic
+                freq = 0.5 if np.isnan(freq) else freq
+                length = 0.5 if np.isnan(length) else length
+                
                 final_score = (
-                    self.weights['semantic'] * phrase.get('semantic_score', 0.5) +
-                    self.weights['frequency'] * phrase.get('freq_score', 0.5) +
-                    self.weights['length'] * phrase.get('length_score', 0.5)
+                    self.weights['semantic'] * semantic +
+                    self.weights['frequency'] * freq +
+                    self.weights['length'] * length
                 )
             
             phrase['final_score'] = float(final_score)
