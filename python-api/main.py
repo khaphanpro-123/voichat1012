@@ -112,13 +112,18 @@ class RAGQueryRequest(BaseModel):
 def convert_numpy_types(obj):
     """
     Recursively convert numpy types to Python native types for JSON serialization
+    Also handles inf and NaN values
     """
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
-        return float(obj)
+        val = float(obj)
+        # Handle inf and NaN
+        if np.isnan(val) or np.isinf(val):
+            return 0.0
+        return val
     elif isinstance(obj, np.bool_):
         return bool(obj)
     elif isinstance(obj, dict):
@@ -127,6 +132,11 @@ def convert_numpy_types(obj):
         return [convert_numpy_types(item) for item in obj]
     elif isinstance(obj, tuple):
         return tuple(convert_numpy_types(item) for item in obj)
+    elif isinstance(obj, float):
+        # Handle Python float inf and NaN
+        if np.isnan(obj) or np.isinf(obj):
+            return 0.0
+        return obj
     else:
         return obj
 
