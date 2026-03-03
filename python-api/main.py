@@ -338,6 +338,27 @@ async def upload_document_complete(
         topics = convert_numpy_types(result.get('topics', []))
         statistics = convert_numpy_types(result.get('statistics', {}))
         
+        # Add importance_score field for frontend compatibility
+        # Also add fuzzy difficulty levels
+        for item in vocabulary:
+            # Use final_score as importance_score
+            final_score = item.get('final_score', 0.0)
+            item['importance_score'] = final_score
+            
+            # Add fuzzy difficulty level based on score ranges
+            if final_score >= 0.8:
+                item['difficulty'] = 'critical'  # Rất quan trọng
+                item['difficulty_label'] = 'Rất quan trọng'
+            elif final_score >= 0.6:
+                item['difficulty'] = 'important'  # Quan trọng
+                item['difficulty_label'] = 'Quan trọng'
+            elif final_score >= 0.4:
+                item['difficulty'] = 'moderate'  # Trung bình
+                item['difficulty_label'] = 'Trung bình'
+            else:
+                item['difficulty'] = 'easy'  # Dễ
+                item['difficulty_label'] = 'Dễ'
+        
         # Prepare response
         return JSONResponse(content={
             'success': True,
