@@ -325,6 +325,27 @@ class CompletePipelineNew:
             return float(obj)
         else:
             return obj
+    
+    def _get_ipa_phonetics(self, word: str) -> str:
+        """
+        Get IPA phonetic transcription
+        
+        Args:
+            word: Word or phrase
+        
+        Returns:
+            IPA transcription (or empty string if not available)
+        """
+        try:
+            import eng_to_ipa as ipa
+            result = ipa.convert(word)
+            return result
+        except ImportError:
+            # Library not installed
+            return ""
+        except Exception:
+            # Conversion failed
+            return ""
 
 
 # ============================================================================
@@ -404,23 +425,3 @@ if __name__ == "__main__":
     
     print("\n✅ Test completed!")
 
-    def _get_ipa_phonetics(self, word: str) -> str:
-        """
-        Get IPA phonetic transcription
-        
-        Args:
-            word: Word or phrase
-        
-        Returns:
-            IPA transcription (or empty string if not available)
-        """
-        try:
-            import eng_to_ipa as ipa
-            result = ipa.convert(word)
-            return result
-        except ImportError:
-            # Library not installed
-            return ""
-        except Exception:
-            # Conversion failed
-            return ""
