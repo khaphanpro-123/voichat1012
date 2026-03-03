@@ -195,22 +195,34 @@ class CompletePipelineNew:
         )
         
         # ====================================================================
-        # Add IPA Phonetics to Vocabulary
+        # POST-PROCESSING: Add IPA Phonetics & POS Tags
         # ====================================================================
-        print(f"\n[POST-PROCESSING] Adding IPA phonetics...")
+        print(f"\n[POST-PROCESSING] Adding IPA phonetics and POS tags...")
         vocabulary = pipeline_result['vocabulary']
         ipa_added_count = 0
+        pos_added_count = 0
         
         for item in vocabulary:
             word = item.get('phrase', item.get('word', item.get('text', '')))
+            
+            # Add IPA if not present
             if word and not item.get('ipa'):
                 ipa = self._get_ipa_phonetics(word)
                 if ipa:
                     item['ipa'] = ipa
                     item['phonetic'] = ipa
                     ipa_added_count += 1
+            
+            # Add POS if not present
+            if word and not item.get('pos'):
+                pos = self._get_pos_tag(word)
+                if pos:
+                    item['pos'] = pos
+                    item['pos_label'] = self._get_pos_label(pos)
+                    pos_added_count += 1
         
         print(f"  ✓ Added IPA to {ipa_added_count}/{len(vocabulary)} items")
+        print(f"  ✓ Added POS to {pos_added_count}/{len(vocabulary)} items")
         
         # ====================================================================
         # Add Metadata
@@ -346,6 +358,74 @@ class CompletePipelineNew:
         except Exception:
             # Conversion failed
             return ""
+    
+    def _get_pos_tag(self, word: str) -> str:
+        """
+        Get Part of Speech tag for a word or phrase
+        
+        Args:
+            word: Word or phrase
+        
+        Returns:
+            POS tag (NN, VB, JJ, etc.) or empty string
+        """
+        try:
+            from nltk import word_tokenize, pos_tag
+            
+            # Tokenize and get POS
+            tokens = word_tokenize(word)
+            if not tokens:
+                return ""
+            
+            # Get POS tags
+            pos_tags = pos_tag(tokens)
+            
+            # For phrases, use the POS of the main word (usually the last noun/verb/adj)
+            # Priority: NOUN > VERB > ADJ
+            nouns = [pos for word, pos in pos_tags if pos.startswith('NN')]
+            verbs = [pos for word, pos in pos_tags if pos.startswith('VB')]
+            adjs = [pos for word, pos in pos_tags if pos.startswith('JJ')]
+            
+            if nouns:
+                return nouns[0]
+            elif verbs:
+                return verbs[0]
+            elif adjs:
+                return adjs[0]
+            else:
+                # Return first token's POS
+                return pos_tags[0][1] if pos_tags else ""
+        except Exception:
+            return ""
+    
+    def _get_pos_label(self, pos: str) -> str:
+        """
+        Convert POS tag to readable label
+        
+        Args:
+            pos: POS tag (NN, VB, JJ, etc.)
+        
+        Returns:
+            Readable label (noun, verb, adjective, etc.)
+        """
+        if pos.startswith('NN'):
+            return 'noun'
+        elif pos.startswith('VB'):
+            return 'verb'
+        elif pos.startswith('JJ'):
+            return 'adjective'
+        elif pos.startswith('RB'):
+            return 'adverb'
+        elif pos.startswith('IN'):
+            return 'preposition'
+        elif pos.startswith('DT'):
+            return 'determiner'
+        elif pos.startswith('PR'):
+            return 'pronoun'
+        elif pos.startswith('CC'):
+            return 'conjunction'
+        else:
+            return 'other'
 
 
 # ============================================================================
