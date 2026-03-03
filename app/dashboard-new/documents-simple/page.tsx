@@ -2,6 +2,90 @@
 
 import { useState } from "react"
 
+// Vocabulary Card Component
+function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
+  if (!card || (!card.word && !card.phrase)) return null;
+  
+  return (
+    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
+            
+            {/* POS Tag - Always show */}
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
+              {card.pos_label || 'noun'}
+            </span>
+            
+            <button
+              onClick={() => speakText(card.word || card.phrase || "")}
+              className="p-1 hover:bg-blue-100 rounded-full transition-colors"
+              title="Phát âm từ"
+            >
+              <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* IPA - Always show if available */}
+          {(card.phonetic || card.ipa) && (
+            <p className="text-sm text-blue-600 mb-2 font-mono">
+              /{card.phonetic || card.ipa}/
+            </p>
+          )}
+
+          {card.definition && (
+            <p className="text-sm text-gray-700 mb-2">
+              <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
+            </p>
+          )}
+
+          {(card.context_sentence || card.supporting_sentence) && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
+              <div className="flex items-start gap-2">
+                <p className="text-sm text-gray-700 italic flex-1">
+                  "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, '')}"
+                </p>
+                <button
+                  onClick={() => speakText((card.context_sentence || card.supporting_sentence)?.replace(/<[^>]*>/g, '') || "")}
+                  className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0"
+                  title="Phát âm câu"
+                >
+                  <svg className="h-4 w-4 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {card.synonyms && card.synonyms.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              <span className="text-xs font-semibold text-gray-600">🔄 Từ đồng nghĩa:</span>
+              {card.synonyms.map((syn: string, i: number) => (
+                <span
+                  key={i}
+                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full border border-purple-200"
+                >
+                  {syn}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="ml-4 text-right flex-shrink-0">
+          <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-bold">
+            {(card.importance_score || 0).toFixed(2)}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -328,96 +412,133 @@ export default function DocumentsPage() {
           <h2 className="text-2xl font-bold mb-4">Kết quả trích xuất</h2>
           
           <div className="space-y-4">
-            {/* Vocabulary List */}
+            {/* Statistics Summary */}
+            {result.vocabulary_by_difficulty && (
+              <div className="grid grid-cols-4 gap-3 mb-6">
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {result.vocabulary_by_difficulty.critical?.length || 0}
+                  </div>
+                  <div className="text-xs text-red-700 font-medium">🔴 Rất quan trọng</div>
+                  <div className="text-xs text-gray-500">0.8 - 1.0</div>
+                </div>
+                <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {result.vocabulary_by_difficulty.important?.length || 0}
+                  </div>
+                  <div className="text-xs text-orange-700 font-medium">🟠 Quan trọng</div>
+                  <div className="text-xs text-gray-500">0.6 - 0.79</div>
+                </div>
+                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {result.vocabulary_by_difficulty.moderate?.length || 0}
+                  </div>
+                  <div className="text-xs text-yellow-700 font-medium">🟡 Trung bình</div>
+                  <div className="text-xs text-gray-500">0.4 - 0.59</div>
+                </div>
+                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {result.vocabulary_by_difficulty.easy?.length || 0}
+                  </div>
+                  <div className="text-xs text-green-700 font-medium">🟢 Dễ</div>
+                  <div className="text-xs text-gray-500">0.0 - 0.39</div>
+                </div>
+              </div>
+            )}
+
+            {/* Vocabulary List - Grouped by Difficulty */}
             <div className="border rounded-lg p-4">
               <h3 className="font-bold mb-3 text-lg">
                 📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ)
               </h3>
-              <div className="space-y-3">
-                {Array.isArray(result.vocabulary || result.flashcards) && 
-                 (result.vocabulary || result.flashcards).map((card: any, idx: number) => {
-                  if (!card || (!card.word && !card.phrase)) return null;
-                  
-                  return (
-                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
-                            
-                            {/* POS Tag - Always show */}
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
-                              {card.pos_label || 'noun'}
-                            </span>
-                            
-                            <button
-                              onClick={() => speakText(card.word || card.phrase || "")}
-                              className="p-1 hover:bg-blue-100 rounded-full transition-colors"
-                              title="Phát âm từ"
-                            >
-                              <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                              </svg>
-                            </button>
-                        </div>
-
-                        {/* IPA - Always show if available */}
-                        {(card.phonetic || card.ipa) && (
-                          <p className="text-sm text-blue-600 mb-2 font-mono">
-                            /{card.phonetic || card.ipa}/
-                          </p>
-                        )}
-
-                        {card.definition && (
-                          <p className="text-sm text-gray-700 mb-2">
-                            <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
-                          </p>
-                        )}
-
-                        {(card.context_sentence || card.supporting_sentence) && (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
-                            <div className="flex items-start gap-2">
-                              <p className="text-sm text-gray-700 italic flex-1">
-                                "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, '')}"
-                              </p>
-                              <button
-                                onClick={() => speakText((card.context_sentence || card.supporting_sentence)?.replace(/<[^>]*>/g, '') || "")}
-                                className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0"
-                                title="Phát âm câu"
-                              >
-                                <svg className="h-4 w-4 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {card.synonyms && card.synonyms.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            <span className="text-xs font-semibold text-gray-600">🔄 Từ đồng nghĩa:</span>
-                            {card.synonyms.map((syn: string, i: number) => (
-                              <span
-                                key={i}
-                                className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full border border-purple-200"
-                              >
-                                {syn}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+              
+              {result.vocabulary_by_difficulty ? (
+                <div className="space-y-6">
+                  {/* Critical - Rất quan trọng */}
+                  {result.vocabulary_by_difficulty.critical?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-red-300">
+                        <h4 className="text-lg font-bold text-red-600">
+                          🔴 Rất Quan Trọng
+                        </h4>
+                        <span className="text-sm text-red-500">
+                          ({result.vocabulary_by_difficulty.critical.length} từ)
+                        </span>
                       </div>
-
-                      <div className="ml-4 text-right flex-shrink-0">
-                        <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-bold">
-                          {(card.importance_score || 0).toFixed(2)}
-                        </div>
+                      <div className="space-y-3">
+                        {result.vocabulary_by_difficulty.critical.map((card: any, idx: number) => (
+                          <VocabularyCard key={`critical-${idx}`} card={card} speakText={speakText} />
+                        ))}
                       </div>
                     </div>
-                  </div>
-                  )
-                })}
-              </div>
+                  )}
+
+                  {/* Important - Quan trọng */}
+                  {result.vocabulary_by_difficulty.important?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-orange-300">
+                        <h4 className="text-lg font-bold text-orange-600">
+                          🟠 Quan Trọng
+                        </h4>
+                        <span className="text-sm text-orange-500">
+                          ({result.vocabulary_by_difficulty.important.length} từ)
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {result.vocabulary_by_difficulty.important.map((card: any, idx: number) => (
+                          <VocabularyCard key={`important-${idx}`} card={card} speakText={speakText} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Moderate - Trung bình */}
+                  {result.vocabulary_by_difficulty.moderate?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-yellow-300">
+                        <h4 className="text-lg font-bold text-yellow-600">
+                          🟡 Trung Bình
+                        </h4>
+                        <span className="text-sm text-yellow-500">
+                          ({result.vocabulary_by_difficulty.moderate.length} từ)
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {result.vocabulary_by_difficulty.moderate.map((card: any, idx: number) => (
+                          <VocabularyCard key={`moderate-${idx}`} card={card} speakText={speakText} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Easy - Dễ */}
+                  {result.vocabulary_by_difficulty.easy?.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-green-300">
+                        <h4 className="text-lg font-bold text-green-600">
+                          🟢 Dễ
+                        </h4>
+                        <span className="text-sm text-green-500">
+                          ({result.vocabulary_by_difficulty.easy.length} từ)
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {result.vocabulary_by_difficulty.easy.map((card: any, idx: number) => (
+                          <VocabularyCard key={`easy-${idx}`} card={card} speakText={speakText} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Fallback: Display flat list if grouping not available
+                <div className="space-y-3">
+                  {Array.isArray(result.vocabulary || result.flashcards) && 
+                   (result.vocabulary || result.flashcards).map((card: any, idx: number) => (
+                    <VocabularyCard key={idx} card={card} speakText={speakText} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

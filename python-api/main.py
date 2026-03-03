@@ -359,6 +359,24 @@ async def upload_document_complete(
                 item['difficulty'] = 'easy'  # Dễ
                 item['difficulty_label'] = 'Dễ'
         
+        # Group vocabulary by difficulty for fuzzy display
+        vocabulary_by_difficulty = {
+            'critical': [],      # 0.8 - 1.0
+            'important': [],     # 0.6 - 0.79
+            'moderate': [],      # 0.4 - 0.59
+            'easy': []          # 0.0 - 0.39
+        }
+        
+        for item in vocabulary:
+            difficulty = item.get('difficulty', 'easy')
+            vocabulary_by_difficulty[difficulty].append(item)
+        
+        print(f"[Upload Complete] Vocabulary grouped by difficulty:")
+        print(f"  🔴 Critical: {len(vocabulary_by_difficulty['critical'])} items")
+        print(f"  🟠 Important: {len(vocabulary_by_difficulty['important'])} items")
+        print(f"  🟡 Moderate: {len(vocabulary_by_difficulty['moderate'])} items")
+        print(f"  🟢 Easy: {len(vocabulary_by_difficulty['easy'])} items")
+        
         # Prepare response
         return JSONResponse(content={
             'success': True,
@@ -367,6 +385,7 @@ async def upload_document_complete(
             'text_length': len(text),
             'vocabulary': vocabulary,
             'vocabulary_count': len(vocabulary),
+            'vocabulary_by_difficulty': vocabulary_by_difficulty,  # NEW: Grouped vocabulary
             'flashcards': flashcards,
             'flashcards_count': len(flashcards),
             'topics': topics,

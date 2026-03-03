@@ -199,52 +199,82 @@ class CompletePipelineNew:
         # ====================================================================
         print(f"\n[POST-PROCESSING] Adding IPA phonetics and POS tags...")
         vocabulary = pipeline_result['vocabulary']
-        ipa_added_count = 0
-        pos_added_count = 0
+        ipa_success_count = 0
+        pos_success_count = 0
+        context_added_count = 0
         
         for item in vocabulary:
             word = item.get('phrase', item.get('word', item.get('text', '')))
             
-            # Add IPA if not present
-            if word and not item.get('ipa') and not item.get('phonetic'):
-                ipa = self._get_ipa_phonetics(word)
-                if ipa:
-                    item['ipa'] = ipa
-                    item['phonetic'] = ipa
-                    ipa_added_count += 1
+            # ALWAYS ensure IPA fields exist (even if empty)
+            if word:
+                # Get IPA if not already present
+                if not item.get('ipa') or not item.get('phonetic'):
+                    ipa = self._get_ipa_phonetics(word)
+                    if ipa:
+                        item['ipa'] = ipa
+                        item['phonetic'] = ipa
+                        ipa_success_count += 1
+                    else:
+                        # Set empty string if IPA not available
+                        item['ipa'] = ''
+                        item['phonetic'] = ''
                 else:
-                    # Set empty string if IPA not available
-                    item['ipa'] = ''
-                    item['phonetic'] = ''
+                    # Already has IPA
+                    ipa_success_count += 1
+            else:
+                # No word, set empty
+                item['ipa'] = ''
+                item['phonetic'] = ''
             
-            # Add POS if not present
-            if word and not item.get('pos'):
-                pos = self._get_pos_tag(word)
-                if pos:
-                    item['pos'] = pos
-                    item['pos_label'] = self._get_pos_label(pos)
-                    pos_added_count += 1
+            # ALWAYS ensure POS fields exist
+            if word:
+                if not item.get('pos') or not item.get('pos_label'):
+                    pos = self._get_pos_tag(word)
+                    if pos:
+                        item['pos'] = pos
+                        item['pos_label'] = self._get_pos_label(pos)
+                        pos_success_count += 1
+                    else:
+                        # Set default if POS not available
+                        item['pos'] = 'NN'
+                        item['pos_label'] = 'noun'
+                        pos_success_count += 1
                 else:
-                    # Set default if POS not available
-                    item['pos'] = 'NN'
-                    item['pos_label'] = 'noun'
+                    # Already has POS
+                    pos_success_count += 1
+            else:
+                # No word, set default
+                item['pos'] = 'NN'
+                item['pos_label'] = 'noun'
             
-            # Ensure context_sentence exists
-            if not item.get('context_sentence') and not item.get('supporting_sentence'):
+            # ALWAYS ensure context_sentence exists
+            has_context = bool(item.get('context_sentence') or item.get('supporting_sentence'))
+            
+            if not has_context:
                 # Try to get from occurrences
                 if item.get('occurrences') and len(item['occurrences']) > 0:
-                    item['context_sentence'] = item['occurrences'][0].get('sentence', '')
-                    item['supporting_sentence'] = item['occurrences'][0].get('sentence', '')
+                    sentence = item['occurrences'][0].get('sentence', '')
+                    if sentence:
+                        item['context_sentence'] = sentence
+                        item['supporting_sentence'] = sentence
+                        context_added_count += 1
+                    else:
+                        item['context_sentence'] = ''
+                        item['supporting_sentence'] = ''
                 else:
                     item['context_sentence'] = ''
                     item['supporting_sentence'] = ''
-            elif item.get('supporting_sentence') and not item.get('context_sentence'):
-                item['context_sentence'] = item['supporting_sentence']
-            elif item.get('context_sentence') and not item.get('supporting_sentence'):
-                item['supporting_sentence'] = item['context_sentence']
+            else:
+                # Sync both fields
+                if item.get('supporting_sentence') and not item.get('context_sentence'):
+                    item['context_sentence'] = item['supporting_sentence']
+                elif item.get('context_sentence') and not item.get('supporting_sentence'):
+                    item['supporting_sentence'] = item['context_sentence']
         
-        print(f"  ✓ Added IPA to {ipa_added_count}/{len(vocabulary)} items")
-        print(f"  ✓ Added POS to {pos_added_count}/{len(vocabulary)} items")
+        print(f"  ✓ Added IPA to {ipa_success_count}/{len(vocabulary)} items {'✅' if ipa_success_count > 0 else '❌ (IPA library not working)'}")
+        print(f"  ✓ Added POS to {pos_success_count}/{len(vocabulary)} items {'✅' if pos_success_count == len(vocabulary) else '⚠️'}")
+        print(f"  ✓ Added context to {context_added_count}/{len(vocabulary)} items")
         
         # ====================================================================
         # Add Metadata
@@ -370,15 +400,35 @@ class CompletePipelineNew:
         Returns:
             IPA transcription (or empty string if not available)
         """
+        if not word or not isinstance(word, str):
+            return ""
+        
         try:
             import eng_to_ipa as ipa
             result = ipa.convert(word)
-            return result
-        except ImportError:
-            # Library not installed
+            
+            # Debug: Log first few conversions
+            if result and len(result) > 0:
+                return result
+            else:
+                # Empty result
+                return ""
+        except ImportError as e:
+            # Library not installed - only log once
+            if not hasattr(self, '_ipa_import_error_logged'):
+                print(f"  ⚠️  eng_to_ipa library not installed: {e}")
+                print(f"  ⚠️  Install with: pip install eng-to-ipa")
+                self._ipa_import_error_logged = True
             return ""
-        except Exception:
-            # Conversion failed
+        except Exception as e:
+            # Conversion failed - log first few errors only
+            if not hasattr(self, '_ipa_error_count'):
+                self._ipa_error_count = 0
+            
+            if self._ipa_error_count < 3:
+                print(f"  ⚠️  IPA conversion failed for '{word}': {e}")
+                self._ipa_error_count += 1
+            
             return ""
     
     def _get_pos_tag(self, word: str) -> str:
