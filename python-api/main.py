@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 import os
+import numpy as np
 from datetime import datetime
 import shutil
 from pathlib import Path
@@ -107,6 +108,27 @@ class RAGQueryRequest(BaseModel):
 
 
 # ==================== HELPER FUNCTIONS ====================
+
+def convert_numpy_types(obj):
+    """
+    Recursively convert numpy types to Python native types for JSON serialization
+    """
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy_types(item) for item in obj)
+    else:
+        return obj
 
 def extract_text_from_file(file_path: str) -> str:
     """Extract text from uploaded file"""
@@ -300,18 +322,24 @@ async def upload_document_complete(
         print(f"  Vocabulary: {len(result['vocabulary'])} items")
         print(f"  Flashcards: {len(result['flashcards'])} cards")
         
+        # Convert numpy types to Python native types for JSON serialization
+        vocabulary = convert_numpy_types(result['vocabulary'])
+        flashcards = convert_numpy_types(result.get('flashcards', []))
+        topics = convert_numpy_types(result.get('topics', []))
+        statistics = convert_numpy_types(result.get('statistics', {}))
+        
         # Prepare response
         return JSONResponse(content={
             'success': True,
             'document_id': document_id,
             'filename': file.filename,
             'text_length': len(text),
-            'vocabulary': result['vocabulary'],
-            'vocabulary_count': len(result['vocabulary']),
-            'flashcards': result.get('flashcards', []),
-            'flashcards_count': len(result.get('flashcards', [])),
-            'topics': result.get('topics', []),
-            'statistics': result.get('statistics', {}),
+            'vocabulary': vocabulary,
+            'vocabulary_count': len(vocabulary),
+            'flashcards': flashcards,
+            'flashcards_count': len(flashcards),
+            'topics': topics,
+            'statistics': statistics,
             'pipeline': 'Complete Pipeline (New)',
             'pipeline_version': result.get('metadata', {}).get('pipeline_version', '2.0'),
             'timestamp': datetime.now().isoformat()
@@ -468,6 +496,11 @@ async def upload_document(
                 'score': vc['finalScore']
             })
         print(f"[Upload] Generated {len(flashcards)} flashcards (simple mode)")
+        
+        # Convert numpy types to Python native types
+        vocabulary_contexts = convert_numpy_types(vocabulary_contexts)
+        flashcards = convert_numpy_types(flashcards)
+        kg_stats = convert_numpy_types(kg_stats)
         
         return JSONResponse(content={
             'success': True,
