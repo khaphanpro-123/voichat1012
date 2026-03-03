@@ -345,12 +345,10 @@ export default function DocumentsPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
                             
-                            {/* POS Tag */}
-                            {card.pos_label && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
-                                {card.pos_label}
-                              </span>
-                            )}
+                            {/* POS Tag - Always show */}
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
+                              {card.pos_label || 'noun'}
+                            </span>
                             
                             <button
                               onClick={() => speakText(card.word || card.phrase || "")}
@@ -363,6 +361,7 @@ export default function DocumentsPage() {
                             </button>
                         </div>
 
+                        {/* IPA - Always show if available */}
                         {(card.phonetic || card.ipa) && (
                           <p className="text-sm text-blue-600 mb-2 font-mono">
                             /{card.phonetic || card.ipa}/

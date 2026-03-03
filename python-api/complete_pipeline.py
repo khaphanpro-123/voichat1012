@@ -206,12 +206,16 @@ class CompletePipelineNew:
             word = item.get('phrase', item.get('word', item.get('text', '')))
             
             # Add IPA if not present
-            if word and not item.get('ipa'):
+            if word and not item.get('ipa') and not item.get('phonetic'):
                 ipa = self._get_ipa_phonetics(word)
                 if ipa:
                     item['ipa'] = ipa
                     item['phonetic'] = ipa
                     ipa_added_count += 1
+                else:
+                    # Set empty string if IPA not available
+                    item['ipa'] = ''
+                    item['phonetic'] = ''
             
             # Add POS if not present
             if word and not item.get('pos'):
@@ -220,6 +224,24 @@ class CompletePipelineNew:
                     item['pos'] = pos
                     item['pos_label'] = self._get_pos_label(pos)
                     pos_added_count += 1
+                else:
+                    # Set default if POS not available
+                    item['pos'] = 'NN'
+                    item['pos_label'] = 'noun'
+            
+            # Ensure context_sentence exists
+            if not item.get('context_sentence') and not item.get('supporting_sentence'):
+                # Try to get from occurrences
+                if item.get('occurrences') and len(item['occurrences']) > 0:
+                    item['context_sentence'] = item['occurrences'][0].get('sentence', '')
+                    item['supporting_sentence'] = item['occurrences'][0].get('sentence', '')
+                else:
+                    item['context_sentence'] = ''
+                    item['supporting_sentence'] = ''
+            elif item.get('supporting_sentence') and not item.get('context_sentence'):
+                item['context_sentence'] = item['supporting_sentence']
+            elif item.get('context_sentence') and not item.get('supporting_sentence'):
+                item['supporting_sentence'] = item['context_sentence']
         
         print(f"  ✓ Added IPA to {ipa_added_count}/{len(vocabulary)} items")
         print(f"  ✓ Added POS to {pos_added_count}/{len(vocabulary)} items")
