@@ -195,6 +195,24 @@ class CompletePipelineNew:
         )
         
         # ====================================================================
+        # Add IPA Phonetics to Vocabulary
+        # ====================================================================
+        print(f"\n[POST-PROCESSING] Adding IPA phonetics...")
+        vocabulary = pipeline_result['vocabulary']
+        ipa_added_count = 0
+        
+        for item in vocabulary:
+            word = item.get('phrase', item.get('word', item.get('text', '')))
+            if word and not item.get('ipa'):
+                ipa = self._get_ipa_phonetics(word)
+                if ipa:
+                    item['ipa'] = ipa
+                    item['phonetic'] = ipa
+                    ipa_added_count += 1
+        
+        print(f"  ✓ Added IPA to {ipa_added_count}/{len(vocabulary)} items")
+        
+        # ====================================================================
         # Add Metadata
         # ====================================================================
         result = {
@@ -385,3 +403,24 @@ if __name__ == "__main__":
     pipeline.export_to_json(result, "test_output.json")
     
     print("\n✅ Test completed!")
+
+    def _get_ipa_phonetics(self, word: str) -> str:
+        """
+        Get IPA phonetic transcription
+        
+        Args:
+            word: Word or phrase
+        
+        Returns:
+            IPA transcription (or empty string if not available)
+        """
+        try:
+            import eng_to_ipa as ipa
+            result = ipa.convert(word)
+            return result
+        except ImportError:
+            # Library not installed
+            return ""
+        except Exception:
+            # Conversion failed
+            return ""
