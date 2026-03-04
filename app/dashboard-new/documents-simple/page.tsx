@@ -236,6 +236,8 @@ export default function DocumentsPage() {
           level: level,
           pronunciation: item.phonetic || item.ipa || "",
           ipa: item.ipa || item.phonetic || "",
+          partOfSpeech: item.pos_label || "other", // Add POS tag
+          type: item.pos_label || "other", // Backward compatibility
           source: `document_${data.document_id || Date.now()}`,
           synonyms: item.synonyms || [],
         }
@@ -249,6 +251,12 @@ export default function DocumentsPage() {
             phoneticValue: item.phonetic,
             ipaValue: item.ipa,
             finalIpa: payload.ipa
+          })
+          console.log("💾 POS check:", {
+            hasPosLabel: !!item.pos_label,
+            posLabelValue: item.pos_label,
+            finalPartOfSpeech: payload.partOfSpeech,
+            finalType: payload.type
           })
         }
         

@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
       ipa,
       synonyms,
       level,
-      source
+      source,
+      partOfSpeech,
+      type
     } = body
 
     if (!word) {
@@ -65,6 +67,8 @@ export async function POST(request: NextRequest) {
             synonyms: synonyms || existing.synonyms,
             level: level || existing.level,
             source: source || existing.source,
+            partOfSpeech: partOfSpeech || existing.partOfSpeech || "other",
+            type: type || existing.type || "other",
             updated_at: new Date()
           }
         }
@@ -89,6 +93,8 @@ export async function POST(request: NextRequest) {
       synonyms: synonyms || [],
       level: level || "intermediate",
       source: source || "document",
+      partOfSpeech: partOfSpeech || "other",
+      type: type || "other",
       created_at: new Date(),
     })
 
