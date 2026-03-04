@@ -392,7 +392,11 @@ class CompletePipelineNew:
     
     def _get_ipa_phonetics(self, word: str) -> str:
         """
-        Get IPA phonetic transcription
+        Get IPA phonetic transcription using multiple methods
+        
+        Priority:
+        1. Free Dictionary API (most reliable)
+        2. eng_to_ipa library (fallback)
         
         Args:
             word: Word or phrase
@@ -403,21 +407,57 @@ class CompletePipelineNew:
         if not word or not isinstance(word, str):
             return ""
         
+        # Method 1: Try Free Dictionary API (most reliable)
+        try:
+            import requests
+            import time
+            
+            # Only try API for single words (not phrases)
+            if ' ' not in word.strip():
+                # Add small delay to avoid rate limiting
+                if not hasattr(self, '_last_api_call'):
+                    self._last_api_call = 0
+                
+                current_time = time.time()
+                if current_time - self._last_api_call < 0.1:  # 100ms delay
+                    time.sleep(0.1)
+                self._last_api_call = current_time
+                
+                url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word.lower()}"
+                response = requests.get(url, timeout=2)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data and len(data) > 0:
+                        # Try to get IPA from phonetics
+                        phonetics = data[0].get('phonetics', [])
+                        for phonetic in phonetics:
+                            ipa_text = phonetic.get('text', '')
+                            if ipa_text:
+                                # Clean IPA text (remove slashes if present)
+                                ipa_text = ipa_text.strip('/')
+                                if ipa_text:
+                                    return ipa_text
+        except Exception as e:
+            # API failed, continue to fallback
+            if not hasattr(self, '_api_error_logged'):
+                print(f"  ⚠️  Dictionary API failed: {e}")
+                self._api_error_logged = True
+        
+        # Method 2: Try eng_to_ipa library (fallback)
         try:
             import eng_to_ipa as ipa
             result = ipa.convert(word)
             
-            # Debug: Log first few conversions
             if result and len(result) > 0:
                 return result
             else:
-                # Empty result
                 return ""
         except ImportError as e:
             # Library not installed - only log once
             if not hasattr(self, '_ipa_import_error_logged'):
                 print(f"  ⚠️  eng_to_ipa library not installed: {e}")
-                print(f"  ⚠️  Install with: pip install eng-to-ipa")
+                print(f"  ⚠️  Using Dictionary API only")
                 self._ipa_import_error_logged = True
             return ""
         except Exception as e:
