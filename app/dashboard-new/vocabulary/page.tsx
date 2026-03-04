@@ -107,9 +107,18 @@ export default function VocabularyPage() {
   
   // Get IPA pronunciation - prioritize database IPA, then dictionary, then pronunciation field
   const getPronunciation = (word: VocabularyWord): string => {
-    if (word.ipa) return word.ipa;
-    if (word.pronunciation) return word.pronunciation;
-    return getIPA(word.word);
+    // If has IPA from database, use it
+    if (word.ipa && word.ipa.trim() !== '') return word.ipa;
+    if (word.pronunciation && word.pronunciation.trim() !== '') return word.pronunciation;
+    
+    // Only get IPA from dictionary for single words (not phrases)
+    const wordText = word.word || '';
+    if (wordText.includes(' ')) {
+      // This is a phrase, don't show IPA
+      return '';
+    }
+    
+    return getIPA(wordText);
   };
 
   useEffect(() => {

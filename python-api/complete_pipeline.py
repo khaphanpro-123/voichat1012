@@ -204,12 +204,15 @@ class CompletePipelineNew:
         context_added_count = 0
         
         for item in vocabulary:
-            word = item.get('phrase', item.get('word', item.get('text', '')))
+            word = item.get('word', item.get('phrase', item.get('text', '')))
             
             # ALWAYS ensure IPA fields exist (even if empty)
             if word:
-                # Get IPA if not already present
-                if not item.get('ipa') or not item.get('phonetic'):
+                # Only get IPA for single words (not phrases)
+                is_single_word = ' ' not in word.strip()
+                
+                # Get IPA if not already present AND it's a single word
+                if is_single_word and (not item.get('ipa') or not item.get('phonetic')):
                     ipa = self._get_ipa_phonetics(word)
                     if ipa:
                         item['ipa'] = ipa
@@ -218,6 +221,11 @@ class CompletePipelineNew:
                     else:
                         # Set empty string if IPA not available
                         item['ipa'] = ''
+                        item['phonetic'] = ''
+                elif not is_single_word:
+                    # Phrase - don't get IPA
+                    item['ipa'] = ''
+                    item['phonetic'] = ''
                         item['phonetic'] = ''
                 else:
                     # Already has IPA
