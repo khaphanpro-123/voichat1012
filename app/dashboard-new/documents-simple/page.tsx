@@ -241,6 +241,15 @@ export default function DocumentsPage() {
           source: `document_${data.document_id || Date.now()}`,
           synonyms: item.synonyms || [],
         }
+        
+        // Skip if no word
+        if (!payload.word || payload.word.trim() === '') {
+          failedCount++
+          const errorMsg = `Skipped item with no word: ${JSON.stringify(item).substring(0, 100)}`
+          errors.push(errorMsg)
+          console.warn(`⚠️ ${errorMsg}`)
+          return
+        }
 
         // DEBUG: Log first item
         if (index === 0) {
@@ -292,8 +301,12 @@ export default function DocumentsPage() {
       
       console.log(`✅ Save complete: ${savedCount} saved, ${failedCount} failed`)
       
-      if (errors.length > 0 && errors.length <= 5) {
-        console.error("❌ Errors:", errors)
+      // Always show errors (max 5)
+      if (errors.length > 0) {
+        console.error(`\n❌ Save errors (showing first 5 of ${errors.length}):`)
+        errors.slice(0, 5).forEach((err, i) => {
+          console.error(`  ${i + 1}. ${err}`)
+        })
       }
       
       // Show user notification
@@ -301,7 +314,7 @@ export default function DocumentsPage() {
         console.log(`✅ Đã lưu ${savedCount} từ vào kho từ vựng`)
       }
       if (failedCount > 0) {
-        console.warn(`⚠️ ${failedCount} từ không lưu được`)
+        console.warn(`⚠️ ${failedCount} từ không lưu được - xem console để biết chi tiết`)
       }
       
       return { savedCount, failedCount }
