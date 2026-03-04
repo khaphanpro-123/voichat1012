@@ -188,8 +188,14 @@ export default function DocumentsPage() {
       
       // Auto-save vocabulary to database
       console.log("💾 Starting auto-save to database...")
-      await handleSaveToDatabase(data)
-      console.log("✅ Auto-save completed")
+      const saveResult = await handleSaveToDatabase(data)
+      console.log("✅ Auto-save completed:", saveResult)
+      
+      // Show success message to user
+      if (saveResult && saveResult.savedCount > 0) {
+        // You can add a toast notification here if you have a toast library
+        console.log(`✅ Đã tự động lưu ${saveResult.savedCount} từ vào kho từ vựng`)
+      }
     } catch (err: any) {
       console.error("Upload error:", err)
       // Hiển thị thông báo lỗi chung
@@ -207,11 +213,12 @@ export default function DocumentsPage() {
       
       if (vocabularyToSave.length === 0) {
         console.log("⚠️ No vocabulary to save")
-        return
+        return { savedCount: 0, failedCount: 0 }
       }
 
       let savedCount = 0
       let failedCount = 0
+      const errors: string[] = []
 
       const savePromises = vocabularyToSave.map(async (item: any, index: number) => {
         if (!item || (!item.word && !item.phrase)) {
@@ -245,29 +252,54 @@ export default function DocumentsPage() {
           })
         }
         
-        const response = await fetch("/api/vocabulary", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        })
-        
-        if (!response.ok) {
-          failedCount++
-          const errorText = await response.text()
-          console.error(`❌ Failed to save word: ${item.word || item.phrase}`, errorText)
-        } else {
-          savedCount++
-          if (index === 0) {
-            const result = await response.json()
-            console.log("✅ First item saved successfully:", result)
+        try {
+          const response = await fetch("/api/vocabulary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+          
+          if (!response.ok) {
+            failedCount++
+            const errorText = await response.text()
+            const errorMsg = `Failed to save word: ${item.word || item.phrase} - ${errorText}`
+            errors.push(errorMsg)
+            console.error(`❌ ${errorMsg}`)
+          } else {
+            savedCount++
+            if (index === 0) {
+              const result = await response.json()
+              console.log("✅ First item saved successfully:", result)
+            }
           }
+        } catch (err: any) {
+          failedCount++
+          const errorMsg = `Error saving word: ${item.word || item.phrase} - ${err.message}`
+          errors.push(errorMsg)
+          console.error(`❌ ${errorMsg}`)
         }
       })
 
       await Promise.all(savePromises)
+      
       console.log(`✅ Save complete: ${savedCount} saved, ${failedCount} failed`)
+      
+      if (errors.length > 0 && errors.length <= 5) {
+        console.error("❌ Errors:", errors)
+      }
+      
+      // Show user notification
+      if (savedCount > 0) {
+        console.log(`✅ Đã lưu ${savedCount} từ vào kho từ vựng`)
+      }
+      if (failedCount > 0) {
+        console.warn(`⚠️ ${failedCount} từ không lưu được`)
+      }
+      
+      return { savedCount, failedCount }
     } catch (err) {
       console.error("❌ Save error:", err)
+      return { savedCount: 0, failedCount: 0 }
     }
   }
 
