@@ -32,7 +32,7 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
           {/* IPA - Always show if available */}
           {(card.phonetic || card.ipa) && (
             <p className="text-sm text-blue-600 mb-2 font-mono">
-              /{card.phonetic || card.ipa}/
+              {card.phonetic || card.ipa}
             </p>
           )}
 

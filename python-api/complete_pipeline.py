@@ -434,9 +434,14 @@ class CompletePipelineNew:
                         for phonetic in phonetics:
                             ipa_text = phonetic.get('text', '')
                             if ipa_text:
-                                # Clean IPA text (remove slashes if present)
-                                ipa_text = ipa_text.strip('/')
+                                # Keep IPA text as-is (with slashes for standard format)
+                                ipa_text = ipa_text.strip()
                                 if ipa_text:
+                                    # Ensure it has slashes for standard IPA format
+                                    if not ipa_text.startswith('/'):
+                                        ipa_text = '/' + ipa_text
+                                    if not ipa_text.endswith('/'):
+                                        ipa_text = ipa_text + '/'
                                     return ipa_text
         except Exception as e:
             # API failed, continue to fallback
