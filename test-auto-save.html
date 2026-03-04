@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auto-Save</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .success { background: #4CAF50; color: white; }
+        .error { background: #f44336; color: white; }
+        .info { background: #2196F3; color: white; }
+        #logs {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-item {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #ccc;
+            padding-left: 10px;
+        }
+        .log-success { border-left-color: #4CAF50; }
+        .log-error { border-left-color: #f44336; }
+        .log-info { border-left-color: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Auto-Save Vocabulary</h1>
+    
+    <div>
+        <button class="info" onclick="testSingleWord()">Test 1: Lưu 1 từ</button>
+        <button class="info" onclick="testMultipleWords()">Test 2: Lưu 5 từ</button>
+        <button class="info" onclick="testWithIPA()">Test 3: Lưu với IPA</button>
+        <button class="error" onclick="clearLogs()">Xóa logs</button>
+    </div>
+    
+    <div id="logs"></div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logItem = document.createElement('div');
+            logItem.className = `log-item log-${type}`;
+            logItem.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(logItem);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        async function testSingleWord() {
+            log('🧪 Test 1: Lưu 1 từ...', 'info');
+            
+            try {
+                const payload = {
+                    word: "test_" + Date.now(),
+                    meaning: "Test meaning",
+                    example: "This is a test example",
+                    ipa: "test",
+                    pronunciation: "test",
+                    level: "intermediate",
+                    source: "test_auto_save"
+                };
+                
+                log(`📤 Sending: ${JSON.stringify(payload)}`, 'info');
+                
+                const response = await fetch("/api/vocabulary", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                log(`📥 Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const data = await response.json();
+                log(`📥 Response data: ${JSON.stringify(data)}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    log(`✅ Test 1 PASSED: Từ đã được lưu`, 'success');
+                } else {
+                    log(`❌ Test 1 FAILED: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (err) {
+                log(`❌ Test 1 ERROR: ${err.message}`, 'error');
+            }
+        }
+        
+        async function testMultipleWords() {
+            log('🧪 Test 2: Lưu 5 từ...', 'info');
+            
+            const words = [
+                { word: "climate", meaning: "khí hậu", example: "Climate change is real" },
+                { word: "environment", meaning: "môi trường", example: "Protect the environment" },
+                { word: "pollution", meaning: "ô nhiễm", example: "Air pollution is bad" },
+                { word: "biodiversity", meaning: "đa dạng sinh học", example: "Biodiversity is important" },
+                { word: "sustainability", meaning: "bền vững", example: "Sustainability matters" }
+            ];
+            
+            let saved = 0;
+            let failed = 0;
+            
+            for (const word of words) {
+                try {
+                    const payload = {
+                        ...word,
+                        ipa: "",
+                        pronunciation: "",
+                        level: "intermediate",
+                        source: "test_multiple"
+                    };
+                    
+                    const response = await fetch("/api/vocabulary", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        saved++;
+                        log(`✅ Saved: ${word.word}`, 'success');
+                    } else {
+                        failed++;
+                        const data = await response.json();
+                        log(`❌ Failed: ${word.word} - ${data.error}`, 'error');
+                    }
+                } catch (err) {
+                    failed++;
+                    log(`❌ Error: ${word.word} - ${err.message}`, 'error');
+                }
+            }
+            
+            log(`📊 Test 2 Complete: ${saved} saved, ${failed} failed`, saved === 5 ? 'success' : 'error');
+        }
+        
+        async function testWithIPA() {
+            log('🧪 Test 3: Lưu với IPA...', 'info');
+            
+            try {
+                const payload = {
+                    word: "phonetic_" + Date.now(),
+                    meaning: "Test with IPA",
+                    example: "This word has IPA",
+                    ipa: "fəˈnetɪk",
+                    pronunciation: "fəˈnetɪk",
+                    level: "advanced",
+                    source: "test_ipa"
+                };
+                
+                log(`📤 Sending with IPA: ${payload.ipa}`, 'info');
+                
+                const response = await fetch("/api/vocabulary", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Test 3 PASSED: Từ với IPA đã được lưu`, 'success');
+                    log(`📊 Saved data: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    log(`❌ Test 3 FAILED: ${data.error}`, 'error');
+                }
+            } catch (err) {
+                log(`❌ Test 3 ERROR: ${err.message}`, 'error');
+            }
+        }
+        
+        // Auto-run test on load
+        window.addEventListener('load', () => {
+            log('🚀 Test page loaded. Click buttons to test auto-save.', 'info');
+            log('💡 Mở Console (F12) để xem logs chi tiết hơn.', 'info');
+        });
+    </script>
+</body>
+</html>
