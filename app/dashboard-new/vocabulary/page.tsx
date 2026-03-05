@@ -111,14 +111,14 @@ export default function VocabularyPage() {
     if (word.ipa && word.ipa.trim() !== '') return word.ipa;
     if (word.pronunciation && word.pronunciation.trim() !== '') return word.pronunciation;
     
-    // Only get IPA from dictionary for single words (not phrases)
+    // Try to get IPA from dictionary for single words only
     const wordText = word.word || '';
-    if (wordText.includes(' ')) {
-      // This is a phrase, don't show IPA
-      return '';
+    if (!wordText.includes(' ')) {
+      return getIPA(wordText);
     }
     
-    return getIPA(wordText);
+    // For phrases, return empty (backend should have generated IPA already)
+    return '';
   };
 
   useEffect(() => {

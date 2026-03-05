@@ -209,11 +209,8 @@ class CompletePipelineNew:
             
             # ALWAYS ensure IPA fields exist (even if empty)
             if word:
-                # Only get IPA for single words (not phrases)
-                is_single_word = ' ' not in word.strip()
-                
-                # Get IPA if not already present AND it's a single word
-                if is_single_word and (not item.get('ipa') or not item.get('phonetic')):
+                # Get IPA for both single words AND phrases
+                if not item.get('ipa') or not item.get('phonetic'):
                     ipa = self._get_ipa_phonetics(word)
                     if ipa:
                         item['ipa'] = ipa
@@ -223,10 +220,6 @@ class CompletePipelineNew:
                         # Set empty string if IPA not available
                         item['ipa'] = ''
                         item['phonetic'] = ''
-                elif not is_single_word:
-                    # Phrase - don't get IPA
-                    item['ipa'] = ''
-                    item['phonetic'] = ''
                 else:
                     # Already has IPA
                     ipa_success_count += 1
@@ -403,6 +396,9 @@ class CompletePipelineNew:
         """
         Get IPA phonetic transcription using multiple methods
         
+        For phrases: Split into words and get IPA for each word
+        For single words: Use Dictionary API
+        
         Priority:
         1. Free Dictionary API (most reliable)
         2. eng_to_ipa library (fallback)
@@ -416,42 +412,83 @@ class CompletePipelineNew:
         if not word or not isinstance(word, str):
             return ""
         
+        word = word.strip()
+        
+        # Check if it's a phrase (contains space)
+        if ' ' in word:
+            # Split phrase into words
+            words = word.split()
+            ipa_parts = []
+            
+            for w in words:
+                w_clean = w.strip().lower()
+                if not w_clean:
+                    continue
+                    
+                # Get IPA for each word
+                word_ipa = self._get_single_word_ipa(w_clean)
+                if word_ipa:
+                    # Remove slashes from individual words
+                    word_ipa = word_ipa.strip('/')
+                    ipa_parts.append(word_ipa)
+            
+            # Combine IPAs
+            if ipa_parts:
+                combined_ipa = ' '.join(ipa_parts)
+                return f'/{combined_ipa}/'
+            else:
+                return ""
+        else:
+            # Single word
+            return self._get_single_word_ipa(word.lower())
+    
+    def _get_single_word_ipa(self, word: str) -> str:
+        """
+        Get IPA for a single word only
+        
+        Args:
+            word: Single word (lowercase)
+        
+        Returns:
+            IPA transcription with slashes (or empty string)
+        """
+        if not word or not isinstance(word, str):
+            return ""
+        
         # Method 1: Try Free Dictionary API (most reliable)
         try:
             import requests
             import time
             
-            # Only try API for single words (not phrases)
-            if ' ' not in word.strip():
-                # Add small delay to avoid rate limiting
-                if not hasattr(self, '_last_api_call'):
-                    self._last_api_call = 0
-                
-                current_time = time.time()
-                if current_time - self._last_api_call < 0.1:  # 100ms delay
-                    time.sleep(0.1)
-                self._last_api_call = current_time
-                
-                url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word.lower()}"
-                response = requests.get(url, timeout=2)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and len(data) > 0:
-                        # Try to get IPA from phonetics
-                        phonetics = data[0].get('phonetics', [])
-                        for phonetic in phonetics:
-                            ipa_text = phonetic.get('text', '')
+            # Add small delay to avoid rate limiting
+            if not hasattr(self, '_last_api_call'):
+                self._last_api_call = 0
+            
+            current_time = time.time()
+            if current_time - self._last_api_call < 0.1:  # 100ms delay
+                time.sleep(0.1)
+            self._last_api_call = current_time
+            
+            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+            response = requests.get(url, timeout=2)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    # Try to get IPA from phonetics
+                    phonetics = data[0].get('phonetics', [])
+                    for phonetic in phonetics:
+                        ipa_text = phonetic.get('text', '')
+                        if ipa_text:
+                            # Keep IPA text as-is (with slashes for standard format)
+                            ipa_text = ipa_text.strip()
                             if ipa_text:
-                                # Keep IPA text as-is (with slashes for standard format)
-                                ipa_text = ipa_text.strip()
-                                if ipa_text:
-                                    # Ensure it has slashes for standard IPA format
-                                    if not ipa_text.startswith('/'):
-                                        ipa_text = '/' + ipa_text
-                                    if not ipa_text.endswith('/'):
-                                        ipa_text = ipa_text + '/'
-                                    return ipa_text
+                                # Ensure it has slashes for standard IPA format
+                                if not ipa_text.startswith('/'):
+                                    ipa_text = '/' + ipa_text
+                                if not ipa_text.endswith('/'):
+                                    ipa_text = ipa_text + '/'
+                                return ipa_text
         except Exception as e:
             # API failed, continue to fallback
             if not hasattr(self, '_api_error_logged'):
@@ -464,6 +501,11 @@ class CompletePipelineNew:
             result = ipa.convert(word)
             
             if result and len(result) > 0:
+                # Add slashes if not present
+                if not result.startswith('/'):
+                    result = '/' + result
+                if not result.endswith('/'):
+                    result = result + '/'
                 return result
             else:
                 return ""
