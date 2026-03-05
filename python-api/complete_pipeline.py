@@ -227,7 +227,6 @@ class CompletePipelineNew:
                 # No word, set empty
                 item['ipa'] = ''
                 item['phonetic'] = ''
-                item['phonetic'] = ''
             
             # ALWAYS ensure POS fields exist
             if word:
