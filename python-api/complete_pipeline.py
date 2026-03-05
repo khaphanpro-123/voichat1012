@@ -203,6 +203,7 @@ class CompletePipelineNew:
         pos_success_count = 0
         context_added_count = 0
         
+        # Process each vocabulary item
         for item in vocabulary:
             word = item.get('word', item.get('phrase', item.get('text', '')))
             
