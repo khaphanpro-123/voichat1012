@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     
     // Forward to Railway backend
-    const response = await fetch(`${BACKEND_URL}/upload-document-complete`, {
+    const response = await fetch(`${BACKEND_URL}/api/upload-document-complete`, {
       method: "POST",
       body: formData,
       // Don't set Content-Type header - let fetch set it with boundary
