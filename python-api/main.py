@@ -2,6 +2,7 @@
 Visual Language Tutor - Backend API
 Complete 12-Stage Pipeline + Phrase-Centric Extraction
 Version: 5.0.0-simplified
+Last Updated: 2026-03-05 - Fixed IndentationError in complete_pipeline.py
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form

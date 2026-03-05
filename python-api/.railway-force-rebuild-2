@@ -1,0 +1,4 @@
+# Force Railway to rebuild - Attempt 2
+# Railway is stuck on old code with IndentationError at line 229
+# This file forces a complete rebuild
+# Timestamp: 2026-03-05 09:45:00
