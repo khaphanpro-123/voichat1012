@@ -283,9 +283,19 @@ class WordRanker:
             word_emb = self.embedding_model.encode([word])[0]
             doc_emb = document_embedding
             
-            similarity = np.dot(word_emb, doc_emb) / (
-                np.linalg.norm(word_emb) * np.linalg.norm(doc_emb)
-            )
+            # Compute norms
+            word_norm = np.linalg.norm(word_emb)
+            doc_norm = np.linalg.norm(doc_emb)
+            
+            # Check for zero vectors
+            if word_norm == 0 or doc_norm == 0:
+                return 0.5  # Default for zero vectors
+            
+            similarity = np.dot(word_emb, doc_emb) / (word_norm * doc_norm)
+            
+            # Handle NaN or inf
+            if np.isnan(similarity) or np.isinf(similarity):
+                return 0.5
             
             return float(similarity)
         except:
