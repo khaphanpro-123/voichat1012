@@ -56,6 +56,8 @@ export async function POST(request: NextRequest) {
     
     if (existing) {
       // Update existing word
+      // Ensure partOfSpeech and type are synced
+      const finalPartOfSpeech = partOfSpeech || type || existing.partOfSpeech || existing.type || "other"
       await collection.updateOne(
         { word, userId },
         { 
@@ -67,8 +69,8 @@ export async function POST(request: NextRequest) {
             synonyms: synonyms || existing.synonyms,
             level: level || existing.level,
             source: source || existing.source,
-            partOfSpeech: partOfSpeech || existing.partOfSpeech || "other",
-            type: type || existing.type || "other",
+            partOfSpeech: finalPartOfSpeech,
+            type: finalPartOfSpeech,  // Keep both fields synced
             updated_at: new Date()
           }
         }
@@ -83,6 +85,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert new word WITH userId
+    // Ensure partOfSpeech and type are synced
+    const finalPartOfSpeech = partOfSpeech || type || "other"
     const result = await collection.insertOne({
       userId,  // IMPORTANT: Save with userId
       word,
@@ -93,8 +97,8 @@ export async function POST(request: NextRequest) {
       synonyms: synonyms || [],
       level: level || "intermediate",
       source: source || "document",
-      partOfSpeech: partOfSpeech || "other",
-      type: type || "other",
+      partOfSpeech: finalPartOfSpeech,
+      type: finalPartOfSpeech,  // Keep both fields synced
       created_at: new Date(),
     })
 

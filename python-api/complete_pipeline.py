@@ -277,6 +277,15 @@ class CompletePipelineNew:
         print(f"  ✓ Added POS to {pos_success_count}/{len(vocabulary)} items {'✅' if pos_success_count == len(vocabulary) else '⚠️'}")
         print(f"  ✓ Added context to {context_added_count}/{len(vocabulary)} items")
         
+        # DEBUG: Show sample of IPA results
+        if len(vocabulary) > 0:
+            print(f"\n  📊 IPA Sample (first 5 items):")
+            for i, item in enumerate(vocabulary[:5]):
+                word = item.get('word', item.get('phrase', ''))
+                ipa = item.get('ipa', '')
+                pos = item.get('pos_label', '')
+                print(f"    {i+1}. '{word}' -> IPA: '{ipa}' | POS: '{pos}'")
+        
         # ====================================================================
         # Add Metadata
         # ====================================================================
@@ -459,17 +468,18 @@ class CompletePipelineNew:
             import requests
             import time
             
-            # Add small delay to avoid rate limiting
+            # Add delay to avoid rate limiting (increased to 200ms)
             if not hasattr(self, '_last_api_call'):
                 self._last_api_call = 0
             
             current_time = time.time()
-            if current_time - self._last_api_call < 0.1:  # 100ms delay
-                time.sleep(0.1)
-            self._last_api_call = current_time
+            time_since_last = current_time - self._last_api_call
+            if time_since_last < 0.2:  # 200ms delay (increased from 100ms)
+                time.sleep(0.2 - time_since_last)
+            self._last_api_call = time.time()
             
             url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-            response = requests.get(url, timeout=2)
+            response = requests.get(url, timeout=3)  # Increased timeout to 3s
             
             if response.status_code == 200:
                 data = response.json()
