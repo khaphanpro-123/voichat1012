@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://voichat1012-production.up.railway.app"
+const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || "https://voichat1012-production.up.railway.app").replace(/\/$/, "")
 
 export async function POST(request: NextRequest) {
   try {
