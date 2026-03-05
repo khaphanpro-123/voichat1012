@@ -226,13 +226,13 @@ class CompletePipelineNew:
                     # Phrase - don't get IPA
                     item['ipa'] = ''
                     item['phonetic'] = ''
-                        item['phonetic'] = ''
                 else:
                     # Already has IPA
                     ipa_success_count += 1
             else:
                 # No word, set empty
                 item['ipa'] = ''
+                item['phonetic'] = ''
                 item['phonetic'] = ''
             
             # ALWAYS ensure POS fields exist
