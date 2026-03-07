@@ -45,7 +45,7 @@ export function Footer() {
             <ul className="space-y-2 text-gray-400">
               <li><Link href="/dashboard-new/chat" className="hover:text-white transition">Voice Chat</Link></li>
               <li><Link href="/dashboard-new/vocabulary" className="hover:text-white transition">Học từ vựng</Link></li>
-              <li><Link href="/dashboard-new/documents" className="hover:text-white transition">Upload tài liệu</Link></li>
+              <li><Link href="/dashboard-new/documents-simple" className="hover:text-white transition">Upload tài liệu</Link></li>
               <li><Link href="/dashboard-new/pronunciation" className="hover:text-white transition">Luyện phát âm</Link></li>
             </ul>
           </div>

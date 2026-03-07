@@ -172,7 +172,7 @@ export default function FlashCardStudy() {
             Hãy upload tài liệu và trích xuất từ vựng để bắt đầu học!
           </p>
           <a
-            href="/dashboard-new/documents"
+            href="/dashboard-new/documents-simple"
             className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition font-medium"
           >
             Tải lên tài liệu
