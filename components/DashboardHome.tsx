@@ -129,8 +129,8 @@ export default function DashboardHome() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
-  // Video hướng dẫn - file trong thư mục public
-  const TUTORIAL_VIDEO_URL = "https://youtube.com/shorts/1bW10HRrjy0?feature=share";
+  // Video hướng dẫn - YouTube embed URL
+  const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/1bW10HRrjy0";
 
   // Check if user is new (first time)
   useEffect(() => {
@@ -325,14 +325,13 @@ export default function DashboardHome() {
               </button>
             </div>
             <div className="aspect-video bg-black">
-              <video
+              <iframe
                 src={TUTORIAL_VIDEO_URL}
-                controls
-                autoPlay
                 className="w-full h-full"
-              >
-                Trình duyệt của bạn không hỗ trợ video.
-              </video>
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video hướng dẫn sử dụng"
+              />
             </div>
             <div className="p-4 bg-gray-50">
               <p className="text-sm text-gray-600">
