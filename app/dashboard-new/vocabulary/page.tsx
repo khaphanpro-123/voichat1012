@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import VocabularyQuiz from "@/components/VocabularyQuiz";
 import { motion, AnimatePresence } from "framer-motion";
-import { getIPA } from "@/lib/ipaDict";
 import {
   BookOpen,
   Search,
@@ -105,22 +104,6 @@ export default function VocabularyPage() {
   const getExampleTranslation = (word: VocabularyWord): string => word.exampleTranslation || word.exampleVi || "";
   const getWordType = (word: VocabularyWord): string => word.partOfSpeech || word.type || "other";
   
-  // Get IPA pronunciation - prioritize database IPA, then dictionary, then pronunciation field
-  const getPronunciation = (word: VocabularyWord): string => {
-    // If has IPA from database, use it
-    if (word.ipa && word.ipa.trim() !== '') return word.ipa;
-    if (word.pronunciation && word.pronunciation.trim() !== '') return word.pronunciation;
-    
-    // Try to get IPA from dictionary for single words only
-    const wordText = word.word || '';
-    if (!wordText.includes(' ')) {
-      return getIPA(wordText);
-    }
-    
-    // For phrases, return empty (backend should have generated IPA already)
-    return '';
-  };
-
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/login");
   }, [status, router]);
@@ -148,8 +131,6 @@ export default function VocabularyPage() {
           timesReviewed: item.timesReviewed || 0,
           isLearned: item.isLearned || false,
           source: item.source || "",
-          pronunciation: item.pronunciation || "",
-          ipa: item.ipa || item.pronunciation || "", // Use ipa field or fallback to pronunciation
         }));
         
         setVocabulary(allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error"));
@@ -158,8 +139,7 @@ export default function VocabularyPage() {
         
         console.log("📊 Vocabulary stats:", {
           total: allWords.length,
-          vocabulary: allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error").length,
-          withIPA: allWords.filter((w: VocabularyWord) => w.ipa).length
+          vocabulary: allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error").length
         });
       }
     } catch (error) {
@@ -717,7 +697,6 @@ export default function VocabularyPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
-                            <span className="text-sm text-gray-600 font-mono">{getPronunciation(word)}</span>
                             <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
                               <Volume2 className="w-3.5 h-3.5" />
                             </button>
@@ -772,9 +751,6 @@ export default function VocabularyPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-xl font-bold text-purple-700 font-mono">{structure.word}</h3>
-                            {getPronunciation(structure) && (
-                              <span className="text-sm text-purple-600 font-mono">/{getPronunciation(structure)}/</span>
-                            )}
                             <span className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded-full">Cấu trúc</span>
                           </div>
                           <p className="text-gray-700 mb-2">{getMeaning(structure)}</p>

@@ -195,38 +195,16 @@ class CompletePipelineNew:
         )
         
         # ====================================================================
-        # POST-PROCESSING: Add IPA Phonetics & POS Tags
+        # POST-PROCESSING: Add POS Tags (IPA REMOVED)
         # ====================================================================
-        print(f"\n[POST-PROCESSING] Adding IPA phonetics and POS tags...")
+        print(f"\n[POST-PROCESSING] Adding POS tags...")
         vocabulary = pipeline_result['vocabulary']
-        ipa_success_count = 0
         pos_success_count = 0
         context_added_count = 0
         
         # Process each vocabulary item
         for item in vocabulary:
             word = item.get('word', item.get('phrase', item.get('text', '')))
-            
-            # ALWAYS ensure IPA fields exist (even if empty)
-            if word:
-                # Get IPA for both single words AND phrases
-                if not item.get('ipa') or not item.get('phonetic'):
-                    ipa = self._get_ipa_phonetics(word)
-                    if ipa:
-                        item['ipa'] = ipa
-                        item['phonetic'] = ipa
-                        ipa_success_count += 1
-                    else:
-                        # Set empty string if IPA not available
-                        item['ipa'] = ''
-                        item['phonetic'] = ''
-                else:
-                    # Already has IPA
-                    ipa_success_count += 1
-            else:
-                # No word, set empty
-                item['ipa'] = ''
-                item['phonetic'] = ''
             
             # ALWAYS ensure POS fields exist
             if word:
@@ -273,18 +251,8 @@ class CompletePipelineNew:
                 elif item.get('context_sentence') and not item.get('supporting_sentence'):
                     item['supporting_sentence'] = item['context_sentence']
         
-        print(f"  ✓ Added IPA to {ipa_success_count}/{len(vocabulary)} items {'✅' if ipa_success_count > 0 else '❌ (IPA library not working)'}")
         print(f"  ✓ Added POS to {pos_success_count}/{len(vocabulary)} items {'✅' if pos_success_count == len(vocabulary) else '⚠️'}")
         print(f"  ✓ Added context to {context_added_count}/{len(vocabulary)} items")
-        
-        # DEBUG: Show sample of IPA results
-        if len(vocabulary) > 0:
-            print(f"\n  📊 IPA Sample (first 5 items):")
-            for i, item in enumerate(vocabulary[:5]):
-                word = item.get('word', item.get('phrase', ''))
-                ipa = item.get('ipa', '')
-                pos = item.get('pos_label', '')
-                print(f"    {i+1}. '{word}' -> IPA: '{ipa}' | POS: '{pos}'")
         
         # ====================================================================
         # Add Metadata
@@ -399,142 +367,6 @@ class CompletePipelineNew:
             return float(obj)
         else:
             return obj
-    
-    def _get_ipa_phonetics(self, word: str) -> str:
-        """
-        Get IPA phonetic transcription using multiple methods
-        
-        For phrases: Split into words and get IPA for each word
-        For single words: Use Dictionary API
-        
-        Priority:
-        1. Free Dictionary API (most reliable)
-        2. eng_to_ipa library (fallback)
-        
-        Args:
-            word: Word or phrase
-        
-        Returns:
-            IPA transcription (or empty string if not available)
-        """
-        if not word or not isinstance(word, str):
-            return ""
-        
-        word = word.strip()
-        
-        # Check if it's a phrase (contains space)
-        if ' ' in word:
-            # Split phrase into words
-            words = word.split()
-            ipa_parts = []
-            
-            for w in words:
-                w_clean = w.strip().lower()
-                if not w_clean:
-                    continue
-                    
-                # Get IPA for each word
-                word_ipa = self._get_single_word_ipa(w_clean)
-                if word_ipa:
-                    # Remove slashes from individual words
-                    word_ipa = word_ipa.strip('/')
-                    ipa_parts.append(word_ipa)
-            
-            # Combine IPAs
-            if ipa_parts:
-                combined_ipa = ' '.join(ipa_parts)
-                return f'/{combined_ipa}/'
-            else:
-                return ""
-        else:
-            # Single word
-            return self._get_single_word_ipa(word.lower())
-    
-    def _get_single_word_ipa(self, word: str) -> str:
-        """
-        Get IPA for a single word only
-        
-        Args:
-            word: Single word (lowercase)
-        
-        Returns:
-            IPA transcription with slashes (or empty string)
-        """
-        if not word or not isinstance(word, str):
-            return ""
-        
-        # Method 1: Try Free Dictionary API (most reliable)
-        try:
-            import requests
-            import time
-            
-            # Add delay to avoid rate limiting (increased to 200ms)
-            if not hasattr(self, '_last_api_call'):
-                self._last_api_call = 0
-            
-            current_time = time.time()
-            time_since_last = current_time - self._last_api_call
-            if time_since_last < 0.2:  # 200ms delay (increased from 100ms)
-                time.sleep(0.2 - time_since_last)
-            self._last_api_call = time.time()
-            
-            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-            response = requests.get(url, timeout=3)  # Increased timeout to 3s
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    # Try to get IPA from phonetics
-                    phonetics = data[0].get('phonetics', [])
-                    for phonetic in phonetics:
-                        ipa_text = phonetic.get('text', '')
-                        if ipa_text:
-                            # Keep IPA text as-is (with slashes for standard format)
-                            ipa_text = ipa_text.strip()
-                            if ipa_text:
-                                # Ensure it has slashes for standard IPA format
-                                if not ipa_text.startswith('/'):
-                                    ipa_text = '/' + ipa_text
-                                if not ipa_text.endswith('/'):
-                                    ipa_text = ipa_text + '/'
-                                return ipa_text
-        except Exception as e:
-            # API failed, continue to fallback
-            if not hasattr(self, '_api_error_logged'):
-                print(f"  ⚠️  Dictionary API failed: {e}")
-                self._api_error_logged = True
-        
-        # Method 2: Try eng_to_ipa library (fallback)
-        try:
-            import eng_to_ipa as ipa
-            result = ipa.convert(word)
-            
-            if result and len(result) > 0:
-                # Add slashes if not present
-                if not result.startswith('/'):
-                    result = '/' + result
-                if not result.endswith('/'):
-                    result = result + '/'
-                return result
-            else:
-                return ""
-        except ImportError as e:
-            # Library not installed - only log once
-            if not hasattr(self, '_ipa_import_error_logged'):
-                print(f"  ⚠️  eng_to_ipa library not installed: {e}")
-                print(f"  ⚠️  Using Dictionary API only")
-                self._ipa_import_error_logged = True
-            return ""
-        except Exception as e:
-            # Conversion failed - log first few errors only
-            if not hasattr(self, '_ipa_error_count'):
-                self._ipa_error_count = 0
-            
-            if self._ipa_error_count < 3:
-                print(f"  ⚠️  IPA conversion failed for '{word}': {e}")
-                self._ipa_error_count += 1
-            
-            return ""
     
     def _get_pos_tag(self, word: str) -> str:
         """

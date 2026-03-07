@@ -29,13 +29,6 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
             </button>
           </div>
 
-          {/* IPA - Always show if available */}
-          {(card.phonetic || card.ipa) && (
-            <p className="text-sm text-blue-600 mb-2 font-mono">
-              {card.phonetic || card.ipa}
-            </p>
-          )}
-
           {card.definition && (
             <p className="text-sm text-gray-700 mb-2">
               <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
