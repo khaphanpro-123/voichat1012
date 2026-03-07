@@ -233,7 +233,8 @@ class CompletePipelineNew:
             if not has_context:
                 # Try to get from occurrences
                 if item.get('occurrences') and len(item['occurrences']) > 0:
-                    sentence = item['occurrences'][0].get('sentence', '')
+                    # Try both 'sentence_text' (phrases) and 'sentence' (words)
+                    sentence = item['occurrences'][0].get('sentence_text', '') or item['occurrences'][0].get('sentence', '')
                     if sentence:
                         item['context_sentence'] = sentence
                         item['supporting_sentence'] = sentence
