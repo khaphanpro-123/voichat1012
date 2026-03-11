@@ -690,45 +690,63 @@ export default function VocabularyPage() {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-3">
-                  {filteredVocabulary.map((word) => (
-                    <motion.div key={word._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-                      className="bg-white rounded-xl p-4 shadow hover:shadow-md transition border border-gray-100">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
-                            <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
-                              <Volume2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">{getWordType(word)}</span>
-                            {word.source && <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{word.source}</span>}
-                          </div>
-                          <p className="text-sm text-teal-600 font-medium mb-2">{getMeaning(word)}</p>
-                          {getExample(word) && (
-                            <div className="text-xs text-gray-600 bg-gray-50 rounded p-2">
-                              <div className="flex items-start gap-1">
-                                <p className="italic flex-1">&quot;{getExample(word)}&quot;</p>
-                                <button 
-                                  onClick={() => speakSentence(getExample(word))} 
-                                  className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 flex-shrink-0"
-                                  title="Phát âm câu"
-                                >
-                                  <Volume2 className="w-3 h-3" />
-                                </button>
-                              </div>
-                              {getExampleTranslation(word) && <p className="text-gray-500 mt-1">{getExampleTranslation(word)}</p>}
+                  {filteredVocabulary.map((word: any) => {
+                    const isPrimarySynonym = word.is_primary_synonym !== false;
+                    const hasSynonymGroup = word.synonym_group_id !== undefined;
+                    const similarityScore = word.similarity_to_primary;
+                    
+                    return (
+                      <motion.div key={word._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                        className={`rounded-xl p-4 shadow hover:shadow-md transition border ${
+                          isPrimarySynonym 
+                            ? 'bg-white border-gray-100' 
+                            : 'bg-blue-50 border-blue-200 ml-4'
+                        }`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {!isPrimarySynonym && (
+                                <span className="text-blue-500" title="Từ đồng nghĩa">🔗</span>
+                              )}
+                              <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
+                              <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
+                                <Volume2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
-                          )}
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">{getWordType(word)}</span>
+                              {!isPrimarySynonym && similarityScore && (
+                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                                  {(similarityScore * 100).toFixed(0)}% tương đồng
+                                </span>
+                              )}
+                              {word.source && <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{word.source}</span>}
+                            </div>
+                            <p className="text-sm text-teal-600 font-medium mb-2">{getMeaning(word)}</p>
+                            {getExample(word) && (
+                              <div className="text-xs text-gray-600 bg-gray-50 rounded p-2">
+                                <div className="flex items-start gap-1">
+                                  <p className="italic flex-1">&quot;{getExample(word)}&quot;</p>
+                                  <button 
+                                    onClick={() => speakSentence(getExample(word))} 
+                                    className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 flex-shrink-0"
+                                    title="Phát âm câu"
+                                  >
+                                    <Volume2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                {getExampleTranslation(word) && <p className="text-gray-500 mt-1">{getExampleTranslation(word)}</p>}
+                              </div>
+                            )}
+                          </div>
+                          <button onClick={() => deleteWord(word._id)} disabled={deletingId === word._id}
+                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50">
+                            {deletingId === word._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          </button>
                         </div>
-                        <button onClick={() => deleteWord(word._id)} disabled={deletingId === word._id}
-                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50">
-                          {deletingId === word._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </motion.div>

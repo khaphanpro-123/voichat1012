@@ -6,17 +6,39 @@ import { useState } from "react"
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
   if (!card || (!card.word && !card.phrase)) return null;
   
+  const isPrimarySynonym = card.is_primary_synonym !== false; // Default to true if not set
+  const hasSynonymGroup = card.synonym_group_id !== undefined;
+  const similarityScore = card.similarity_to_primary;
+  
   return (
-    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
+    <div className={`p-4 rounded-lg border transition-all ${
+      isPrimarySynonym 
+        ? 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md' 
+        : 'bg-blue-50 border-blue-200 ml-6 hover:border-blue-400 hover:shadow-sm'
+    }`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
+            {/* Synonym indicator */}
+            {!isPrimarySynonym && (
+              <span className="text-blue-500" title="Từ đồng nghĩa">
+                🔗
+              </span>
+            )}
+            
             <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
             
             {/* POS Tag - Always show */}
             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
               {card.pos_label || 'noun'}
             </span>
+            
+            {/* Similarity badge for synonyms */}
+            {!isPrimarySynonym && similarityScore && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 font-medium">
+                {(similarityScore * 100).toFixed(0)}% tương đồng
+              </span>
+            )}
             
             <button
               onClick={() => speakText(card.word || card.phrase || "")}
@@ -71,7 +93,7 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
 
         <div className="ml-4 text-right flex-shrink-0">
           <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-bold">
-            {(card.importance_score || 0).toFixed(2)}
+            {(card.importance_score || card.final_score || 0).toFixed(2)}
           </div>
         </div>
       </div>
