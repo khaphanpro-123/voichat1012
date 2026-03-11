@@ -433,8 +433,11 @@ class NewPipelineLearnedScoring:
         For each topic:
         1. Compute centrality (distance to centroid)
         2. Assign semantic roles: core / supporting / peripheral
-        3. Sort by final_score
+        3. Group synonyms together (similarity > 0.75)
+        4. Sort by final_score, keeping synonyms adjacent
         """
+        from sklearn.metrics.pairwise import cosine_similarity
+        
         for topic in topics:
             items = topic['items']
             centroid = topic['centroid']
@@ -453,8 +456,12 @@ class NewPipelineLearnedScoring:
                 else:
                     item['centrality'] = 0.5
             
-            # Sort by final_score
+            # Sort by final_score first
             items.sort(key=lambda x: x.get('final_score', 0.0), reverse=True)
+            
+            # Group synonyms together (keep them adjacent)
+            if len(items) > 1:
+                items = self._group_synonyms_in_topic(items, threshold=0.75)
             
             # Assign semantic roles
             n_items = len(items)
@@ -474,6 +481,89 @@ class NewPipelineLearnedScoring:
             topic['items'] = items
         
         return topics
+    
+    def _group_synonyms_in_topic(self, items: List[Dict], threshold: float = 0.75) -> List[Dict]:
+        """
+        Group synonyms together within a topic
+        
+        Strategy:
+        1. Keep items sorted by final_score
+        2. For each item, find similar items (similarity > threshold)
+        3. Move similar items to be adjacent
+        4. Mark synonym groups with 'synonym_group_id'
+        
+        Args:
+            items: List of vocabulary items (already sorted by final_score)
+            threshold: Similarity threshold for grouping (default: 0.75)
+        
+        Returns:
+            Reordered list with synonyms adjacent
+        """
+        from sklearn.metrics.pairwise import cosine_similarity
+        
+        if len(items) < 2:
+            return items
+        
+        # Extract embeddings
+        embeddings = []
+        for item in items:
+            if 'embedding' in item:
+                embeddings.append(item['embedding'])
+            else:
+                embeddings.append(np.zeros(384))
+        
+        embeddings = np.array(embeddings)
+        
+        # Compute similarity matrix
+        try:
+            similarity_matrix = cosine_similarity(embeddings)
+        except Exception as e:
+            print(f"  ⚠️  Failed to compute similarity: {e}")
+            return items
+        
+        # Group synonyms
+        result = []
+        used_indices = set()
+        synonym_group_id = 0
+        
+        for i in range(len(items)):
+            if i in used_indices:
+                continue
+            
+            # Add current item
+            current_item = items[i].copy()
+            current_item['synonym_group_id'] = synonym_group_id
+            current_item['is_primary_synonym'] = True
+            result.append(current_item)
+            used_indices.add(i)
+            
+            # Find similar items (synonyms)
+            synonyms = []
+            for j in range(i + 1, len(items)):
+                if j in used_indices:
+                    continue
+                
+                similarity = similarity_matrix[i][j]
+                if similarity >= threshold:
+                    synonym_item = items[j].copy()
+                    synonym_item['synonym_group_id'] = synonym_group_id
+                    synonym_item['is_primary_synonym'] = False
+                    synonym_item['similarity_to_primary'] = float(similarity)
+                    synonyms.append((j, synonym_item))
+                    used_indices.add(j)
+            
+            # Add synonyms right after primary
+            for _, synonym_item in synonyms:
+                result.append(synonym_item)
+            
+            # Increment group ID if we had synonyms
+            if synonyms:
+                synonym_group_id += 1
+            else:
+                # No synonyms, still increment but mark as single
+                synonym_group_id += 1
+        
+        return result
     
     def _flashcard_generation(self, topics: List[Dict]) -> List[Dict]:
         """
