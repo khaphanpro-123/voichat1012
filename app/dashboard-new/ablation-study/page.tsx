@@ -85,17 +85,56 @@ reinforcement learning`);
 
     setUploadedFile(file);
     setDocumentTitle(file.name.replace(/\.[^/.]+$/, ''));
+    setError('');
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      setDocumentText(text);
-    };
-    reader.readAsText(file);
+    // Chỉ hỗ trợ .txt file cho việc đọc trực tiếp
+    // Các file khác (.pdf, .docx) cần gửi lên backend để xử lý
+    if (file.name.endsWith('.txt')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        setDocumentText(text);
+      };
+      reader.readAsText(file);
+    } else {
+      // Với PDF/DOCX, gửi lên backend để extract text
+      setError('Đang xử lý file... Vui lòng đợi');
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('max_phrases', '1'); // Chỉ cần extract text
+        formData.append('max_words', '1');
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload-document-complete`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Lấy text từ response (backend đã extract)
+        // Backend trả về text trong metadata hoặc có thể reconstruct từ vocabulary
+        if (data.success) {
+          // Tạm thời set message để user biết file đã upload
+          setDocumentText(`File "${file.name}" đã được tải lên.\n\nVui lòng click "Tự Động Trích Xuất Từ Vựng" để xử lý file này.`);
+          setError('');
+        } else {
+          throw new Error('Không thể xử lý file');
+        }
+      } catch (err) {
+        setError('Lỗi khi xử lý file. Vui lòng thử file .txt hoặc copy/paste nội dung.');
+        console.error('Error:', err);
+      }
+    }
   };
 
   const autoExtractVocabulary = async () => {
-    if (!documentText.trim()) {
+    if (!uploadedFile && !documentText.trim()) {
       setError('Vui lòng nhập văn bản hoặc tải file lên trước');
       return;
     }
@@ -104,24 +143,29 @@ reinforcement learning`);
     setError('');
 
     try {
-      // Gọi API upload-document-complete để trích xuất từ vựng
       const formData = new FormData();
       
-      // Tạo file blob từ text
-      const blob = new Blob([documentText], { type: 'text/plain' });
-      const file = new File([blob], documentTitle + '.txt', { type: 'text/plain' });
+      // Nếu có file đã upload, dùng file đó
+      if (uploadedFile) {
+        formData.append('file', uploadedFile);
+      } else {
+        // Nếu không, tạo file blob từ text
+        const blob = new Blob([documentText], { type: 'text/plain' });
+        const file = new File([blob], documentTitle + '.txt', { type: 'text/plain' });
+        formData.append('file', file);
+      }
       
-      formData.append('file', file);
       formData.append('max_phrases', '30');
       formData.append('max_words', '20');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/upload-document-complete`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload-document-complete`, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
@@ -135,6 +179,19 @@ reinforcement learning`);
         
         setGroundTruth(extractedVocab.join('\n'));
         setError('');
+        
+        // Nếu có file PDF/DOCX, cập nhật document text từ extracted text
+        if (uploadedFile && !uploadedFile.name.endsWith('.txt')) {
+          // Reconstruct text từ vocabulary contexts
+          const contexts = data.vocabulary
+            .map((item: any) => item.context_sentence || item.supporting_sentence || '')
+            .filter((s: string) => s.trim())
+            .slice(0, 20);
+          
+          if (contexts.length > 0) {
+            setDocumentText(contexts.join('\n\n'));
+          }
+        }
       } else {
         throw new Error('Không thể trích xuất từ vựng');
       }
@@ -167,7 +224,7 @@ reinforcement learning`);
         .map(line => line.trim())
         .filter(line => line.length > 0);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/ablation-study`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ablation-study`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -223,7 +280,13 @@ reinforcement learning`);
         <Card>
           <CardHeader>
             <CardTitle>Văn Bản Tài Liệu</CardTitle>
-            <CardDescription>Tải file lên hoặc nhập văn bản (tiếng Anh)</CardDescription>
+            <CardDescription>
+              Tải file .txt lên (khuyến nghị) hoặc nhập văn bản (tiếng Anh)
+              <br />
+              <span className="text-xs text-orange-600">
+                Lưu ý: File .pdf/.docx cần click "Tự Động Trích Xuất" để xử lý
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
@@ -239,7 +302,7 @@ reinforcement learning`);
                 className="flex-1"
               >
                 <Upload className="mr-2 h-4 w-4" />
-                {uploadedFile ? uploadedFile.name : 'Tải File Lên'}
+                {uploadedFile ? uploadedFile.name : 'Tải File Lên (.txt khuyến nghị)'}
               </Button>
               <input
                 ref={fileInputRef}
