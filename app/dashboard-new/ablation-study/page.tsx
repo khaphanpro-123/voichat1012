@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, PlayCircle, CheckCircle2, TrendingUp, Clock, Target } from 'lucide-react';
+import { Loader2, PlayCircle, CheckCircle2, TrendingUp, Clock, Target, Upload, FileText, Sparkles } from 'lucide-react';
 
 interface AblationResult {
   case: string;
@@ -45,7 +45,11 @@ export default function AblationStudyPage() {
   const [documentTitle, setDocumentTitle] = useState('Test Document');
   const [result, setResult] = useState<AblationResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [extractingVocab, setExtractingVocab] = useState(false);
   const [error, setError] = useState('');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const loadExample = () => {
     setDocumentText(`Machine Learning and Artificial Intelligence
@@ -72,6 +76,74 @@ computer vision
 reinforcement learning`);
     
     setDocumentTitle('Machine Learning Introduction');
+    setUploadedFile(null);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadedFile(file);
+    setDocumentTitle(file.name.replace(/\.[^/.]+$/, ''));
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      setDocumentText(text);
+    };
+    reader.readAsText(file);
+  };
+
+  const autoExtractVocabulary = async () => {
+    if (!documentText.trim()) {
+      setError('Vui lòng nhập văn bản hoặc tải file lên trước');
+      return;
+    }
+
+    setExtractingVocab(true);
+    setError('');
+
+    try {
+      // Gọi API upload-document-complete để trích xuất từ vựng
+      const formData = new FormData();
+      
+      // Tạo file blob từ text
+      const blob = new Blob([documentText], { type: 'text/plain' });
+      const file = new File([blob], documentTitle + '.txt', { type: 'text/plain' });
+      
+      formData.append('file', file);
+      formData.append('max_phrases', '30');
+      formData.append('max_words', '20');
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/api/upload-document-complete`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.vocabulary) {
+        // Trích xuất từ vựng từ kết quả
+        const extractedVocab = data.vocabulary
+          .map((item: any) => item.word || item.phrase || item.text)
+          .filter((word: string) => word && word.trim())
+          .slice(0, 50); // Lấy top 50 từ
+        
+        setGroundTruth(extractedVocab.join('\n'));
+        setError('');
+      } else {
+        throw new Error('Không thể trích xuất từ vựng');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi khi trích xuất từ vựng');
+      console.error('Error:', err);
+    } finally {
+      setExtractingVocab(false);
+    }
   };
 
   const runAblationStudy = async () => {
@@ -151,7 +223,7 @@ reinforcement learning`);
         <Card>
           <CardHeader>
             <CardTitle>Văn Bản Tài Liệu</CardTitle>
-            <CardDescription>Nhập văn bản cần phân tích (tiếng Anh)</CardDescription>
+            <CardDescription>Tải file lên hoặc nhập văn bản (tiếng Anh)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
@@ -159,8 +231,27 @@ reinforcement learning`);
               value={documentTitle}
               onChange={(e) => setDocumentTitle(e.target.value)}
             />
+            
+            <div className="flex gap-2">
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="flex-1"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {uploadedFile ? uploadedFile.name : 'Tải File Lên'}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.pdf,.doc,.docx"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
+
             <Textarea
-              placeholder="Nhập văn bản tài liệu..."
+              placeholder="Hoặc nhập văn bản tài liệu..."
               value={documentText}
               onChange={(e) => setDocumentText(e.target.value)}
               className="min-h-[300px] font-mono text-sm"
@@ -171,15 +262,38 @@ reinforcement learning`);
         <Card>
           <CardHeader>
             <CardTitle>Từ Vựng Chuẩn (Ground Truth)</CardTitle>
-            <CardDescription>Mỗi từ/cụm từ trên một dòng</CardDescription>
+            <CardDescription>Tự động trích xuất hoặc nhập thủ công</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={autoExtractVocabulary}
+              disabled={extractingVocab || !documentText.trim()}
+              variant="outline"
+              className="w-full"
+            >
+              {extractingVocab ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang trích xuất...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Tự Động Trích Xuất Từ Vựng
+                </>
+              )}
+            </Button>
+
             <Textarea
-              placeholder="machine learning&#10;artificial intelligence&#10;algorithm&#10;..."
+              placeholder="machine learning&#10;artificial intelligence&#10;algorithm&#10;...&#10;&#10;Hoặc click 'Tự Động Trích Xuất' để hệ thống tự động tạo"
               value={groundTruth}
               onChange={(e) => setGroundTruth(e.target.value)}
               className="min-h-[300px] font-mono text-sm"
             />
+            
+            <div className="text-xs text-gray-500">
+              {groundTruth.split('\n').filter(l => l.trim()).length} từ vựng
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -209,6 +323,7 @@ reinforcement learning`);
           variant="outline"
           size="lg"
         >
+          <FileText className="mr-2 h-5 w-5" />
           Tải Ví Dụ
         </Button>
       </div>
