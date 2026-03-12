@@ -1,8 +1,9 @@
 """
 Visual Language Tutor - Backend API
-Complete 12-Stage Pipeline + Phrase-Centric Extraction
+Complete 12-Stage Pipeline + Phrase-Centric Extraction + Ablation Study
 Version: 5.0.0-simplified
-Last Updated: 2026-03-05 - Fixed IndentationError in complete_pipeline.py
+Last Updated: 2026-03-12 - Added Ablation Study API endpoint
+Force Redeploy: 2026-03-12 14:30
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
