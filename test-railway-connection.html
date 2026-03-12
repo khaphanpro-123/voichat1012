@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Railway Connection</title>
+</head>
+<body>
+    <h1>Test Railway Backend Connection</h1>
+    
+    <button onclick="testRoot()">Test Root Endpoint (/)</button>
+    <button onclick="testHealth()">Test Health Endpoint (/health)</button>
+    <button onclick="testAblationExample()">Test Ablation Example (/api/ablation-study/example)</button>
+    
+    <pre id="result"></pre>
+    
+    <script>
+        const API_URL = 'https://voichat1012-production.up.railway.app';
+        
+        async function testRoot() {
+            try {
+                document.getElementById('result').textContent = 'Testing root endpoint...';
+                const response = await fetch(`${API_URL}/`);
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testHealth() {
+            try {
+                document.getElementById('result').textContent = 'Testing health endpoint...';
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testAblationExample() {
+            try {
+                document.getElementById('result').textContent = 'Testing ablation example endpoint...';
+                const response = await fetch(`${API_URL}/api/ablation-study/example`);
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
