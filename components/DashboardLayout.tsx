@@ -18,6 +18,7 @@ import {
   Camera,
   Shield,
   Bell,
+  FlaskConical,
 } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
 
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/dashboard-new/documents-simple", label: "Tải lên tài liệu", icon: FileText },
   { href: "/dashboard-new/vocabulary", label: "Từ vựng", icon: BookOpen },
   { href: "/dashboard-new/survey", label: "Khảo sát học tập", icon: ClipboardList },
+  { href: "/dashboard-new/ablation-study", label: "Ablation Study", icon: FlaskConical },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
