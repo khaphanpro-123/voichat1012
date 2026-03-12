@@ -42,6 +42,9 @@ except ImportError:
 from phrase_centric_extractor import PhraseCentricExtractor
 from complete_pipeline import CompletePipelineNew
 
+# Import ablation study router
+from ablation_api_endpoint import router as ablation_router
+
 # Import RAG systems (DISABLED - commented out by user)
 # from knowledge_graph import KnowledgeGraph
 # from rag_system import RAGSystem
@@ -62,6 +65,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include ablation study router
+app.include_router(ablation_router, prefix="/api", tags=["ablation"])
 
 # Directories
 os.makedirs("uploads", exist_ok=True)
@@ -180,7 +186,9 @@ async def root():
         "system": "Complete 12-Stage Pipeline + Phrase-Centric",
         "endpoints": {
             "upload_complete": "/api/upload-document-complete (phrases + words)",
-            "upload_phrases": "/api/upload-document (phrases only)"
+            "upload_phrases": "/api/upload-document (phrases only)",
+            "ablation_study": "/api/ablation-study (POST - run ablation study)",
+            "ablation_example": "/api/ablation-study/example (GET - example request)"
         },
         "disabled_endpoints": {
             "flashcards": "/api/rag/generate-flashcards (DISABLED - use upload endpoints)",
@@ -842,6 +850,10 @@ if __name__ == "__main__":
     print("  POST /api/upload-document           (Phrases Only)")
     print("  GET  /api/knowledge-graph/{doc_id}  (STAGE 11 Visualization)")
     print("  GET  /api/flashcards/{doc_id}       (STAGE 12 Flashcards)")
+    print("")
+    print("  Ablation Study:")
+    print("  POST /api/ablation-study            (Run Ablation Study)")
+    print("  GET  /api/ablation-study/example    (Example Request)")
     print("")
     print("Documentation: http://localhost:8000/docs")
     print("="*80 + "\n")
