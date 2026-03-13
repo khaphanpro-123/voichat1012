@@ -96,8 +96,7 @@ def run_pipeline_case(
     pipeline = CompletePipelineNew(n_topics=n_topics)
     result = pipeline.process_document(
         text=text,
-        document_title=document_title,
-        document_id=f"ablation_case_{case_id}"
+        document_title=document_title
     )
     
     latency = time.time() - start_time
