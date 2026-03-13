@@ -1,7 +1,7 @@
 """
-ABLATION STUDY API ENDPOINT
+ABLATION STUDY API ENDPOINT - FIXED VERSION
 
-Tự động chạy ablation study và trả về kết quả
+Tự động chạy ablation study với các pipeline configurations khác nhau
 
 Endpoint: POST /api/ablation-study
 """
@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional
 import time
 import numpy as np
-from complete_pipeline import CompletePipelineNew
+from configurable_pipeline import create_pipeline_for_case, ABLATION_CASES
 
 router = APIRouter()
 
@@ -85,15 +85,35 @@ def calculate_diversity(vocabulary: List[Dict]) -> float:
 def run_pipeline_case(
     text: str,
     document_title: str,
-    case_id: int,
-    n_topics: int = 3
+    case_id: int
 ) -> Dict:
     """
-    Chạy pipeline cho một case cụ thể
+    Chạy pipeline cho một case cụ thể với stages configuration khác nhau
+    
+    Args:
+        text: Document text
+        document_title: Document title
+        case_id: Case number (1-4)
+    
+    Returns:
+        Pipeline result with vocabulary and metadata
     """
     start_time = time.time()
     
-    pipeline = CompletePipelineNew(n_topics=n_topics)
+    print(f"\n{'='*80}")
+    print(f"RUNNING ABLATION CASE {case_id}")
+    print(f"{'='*80}")
+    
+    # Create pipeline for specific case
+    pipeline = create_pipeline_for_case(case_id)
+    
+    # Get case configuration
+    case_config = ABLATION_CASES[case_id]
+    print(f"Case: {case_config['name']}")
+    print(f"Description: {case_config['description']}")
+    print(f"Enabled stages: {case_config['stages']}")
+    
+    # Process document
     result = pipeline.process_document(
         text=text,
         document_title=document_title
@@ -107,11 +127,18 @@ def run_pipeline_case(
         for v in vocabulary
     ]
     
+    print(f"\n📊 CASE {case_id} RESULTS:")
+    print(f"  Vocabulary items: {len(vocabulary)}")
+    print(f"  Predicted words: {len(predicted_words)}")
+    print(f"  Latency: {latency:.2f}s")
+    print(f"  Enabled stages: {case_config['stages']}")
+    
     return {
         'vocabulary': vocabulary,
         'predicted_words': predicted_words,
         'latency': round(latency, 2),
-        'total_words': len(vocabulary)
+        'total_words': len(vocabulary),
+        'case_config': case_config
     }
 
 
@@ -156,10 +183,10 @@ async def run_ablation_study(request: AblationRequest):
         results = []
         
         # ====================================================================
-        # CASE 1: Baseline (Trích xuất cơ bản)
+        # CASE 1: Baseline (Steps: 1,2,4,7,8,12)
         # ====================================================================
         print("\n[CASE 1] Baseline - Trích xuất cơ bản")
-        case1_result = run_pipeline_case(text, title, 1, n_topics=3)
+        case1_result = run_pipeline_case(text, title, 1)
         
         metrics1 = calculate_metrics(case1_result['predicted_words'], ground_truth)
         diversity1 = calculate_diversity(case1_result['vocabulary'])
@@ -167,7 +194,7 @@ async def run_ablation_study(request: AblationRequest):
         results.append({
             'case': 'Case 1: Baseline',
             'steps': '1,2,4,7,8,12',
-            'description': 'Trích xuất cơ bản',
+            'description': 'Trích xuất cơ bản - chỉ phrases',
             **metrics1,
             'latency': case1_result['latency'],
             'diversity_index': diversity1,
@@ -176,10 +203,10 @@ async def run_ablation_study(request: AblationRequest):
         })
         
         # ====================================================================
-        # CASE 2: + Context Intelligence
+        # CASE 2: + Context Intelligence (Steps: 1,2,3,4,7,8,12)
         # ====================================================================
         print("\n[CASE 2] + Context Intelligence")
-        case2_result = run_pipeline_case(text, title, 2, n_topics=3)
+        case2_result = run_pipeline_case(text, title, 2)
         
         metrics2 = calculate_metrics(case2_result['predicted_words'], ground_truth)
         diversity2 = calculate_diversity(case2_result['vocabulary'])
@@ -196,10 +223,10 @@ async def run_ablation_study(request: AblationRequest):
         })
         
         # ====================================================================
-        # CASE 3: + Filtering & Scoring
+        # CASE 3: + Filtering & Scoring (Steps: 1,2,3,4,5,6,7,8,9,12)
         # ====================================================================
         print("\n[CASE 3] + Filtering & Scoring")
-        case3_result = run_pipeline_case(text, title, 3, n_topics=5)
+        case3_result = run_pipeline_case(text, title, 3)
         
         metrics3 = calculate_metrics(case3_result['predicted_words'], ground_truth)
         diversity3 = calculate_diversity(case3_result['vocabulary'])
@@ -207,7 +234,7 @@ async def run_ablation_study(request: AblationRequest):
         results.append({
             'case': 'Case 3: + Filtering',
             'steps': '1,2,3,4,5,6,7,8,9,12',
-            'description': 'Thêm bộ lọc nhiễu và chấm điểm',
+            'description': 'Thêm single words và topic modeling',
             **metrics3,
             'latency': case3_result['latency'],
             'diversity_index': diversity3,
@@ -216,10 +243,10 @@ async def run_ablation_study(request: AblationRequest):
         })
         
         # ====================================================================
-        # CASE 4: Full Pipeline
+        # CASE 4: Full Pipeline (Steps: 1,2,3,4,5,6,7,8,9,10,11,12)
         # ====================================================================
         print("\n[CASE 4] Full Pipeline")
-        case4_result = run_pipeline_case(text, title, 4, n_topics=5)
+        case4_result = run_pipeline_case(text, title, 4)
         
         metrics4 = calculate_metrics(case4_result['predicted_words'], ground_truth)
         diversity4 = calculate_diversity(case4_result['vocabulary'])
@@ -227,7 +254,7 @@ async def run_ablation_study(request: AblationRequest):
         results.append({
             'case': 'Case 4: Full Pipeline',
             'steps': '1,2,3,4,5,6,7,8,9,10,11,12',
-            'description': 'Hệ thống đầy đủ với synonym grouping',
+            'description': 'Hệ thống đầy đủ với tất cả features',
             **metrics4,
             'latency': case4_result['latency'],
             'diversity_index': diversity4,

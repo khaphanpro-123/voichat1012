@@ -97,15 +97,17 @@ class NewPipelineLearnedScoring:
         self,
         phrases: List[Dict],
         words: List[Dict],
-        document_text: str = ""
+        document_text: str = "",
+        enabled_stages: List[int] = None
     ) -> Dict:
         """
-        Process phrases and words through new pipeline
+        Process phrases and words through new pipeline with configurable stages
         
         Args:
             phrases: List of phrase dicts from phrase extraction
             words: List of word dicts from word extraction
             document_text: Original document text (for centroid)
+            enabled_stages: List of stage numbers to enable (6-11)
         
         Returns:
             {
@@ -114,69 +116,107 @@ class NewPipelineLearnedScoring:
                 'flashcards': List[Dict]
             }
         """
+        if enabled_stages is None:
+            enabled_stages = [6, 7, 8, 9, 10, 11]  # Default: all stages
+        
         print(f"\n{'='*80}")
         print(f"NEW PIPELINE - LEARNED SCORING")
+        print(f"Enabled stages: {enabled_stages}")
         print(f"{'='*80}\n")
         
         print(f"[INPUT]")
         print(f"  Phrases: {len(phrases)}")
         print(f"  Words: {len(words)}")
         
+        # Initialize variables
+        phrases_scored = phrases
+        words_scored = words
+        merged = []
+        topics = []
+        flashcards = []
+        
         # ====================================================================
         # STAGE 6: Independent Scoring
         # ====================================================================
-        print(f"\n[STAGE 6] Independent Scoring...")
-        
-        phrases_scored = self._independent_scoring(phrases, document_text, item_type='phrase')
-        words_scored = self._independent_scoring(words, document_text, item_type='word')
-        
-        print(f"  ✓ Scored {len(phrases_scored)} phrases")
-        print(f"  ✓ Scored {len(words_scored)} words")
+        if 6 in enabled_stages:
+            print(f"\n[STAGE 6] Independent Scoring...")
+            
+            phrases_scored = self._independent_scoring(phrases, document_text, item_type='phrase')
+            words_scored = self._independent_scoring(words, document_text, item_type='word')
+            
+            print(f"  ✓ Scored {len(phrases_scored)} phrases")
+            print(f"  ✓ Scored {len(words_scored)} words")
+        else:
+            print(f"\n[STAGE 6] SKIPPED")
         
         # ====================================================================
         # STAGE 7: Merge
         # ====================================================================
-        print(f"\n[STAGE 7] Merge...")
-        
-        merged = self._merge(phrases_scored, words_scored)
-        
-        print(f"  ✓ Merged: {len(merged)} items")
+        if 7 in enabled_stages:
+            print(f"\n[STAGE 7] Merge...")
+            
+            merged = self._merge(phrases_scored, words_scored)
+            
+            print(f"  ✓ Merged: {len(merged)} items")
+        else:
+            print(f"\n[STAGE 7] SKIPPED")
+            # Simple concatenation if no merge
+            merged = phrases_scored + words_scored
         
         # ====================================================================
         # STAGE 8: Learned Final Scoring
         # ====================================================================
-        print(f"\n[STAGE 8] Learned Final Scoring...")
-        
-        merged = self._learned_final_scoring(merged)
-        
-        print(f"  ✓ Applied final scoring")
+        if 8 in enabled_stages:
+            print(f"\n[STAGE 8] Learned Final Scoring...")
+            
+            merged = self._learned_final_scoring(merged)
+            
+            print(f"  ✓ Applied final scoring")
+        else:
+            print(f"\n[STAGE 8] SKIPPED")
         
         # ====================================================================
         # STAGE 9: Topic Modeling
         # ====================================================================
-        print(f"\n[STAGE 9] Topic Modeling...")
-        
-        topics = self._topic_modeling(merged)
-        
-        print(f"  ✓ Created {len(topics)} topics")
+        if 9 in enabled_stages:
+            print(f"\n[STAGE 9] Topic Modeling...")
+            
+            topics = self._topic_modeling(merged)
+            
+            print(f"  ✓ Created {len(topics)} topics")
+        else:
+            print(f"\n[STAGE 9] SKIPPED")
+            # Create single topic if no topic modeling
+            topics = [{
+                'topic_id': 0,
+                'topic_name': 'General',
+                'items': merged,
+                'size': len(merged)
+            }]
         
         # ====================================================================
         # STAGE 10: Within-Topic Ranking
         # ====================================================================
-        print(f"\n[STAGE 10] Within-Topic Ranking...")
-        
-        topics = self._within_topic_ranking(topics)
-        
-        print(f"  ✓ Ranked items within topics")
+        if 10 in enabled_stages:
+            print(f"\n[STAGE 10] Within-Topic Ranking...")
+            
+            topics = self._within_topic_ranking(topics)
+            
+            print(f"  ✓ Ranked items within topics")
+        else:
+            print(f"\n[STAGE 10] SKIPPED")
         
         # ====================================================================
         # STAGE 11: Flashcard Generation
         # ====================================================================
-        print(f"\n[STAGE 11] Flashcard Generation...")
-        
-        flashcards = self._flashcard_generation(topics)
-        
-        print(f"  ✓ Generated {len(flashcards)} flashcards")
+        if 11 in enabled_stages:
+            print(f"\n[STAGE 11] Flashcard Generation...")
+            
+            flashcards = self._flashcard_generation(topics)
+            
+            print(f"  ✓ Generated {len(flashcards)} flashcards")
+        else:
+            print(f"\n[STAGE 11] SKIPPED")
         
         # ====================================================================
         # Result
@@ -190,7 +230,8 @@ class NewPipelineLearnedScoring:
                 'phrases': len(phrases_scored),
                 'words': len(words_scored),
                 'num_topics': len(topics),
-                'num_flashcards': len(flashcards)
+                'num_flashcards': len(flashcards),
+                'enabled_stages': enabled_stages
             }
         }
         
@@ -199,6 +240,7 @@ class NewPipelineLearnedScoring:
         print(f"  Total vocabulary: {len(merged)}")
         print(f"  Topics: {len(topics)}")
         print(f"  Flashcards: {len(flashcards)}")
+        print(f"  Enabled stages: {enabled_stages}")
         print(f"{'='*80}\n")
         
         return result
