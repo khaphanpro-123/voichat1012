@@ -106,7 +106,7 @@ reinforcement learning`);
         formData.append('max_phrases', '1'); // Chỉ cần extract text
         formData.append('max_words', '1');
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload-document-complete`, {
+        const response = await fetch(`/api/proxy/upload-document-complete`, {
           method: 'POST',
           body: formData,
         });
@@ -158,7 +158,7 @@ reinforcement learning`);
       formData.append('max_phrases', '30');
       formData.append('max_words', '20');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload-document-complete`, {
+      const response = await fetch(`/api/proxy/upload-document-complete`, {
         method: 'POST',
         body: formData,
       });
@@ -224,7 +224,7 @@ reinforcement learning`);
         .map(line => line.trim())
         .filter(line => line.length > 0);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ablation-study`, {
+      const response = await fetch(`/api/proxy/ablation-study`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
