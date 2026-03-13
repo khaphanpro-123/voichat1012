@@ -4,7 +4,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     
-    const PYTHON_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://voichat1012-production.up.railway.app';
+    // Remove trailing slash from API URL to prevent double slashes
+    const PYTHON_API_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://voichat1012-production.up.railway.app').replace(/\/$/, '');
     
     const response = await fetch(`${PYTHON_API_URL}/api/upload-document-complete`, {
       method: 'POST',

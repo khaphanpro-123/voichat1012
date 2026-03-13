@@ -4,7 +4,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const PYTHON_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://voichat1012-production.up.railway.app';
+    // Remove trailing slash from API URL to prevent double slashes
+    const PYTHON_API_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://voichat1012-production.up.railway.app').replace(/\/$/, '');
     
     const response = await fetch(`${PYTHON_API_URL}/api/ablation-study`, {
       method: 'POST',
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const PYTHON_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://voichat1012-production.up.railway.app';
+    // Remove trailing slash from API URL to prevent double slashes
+    const PYTHON_API_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://voichat1012-production.up.railway.app').replace(/\/$/, '');
     
     const response = await fetch(`${PYTHON_API_URL}/api/ablation-study/example`);
 
