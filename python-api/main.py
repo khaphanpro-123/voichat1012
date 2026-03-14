@@ -2,8 +2,8 @@
 Visual Language Tutor - Backend API
 Complete 12-Stage Pipeline + Phrase-Centric Extraction + Ablation Study
 Version: 5.0.0-simplified
-Last Updated: 2026-03-12 - Added Ablation Study API endpoint
-Force Redeploy: 2026-03-12 14:30
+Last Updated: 2026-03-14 - Fixed document_id parameter issue in ablation study
+Force Redeploy: 2026-03-14 15:30 - Ablation study parameter fix
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form

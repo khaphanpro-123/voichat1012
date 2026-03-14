@@ -4,6 +4,8 @@ ABLATION STUDY API ENDPOINT - FIXED VERSION
 Tự động chạy ablation study với các pipeline configurations khác nhau
 
 Endpoint: POST /api/ablation-study
+
+FORCE REDEPLOY: 2026-03-14 - Fixed document_id parameter issue
 """
 
 from fastapi import APIRouter, HTTPException
@@ -104,42 +106,55 @@ def run_pipeline_case(
     print(f"RUNNING ABLATION CASE {case_id}")
     print(f"{'='*80}")
     
-    # Create pipeline for specific case
-    pipeline = create_pipeline_for_case(case_id)
-    
-    # Get case configuration
-    case_config = ABLATION_CASES[case_id]
-    print(f"Case: {case_config['name']}")
-    print(f"Description: {case_config['description']}")
-    print(f"Enabled stages: {case_config['stages']}")
-    
-    # Process document
-    result = pipeline.process_document(
-        text=text,
-        document_title=document_title
-    )
-    
-    latency = time.time() - start_time
-    
-    vocabulary = result.get('vocabulary', [])
-    predicted_words = [
-        v.get('word') or v.get('phrase') or v.get('text', '') 
-        for v in vocabulary
-    ]
-    
-    print(f"\n📊 CASE {case_id} RESULTS:")
-    print(f"  Vocabulary items: {len(vocabulary)}")
-    print(f"  Predicted words: {len(predicted_words)}")
-    print(f"  Latency: {latency:.2f}s")
-    print(f"  Enabled stages: {case_config['stages']}")
-    
-    return {
-        'vocabulary': vocabulary,
-        'predicted_words': predicted_words,
-        'latency': round(latency, 2),
-        'total_words': len(vocabulary),
-        'case_config': case_config
-    }
+    try:
+        # Create pipeline for specific case
+        pipeline = create_pipeline_for_case(case_id)
+        
+        # Get case configuration
+        case_config = ABLATION_CASES[case_id]
+        print(f"Case: {case_config['name']}")
+        print(f"Description: {case_config['description']}")
+        print(f"Enabled stages: {case_config['stages']}")
+        
+        # Debug: Print pipeline type and method signature
+        print(f"Pipeline type: {type(pipeline)}")
+        print(f"Pipeline method: {pipeline.process_document}")
+        
+        # Process document - ONLY pass supported parameters
+        print(f"Calling process_document with text and document_title only...")
+        result = pipeline.process_document(
+            text=text,
+            document_title=document_title
+        )
+        
+        latency = time.time() - start_time
+        
+        vocabulary = result.get('vocabulary', [])
+        predicted_words = [
+            v.get('word') or v.get('phrase') or v.get('text', '') 
+            for v in vocabulary
+        ]
+        
+        print(f"\n📊 CASE {case_id} RESULTS:")
+        print(f"  Vocabulary items: {len(vocabulary)}")
+        print(f"  Predicted words: {len(predicted_words)}")
+        print(f"  Latency: {latency:.2f}s")
+        print(f"  Enabled stages: {case_config['stages']}")
+        
+        return {
+            'vocabulary': vocabulary,
+            'predicted_words': predicted_words,
+            'latency': round(latency, 2),
+            'total_words': len(vocabulary),
+            'case_config': case_config
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in run_pipeline_case: {str(e)}")
+        print(f"❌ Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        raise e
 
 
 @router.post("/ablation-study", response_model=AblationResponse)

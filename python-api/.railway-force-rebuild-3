@@ -1,0 +1,6 @@
+# Force Railway rebuild - Ablation Study Parameter Fix
+# Timestamp: 2026-03-14 16:45:00
+# Fix: Removed document_id parameter from ablation_api_endpoint.py
+# Status: Ready for deployment
+
+DEPLOYMENT_TRIGGER=ablation_parameter_fix_2026_03_14
