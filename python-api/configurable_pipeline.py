@@ -267,33 +267,37 @@ class ConfigurablePipeline:
 
 
 # ============================================================================
-# CASE CONFIGURATIONS
+# CASE CONFIGURATIONS - UPDATED FOR 11-STEP PIPELINE
 # ============================================================================
 
 ABLATION_CASES = {
     1: {
-        'name': 'Case 1: Baseline',
-        'description': 'Trích xuất cơ bản - chỉ phrases',
-        'stages': [1, 2, 4, 7, 8, 12],
-        'n_topics': 3
+        'name': 'TH1: Extraction Module',
+        'description': 'Cấu hình cơ bản - Bước 1-5 (Tiền xử lý + Trích xuất từ vựng)',
+        'stages': [1, 3, 4, 5],  # Document normalization + Phrase extraction + Single word extraction
+        'n_topics': 3,
+        'details': 'Chuẩn hóa tài liệu, phân tích cấu trúc, trích xuất cụm từ và từ đơn'
     },
     2: {
-        'name': 'Case 2: + Context Intelligence',
-        'description': 'Thêm phân tích ngữ cảnh',
-        'stages': [1, 2, 3, 4, 7, 8, 12],
-        'n_topics': 3
+        'name': 'TH2: + Structural Context',
+        'description': 'TH1 + Phân tích cấu trúc tiêu đề và ánh xạ ngữ cảnh (Bước 2-3)',
+        'stages': [1, 2, 3, 4, 5],  # + Heading Analysis + Structural Context Mapping
+        'n_topics': 3,
+        'details': 'Bổ sung Heading Analysis và Structural Heading Context Mapping'
     },
     3: {
-        'name': 'Case 3: + Filtering & Scoring',
-        'description': 'Thêm single words và topic modeling',
-        'stages': [1, 2, 3, 4, 5, 6, 7, 8, 9, 12],
-        'n_topics': 5
+        'name': 'TH3: + Semantic Scoring',
+        'description': 'TH2 + Chấm điểm ngữ nghĩa và hợp nhất từ vựng (Bước 6-8)',
+        'stages': [1, 2, 3, 4, 5, 6, 7, 8],  # + Independent Scoring + Merge + Learned Final Scoring
+        'n_topics': 5,
+        'details': 'Bổ sung Independent Scoring, Merge Phrase & Word, Learned Final Scoring'
     },
     4: {
-        'name': 'Case 4: Full Pipeline',
-        'description': 'Hệ thống đầy đủ với tất cả features',
-        'stages': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        'n_topics': 5
+        'name': 'TH4: Full System',
+        'description': 'Hệ thống hoàn chỉnh với phân cụm chủ đề và xếp hạng (Bước 9-11)',
+        'stages': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],  # + Topic Modeling + Within-topic Ranking + Flashcard Generation
+        'n_topics': 5,
+        'details': 'Hệ thống đầy đủ với Topic Modeling, Within-topic Ranking, Flashcard Generation'
     }
 }
 
