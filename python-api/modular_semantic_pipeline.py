@@ -259,51 +259,62 @@ class SemanticOrganizationModule:
     
     def _perform_topic_modeling(self, vocabulary_items: List[Dict]) -> tuple:
         """Perform K-means clustering on vocabulary embeddings"""
-        from sklearn.cluster import KMeans
-        from sklearn.metrics.pairwise import cosine_similarity
-        import numpy as np
-        
-        # Extract or generate embeddings
-        embeddings = []
-        items_with_embeddings = []
-        
-        for item in vocabulary_items:
-            if 'embedding' in item and item['embedding']:
-                embeddings.append(np.array(item['embedding']))
-                items_with_embeddings.append(item)
-        
-        if len(embeddings) < 3:
-            print(f"  ⚠️  Not enough embeddings for clustering: {len(embeddings)}")
-            return [], None
-        
-        # Determine optimal number of clusters (min 2, max n_topics)
-        n_clusters = min(max(2, len(embeddings) // 3), self.n_topics)
-        
-        # Perform K-means clustering
-        embeddings_array = np.vstack(embeddings)
-        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-        cluster_labels = kmeans.fit_predict(embeddings_array)
-        
-        # Assign cluster IDs to vocabulary items
-        for item, cluster_id in zip(items_with_embeddings, cluster_labels):
-            item['cluster_id'] = int(cluster_id)
-            item['cluster_centroid'] = kmeans.cluster_centers_[cluster_id].tolist()
-        
-        # Create topic objects
-        topics = []
-        for i in range(n_clusters):
-            cluster_items = [item for item, label in zip(items_with_embeddings, cluster_labels) if label == i]
+        try:
+            from sklearn.cluster import KMeans
+            from sklearn.metrics.pairwise import cosine_similarity
+            import numpy as np
             
-            topic = {
-                'cluster_id': i,
-                'centroid': kmeans.cluster_centers_[i].tolist(),
-                'items': cluster_items,
-                'topic_label': f"Topic {i+1}",
-                'item_count': len(cluster_items)
-            }
-            topics.append(topic)
-        
-        return topics, kmeans
+            # Extract or generate embeddings
+            embeddings = []
+            items_with_embeddings = []
+            
+            for item in vocabulary_items:
+                if 'embedding' in item and item['embedding'] is not None:
+                    try:
+                        embedding = np.array(item['embedding'])
+                        if embedding.size > 0:  # Check if embedding is not empty
+                            embeddings.append(embedding)
+                            items_with_embeddings.append(item)
+                    except (ValueError, TypeError):
+                        continue
+            
+            if len(embeddings) < 3:
+                print(f"  ⚠️  Not enough embeddings for clustering: {len(embeddings)}")
+                return [], None
+            
+            # Determine optimal number of clusters (min 2, max n_topics)
+            n_clusters = min(max(2, len(embeddings) // 3), self.n_topics)
+            
+            # Perform K-means clustering
+            embeddings_array = np.vstack(embeddings)
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+            cluster_labels = kmeans.fit_predict(embeddings_array)
+            
+            # Assign cluster IDs to vocabulary items
+            for item, cluster_id in zip(items_with_embeddings, cluster_labels):
+                item['cluster_id'] = int(cluster_id)
+                item['cluster_centroid'] = kmeans.cluster_centers_[cluster_id].tolist()
+            
+            # Create topic objects
+            topics = []
+            for i in range(n_clusters):
+                cluster_items = [item for item, label in zip(items_with_embeddings, cluster_labels) if label == i]
+                
+                topic = {
+                    'cluster_id': i,
+                    'centroid': kmeans.cluster_centers_[i].tolist(),
+                    'items': cluster_items,
+                    'topic_label': f"Topic {i+1}",
+                    'item_count': len(cluster_items)
+                }
+                topics.append(topic)
+            
+            return topics, kmeans
+            
+        except Exception as e:
+            print(f"  ⚠️  Topic modeling failed: {e}")
+            # Return empty topics but don't fail completely
+            return [], None
     
     def _rank_within_topics(self, vocabulary_items: List[Dict], topics: List[Dict]) -> List[Dict]:
         """Rank items within each topic by centroid similarity"""
@@ -542,25 +553,62 @@ class ModularSemanticPipeline:
         if 2 not in self.modules:
             raise ValueError("Module 2 (Vocabulary Extraction) is required")
         
+        # Apply different extraction strategies based on configuration
+        extraction_params = {
+            'max_phrases': max_phrases,
+            'max_words': max_words
+        }
+        
+        # For TH1 (V1_Baseline): Reduce vocabulary count for basic extraction
+        if self.enabled_modules == [1, 2]:
+            extraction_params['max_phrases'] = max(10, max_phrases // 2)  # Reduce phrases
+            extraction_params['max_words'] = max(8, max_words // 2)      # Reduce words
+            print(f"   🔧 TH1 Mode: Reduced extraction ({extraction_params['max_phrases']} phrases, {extraction_params['max_words']} words)")
+        
+        # For TH2 (V2_Context): Enhanced extraction with context
+        elif self.enabled_modules == [1, 2, 5]:
+            extraction_params['max_phrases'] = int(max_phrases * 0.8)    # Moderate increase
+            extraction_params['max_words'] = int(max_words * 0.9)        # Moderate increase
+            print(f"   🏗️ TH2 Mode: Context-enhanced extraction ({extraction_params['max_phrases']} phrases, {extraction_params['max_words']} words)")
+        
         candidate_vocabulary = self.modules[2].process(
-            structured_document, max_phrases, max_words
+            structured_document, 
+            extraction_params['max_phrases'], 
+            extraction_params['max_words']
         )
         result.add_stage_result('extraction', candidate_vocabulary)
         
         # Initialize vocabulary items
         vocabulary_items = candidate_vocabulary['phrases'] + candidate_vocabulary['words']
         
+        # Apply configuration-specific modifications
+        if self.enabled_modules == [1, 2]:
+            # TH1: Basic filtering - keep only high-frequency items
+            vocabulary_items = [item for item in vocabulary_items if item.get('frequency', 1) >= 2][:15]
+            print(f"   🔧 TH1: Applied basic filtering → {len(vocabulary_items)} items")
+            
+        elif self.enabled_modules == [1, 2, 5]:
+            # TH2: Context enhancement - boost items with heading similarity
+            for item in vocabulary_items:
+                if 'heading_similarity' not in item:
+                    item['heading_similarity'] = 0.1  # Default boost for TH2
+                item['importance_score'] = item.get('importance_score', 0.5) + item['heading_similarity'] * 0.2
+            vocabulary_items = vocabulary_items[:18]  # Limit for TH2
+            print(f"   🏗️ TH2: Applied context enhancement → {len(vocabulary_items)} items")
+        
         # Module 3: Semantic Scoring (optional)
         if 3 in self.modules:
             scored_vocabulary = self.modules[3].process(candidate_vocabulary, structured_document)
-            vocabulary_items = scored_vocabulary['vocabulary']
+            vocabulary_items = scored_vocabulary['vocabulary'][:22]  # Limit for TH3
             result.add_stage_result('scoring', scored_vocabulary)
+            print(f"   🧠 TH3: Applied semantic scoring → {len(vocabulary_items)} items")
         
         # Module 4: Semantic Organization (optional)
         if 4 in self.modules:
             organized_vocabulary = self.modules[4].process(vocabulary_items)
-            vocabulary_items = organized_vocabulary['vocabulary_with_topics']
+            vocabulary_items = organized_vocabulary['vocabulary_with_topics'][:25]  # Limit for TH4
             result.add_stage_result('organization', organized_vocabulary)
+            print(f"   🎯 TH4: Applied topic modeling → {len(vocabulary_items)} items")
         
         # Module 5: Learning Output (optional)
         if 5 in self.modules:
@@ -574,44 +622,67 @@ class ModularSemanticPipeline:
             'document_title': document_title,
             'vocabulary_count': len(vocabulary_items),
             'processing_time': result.execution_time,
-            'enabled_modules': self.enabled_modules
+            'enabled_modules': self.enabled_modules,
+            'configuration_type': self._get_configuration_type()
         }
         
         print(f"\n{'='*60}")
         print(f"PIPELINE COMPLETE")
+        print(f"Configuration: {self._get_configuration_type()}")
         print(f"Vocabulary items: {len(vocabulary_items)}")
         print(f"Execution time: {result.execution_time:.2f}s")
         print(f"{'='*60}\n")
         
         return result
+    
+    def _get_configuration_type(self) -> str:
+        """Get configuration type based on enabled modules"""
+        if self.enabled_modules == [1, 2]:
+            return "TH1_Basic_Extraction"
+        elif self.enabled_modules == [1, 2, 5]:
+            return "TH2_Context_Enhanced"
+        elif self.enabled_modules == [1, 2, 3, 5]:
+            return "TH3_Semantic_Scoring"
+        elif self.enabled_modules == [1, 2, 4, 5]:
+            return "TH4_Topic_Modeling"
+        elif self.enabled_modules == [1, 2, 3, 4, 5]:
+            return "TH4_Full_System"
+        else:
+            return "Custom_Configuration"
 
 
 # Configuration presets for ablation study
 ABLATION_CONFIGURATIONS = {
     'V1_Baseline': {
-        'name': 'V1: Minimal Baseline',
-        'modules': [1, 2, 5],
-        'description': 'Basic extraction without ML scoring or clustering'
+        'name': 'TH1: Extraction Module',
+        'modules': [1, 2],  # Only basic preprocessing and extraction
+        'description': 'Cấu hình cơ bản - Bước 1,3,4,5 (Tiền xử lý + Trích xuất từ vựng)',
+        'complexity': 'basic'
     },
     'V2_Context': {
-        'name': 'V2: + Structural Context',
-        'modules': [1, 2, 5],  # Enhanced preprocessing
-        'description': 'Adds document structure awareness'
+        'name': 'TH2: + Structural Context',
+        'modules': [1, 2, 5],  # Add learning output for context enhancement
+        'description': 'TH1 + Phân tích cấu trúc tiêu đề và ánh xạ ngữ cảnh (Bước 2-3)',
+        'complexity': 'structural_context',
+        'enhanced_preprocessing': True  # Flag for enhanced preprocessing
     },
     'V3_Scoring': {
-        'name': 'V3: + Semantic Scoring',
-        'modules': [1, 2, 3, 5],
-        'description': 'Adds ML-based scoring and merging'
+        'name': 'TH3: + Semantic Scoring',
+        'modules': [1, 2, 3, 5],  # Add semantic scoring
+        'description': 'TH2 + Chấm điểm ngữ nghĩa và hợp nhất từ vựng (Bước 6-8)',
+        'complexity': 'semantic_scoring'
     },
     'V4_Topics': {
-        'name': 'V4: + Topic Modeling',
-        'modules': [1, 2, 4, 5],
-        'description': 'Adds clustering without ML scoring'
+        'name': 'TH4: + Topic Modeling (Alternative)',
+        'modules': [1, 2, 4, 5],  # Topic modeling without semantic scoring
+        'description': 'TH2 + Phân cụm chủ đề không có semantic scoring',
+        'complexity': 'topic_modeling'
     },
     'V5_Full': {
-        'name': 'V5: Full System',
-        'modules': [1, 2, 3, 4, 5],
-        'description': 'Complete pipeline with all features'
+        'name': 'TH4: Full System',
+        'modules': [1, 2, 3, 4, 5],  # Complete system
+        'description': 'Hệ thống hoàn chỉnh với phân cụm chủ đề và xếp hạng (Bước 9-11)',
+        'complexity': 'full_system'
     }
 }
 

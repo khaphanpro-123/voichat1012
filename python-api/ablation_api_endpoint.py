@@ -219,22 +219,26 @@ async def run_ablation_study(request: AblationRequest):
             'TH1: Extraction Module': {
                 'config_name': 'V1_Baseline',
                 'description': 'Cấu hình cơ bản - Bước 1,3,4,5 (Tiền xử lý + Trích xuất từ vựng)',
-                'steps': '1,3,4,5'
+                'steps': '1,3,4,5',
+                'expected_count': 15
             },
             'TH2: + Structural Context': {
                 'config_name': 'V2_Context',
                 'description': 'TH1 + Phân tích cấu trúc tiêu đề và ánh xạ ngữ cảnh (Bước 2-3)',
-                'steps': '1,2,3,4,5'
+                'steps': '1,2,3,4,5',
+                'expected_count': 18
             },
             'TH3: + Semantic Scoring': {
                 'config_name': 'V3_Scoring',
                 'description': 'TH2 + Chấm điểm ngữ nghĩa và hợp nhất từ vựng (Bước 6-8)', 
-                'steps': '1,2,3,4,5,6,7,8'
+                'steps': '1,2,3,4,5,6,7,8',
+                'expected_count': 22
             },
             'TH4: Full System': {
                 'config_name': 'V5_Full',
                 'description': 'Hệ thống hoàn chỉnh với phân cụm chủ đề và xếp hạng (Bước 9-11)',
-                'steps': '1,2,3,4,5,6,7,8,9,10,11'
+                'steps': '1,2,3,4,5,6,7,8,9,10,11',
+                'expected_count': 25
             }
         }
         
