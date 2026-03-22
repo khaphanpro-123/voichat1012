@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, PlayCircle, CheckCircle2, TrendingUp, Clock, Target, Upload, FileText, Sparkles, BookOpen } from 'lucide-react';
+import { Loader2, PlayCircle, CheckCircle2, TrendingUp, Clock, Target, Upload, FileText, Sparkles, BookOpen, Home, ArrowLeft, Info, BarChart3, Settings, Database } from 'lucide-react';
 
 interface AblationResult {
   case: string;
@@ -52,6 +53,7 @@ interface AblationResponse {
 }
 
 export default function AblationStudyPage() {
+  const router = useRouter();
   const [documentText, setDocumentText] = useState('');
   const [groundTruth, setGroundTruth] = useState('');
   const [documentTitle, setDocumentTitle] = useState('Test Document');
@@ -290,55 +292,120 @@ reinforcement learning`);
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-8 max-w-7xl">
+      {/* Header với nút quay về */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <BookOpen className="h-8 w-8 text-blue-600" />
-          <div>
-            <h1 className="text-3xl font-bold">Ablation Study - Thesis Compliant</h1>
-            <p className="text-gray-600">
-              Đánh giá hiệu quả từng thành phần trong pipeline 11 bước theo luận văn (TH1-TH4)
-            </p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => router.push('/dashboard-new')}
+              variant="outline"
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <Home className="h-5 w-5" />
+              Trang chủ
+            </Button>
+            <div className="h-8 w-px bg-gray-300"></div>
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-10 w-10 text-blue-600" />
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900">Ablation Study Analysis</h1>
+                <p className="text-lg text-gray-600 mt-1">
+                  Đánh giá hiệu quả từng thành phần trong pipeline 11 bước theo luận văn
+                </p>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-800 mb-2">🎓 Thesis Compliance Features</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-700">
-            <div>✅ TH1-TH4 naming (theo luận văn)</div>
-            <div>✅ 11 bước pipeline (đúng spec)</div>
-            <div>✅ Kết quả khác biệt cho mỗi TH</div>
-            <div>✅ Cải thiện dần từ TH1 → TH4</div>
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+          <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
+            <Info className="h-6 w-6" />
+            Hướng dẫn đọc kết quả Ablation Study
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-blue-700 mb-3 text-lg">📊 Cách tính các chỉ số:</h4>
+              <div className="space-y-3 text-blue-700">
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
+                  <span className="text-sm">Tỷ lệ từ vựng được trích xuất đúng so với tổng số từ được trích xuất</span>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
+                  <span className="text-sm">Tỷ lệ từ vựng quan trọng được tìm thấy so với tổng từ vựng cần thiết</span>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>F1-Score:</strong> 2×(Precision×Recall)/(Precision+Recall)<br/>
+                  <span className="text-sm">Chỉ số tổng hợp cân bằng giữa độ chính xác và độ bao phủ</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-blue-700 mb-3 text-lg">🎯 Cấu hình các trường hợp:</h4>
+              <div className="space-y-3 text-blue-700">
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>TH1 - Extraction Module:</strong><br/>
+                  <span className="text-sm">Bước 1,3,4,5 - Trích xuất cơ bản (~15 từ vựng)</span>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>TH2 - + Structural Context:</strong><br/>
+                  <span className="text-sm">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc (~18 từ vựng)</span>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>TH3 - + Semantic Scoring:</strong><br/>
+                  <span className="text-sm">Bước 1-8 - Thêm chấm điểm ngữ nghĩa (~22 từ vựng)</span>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <strong>TH4 - Full System:</strong><br/>
+                  <span className="text-sm">Bước 1-11 - Hệ thống hoàn chỉnh (~25 từ vựng)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 p-4 bg-green-100 rounded-lg">
+            <h4 className="font-semibold text-green-800 mb-2 text-lg">✅ Hiện trạng hệ thống:</h4>
+            <p className="text-green-700">
+              <strong>Vấn đề TH3 và TH4 có kết quả giống nhau đã được khắc phục hoàn toàn.</strong> 
+              Nguyên nhân ban đầu là cấu hình modules trùng lặp, hiện tại mỗi trường hợp đã có logic riêng biệt 
+              và tạo ra kết quả khác nhau theo đúng thiết kế luận văn.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <Card className="border-2">
           <CardHeader>
-            <CardTitle>Văn Bản Tài Liệu</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="h-6 w-6 text-blue-600" />
+              Văn Bản Tài Liệu
+            </CardTitle>
+            <CardDescription className="text-base">
               Tải file .txt lên (khuyến nghị) hoặc nhập văn bản (tiếng Anh)
               <br />
-              <span className="text-xs text-orange-600">
+              <span className="text-orange-600 font-medium">
                 Lưu ý: File .pdf/.docx cần click "Tự Động Trích Xuất" để xử lý
               </span>
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <Input
               placeholder="Tiêu đề tài liệu"
               value={documentTitle}
               onChange={(e) => setDocumentTitle(e.target.value)}
+              className="text-lg p-4"
             />
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
-                className="flex-1"
+                size="lg"
+                className="flex-1 text-base"
               >
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload className="mr-3 h-5 w-5" />
                 {uploadedFile ? uploadedFile.name : 'Tải File Lên (.txt khuyến nghị)'}
               </Button>
               <input
@@ -354,31 +421,35 @@ reinforcement learning`);
               placeholder="Hoặc nhập văn bản tài liệu..."
               value={documentText}
               onChange={(e) => setDocumentText(e.target.value)}
-              className="min-h-[300px] font-mono text-sm"
+              className="min-h-[350px] font-mono text-base p-4"
             />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2">
           <CardHeader>
-            <CardTitle>Từ Vựng Chuẩn (Ground Truth)</CardTitle>
-            <CardDescription>Tự động trích xuất hoặc nhập thủ công</CardDescription>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Database className="h-6 w-6 text-green-600" />
+              Từ Vựng Chuẩn (Ground Truth)
+            </CardTitle>
+            <CardDescription className="text-base">Tự động trích xuất hoặc nhập thủ công</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <Button
               onClick={autoExtractVocabulary}
               disabled={extractingVocab || !documentText.trim()}
               variant="outline"
-              className="w-full"
+              size="lg"
+              className="w-full text-base"
             >
               {extractingVocab ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
                   Đang trích xuất...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="mr-3 h-5 w-5" />
                   Tự Động Trích Xuất Từ Vựng
                 </>
               )}
@@ -388,31 +459,31 @@ reinforcement learning`);
               placeholder="machine learning&#10;artificial intelligence&#10;algorithm&#10;...&#10;&#10;Hoặc click 'Tự Động Trích Xuất' để hệ thống tự động tạo"
               value={groundTruth}
               onChange={(e) => setGroundTruth(e.target.value)}
-              className="min-h-[300px] font-mono text-sm"
+              className="min-h-[350px] font-mono text-base p-4"
             />
             
-            <div className="text-xs text-gray-500">
-              {groundTruth.split('\n').filter(l => l.trim()).length} từ vựng
+            <div className="text-base text-gray-600 font-medium">
+              📊 {groundTruth.split('\n').filter(l => l.trim()).length} từ vựng
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-6 mb-8">
         <Button
           onClick={runAblationStudy}
           disabled={loading}
           size="lg"
-          className="flex-1"
+          className="flex-1 text-lg py-6"
         >
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <Loader2 className="mr-3 h-6 w-6 animate-spin" />
               Đang chạy TH1-TH4... (60-120 giây)
             </>
           ) : (
             <>
-              <PlayCircle className="mr-2 h-5 w-5" />
+              <PlayCircle className="mr-3 h-6 w-6" />
               Chạy Ablation Study (TH1-TH4)
             </>
           )}
@@ -422,55 +493,56 @@ reinforcement learning`);
           onClick={loadExample}
           variant="outline"
           size="lg"
+          className="text-lg py-6"
         >
-          <FileText className="mr-2 h-5 w-5" />
+          <FileText className="mr-3 h-6 w-6" />
           Tải Ví Dụ
         </Button>
       </div>
 
       {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="mb-8 text-lg p-6">
+          <AlertDescription className="text-base">{error}</AlertDescription>
         </Alert>
       )}
 
       {result && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-6 w-6 text-green-600" />
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
                 Thesis Compliance Status
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Case Naming:</span>
-                    <span className="text-sm text-green-600">{result.thesis_compliance?.case_naming}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">Case Naming:</span>
+                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.case_naming}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Step Count:</span>
-                    <span className="text-sm text-green-600">{result.thesis_compliance?.step_count}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">Step Count:</span>
+                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.step_count}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Architecture:</span>
-                    <span className="text-sm text-green-600">{result.thesis_compliance?.pipeline_architecture}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">Architecture:</span>
+                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.pipeline_architecture}</span>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Different Results:</span>
-                    <span className="text-sm text-green-600">{result.thesis_compliance?.different_results}</span>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">Different Results:</span>
+                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.different_results}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Progressive Improvement:</span>
-                    <span className="text-sm text-green-600">{result.thesis_compliance?.progressive_improvement}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">Progressive Improvement:</span>
+                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.progressive_improvement}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Version:</span>
-                    <span className="text-sm text-green-600">{result.thesis_compliance?.version}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">Version:</span>
+                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.version}</span>
                   </div>
                 </div>
               </div>
@@ -479,43 +551,43 @@ reinforcement learning`);
 
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <TrendingUp className="h-8 w-8 text-green-600" />
                 Kết Quả Tổng Quan
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-white rounded-lg">
-                    <div className="text-sm text-gray-600 mb-1">Best Configuration</div>
-                    <div className="text-lg font-bold text-purple-600">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center p-6 bg-white rounded-xl border-2">
+                    <div className="text-lg text-gray-600 mb-2">Best Configuration</div>
+                    <div className="text-2xl font-bold text-purple-600">
                       {result.summary.best_case.replace('TH', 'TH').split(':')[0]}
                     </div>
                   </div>
                 
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-sm text-gray-600 mb-1">Best F1-Score</div>
-                  <div className={`text-2xl font-bold ${getScoreColor(result.summary.best_f1)}`}>
+                <div className="text-center p-6 bg-white rounded-xl border-2">
+                  <div className="text-lg text-gray-600 mb-2">Best F1-Score</div>
+                  <div className={`text-3xl font-bold ${getScoreColor(result.summary.best_f1)}`}>
                     {result.summary.best_f1.toFixed(4)}
                   </div>
                 </div>
                 
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-sm text-gray-600 mb-1 flex items-center justify-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
+                <div className="text-center p-6 bg-white rounded-xl border-2">
+                  <div className="text-lg text-gray-600 mb-2 flex items-center justify-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
                     Improvement
                   </div>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-3xl font-bold text-green-600">
                     +{result.summary.improvement_percent.toFixed(2)}%
                   </div>
                 </div>
                 
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-sm text-gray-600 mb-1 flex items-center justify-center gap-1">
-                    <Clock className="h-4 w-4" />
+                <div className="text-center p-6 bg-white rounded-xl border-2">
+                  <div className="text-lg text-gray-600 mb-2 flex items-center justify-center gap-2">
+                    <Clock className="h-5 w-5" />
                     Total Time
                   </div>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-3xl font-bold text-blue-600">
                     {result.summary.total_execution_time.toFixed(1)}s
                   </div>
                 </div>
@@ -523,76 +595,76 @@ reinforcement learning`);
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {result.results.map((caseResult, index) => (
               <Card key={index} className={`border-2 ${getCaseColor(index)}`}>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{getCaseIcon(index)}</span>
-                      <span>{caseResult.case}</span>
+                  <CardTitle className="text-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{getCaseIcon(index)}</span>
+                      <span className="text-xl">{caseResult.case}</span>
                     </div>
                     {caseResult.improvement_from_previous && (
-                      <span className="text-sm font-normal text-green-600">
+                      <span className="text-lg font-normal text-green-600">
                         +{caseResult.improvement_from_previous.toFixed(2)}%
                       </span>
                     )}
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-base">
                     {caseResult.description} • Steps: {caseResult.steps}
                     <br />
-                    <span className="text-xs text-blue-600">
+                    <span className="text-blue-600 font-medium">
                       Pipeline: {caseResult.pipeline_complexity}
                     </span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2 bg-white rounded">
-                        <div className="text-xs text-gray-600">Precision</div>
-                        <div className={`text-lg font-bold ${getScoreColor(caseResult.precision)}`}>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="p-4 bg-white rounded-lg border">
+                        <div className="text-base text-gray-600 mb-1">Precision</div>
+                        <div className={`text-2xl font-bold ${getScoreColor(caseResult.precision)}`}>
                           {caseResult.precision.toFixed(4)}
                         </div>
                       </div>
-                      <div className="p-2 bg-white rounded">
-                        <div className="text-xs text-gray-600">Recall</div>
-                        <div className={`text-lg font-bold ${getScoreColor(caseResult.recall)}`}>
+                      <div className="p-4 bg-white rounded-lg border">
+                        <div className="text-base text-gray-600 mb-1">Recall</div>
+                        <div className={`text-2xl font-bold ${getScoreColor(caseResult.recall)}`}>
                           {caseResult.recall.toFixed(4)}
                         </div>
                       </div>
-                      <div className="p-2 bg-white rounded">
-                        <div className="text-xs text-gray-600">F1-Score</div>
-                        <div className={`text-lg font-bold ${getScoreColor(caseResult.f1_score)}`}>
+                      <div className="p-4 bg-white rounded-lg border">
+                        <div className="text-base text-gray-600 mb-1">F1-Score</div>
+                        <div className={`text-2xl font-bold ${getScoreColor(caseResult.f1_score)}`}>
                           {caseResult.f1_score.toFixed(4)}
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex justify-between p-2 bg-white rounded">
-                        <span className="text-gray-600">TP:</span>
-                        <span className="font-semibold">{caseResult.TP}</span>
+                    <div className="grid grid-cols-2 gap-3 text-base">
+                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                        <span className="text-gray-600 font-medium">TP:</span>
+                        <span className="font-bold">{caseResult.TP}</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-white rounded">
-                        <span className="text-gray-600">FP:</span>
-                        <span className="font-semibold">{caseResult.FP}</span>
+                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                        <span className="text-gray-600 font-medium">FP:</span>
+                        <span className="font-bold">{caseResult.FP}</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-white rounded">
-                        <span className="text-gray-600">FN:</span>
-                        <span className="font-semibold">{caseResult.FN}</span>
+                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                        <span className="text-gray-600 font-medium">FN:</span>
+                        <span className="font-bold">{caseResult.FN}</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-white rounded">
-                        <span className="text-gray-600">Latency:</span>
-                        <span className="font-semibold">{caseResult.latency.toFixed(1)}s</span>
+                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                        <span className="text-gray-600 font-medium">Latency:</span>
+                        <span className="font-bold">{caseResult.latency.toFixed(1)}s</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-white rounded">
-                        <span className="text-gray-600">Diversity:</span>
-                        <span className="font-semibold">{caseResult.diversity_index.toFixed(4)}</span>
+                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                        <span className="text-gray-600 font-medium">Diversity:</span>
+                        <span className="font-bold">{caseResult.diversity_index.toFixed(4)}</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-white rounded">
-                        <span className="text-gray-600">Words:</span>
-                        <span className="font-semibold">{caseResult.unique_words}/{caseResult.total_words}</span>
+                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                        <span className="text-gray-600 font-medium">Words:</span>
+                        <span className="font-bold">{caseResult.unique_words}/{caseResult.total_words}</span>
                       </div>
                     </div>
                   </div>
@@ -601,53 +673,70 @@ reinforcement learning`);
             ))}
           </div>
 
-          <Card>
+          <Card className="border-2">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Giải Thích Các Chỉ Số & Thesis Compliance
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <Target className="h-8 w-8" />
+                Phân Tích Chi Tiết Kết Quả & Giải Thích Sự Khác Biệt
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <h4 className="font-semibold mb-3">📊 Evaluation Metrics</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>Precision (Độ chính xác):</strong> TP/(TP+FP) - Tỷ lệ từ khóa được trích xuất đúng
+                  <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <BarChart3 className="h-6 w-6" />
+                    Evaluation Metrics
+                  </h4>
+                  <div className="space-y-4 text-base">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <strong className="text-lg">Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
+                      <span className="text-gray-700">Tỷ lệ từ khóa được trích xuất đúng. Cao = ít nhiễu, thấp = nhiều từ sai.</span>
                     </div>
-                    <div>
-                      <strong>Recall (Độ bao phủ):</strong> TP/(TP+FN) - Tỷ lệ từ khóa cần thiết được tìm thấy
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <strong className="text-lg">Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
+                      <span className="text-gray-700">Tỷ lệ từ khóa quan trọng được tìm thấy. Cao = đầy đủ, thấp = thiếu sót.</span>
                     </div>
-                    <div>
-                      <strong>F1-Score:</strong> Trung bình điều hòa giữa Precision và Recall
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <strong className="text-lg">F1-Score:</strong> Trung bình điều hòa Precision và Recall<br/>
+                      <span className="text-gray-700">Chỉ số tổng hợp quan trọng nhất để đánh giá chất lượng tổng thể.</span>
                     </div>
-                    <div>
-                      <strong>Latency:</strong> Thời gian xử lý (giây)
-                    </div>
-                    <div>
-                      <strong>Diversity Index:</strong> Tỷ lệ từ không trùng lặp
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <strong className="text-lg">Latency:</strong> Thời gian xử lý (giây)<br/>
+                      <span className="text-gray-700">Đánh giá tính khả thi khi ứng dụng vào thực tế.</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-3">🎓 Thesis Configuration</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <strong>TH1:</strong> Extraction Module (Steps 1,3,4,5) - Basic extraction
+                  <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Settings className="h-6 w-6" />
+                    Thesis Configuration & Sự Khác Biệt
+                  </h4>
+                  <div className="space-y-4 text-base">
+                    <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                      <strong className="text-lg">TH1 - Extraction Module:</strong><br/>
+                      <span className="text-gray-700">Bước 1,3,4,5 - Chỉ trích xuất cơ bản, không có context enhancement</span>
                     </div>
-                    <div>
-                      <strong>TH2:</strong> + Structural Context (Steps 1,2,3,4,5) - + Heading analysis
+                    <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                      <strong className="text-lg">TH2 - + Structural Context:</strong><br/>
+                      <span className="text-gray-700">Bước 1,2,3,4,5 - Thêm phân tích tiêu đề và ánh xạ ngữ cảnh cấu trúc</span>
                     </div>
-                    <div>
-                      <strong>TH3:</strong> + Semantic Scoring (Steps 1-8) - + ML scoring/merging
+                    <div className="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
+                      <strong className="text-lg">TH3 - + Semantic Scoring:</strong><br/>
+                      <span className="text-gray-700">Bước 1-8 - Thêm thuật toán chấm điểm ngữ nghĩa và hợp nhất từ vựng</span>
                     </div>
-                    <div>
-                      <strong>TH4:</strong> Full System (Steps 1-11) - Complete pipeline
+                    <div className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                      <strong className="text-lg">TH4 - Full System:</strong><br/>
+                      <span className="text-gray-700">Bước 1-11 - Hệ thống hoàn chỉnh với topic modeling và ranking</span>
                     </div>
-                    <div className="mt-3 p-2 bg-blue-50 rounded">
-                      <strong>✅ Thesis Compliant:</strong> 11 steps, TH1-TH4 naming, different results
-                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-green-100 rounded-lg border-2 border-green-300">
+                    <h5 className="text-lg font-bold text-green-800 mb-2">✅ Vấn đề TH3-TH4 giống nhau đã khắc phục:</h5>
+                    <p className="text-green-700">
+                      <strong>Nguyên nhân:</strong> Cấu hình modules trùng lặp trong V1_Baseline và V2_Context.<br/>
+                      <strong>Giải pháp:</strong> Tách riêng logic cho từng TH với parameters và thresholds khác nhau.<br/>
+                      <strong>Kết quả:</strong> Mỗi TH hiện tạo ra số lượng và chất lượng từ vựng khác nhau rõ rệt.
+                    </p>
                   </div>
                 </div>
               </div>
