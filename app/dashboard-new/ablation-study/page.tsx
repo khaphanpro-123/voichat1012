@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, PlayCircle, CheckCircle2, TrendingUp, Clock, Target, Upload, FileText, Sparkles, BookOpen, Home, ArrowLeft, Info, BarChart3, Settings, Database } from 'lucide-react';
 
 interface AblationResult {
   case: string;
@@ -275,13 +274,8 @@ reinforcement learning`);
   };
 
   const getCaseIcon = (caseNum: number) => {
-    const icons = [
-      '🔧', // TH1: Basic tools
-      '🏗️', // TH2: Structure
-      '🧠', // TH3: Intelligence  
-      '🎯', // TH4: Complete system
-    ];
-    return icons[caseNum] || '📊';
+    // Removed icons as requested by user
+    return '';
   };
 
   const getScoreColor = (score: number) => {
@@ -289,6 +283,44 @@ reinforcement learning`);
     if (score >= 0.6) return 'text-blue-600';
     if (score >= 0.4) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const analyzeScore = (score: number, metric: string, caseIndex: number) => {
+    const caseNames = ['TH1', 'TH2', 'TH3', 'TH4'];
+    const caseName = caseNames[caseIndex];
+    
+    if (metric === 'precision') {
+      if (score >= 0.9) {
+        return `${caseName} đạt precision ${score.toFixed(4)} - Xuất sắc! Hệ thống trích xuất rất chính xác với tỷ lệ từ vựng đúng trên 90%. Điều này có nghĩa là trong số các từ vựng được hệ thống trích xuất, hơn 90% là từ vựng thực sự quan trọng và phù hợp với nội dung tài liệu.`;
+      } else if (score >= 0.7) {
+        return `${caseName} đạt precision ${score.toFixed(4)} - Tốt. Hệ thống có độ chính xác cao với ${(score*100).toFixed(1)}% từ vựng được trích xuất là chính xác. Vẫn có một số từ vựng không liên quan nhưng ở mức chấp nhận được.`;
+      } else if (score >= 0.5) {
+        return `${caseName} đạt precision ${score.toFixed(4)} - Trung bình. Chỉ có ${(score*100).toFixed(1)}% từ vựng được trích xuất là chính xác. Hệ thống cần cải thiện khả năng lọc để giảm từ vựng nhiễu.`;
+      } else {
+        return `${caseName} đạt precision ${score.toFixed(4)} - Thấp. Chỉ ${(score*100).toFixed(1)}% từ vựng trích xuất là đúng, có quá nhiều từ vựng sai hoặc không liên quan. Cần cải thiện đáng kể thuật toán filtering.`;
+      }
+    } else if (metric === 'recall') {
+      if (score >= 0.8) {
+        return `${caseName} đạt recall ${score.toFixed(4)} - Xuất sắc! Hệ thống tìm thấy ${(score*100).toFixed(1)}% từ vựng quan trọng trong tài liệu. Khả năng bao phủ rất tốt, ít bỏ sót từ vựng cần thiết.`;
+      } else if (score >= 0.6) {
+        return `${caseName} đạt recall ${score.toFixed(4)} - Tốt. Hệ thống bắt được ${(score*100).toFixed(1)}% từ vựng quan trọng. Vẫn bỏ sót một số từ vựng nhưng đã cover được phần lớn nội dung cần thiết.`;
+      } else if (score >= 0.4) {
+        return `${caseName} đạt recall ${score.toFixed(4)} - Trung bình. Chỉ tìm thấy ${(score*100).toFixed(1)}% từ vựng quan trọng, bỏ sót khá nhiều từ vựng cần thiết. Cần mở rộng coverage của hệ thống.`;
+      } else {
+        return `${caseName} đạt recall ${score.toFixed(4)} - Thấp. Chỉ phát hiện được ${(score*100).toFixed(1)}% từ vựng quan trọng, bỏ sót quá nhiều. Hệ thống cần cải thiện khả năng nhận diện từ vựng.`;
+      }
+    } else if (metric === 'f1') {
+      if (score >= 0.8) {
+        return `${caseName} đạt F1-Score ${score.toFixed(4)} - Xuất sắc! Cân bằng tốt giữa precision (${score >= 0.9 ? 'rất cao' : 'cao'}) và recall (${score >= 0.8 ? 'tốt' : 'khá tốt'}). Hiệu suất tổng thể rất ấn tượng.`;
+      } else if (score >= 0.6) {
+        return `${caseName} đạt F1-Score ${score.toFixed(4)} - Tốt. Hiệu suất tổng thể ổn định với sự cân bằng hợp lý giữa độ chính xác và độ bao phủ. Phù hợp cho ứng dụng thực tế.`;
+      } else if (score >= 0.4) {
+        return `${caseName} đạt F1-Score ${score.toFixed(4)} - Trung bình. Hiệu suất chưa tối ưu, cần cải thiện cả precision và recall để đạt được chất lượng tốt hơn.`;
+      } else {
+        return `${caseName} đạt F1-Score ${score.toFixed(4)} - Thấp. Hiệu suất tổng thể cần cải thiện đáng kể. Cả precision và recall đều ở mức thấp, cần tối ưu hóa toàn bộ pipeline.`;
+      }
+    }
+    return `${caseName}: ${metric} ${score.toFixed(4)}`;
   };
 
   return (
@@ -301,76 +333,63 @@ reinforcement learning`);
               onClick={() => router.push('/dashboard-new')}
               variant="outline"
               size="lg"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-lg px-6 py-3"
             >
-              <Home className="h-5 w-5" />
-              Trang chủ
+              ← Trang chủ
             </Button>
             <div className="h-8 w-px bg-gray-300"></div>
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-10 w-10 text-blue-600" />
-              <div>
-                <h1 className="text-4xl font-bold text-gray-900">Ablation Study Analysis</h1>
-                <p className="text-lg text-gray-600 mt-1">
-                  Đánh giá hiệu quả từng thành phần trong pipeline 11 bước theo luận văn
-                </p>
-              </div>
+            <div>
+              <h1 className="text-5xl font-bold text-gray-900 mb-2">Ablation Study Analysis</h1>
+              <p className="text-xl text-gray-600">
+                Đánh giá hiệu quả từng thành phần trong pipeline 11 bước theo luận văn
+              </p>
             </div>
           </div>
         </div>
         
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
-            <Info className="h-6 w-6" />
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-8">
+          <h3 className="text-2xl font-bold text-blue-800 mb-6">
             Hướng dẫn đọc kết quả Ablation Study
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-semibold text-blue-700 mb-3 text-lg">📊 Cách tính các chỉ số:</h4>
-              <div className="space-y-3 text-blue-700">
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
-                  <span className="text-sm">Tỷ lệ từ vựng được trích xuất đúng so với tổng số từ được trích xuất</span>
+              <h4 className="font-semibold text-blue-700 mb-4 text-xl">Cách tính các chỉ số:</h4>
+              <div className="space-y-4 text-blue-700">
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
+                  <span className="text-base">Tỷ lệ từ vựng được trích xuất đúng so với tổng số từ được trích xuất</span>
                 </div>
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
-                  <span className="text-sm">Tỷ lệ từ vựng quan trọng được tìm thấy so với tổng từ vựng cần thiết</span>
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
+                  <span className="text-base">Tỷ lệ từ vựng quan trọng được tìm thấy so với tổng từ vựng cần thiết</span>
                 </div>
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>F1-Score:</strong> 2×(Precision×Recall)/(Precision+Recall)<br/>
-                  <span className="text-sm">Chỉ số tổng hợp cân bằng giữa độ chính xác và độ bao phủ</span>
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">F1-Score:</strong> 2×(Precision×Recall)/(Precision+Recall)<br/>
+                  <span className="text-base">Chỉ số tổng hợp cân bằng giữa độ chính xác và độ bao phủ</span>
                 </div>
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-blue-700 mb-3 text-lg">🎯 Cấu hình các trường hợp:</h4>
-              <div className="space-y-3 text-blue-700">
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>TH1 - Extraction Module:</strong><br/>
-                  <span className="text-sm">Bước 1,3,4,5 - Trích xuất cơ bản (~15 từ vựng)</span>
+              <h4 className="font-semibold text-blue-700 mb-4 text-xl">Cấu hình các trường hợp:</h4>
+              <div className="space-y-4 text-blue-700">
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">TH1 - Extraction Module:</strong><br/>
+                  <span className="text-base">Bước 1,3,4,5 - Trích xuất cơ bản (~15 từ vựng)</span>
                 </div>
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>TH2 - + Structural Context:</strong><br/>
-                  <span className="text-sm">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc (~18 từ vựng)</span>
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">TH2 - + Structural Context:</strong><br/>
+                  <span className="text-base">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc (~18 từ vựng)</span>
                 </div>
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>TH3 - + Semantic Scoring:</strong><br/>
-                  <span className="text-sm">Bước 1-8 - Thêm chấm điểm ngữ nghĩa (~22 từ vựng)</span>
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">TH3 - + Semantic Scoring:</strong><br/>
+                  <span className="text-base">Bước 1-8 - Thêm chấm điểm ngữ nghĩa (~22 từ vựng)</span>
                 </div>
-                <div className="bg-white p-3 rounded-lg">
-                  <strong>TH4 - Full System:</strong><br/>
-                  <span className="text-sm">Bước 1-11 - Hệ thống hoàn chỉnh (~25 từ vựng)</span>
+                <div className="bg-white p-4 rounded-lg border">
+                  <strong className="text-lg">TH4 - Full System:</strong><br/>
+                  <span className="text-base">Bước 1-11 - Hệ thống hoàn chỉnh (~25 từ vựng)</span>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="mt-4 p-4 bg-green-100 rounded-lg">
-            <h4 className="font-semibold text-green-800 mb-2 text-lg">✅ Hiện trạng hệ thống:</h4>
-            <p className="text-green-700">
-              <strong>Vấn đề TH3 và TH4 có kết quả giống nhau đã được khắc phục hoàn toàn.</strong> 
-              Nguyên nhân ban đầu là cấu hình modules trùng lặp, hiện tại mỗi trường hợp đã có logic riêng biệt 
-              và tạo ra kết quả khác nhau theo đúng thiết kế luận văn.
-            </p>
           </div>
         </div>
       </div>
@@ -378,8 +397,7 @@ reinforcement learning`);
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FileText className="h-6 w-6 text-blue-600" />
+            <CardTitle className="text-xl">
               Văn Bản Tài Liệu
             </CardTitle>
             <CardDescription className="text-base">
@@ -405,7 +423,6 @@ reinforcement learning`);
                 size="lg"
                 className="flex-1 text-base"
               >
-                <Upload className="mr-3 h-5 w-5" />
                 {uploadedFile ? uploadedFile.name : 'Tải File Lên (.txt khuyến nghị)'}
               </Button>
               <input
@@ -428,8 +445,7 @@ reinforcement learning`);
 
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Database className="h-6 w-6 text-green-600" />
+            <CardTitle className="text-xl">
               Từ Vựng Chuẩn (Ground Truth)
             </CardTitle>
             <CardDescription className="text-base">Tự động trích xuất hoặc nhập thủ công</CardDescription>
@@ -444,12 +460,10 @@ reinforcement learning`);
             >
               {extractingVocab ? (
                 <>
-                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                  Đang trích xuất...
+                  Đang trích xuất từ vựng...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-3 h-5 w-5" />
                   Tự Động Trích Xuất Từ Vựng
                 </>
               )}
@@ -463,7 +477,7 @@ reinforcement learning`);
             />
             
             <div className="text-base text-gray-600 font-medium">
-              📊 {groundTruth.split('\n').filter(l => l.trim()).length} từ vựng
+              {groundTruth.split('\n').filter(l => l.trim()).length} từ vựng
             </div>
           </CardContent>
         </Card>
@@ -478,12 +492,10 @@ reinforcement learning`);
         >
           {loading ? (
             <>
-              <Loader2 className="mr-3 h-6 w-6 animate-spin" />
               Đang chạy TH1-TH4... (60-120 giây)
             </>
           ) : (
             <>
-              <PlayCircle className="mr-3 h-6 w-6" />
               Chạy Ablation Study (TH1-TH4)
             </>
           )}
@@ -495,7 +507,6 @@ reinforcement learning`);
           size="lg"
           className="text-lg py-6"
         >
-          <FileText className="mr-3 h-6 w-6" />
           Tải Ví Dụ
         </Button>
       </div>
@@ -510,8 +521,7 @@ reinforcement learning`);
         <div className="space-y-8">
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-3">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <CardTitle className="text-2xl">
                 Thesis Compliance Status
               </CardTitle>
             </CardHeader>
@@ -551,8 +561,7 @@ reinforcement learning`);
 
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-3">
-                <TrendingUp className="h-8 w-8 text-green-600" />
+              <CardTitle className="text-2xl">
                 Kết Quả Tổng Quan
               </CardTitle>
             </CardHeader>
@@ -573,8 +582,7 @@ reinforcement learning`);
                 </div>
                 
                 <div className="text-center p-6 bg-white rounded-xl border-2">
-                  <div className="text-lg text-gray-600 mb-2 flex items-center justify-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
+                  <div className="text-lg text-gray-600 mb-2">
                     Improvement
                   </div>
                   <div className="text-3xl font-bold text-green-600">
@@ -583,8 +591,7 @@ reinforcement learning`);
                 </div>
                 
                 <div className="text-center p-6 bg-white rounded-xl border-2">
-                  <div className="text-lg text-gray-600 mb-2 flex items-center justify-center gap-2">
-                    <Clock className="h-5 w-5" />
+                  <div className="text-lg text-gray-600 mb-2">
                     Total Time
                   </div>
                   <div className="text-3xl font-bold text-blue-600">
@@ -601,7 +608,6 @@ reinforcement learning`);
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl">{getCaseIcon(index)}</span>
                       <span className="text-xl">{caseResult.case}</span>
                     </div>
                     {caseResult.improvement_from_previous && (
@@ -673,43 +679,165 @@ reinforcement learning`);
             ))}
           </div>
 
+          {/* Phân tích chi tiết từng chỉ số */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-3">
-                <Target className="h-8 w-8" />
-                Phân Tích Chi Tiết Kết Quả & Giải Thích Sự Khác Biệt
+              <CardTitle className="text-2xl">
+                Phân Tích Chi Tiết Từng Chỉ Số
               </CardTitle>
+              <CardDescription className="text-lg">
+                Giải thích cụ thể ý nghĩa của từng chỉ số đo lường cho mỗi trường hợp
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                {result.results.map((caseResult, index) => (
+                  <div key={index} className={`p-6 rounded-xl border-2 ${getCaseColor(index)}`}>
+                    <h4 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                      {caseResult.case}
+                      <span className="text-lg font-normal text-gray-600">
+                        ({caseResult.pipeline_complexity})
+                      </span>
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Precision Analysis */}
+                      <div className="p-5 bg-white rounded-lg border-2 border-blue-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xl font-bold text-blue-600">Precision</h5>
+                          <span className={`text-2xl font-bold ${getScoreColor(caseResult.precision)}`}>
+                            {caseResult.precision.toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="text-base text-gray-700 leading-relaxed">
+                          {analyzeScore(caseResult.precision, 'precision', index)}
+                        </div>
+                        <div className="mt-3 p-3 bg-blue-50 rounded text-sm">
+                          <strong>Công thức:</strong> {caseResult.TP}/({caseResult.TP}+{caseResult.FP}) = {caseResult.TP}/{caseResult.TP + caseResult.FP} = {caseResult.precision.toFixed(4)}
+                        </div>
+                      </div>
+
+                      {/* Recall Analysis */}
+                      <div className="p-5 bg-white rounded-lg border-2 border-green-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xl font-bold text-green-600">Recall</h5>
+                          <span className={`text-2xl font-bold ${getScoreColor(caseResult.recall)}`}>
+                            {caseResult.recall.toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="text-base text-gray-700 leading-relaxed">
+                          {analyzeScore(caseResult.recall, 'recall', index)}
+                        </div>
+                        <div className="mt-3 p-3 bg-green-50 rounded text-sm">
+                          <strong>Công thức:</strong> {caseResult.TP}/({caseResult.TP}+{caseResult.FN}) = {caseResult.TP}/{caseResult.TP + caseResult.FN} = {caseResult.recall.toFixed(4)}
+                        </div>
+                      </div>
+
+                      {/* F1-Score Analysis */}
+                      <div className="p-5 bg-white rounded-lg border-2 border-purple-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xl font-bold text-purple-600">F1-Score</h5>
+                          <span className={`text-2xl font-bold ${getScoreColor(caseResult.f1_score)}`}>
+                            {caseResult.f1_score.toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="text-base text-gray-700 leading-relaxed">
+                          {analyzeScore(caseResult.f1_score, 'f1', index)}
+                        </div>
+                        <div className="mt-3 p-3 bg-purple-50 rounded text-sm">
+                          <strong>Công thức:</strong> 2×({caseResult.precision.toFixed(3)}×{caseResult.recall.toFixed(3)})/({caseResult.precision.toFixed(3)}+{caseResult.recall.toFixed(3)}) = {caseResult.f1_score.toFixed(4)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Metrics */}
+                    <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-lg font-bold text-gray-800">{caseResult.latency.toFixed(1)}s</div>
+                        <div className="text-sm text-gray-600">Thời gian xử lý</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {caseResult.latency < 30 ? 'Nhanh' : caseResult.latency < 60 ? 'Trung bình' : 'Chậm'}
+                        </div>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-lg font-bold text-gray-800">{caseResult.diversity_index.toFixed(4)}</div>
+                        <div className="text-sm text-gray-600">Diversity Index</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {caseResult.diversity_index > 0.8 ? 'Đa dạng cao' : caseResult.diversity_index > 0.6 ? 'Đa dạng vừa' : 'Đa dạng thấp'}
+                        </div>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-lg font-bold text-gray-800">{caseResult.unique_words}</div>
+                        <div className="text-sm text-gray-600">Từ vựng duy nhất</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Trên tổng {caseResult.total_words} từ
+                        </div>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-lg font-bold text-gray-800">
+                          {caseResult.improvement_from_previous ? `+${caseResult.improvement_from_previous.toFixed(1)}%` : 'Baseline'}
+                        </div>
+                        <div className="text-sm text-gray-600">Cải thiện</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          So với TH trước
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Technical Details */}
+                    <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+                      <h6 className="text-lg font-semibold mb-2">Chi tiết kỹ thuật:</h6>
+                      <div className="text-base text-gray-700">
+                        <span className="font-medium">Bước pipeline:</span> {caseResult.steps} • 
+                        <span className="font-medium">TP:</span> {caseResult.TP} từ đúng • 
+                        <span className="font-medium">FP:</span> {caseResult.FP} từ sai • 
+                        <span className="font-medium">FN:</span> {caseResult.FN} từ bỏ sót • 
+                        <span className="font-medium">Complexity:</span> {caseResult.pipeline_complexity}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">
+                Cấu Hình Pipeline Theo Luận Văn
+              </CardTitle>
+              <CardDescription className="text-lg">
+                Chi tiết các bước xử lý trong từng trường hợp thử nghiệm
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <BarChart3 className="h-6 w-6" />
+                  <h4 className="text-xl font-bold mb-4 text-blue-600">
                     Evaluation Metrics
                   </h4>
                   <div className="space-y-4 text-base">
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
                       <strong className="text-lg">Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
                       <span className="text-gray-700">Tỷ lệ từ khóa được trích xuất đúng. Cao = ít nhiễu, thấp = nhiều từ sai.</span>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
                       <strong className="text-lg">Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
                       <span className="text-gray-700">Tỷ lệ từ khóa quan trọng được tìm thấy. Cao = đầy đủ, thấp = thiếu sót.</span>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-purple-500">
                       <strong className="text-lg">F1-Score:</strong> Trung bình điều hòa Precision và Recall<br/>
                       <span className="text-gray-700">Chỉ số tổng hợp quan trọng nhất để đánh giá chất lượng tổng thể.</span>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-orange-500">
                       <strong className="text-lg">Latency:</strong> Thời gian xử lý (giây)<br/>
                       <span className="text-gray-700">Đánh giá tính khả thi khi ứng dụng vào thực tế.</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Settings className="h-6 w-6" />
-                    Thesis Configuration & Sự Khác Biệt
+                  <h4 className="text-xl font-bold mb-4 text-purple-600">
+                    Thesis Configuration
                   </h4>
                   <div className="space-y-4 text-base">
                     <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
@@ -728,15 +856,6 @@ reinforcement learning`);
                       <strong className="text-lg">TH4 - Full System:</strong><br/>
                       <span className="text-gray-700">Bước 1-11 - Hệ thống hoàn chỉnh với topic modeling và ranking</span>
                     </div>
-                  </div>
-                  
-                  <div className="mt-6 p-4 bg-green-100 rounded-lg border-2 border-green-300">
-                    <h5 className="text-lg font-bold text-green-800 mb-2">✅ Vấn đề TH3-TH4 giống nhau đã khắc phục:</h5>
-                    <p className="text-green-700">
-                      <strong>Nguyên nhân:</strong> Cấu hình modules trùng lặp trong V1_Baseline và V2_Context.<br/>
-                      <strong>Giải pháp:</strong> Tách riêng logic cho từng TH với parameters và thresholds khác nhau.<br/>
-                      <strong>Kết quả:</strong> Mỗi TH hiện tạo ra số lượng và chất lượng từ vựng khác nhau rõ rệt.
-                    </p>
                   </div>
                 </div>
               </div>
