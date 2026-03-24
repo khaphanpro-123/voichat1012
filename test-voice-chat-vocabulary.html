@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Voice Chat Vocabulary Saving</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Voice Chat Vocabulary Saving</h1>
+    
+    <div class="test-section">
+        <h3>1. Test Voice Chat API - Save Vocabulary</h3>
+        <button onclick="testSaveVocabulary()">Test Save Vocabulary</button>
+        <div id="saveResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test Vocabulary API - Load All Vocabulary</h3>
+        <button onclick="testLoadVocabulary()">Load All Vocabulary</button>
+        <div id="loadResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Vocabulary API - Load Voice Chat Only</h3>
+        <button onclick="testLoadVoiceChatVocabulary()">Load Voice Chat Vocabulary</button>
+        <div id="voiceChatResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testSaveVocabulary() {
+            const resultDiv = document.getElementById('saveResult');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // First, simulate a voice chat conversation
+                const chatResponse = await fetch('/api/voice-chat-enhanced', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'chat',
+                        message: 'Hello, how are you today?',
+                        userId: 'test-user',
+                        autoSave: true,
+                        level: 'A2'
+                    })
+                });
+                
+                const chatData = await chatResponse.json();
+                
+                if (chatData.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Voice Chat Response:</strong><br>
+                            English: ${chatData.response.english}<br>
+                            Vietnamese: ${chatData.response.vietnamese}<br>
+                            Vocabulary Count: ${chatData.response.vocabulary?.length || 0}<br>
+                            Structures Count: ${chatData.response.structures?.length || 0}<br>
+                            <pre>${JSON.stringify(chatData.response.vocabulary, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${chatData.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testLoadVocabulary() {
+            const resultDiv = document.getElementById('loadResult');
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/vocabulary?limit=100');
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    const voiceChatItems = data.filter(item => item.source === 'voice_chat');
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Vocabulary Loaded:</strong><br>
+                            Total Items: ${data.length}<br>
+                            Voice Chat Items: ${voiceChatItems.length}<br>
+                            <strong>Voice Chat Vocabulary:</strong>
+                            <pre>${JSON.stringify(voiceChatItems, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${data.error || 'Invalid response'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testLoadVoiceChatVocabulary() {
+            const resultDiv = document.getElementById('voiceChatResult');
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/vocabulary?source=voice_chat&limit=50');
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Voice Chat Vocabulary:</strong><br>
+                            Count: ${data.length}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${data.error || 'Invalid response'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

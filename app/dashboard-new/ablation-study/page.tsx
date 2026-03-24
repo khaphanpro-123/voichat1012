@@ -324,69 +324,69 @@ reinforcement learning`);
   };
 
   return (
-    <div className="container mx-auto p-8 max-w-7xl">
+    <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
       {/* Header với nút quay về */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <Button
               onClick={() => router.push('/dashboard-new')}
               variant="outline"
               size="lg"
-              className="flex items-center gap-2 text-lg px-6 py-3"
+              className="flex items-center justify-center gap-2 text-sm sm:text-base lg:text-lg px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto"
             >
               ← Trang chủ
             </Button>
-            <div className="h-8 w-px bg-gray-300"></div>
-            <div>
-              <h1 className="text-5xl font-bold text-gray-900 mb-2">Ablation Study Analysis</h1>
-              <p className="text-xl text-gray-600">
+            <div className="hidden sm:block h-8 w-px bg-gray-300"></div>
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-1 sm:mb-2">Ablation Study Analysis</h1>
+              <p className="text-sm sm:text-base lg:text-xl text-gray-600">
                 Đánh giá hiệu quả từng thành phần trong pipeline 11 bước theo luận văn
               </p>
             </div>
           </div>
         </div>
         
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-8">
-          <h3 className="text-2xl font-bold text-blue-800 mb-6">
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg sm:rounded-xl p-4 sm:p-6 lg:p-8">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-800 mb-4 sm:mb-6 text-center sm:text-left">
             Hướng dẫn đọc kết quả Ablation Study
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             <div>
-              <h4 className="font-semibold text-blue-700 mb-4 text-xl">Cách tính các chỉ số:</h4>
-              <div className="space-y-4 text-blue-700">
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
-                  <span className="text-base">Tỷ lệ từ vựng được trích xuất đúng so với tổng số từ được trích xuất</span>
+              <h4 className="font-semibold text-blue-700 mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">Cách tính các chỉ số:</h4>
+              <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-blue-700">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">Precision (Độ chính xác):</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">TP/(TP+FP) - Tỷ lệ từ vựng được trích xuất đúng so với tổng số từ được trích xuất</span>
                 </div>
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
-                  <span className="text-base">Tỷ lệ từ vựng quan trọng được tìm thấy so với tổng từ vựng cần thiết</span>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">Recall (Độ bao phủ):</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">TP/(TP+FN) - Tỷ lệ từ vựng quan trọng được tìm thấy so với tổng từ vựng cần thiết</span>
                 </div>
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">F1-Score:</strong> 2×(Precision×Recall)/(Precision+Recall)<br/>
-                  <span className="text-base">Chỉ số tổng hợp cân bằng giữa độ chính xác và độ bao phủ</span>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">F1-Score:</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">2×(Precision×Recall)/(Precision+Recall) - Chỉ số tổng hợp cân bằng giữa độ chính xác và độ bao phủ</span>
                 </div>
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-blue-700 mb-4 text-xl">Cấu hình các trường hợp:</h4>
-              <div className="space-y-4 text-blue-700">
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">TH1 - Extraction Module:</strong><br/>
-                  <span className="text-base">Bước 1,3,4,5 - Trích xuất cơ bản (~15 từ vựng)</span>
+              <h4 className="font-semibold text-blue-700 mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">Cấu hình các trường hợp:</h4>
+              <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-blue-700">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH1 - Extraction Module:</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,3,4,5 - Trích xuất cơ bản (~15 từ vựng)</span>
                 </div>
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">TH2 - + Structural Context:</strong><br/>
-                  <span className="text-base">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc (~18 từ vựng)</span>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH2 - + Structural Context:</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc (~18 từ vựng)</span>
                 </div>
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">TH3 - + Semantic Scoring:</strong><br/>
-                  <span className="text-base">Bước 1-8 - Thêm chấm điểm ngữ nghĩa (~22 từ vựng)</span>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Semantic Scoring:</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-8 - Thêm chấm điểm ngữ nghĩa (~22 từ vựng)</span>
                 </div>
-                <div className="bg-white p-4 rounded-lg border">
-                  <strong className="text-lg">TH4 - Full System:</strong><br/>
-                  <span className="text-base">Bước 1-11 - Hệ thống hoàn chỉnh (~25 từ vựng)</span>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH4 - Full System:</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-11 - Hệ thống hoàn chỉnh (~25 từ vựng)</span>
                 </div>
               </div>
             </div>
@@ -394,13 +394,13 @@ reinforcement learning`);
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">
+            <CardTitle className="text-base sm:text-lg lg:text-xl">
               Văn Bản Tài Liệu
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-xs sm:text-sm lg:text-base">
               Tải file .txt lên (khuyến nghị) hoặc nhập văn bản (tiếng Anh)
               <br />
               <span className="text-orange-600 font-medium">
@@ -408,20 +408,20 @@ reinforcement learning`);
               </span>
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3 sm:space-y-4 lg:space-y-6">
             <Input
               placeholder="Tiêu đề tài liệu"
               value={documentTitle}
               onChange={(e) => setDocumentTitle(e.target.value)}
-              className="text-lg p-4"
+              className="text-sm sm:text-base lg:text-lg p-2 sm:p-3 lg:p-4"
             />
             
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
                 size="lg"
-                className="flex-1 text-base"
+                className="flex-1 text-xs sm:text-sm lg:text-base break-words"
               >
                 {uploadedFile ? uploadedFile.name : 'Tải File Lên (.txt khuyến nghị)'}
               </Button>
@@ -438,25 +438,25 @@ reinforcement learning`);
               placeholder="Hoặc nhập văn bản tài liệu..."
               value={documentText}
               onChange={(e) => setDocumentText(e.target.value)}
-              className="min-h-[350px] font-mono text-base p-4"
+              className="min-h-[250px] sm:min-h-[300px] lg:min-h-[350px] font-mono text-xs sm:text-sm lg:text-base p-2 sm:p-3 lg:p-4"
             />
           </CardContent>
         </Card>
 
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">
+            <CardTitle className="text-base sm:text-lg lg:text-xl">
               Từ Vựng Chuẩn (Ground Truth)
             </CardTitle>
-            <CardDescription className="text-base">Tự động trích xuất hoặc nhập thủ công</CardDescription>
+            <CardDescription className="text-xs sm:text-sm lg:text-base">Tự động trích xuất hoặc nhập thủ công</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3 sm:space-y-4 lg:space-y-6">
             <Button
               onClick={autoExtractVocabulary}
               disabled={extractingVocab || !documentText.trim()}
               variant="outline"
               size="lg"
-              className="w-full text-base"
+              className="w-full text-xs sm:text-sm lg:text-base"
             >
               {extractingVocab ? (
                 <>
@@ -473,22 +473,22 @@ reinforcement learning`);
               placeholder="machine learning&#10;artificial intelligence&#10;algorithm&#10;...&#10;&#10;Hoặc click 'Tự Động Trích Xuất' để hệ thống tự động tạo"
               value={groundTruth}
               onChange={(e) => setGroundTruth(e.target.value)}
-              className="min-h-[350px] font-mono text-base p-4"
+              className="min-h-[250px] sm:min-h-[300px] lg:min-h-[350px] font-mono text-xs sm:text-sm lg:text-base p-2 sm:p-3 lg:p-4"
             />
             
-            <div className="text-base text-gray-600 font-medium">
+            <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">
               {groundTruth.split('\n').filter(l => l.trim()).length} từ vựng
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex gap-6 mb-8">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
         <Button
           onClick={runAblationStudy}
           disabled={loading}
           size="lg"
-          className="flex-1 text-lg py-6"
+          className="flex-1 text-sm sm:text-base lg:text-lg py-3 sm:py-4 lg:py-6"
         >
           {loading ? (
             <>
@@ -505,54 +505,54 @@ reinforcement learning`);
           onClick={loadExample}
           variant="outline"
           size="lg"
-          className="text-lg py-6"
+          className="text-sm sm:text-base lg:text-lg py-3 sm:py-4 lg:py-6 w-full sm:w-auto"
         >
           Tải Ví Dụ
         </Button>
       </div>
 
       {error && (
-        <Alert variant="destructive" className="mb-8 text-lg p-6">
-          <AlertDescription className="text-base">{error}</AlertDescription>
+        <Alert variant="destructive" className="mb-4 sm:mb-6 lg:mb-8 text-sm sm:text-base lg:text-lg p-4 sm:p-5 lg:p-6">
+          <AlertDescription className="text-xs sm:text-sm lg:text-base break-words">{error}</AlertDescription>
         </Alert>
       )}
 
       {result && (
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center sm:text-left">
                 Thesis Compliance Status
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-medium">Case Naming:</span>
-                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.case_naming}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                <div className="space-y-2 sm:space-y-3 lg:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Case Naming:</span>
+                    <span className="text-sm sm:text-base lg:text-lg text-green-600 font-semibold break-words">{result.thesis_compliance?.case_naming}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-medium">Step Count:</span>
-                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.step_count}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Step Count:</span>
+                    <span className="text-sm sm:text-base lg:text-lg text-green-600 font-semibold break-words">{result.thesis_compliance?.step_count}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-medium">Architecture:</span>
-                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.pipeline_architecture}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Architecture:</span>
+                    <span className="text-sm sm:text-base lg:text-lg text-green-600 font-semibold break-words">{result.thesis_compliance?.pipeline_architecture}</span>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-medium">Different Results:</span>
-                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.different_results}</span>
+                <div className="space-y-2 sm:space-y-3 lg:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Different Results:</span>
+                    <span className="text-sm sm:text-base lg:text-lg text-green-600 font-semibold break-words">{result.thesis_compliance?.different_results}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-medium">Progressive Improvement:</span>
-                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.progressive_improvement}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Progressive Improvement:</span>
+                    <span className="text-sm sm:text-base lg:text-lg text-green-600 font-semibold break-words">{result.thesis_compliance?.progressive_improvement}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-medium">Version:</span>
-                    <span className="text-lg text-green-600 font-semibold">{result.thesis_compliance?.version}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium">Version:</span>
+                    <span className="text-sm sm:text-base lg:text-lg text-green-600 font-semibold break-words">{result.thesis_compliance?.version}</span>
                   </div>
                 </div>
               </div>
@@ -561,40 +561,40 @@ reinforcement learning`);
 
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center sm:text-left">
                 Kết Quả Tổng Quan
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="text-center p-6 bg-white rounded-xl border-2">
-                    <div className="text-lg text-gray-600 mb-2">Best Configuration</div>
-                    <div className="text-2xl font-bold text-purple-600">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
+                  <div className="text-center p-3 sm:p-4 lg:p-6 bg-white rounded-lg sm:rounded-xl border-2">
+                    <div className="text-xs sm:text-sm lg:text-lg text-gray-600 mb-1 sm:mb-2">Best Configuration</div>
+                    <div className="text-base sm:text-xl lg:text-2xl font-bold text-purple-600 break-words">
                       {result.summary.best_case.replace('TH', 'TH').split(':')[0]}
                     </div>
                   </div>
                 
-                <div className="text-center p-6 bg-white rounded-xl border-2">
-                  <div className="text-lg text-gray-600 mb-2">Best F1-Score</div>
-                  <div className={`text-3xl font-bold ${getScoreColor(result.summary.best_f1)}`}>
+                <div className="text-center p-3 sm:p-4 lg:p-6 bg-white rounded-lg sm:rounded-xl border-2">
+                  <div className="text-xs sm:text-sm lg:text-lg text-gray-600 mb-1 sm:mb-2">Best F1-Score</div>
+                  <div className={`text-lg sm:text-2xl lg:text-3xl font-bold ${getScoreColor(result.summary.best_f1)}`}>
                     {result.summary.best_f1.toFixed(4)}
                   </div>
                 </div>
                 
-                <div className="text-center p-6 bg-white rounded-xl border-2">
-                  <div className="text-lg text-gray-600 mb-2">
+                <div className="text-center p-3 sm:p-4 lg:p-6 bg-white rounded-lg sm:rounded-xl border-2">
+                  <div className="text-xs sm:text-sm lg:text-lg text-gray-600 mb-1 sm:mb-2">
                     Improvement
                   </div>
-                  <div className="text-3xl font-bold text-green-600">
+                  <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-green-600">
                     +{result.summary.improvement_percent.toFixed(2)}%
                   </div>
                 </div>
                 
-                <div className="text-center p-6 bg-white rounded-xl border-2">
-                  <div className="text-lg text-gray-600 mb-2">
+                <div className="text-center p-3 sm:p-4 lg:p-6 bg-white rounded-lg sm:rounded-xl border-2">
+                  <div className="text-xs sm:text-sm lg:text-lg text-gray-600 mb-1 sm:mb-2">
                     Total Time
                   </div>
-                  <div className="text-3xl font-bold text-blue-600">
+                  <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-blue-600">
                     {result.summary.total_execution_time.toFixed(1)}s
                   </div>
                 </div>
@@ -602,21 +602,21 @@ reinforcement learning`);
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {result.results.map((caseResult, index) => (
               <Card key={index} className={`border-2 ${getCaseColor(index)}`}>
                 <CardHeader>
-                  <CardTitle className="text-xl flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{caseResult.case}</span>
+                  <CardTitle className="text-base sm:text-lg lg:text-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-base sm:text-lg lg:text-xl break-words">{caseResult.case}</span>
                     </div>
                     {caseResult.improvement_from_previous && (
-                      <span className="text-lg font-normal text-green-600">
+                      <span className="text-sm sm:text-base lg:text-lg font-normal text-green-600">
                         +{caseResult.improvement_from_previous.toFixed(2)}%
                       </span>
                     )}
                   </CardTitle>
-                  <CardDescription className="text-base">
+                  <CardDescription className="text-xs sm:text-sm lg:text-base break-words">
                     {caseResult.description} • Steps: {caseResult.steps}
                     <br />
                     <span className="text-blue-600 font-medium">
@@ -625,50 +625,50 @@ reinforcement learning`);
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="p-4 bg-white rounded-lg border">
-                        <div className="text-base text-gray-600 mb-1">Precision</div>
-                        <div className={`text-2xl font-bold ${getScoreColor(caseResult.precision)}`}>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+                      <div className="p-2 sm:p-3 lg:p-4 bg-white rounded-lg border">
+                        <div className="text-xs sm:text-sm lg:text-base text-gray-600 mb-1">Precision</div>
+                        <div className={`text-sm sm:text-lg lg:text-2xl font-bold ${getScoreColor(caseResult.precision)}`}>
                           {caseResult.precision.toFixed(4)}
                         </div>
                       </div>
-                      <div className="p-4 bg-white rounded-lg border">
-                        <div className="text-base text-gray-600 mb-1">Recall</div>
-                        <div className={`text-2xl font-bold ${getScoreColor(caseResult.recall)}`}>
+                      <div className="p-2 sm:p-3 lg:p-4 bg-white rounded-lg border">
+                        <div className="text-xs sm:text-sm lg:text-base text-gray-600 mb-1">Recall</div>
+                        <div className={`text-sm sm:text-lg lg:text-2xl font-bold ${getScoreColor(caseResult.recall)}`}>
                           {caseResult.recall.toFixed(4)}
                         </div>
                       </div>
-                      <div className="p-4 bg-white rounded-lg border">
-                        <div className="text-base text-gray-600 mb-1">F1-Score</div>
-                        <div className={`text-2xl font-bold ${getScoreColor(caseResult.f1_score)}`}>
+                      <div className="p-2 sm:p-3 lg:p-4 bg-white rounded-lg border">
+                        <div className="text-xs sm:text-sm lg:text-base text-gray-600 mb-1">F1-Score</div>
+                        <div className={`text-sm sm:text-lg lg:text-2xl font-bold ${getScoreColor(caseResult.f1_score)}`}>
                           {caseResult.f1_score.toFixed(4)}
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-base">
-                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm lg:text-base">
+                      <div className="flex justify-between p-2 sm:p-3 bg-white rounded-lg border">
                         <span className="text-gray-600 font-medium">TP:</span>
                         <span className="font-bold">{caseResult.TP}</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex justify-between p-2 sm:p-3 bg-white rounded-lg border">
                         <span className="text-gray-600 font-medium">FP:</span>
                         <span className="font-bold">{caseResult.FP}</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex justify-between p-2 sm:p-3 bg-white rounded-lg border">
                         <span className="text-gray-600 font-medium">FN:</span>
                         <span className="font-bold">{caseResult.FN}</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex justify-between p-2 sm:p-3 bg-white rounded-lg border">
                         <span className="text-gray-600 font-medium">Latency:</span>
                         <span className="font-bold">{caseResult.latency.toFixed(1)}s</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex justify-between p-2 sm:p-3 bg-white rounded-lg border">
                         <span className="text-gray-600 font-medium">Diversity:</span>
                         <span className="font-bold">{caseResult.diversity_index.toFixed(4)}</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex justify-between p-2 sm:p-3 bg-white rounded-lg border">
                         <span className="text-gray-600 font-medium">Words:</span>
                         <span className="font-bold">{caseResult.unique_words}/{caseResult.total_words}</span>
                       </div>
@@ -682,102 +682,102 @@ reinforcement learning`);
           {/* Phân tích chi tiết từng chỉ số */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center sm:text-left">
                 Phân Tích Chi Tiết Từng Chỉ Số
               </CardTitle>
-              <CardDescription className="text-lg">
+              <CardDescription className="text-sm sm:text-base lg:text-lg">
                 Giải thích cụ thể ý nghĩa của từng chỉ số đo lường cho mỗi trường hợp
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-8">
+              <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                 {result.results.map((caseResult, index) => (
-                  <div key={index} className={`p-6 rounded-xl border-2 ${getCaseColor(index)}`}>
-                    <h4 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                      {caseResult.case}
-                      <span className="text-lg font-normal text-gray-600">
+                  <div key={index} className={`p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl border-2 ${getCaseColor(index)}`}>
+                    <h4 className="text-base sm:text-lg lg:text-2xl font-bold mb-3 sm:mb-4 lg:mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <span className="break-words">{caseResult.case}</span>
+                      <span className="text-sm sm:text-base lg:text-lg font-normal text-gray-600">
                         ({caseResult.pipeline_complexity})
                       </span>
                     </h4>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                       {/* Precision Analysis */}
-                      <div className="p-5 bg-white rounded-lg border-2 border-blue-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="text-xl font-bold text-blue-600">Precision</h5>
-                          <span className={`text-2xl font-bold ${getScoreColor(caseResult.precision)}`}>
+                      <div className="p-3 sm:p-4 lg:p-5 bg-white rounded-lg border-2 border-blue-200">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <h5 className="text-sm sm:text-base lg:text-xl font-bold text-blue-600">Precision</h5>
+                          <span className={`text-base sm:text-xl lg:text-2xl font-bold ${getScoreColor(caseResult.precision)}`}>
                             {caseResult.precision.toFixed(4)}
                           </span>
                         </div>
-                        <div className="text-base text-gray-700 leading-relaxed">
+                        <div className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed break-words">
                           {analyzeScore(caseResult.precision, 'precision', index)}
                         </div>
-                        <div className="mt-3 p-3 bg-blue-50 rounded text-sm">
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-50 rounded text-xs sm:text-sm break-words">
                           <strong>Công thức:</strong> {caseResult.TP}/({caseResult.TP}+{caseResult.FP}) = {caseResult.TP}/{caseResult.TP + caseResult.FP} = {caseResult.precision.toFixed(4)}
                         </div>
                       </div>
 
                       {/* Recall Analysis */}
-                      <div className="p-5 bg-white rounded-lg border-2 border-green-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="text-xl font-bold text-green-600">Recall</h5>
-                          <span className={`text-2xl font-bold ${getScoreColor(caseResult.recall)}`}>
+                      <div className="p-3 sm:p-4 lg:p-5 bg-white rounded-lg border-2 border-green-200">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <h5 className="text-sm sm:text-base lg:text-xl font-bold text-green-600">Recall</h5>
+                          <span className={`text-base sm:text-xl lg:text-2xl font-bold ${getScoreColor(caseResult.recall)}`}>
                             {caseResult.recall.toFixed(4)}
                           </span>
                         </div>
-                        <div className="text-base text-gray-700 leading-relaxed">
+                        <div className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed break-words">
                           {analyzeScore(caseResult.recall, 'recall', index)}
                         </div>
-                        <div className="mt-3 p-3 bg-green-50 rounded text-sm">
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-green-50 rounded text-xs sm:text-sm break-words">
                           <strong>Công thức:</strong> {caseResult.TP}/({caseResult.TP}+{caseResult.FN}) = {caseResult.TP}/{caseResult.TP + caseResult.FN} = {caseResult.recall.toFixed(4)}
                         </div>
                       </div>
 
                       {/* F1-Score Analysis */}
-                      <div className="p-5 bg-white rounded-lg border-2 border-purple-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="text-xl font-bold text-purple-600">F1-Score</h5>
-                          <span className={`text-2xl font-bold ${getScoreColor(caseResult.f1_score)}`}>
+                      <div className="p-3 sm:p-4 lg:p-5 bg-white rounded-lg border-2 border-purple-200">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <h5 className="text-sm sm:text-base lg:text-xl font-bold text-purple-600">F1-Score</h5>
+                          <span className={`text-base sm:text-xl lg:text-2xl font-bold ${getScoreColor(caseResult.f1_score)}`}>
                             {caseResult.f1_score.toFixed(4)}
                           </span>
                         </div>
-                        <div className="text-base text-gray-700 leading-relaxed">
+                        <div className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed break-words">
                           {analyzeScore(caseResult.f1_score, 'f1', index)}
                         </div>
-                        <div className="mt-3 p-3 bg-purple-50 rounded text-sm">
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-purple-50 rounded text-xs sm:text-sm break-words">
                           <strong>Công thức:</strong> 2×({caseResult.precision.toFixed(3)}×{caseResult.recall.toFixed(3)})/({caseResult.precision.toFixed(3)}+{caseResult.recall.toFixed(3)}) = {caseResult.f1_score.toFixed(4)}
                         </div>
                       </div>
                     </div>
 
                     {/* Additional Metrics */}
-                    <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <div className="text-lg font-bold text-gray-800">{caseResult.latency.toFixed(1)}s</div>
-                        <div className="text-sm text-gray-600">Thời gian xử lý</div>
+                    <div className="mt-3 sm:mt-4 lg:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                      <div className="p-2 sm:p-3 lg:p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">{caseResult.latency.toFixed(1)}s</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Thời gian xử lý</div>
                         <div className="text-xs text-gray-500 mt-1">
                           {caseResult.latency < 30 ? 'Nhanh' : caseResult.latency < 60 ? 'Trung bình' : 'Chậm'}
                         </div>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <div className="text-lg font-bold text-gray-800">{caseResult.diversity_index.toFixed(4)}</div>
-                        <div className="text-sm text-gray-600">Diversity Index</div>
+                      <div className="p-2 sm:p-3 lg:p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">{caseResult.diversity_index.toFixed(4)}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Diversity Index</div>
                         <div className="text-xs text-gray-500 mt-1">
                           {caseResult.diversity_index > 0.8 ? 'Đa dạng cao' : caseResult.diversity_index > 0.6 ? 'Đa dạng vừa' : 'Đa dạng thấp'}
                         </div>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <div className="text-lg font-bold text-gray-800">{caseResult.unique_words}</div>
-                        <div className="text-sm text-gray-600">Từ vựng duy nhất</div>
+                      <div className="p-2 sm:p-3 lg:p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">{caseResult.unique_words}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Từ vựng duy nhất</div>
                         <div className="text-xs text-gray-500 mt-1">
                           Trên tổng {caseResult.total_words} từ
                         </div>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <div className="text-lg font-bold text-gray-800">
+                      <div className="p-2 sm:p-3 lg:p-4 bg-gray-50 rounded-lg text-center">
+                        <div className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">
                           {caseResult.improvement_from_previous ? `+${caseResult.improvement_from_previous.toFixed(1)}%` : 'Baseline'}
                         </div>
-                        <div className="text-sm text-gray-600">Cải thiện</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Cải thiện</div>
                         <div className="text-xs text-gray-500 mt-1">
                           So với TH trước
                         </div>
@@ -785,9 +785,9 @@ reinforcement learning`);
                     </div>
 
                     {/* Technical Details */}
-                    <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                      <h6 className="text-lg font-semibold mb-2">Chi tiết kỹ thuật:</h6>
-                      <div className="text-base text-gray-700">
+                    <div className="mt-3 sm:mt-4 lg:mt-6 p-3 sm:p-4 bg-gray-100 rounded-lg">
+                      <h6 className="text-sm sm:text-base lg:text-lg font-semibold mb-2">Chi tiết kỹ thuật:</h6>
+                      <div className="text-xs sm:text-sm lg:text-base text-gray-700 break-words">
                         <span className="font-medium">Bước pipeline:</span> {caseResult.steps} • 
                         <span className="font-medium">TP:</span> {caseResult.TP} từ đúng • 
                         <span className="font-medium">FP:</span> {caseResult.FP} từ sai • 
@@ -803,58 +803,58 @@ reinforcement learning`);
 
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center sm:text-left">
                 Cấu Hình Pipeline Theo Luận Văn
               </CardTitle>
-              <CardDescription className="text-lg">
+              <CardDescription className="text-sm sm:text-base lg:text-lg">
                 Chi tiết các bước xử lý trong từng trường hợp thử nghiệm
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <h4 className="text-xl font-bold mb-4 text-blue-600">
+                  <h4 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-blue-600 text-center sm:text-left">
                     Evaluation Metrics
                   </h4>
-                  <div className="space-y-4 text-base">
-                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                      <strong className="text-lg">Precision (Độ chính xác):</strong> TP/(TP+FP)<br/>
-                      <span className="text-gray-700">Tỷ lệ từ khóa được trích xuất đúng. Cao = ít nhiễu, thấp = nhiều từ sai.</span>
+                  <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-xs sm:text-sm lg:text-base">
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">Precision (Độ chính xác):</strong>
+                      <span className="text-gray-700 break-words">TP/(TP+FP) - Tỷ lệ từ khóa được trích xuất đúng. Cao = ít nhiễu, thấp = nhiều từ sai.</span>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
-                      <strong className="text-lg">Recall (Độ bao phủ):</strong> TP/(TP+FN)<br/>
-                      <span className="text-gray-700">Tỷ lệ từ khóa quan trọng được tìm thấy. Cao = đầy đủ, thấp = thiếu sót.</span>
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">Recall (Độ bao phủ):</strong>
+                      <span className="text-gray-700 break-words">TP/(TP+FN) - Tỷ lệ từ khóa quan trọng được tìm thấy. Cao = đầy đủ, thấp = thiếu sót.</span>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-purple-500">
-                      <strong className="text-lg">F1-Score:</strong> Trung bình điều hòa Precision và Recall<br/>
-                      <span className="text-gray-700">Chỉ số tổng hợp quan trọng nhất để đánh giá chất lượng tổng thể.</span>
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border-l-4 border-purple-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">F1-Score:</strong>
+                      <span className="text-gray-700 break-words">Trung bình điều hòa Precision và Recall - Chỉ số tổng hợp quan trọng nhất để đánh giá chất lượng tổng thể.</span>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-orange-500">
-                      <strong className="text-lg">Latency:</strong> Thời gian xử lý (giây)<br/>
-                      <span className="text-gray-700">Đánh giá tính khả thi khi ứng dụng vào thực tế.</span>
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border-l-4 border-orange-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">Latency:</strong>
+                      <span className="text-gray-700 break-words">Thời gian xử lý (giây) - Đánh giá tính khả thi khi ứng dụng vào thực tế.</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold mb-4 text-purple-600">
+                  <h4 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-purple-600 text-center sm:text-left">
                     Thesis Configuration
                   </h4>
-                  <div className="space-y-4 text-base">
-                    <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                      <strong className="text-lg">TH1 - Extraction Module:</strong><br/>
-                      <span className="text-gray-700">Bước 1,3,4,5 - Chỉ trích xuất cơ bản, không có context enhancement</span>
+                  <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-xs sm:text-sm lg:text-base">
+                    <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH1 - Extraction Module:</strong>
+                      <span className="text-gray-700 break-words">Bước 1,3,4,5 - Chỉ trích xuất cơ bản, không có context enhancement</span>
                     </div>
-                    <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                      <strong className="text-lg">TH2 - + Structural Context:</strong><br/>
-                      <span className="text-gray-700">Bước 1,2,3,4,5 - Thêm phân tích tiêu đề và ánh xạ ngữ cảnh cấu trúc</span>
+                    <div className="p-3 sm:p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH2 - + Structural Context:</strong>
+                      <span className="text-gray-700 break-words">Bước 1,2,3,4,5 - Thêm phân tích tiêu đề và ánh xạ ngữ cảnh cấu trúc</span>
                     </div>
-                    <div className="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
-                      <strong className="text-lg">TH3 - + Semantic Scoring:</strong><br/>
-                      <span className="text-gray-700">Bước 1-8 - Thêm thuật toán chấm điểm ngữ nghĩa và hợp nhất từ vựng</span>
+                    <div className="p-3 sm:p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Semantic Scoring:</strong>
+                      <span className="text-gray-700 break-words">Bước 1-8 - Thêm thuật toán chấm điểm ngữ nghĩa và hợp nhất từ vựng</span>
                     </div>
-                    <div className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                      <strong className="text-lg">TH4 - Full System:</strong><br/>
-                      <span className="text-gray-700">Bước 1-11 - Hệ thống hoàn chỉnh với topic modeling và ranking</span>
+                    <div className="p-3 sm:p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH4 - Full System:</strong>
+                      <span className="text-gray-700 break-words">Bước 1-11 - Hệ thống hoàn chỉnh với topic modeling và ranking</span>
                     </div>
                   </div>
                 </div>
