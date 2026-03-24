@@ -136,6 +136,27 @@ Respond with ONLY valid JSON:`;
   };
 }
 
+// Get IPA pronunciation for a word (basic implementation)
+async function getIPAPronunciation(word: string): Promise<string> {
+  try {
+    // For now, return empty string. Could integrate with:
+    // - Free Dictionary API: https://api.dictionaryapi.dev/api/v2/entries/en/{word}
+    // - Or use a pronunciation library
+    
+    // Simple implementation using Free Dictionary API
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data[0] && data[0].phonetics && data[0].phonetics[0]) {
+        return data[0].phonetics[0].text || "";
+      }
+    }
+  } catch (error) {
+    console.log("IPA lookup failed for:", word);
+  }
+  return "";
+}
+
 // Save vocabulary to user's collection
 async function saveVocabulary(userId: string, items: VocabularyItem[]) {
   if (!items || items.length === 0 || userId === "anonymous") return;
@@ -145,20 +166,29 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
     const Vocabulary = (await import("@/app/models/Vocabulary")).default;
     
     for (const item of items) {
+      // Get IPA pronunciation
+      const ipa = await getIPAPronunciation(item.word);
+      
       await Vocabulary.findOneAndUpdate(
         { userId, word: item.word.toLowerCase() },
         {
           userId,
           word: item.word.toLowerCase(),
           meaning: item.meaning,
-          type: item.partOfSpeech,
-          example: item.example,
+          type: item.partOfSpeech || "other",
+          example: item.example || "",
+          exampleTranslation: "", // Will be empty for voice chat
+          ipa: ipa, // IPA pronunciation from dictionary API
           source: "voice_chat",
+          level: "intermediate",
           easeFactor: 2.5,
           interval: 1,
           repetitions: 0,
           nextReviewDate: new Date(),
-          isLearned: false
+          isLearned: false,
+          timesReviewed: 0,
+          timesCorrect: 0,
+          timesIncorrect: 0
         },
         { upsert: true, new: true }
       );
@@ -189,12 +219,17 @@ async function saveStructures(userId: string, items: StructureItem[]) {
           meaning: item.meaning,
           type: "structure",
           example: item.example,
+          exampleTranslation: "", // Will be empty for voice chat structures
           source: "voice_chat",
+          level: "intermediate",
           easeFactor: 2.5,
           interval: 1,
           repetitions: 0,
           nextReviewDate: new Date(),
-          isLearned: false
+          isLearned: false,
+          timesReviewed: 0,
+          timesCorrect: 0,
+          timesIncorrect: 0
         },
         { upsert: true, new: true }
       );

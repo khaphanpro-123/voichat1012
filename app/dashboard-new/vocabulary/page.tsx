@@ -131,6 +131,7 @@ export default function VocabularyPage() {
           timesReviewed: item.timesReviewed || 0,
           isLearned: item.isLearned || false,
           source: item.source || "",
+          ipa: item.ipa || "", // Include IPA pronunciation
         }));
         
         setVocabulary(allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error"));
@@ -709,6 +710,9 @@ export default function VocabularyPage() {
                                 <span className="text-blue-500" title="Từ đồng nghĩa">🔗</span>
                               )}
                               <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
+                              {word.ipa && (
+                                <span className="text-sm text-gray-500 font-mono">/{word.ipa}/</span>
+                              )}
                               <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
                                 <Volume2 className="w-3.5 h-3.5" />
                               </button>

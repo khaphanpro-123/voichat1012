@@ -1,9 +1,8 @@
 """
 Visual Language Tutor - Backend API
-Complete 12-Stage Pipeline + Phrase-Centric Extraction + Ablation Study
-Version: 5.0.0-simplified
-Last Updated: 2026-03-14 - Fixed document_id parameter issue in ablation study
-Force Redeploy: 2026-03-14 15:30 - Ablation study parameter fix
+Complete 11-Step Pipeline + Phrase-Centric Extraction + Ablation Study
+Version: 2.0 (New Pipeline)
+Last Updated: 2026-03-24 - Migrated to new 11-step pipeline with learned scoring
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -54,8 +53,8 @@ from ablation_api_endpoint import router as ablation_router
 
 app = FastAPI(
     title="Visual Language Tutor API",
-    version="5.0.0-simplified",
-    description="Complete 12-Stage Pipeline + Phrase-Centric Extraction"
+    version="2.0",
+    description="Complete 11-Step Pipeline + Phrase-Centric Extraction"
 )
 
 # CORS
@@ -183,8 +182,8 @@ async def root():
     """Health check endpoint"""
     return {
         "status": "online",
-        "version": "5.0.0-simplified",
-        "system": "Complete 12-Stage Pipeline + Phrase-Centric",
+        "version": "2.0",
+        "system": "Complete 11-Step Pipeline + Phrase-Centric",
         "endpoints": {
             "upload_complete": "/api/upload-document-complete (phrases + words)",
             "upload_phrases": "/api/upload-document (phrases only)",
@@ -225,25 +224,24 @@ async def upload_document_complete(
     generate_flashcards: bool = Form(True)
 ):
     """
-    Upload document and extract vocabulary using COMPLETE 12-STAGE PIPELINE
+    Upload document and extract vocabulary using COMPLETE 11-STEP PIPELINE
     
     ✅ RECOMMENDED ENDPOINT - Phrases + Single Words
     
     Supports: .txt, .pdf, .docx (ENGLISH ONLY)
     
-    Complete Pipeline (12 Stages):
+    Complete Pipeline (11 Steps):
     1. Document Ingestion & OCR
-    2. Layout & Heading Detection
-    3. Context Intelligence (Sentence ↔ Heading)
-    4. Phrase Extraction (PRIMARY PIPELINE)
-    5. Dense Retrieval (Sentence-Level)
-    6. BM25 Sanity Filter (SECONDARY)
-    7. Single-Word Extraction (SECONDARY PIPELINE)
-    8. Merge Phrase & Word
-    9. Contrastive Scoring (Heading-Aware)
-    10. Synonym Collapse
-    11. Knowledge Graph
-    12. Flashcard Generation
+    2. Heading Analysis
+    3. Structural Heading Context
+    4. Phrase Extraction
+    5. Single-Word Extraction
+    6. Independent Scoring
+    7. Merge Phrase & Word
+    8. Learned Final Scoring
+    9. Topic Modeling
+    10. Within-topic Ranking
+    11. Flashcard Generation
     
     Parameters:
     - file: Document file (.txt, .pdf, .docx) - MUST BE ENGLISH
@@ -843,14 +841,14 @@ if __name__ == "__main__":
     print("\n" + "="*80)
     print("VISUAL LANGUAGE TUTOR API")
     print("="*80)
-    print("Version: 5.2.0-filter-only-mode")
-    print("Pipeline: Complete 12-Stage + Phrase-Centric")
+    print("Version: 2.0 (New Pipeline)")
+    print("Pipeline: Complete 11-Step + Phrase-Centric")
     print("")
     print("  Main Endpoints:")
     print("  POST /api/upload-document-complete  (Phrases + Words)")
     print("  POST /api/upload-document           (Phrases Only)")
     print("  GET  /api/knowledge-graph/{doc_id}  (STAGE 11 Visualization)")
-    print("  GET  /api/flashcards/{doc_id}       (STAGE 12 Flashcards)")
+    print("  GET  /api/flashcards/{doc_id}       (STAGE 11 Flashcards)")
     print("")
     print("  Ablation Study:")
     print("  POST /api/ablation-study            (Run Ablation Study)")

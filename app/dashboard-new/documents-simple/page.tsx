@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-// Vocabulary Card Component
+// Vocabulary Card Component - Mobile Optimized
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
   if (!card || (!card.word && !card.phrase)) return null;
   
@@ -11,24 +11,50 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
   const similarityScore = card.similarity_to_primary;
   
   return (
-    <div className={`p-4 rounded-lg border transition-all ${
+    <div className={`p-3 sm:p-4 rounded-lg border transition-all ${
       isPrimarySynonym 
         ? 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md' 
-        : 'bg-blue-50 border-blue-200 ml-6 hover:border-blue-400 hover:shadow-sm'
+        : 'bg-blue-50 border-blue-200 ml-2 sm:ml-6 hover:border-blue-400 hover:shadow-sm'
     }`}>
-      <div className="flex items-start justify-between">
+      {/* Mobile: Stack layout, Desktop: Flex layout */}
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-start sm:justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            {/* Synonym indicator */}
-            {!isPrimarySynonym && (
-              <span className="text-blue-500" title="Từ đồng nghĩa">
-                🔗
-              </span>
-            )}
+          {/* Word and Score - Mobile: Stack, Desktop: Inline */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Synonym indicator */}
+              {!isPrimarySynonym && (
+                <span className="text-blue-500" title="Từ đồng nghĩa">
+                  🔗
+                </span>
+              )}
+              
+              <p className="font-bold text-base sm:text-lg text-gray-800 break-words">
+                {card.word || card.phrase}
+              </p>
+              
+              <button
+                onClick={() => speakText(card.word || card.phrase || "")}
+                className="p-1 hover:bg-blue-100 rounded-full transition-colors flex-shrink-0"
+                title="Phát âm từ"
+              >
+                <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              </button>
+            </div>
             
-            <p className="font-bold text-lg text-gray-800">{card.word || card.phrase}</p>
-            
-            {/* POS Tag - Always show */}
+            {/* Score badge - Mobile: Top right, Desktop: Right side */}
+            <div className="self-start sm:ml-4 flex-shrink-0">
+              <div className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded-full text-xs sm:text-sm font-bold">
+                {(card.importance_score || card.final_score || 0).toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          {/* Tags - Mobile: Stack, Desktop: Inline */}
+          <div className="flex flex-wrap gap-1 mb-2">
+            {/* POS Tag */}
             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
               {card.pos_label || 'noun'}
             </span>
@@ -39,33 +65,25 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
                 {(similarityScore * 100).toFixed(0)}% tương đồng
               </span>
             )}
-            
-            <button
-              onClick={() => speakText(card.word || card.phrase || "")}
-              className="p-1 hover:bg-blue-100 rounded-full transition-colors"
-              title="Phát âm từ"
-            >
-              <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-            </button>
           </div>
 
+          {/* Definition */}
           {card.definition && (
-            <p className="text-sm text-gray-700 mb-2">
+            <p className="text-sm text-gray-700 mb-2 break-words">
               <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
             </p>
           )}
 
+          {/* Context sentence */}
           {(card.context_sentence || card.supporting_sentence) && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
-              <div className="flex items-start gap-2">
-                <p className="text-sm text-gray-700 italic flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                <p className="text-sm text-gray-700 italic flex-1 break-words">
                   "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, '')}"
                 </p>
                 <button
                   onClick={() => speakText((card.context_sentence || card.supporting_sentence)?.replace(/<[^>]*>/g, '') || "")}
-                  className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0"
+                  className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0 self-start"
                   title="Phát âm câu"
                 >
                   <svg className="h-4 w-4 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,25 +94,22 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
             </div>
           )}
 
+          {/* Synonyms */}
           {card.synonyms && card.synonyms.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              <span className="text-xs font-semibold text-gray-600">🔄 Từ đồng nghĩa:</span>
-              {card.synonyms.map((syn: string, i: number) => (
-                <span
-                  key={i}
-                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full border border-purple-200"
-                >
-                  {syn}
-                </span>
-              ))}
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-gray-600 block">🔄 Từ đồng nghĩa:</span>
+              <div className="flex flex-wrap gap-1">
+                {card.synonyms.map((syn: string, i: number) => (
+                  <span
+                    key={i}
+                    className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full border border-purple-200 break-words"
+                  >
+                    {syn}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
-        </div>
-
-        <div className="ml-4 text-right flex-shrink-0">
-          <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-bold">
-            {(card.importance_score || card.final_score || 0).toFixed(2)}
-          </div>
         </div>
       </div>
     </div>
@@ -340,277 +355,290 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Tài liệu & Từ vựng</h1>
-          <p className="text-gray-600">Upload tài liệu để trích xuất từ vựng</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => window.location.href = '/dashboard-new'}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Trang chủ
-          </button>
-          <button
-            onClick={() => window.location.href = '/dashboard-new/vocabulary'}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            Xem từ vựng đã lưu
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="space-y-4">
-          <label
-            htmlFor="file-upload"
-            className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
-          >
-            <div className="text-center">
-              <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <p className="text-sm text-gray-600">
-                {file ? (
-                  <span>
-                    {file.name}
-                    <span className="block text-xs text-gray-500 mt-1">
-                      ({(file.size / 1024 / 1024).toFixed(2)}MB)
-                    </span>
-                  </span>
-                ) : (
-                  "Click để chọn file PDF/DOCX (tối đa 50MB)"
-                )}
-              </p>
-            </div>
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              accept=".pdf,.docx,.doc"
-              onChange={handleFileChange}
-            />
-          </label>
-
-          {/* Tùy chọn số lượng từ */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số cụm từ (phrases)
-              </label>
-              <input
-                type="number"
-                min="10"
-                max="100"
-                value={maxPhrases}
-                onChange={(e) => setMaxPhrases(parseInt(e.target.value) || 40)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1">Mặc định: 40</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số từ đơn (words)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="50"
-                value={maxWords}
-                onChange={(e) => setMaxWords(parseInt(e.target.value) || 10)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1">Mặc định: 10</p>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile-optimized container */}
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
+        {/* Header - Mobile responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tài liệu & Từ vựng</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Upload tài liệu để trích xuất từ vựng</p>
           </div>
-          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-            💡 Tổng số từ vựng sẽ trích xuất: <span className="font-bold text-blue-600">{maxPhrases + maxWords}</span> từ
-          </div>
-
-          {error && (
-            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-              <p className="mb-2">❌ {error}</p>
-              {(error.includes("502") || error.includes("khởi động")) && (
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading}
-                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 text-sm font-medium"
-                >
-                  🔄 Thử lại
-                </button>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={handleUpload}
-            disabled={!file || uploading}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {uploading ? (
-              <span className="flex items-center gap-2">
-                <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Đang xử lý...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Trích xuất từ vựng
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {result && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-4">Kết quả trích xuất</h2>
           
+          {/* Mobile: Stack buttons, Desktop: Inline */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <button
+              onClick={() => window.location.href = '/dashboard-new'}
+              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Trang chủ
+            </button>
+            <button
+              onClick={() => window.location.href = '/dashboard-new/vocabulary'}
+              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Xem từ vựng đã lưu
+            </button>
+          </div>
+        </div>
+
+        {/* Upload Section - Mobile optimized */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
           <div className="space-y-4">
-            {/* Statistics Summary */}
-            {result.vocabulary_by_difficulty && (
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-red-600">
-                    {result.vocabulary_by_difficulty.critical?.length || 0}
-                  </div>
-                  <div className="text-xs text-red-700 font-medium">🔴 Rất quan trọng</div>
-                  <div className="text-xs text-gray-500">0.8 - 1.0</div>
-                </div>
-                <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {result.vocabulary_by_difficulty.important?.length || 0}
-                  </div>
-                  <div className="text-xs text-orange-700 font-medium">🟠 Quan trọng</div>
-                  <div className="text-xs text-gray-500">0.6 - 0.79</div>
-                </div>
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {result.vocabulary_by_difficulty.moderate?.length || 0}
-                  </div>
-                  <div className="text-xs text-yellow-700 font-medium">🟡 Trung bình</div>
-                  <div className="text-xs text-gray-500">0.4 - 0.59</div>
-                </div>
-                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {result.vocabulary_by_difficulty.easy?.length || 0}
-                  </div>
-                  <div className="text-xs text-green-700 font-medium">🟢 Dễ</div>
-                  <div className="text-xs text-gray-500">0.0 - 0.39</div>
-                </div>
+            {/* File upload area */}
+            <label
+              htmlFor="file-upload"
+              className="flex items-center justify-center w-full h-24 sm:h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <div className="text-center px-4">
+                <svg className="mx-auto h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="text-xs sm:text-sm text-gray-600 leading-tight">
+                  {file ? (
+                    <span className="break-words">
+                      <span className="font-medium">{file.name}</span>
+                      <span className="block text-xs text-gray-500 mt-1">
+                        ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                      </span>
+                    </span>
+                  ) : (
+                    "Chọn file PDF/DOCX (tối đa 50MB)"
+                  )}
+                </p>
+              </div>
+              <input
+                id="file-upload"
+                type="file"
+                className="hidden"
+                accept=".pdf,.docx,.doc"
+                onChange={handleFileChange}
+              />
+            </label>
+
+            {/* Settings - Mobile: Stack, Desktop: Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Số cụm từ (phrases)
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  max="100"
+                  value={maxPhrases}
+                  onChange={(e) => setMaxPhrases(parseInt(e.target.value) || 40)}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Mặc định: 40</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Số từ đơn (words)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={maxWords}
+                  onChange={(e) => setMaxWords(parseInt(e.target.value) || 10)}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Mặc định: 10</p>
+              </div>
+            </div>
+            
+            {/* Info box */}
+            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              💡 Tổng số từ vựng sẽ trích xuất: <span className="font-bold text-blue-600">{maxPhrases + maxWords}</span> từ
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
+                <p className="mb-2">❌ {error}</p>
+                {(error.includes("502") || error.includes("khởi động")) && (
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading}
+                    className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 text-sm font-medium w-full sm:w-auto"
+                  >
+                    🔄 Thử lại
+                  </button>
+                )}
               </div>
             )}
 
-            {/* Vocabulary List - Grouped by Difficulty */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-bold mb-3 text-lg">
-                📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ)
-              </h3>
-              
-              {result.vocabulary_by_difficulty ? (
-                <div className="space-y-6">
-                  {/* Critical - Rất quan trọng */}
-                  {result.vocabulary_by_difficulty.critical?.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-red-300">
-                        <h4 className="text-lg font-bold text-red-600">
-                          🔴 Rất Quan Trọng
-                        </h4>
-                        <span className="text-sm text-red-500">
-                          ({result.vocabulary_by_difficulty.critical.length} từ)
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {result.vocabulary_by_difficulty.critical.map((card: any, idx: number) => (
-                          <VocabularyCard key={`critical-${idx}`} card={card} speakText={speakText} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Important - Quan trọng */}
-                  {result.vocabulary_by_difficulty.important?.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-orange-300">
-                        <h4 className="text-lg font-bold text-orange-600">
-                          🟠 Quan Trọng
-                        </h4>
-                        <span className="text-sm text-orange-500">
-                          ({result.vocabulary_by_difficulty.important.length} từ)
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {result.vocabulary_by_difficulty.important.map((card: any, idx: number) => (
-                          <VocabularyCard key={`important-${idx}`} card={card} speakText={speakText} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Moderate - Trung bình */}
-                  {result.vocabulary_by_difficulty.moderate?.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-yellow-300">
-                        <h4 className="text-lg font-bold text-yellow-600">
-                          🟡 Trung Bình
-                        </h4>
-                        <span className="text-sm text-yellow-500">
-                          ({result.vocabulary_by_difficulty.moderate.length} từ)
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {result.vocabulary_by_difficulty.moderate.map((card: any, idx: number) => (
-                          <VocabularyCard key={`moderate-${idx}`} card={card} speakText={speakText} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Easy - Dễ */}
-                  {result.vocabulary_by_difficulty.easy?.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-green-300">
-                        <h4 className="text-lg font-bold text-green-600">
-                          🟢 Dễ
-                        </h4>
-                        <span className="text-sm text-green-500">
-                          ({result.vocabulary_by_difficulty.easy.length} từ)
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {result.vocabulary_by_difficulty.easy.map((card: any, idx: number) => (
-                          <VocabularyCard key={`easy-${idx}`} card={card} speakText={speakText} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+            {/* Upload button */}
+            <button
+              onClick={handleUpload}
+              disabled={!file || uploading}
+              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
+            >
+              {uploading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang xử lý...
+                </span>
               ) : (
-                // Fallback: Display flat list if grouping not available
-                <div className="space-y-3">
-                  {Array.isArray(result.vocabulary || result.flashcards) && 
-                   (result.vocabulary || result.flashcards).map((card: any, idx: number) => (
-                    <VocabularyCard key={idx} card={card} speakText={speakText} />
-                  ))}
-                </div>
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Trích xuất từ vựng
+                </span>
               )}
-            </div>
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Results Section - Mobile optimized */}
+        {result && (
+          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">Kết quả trích xuất</h2>
+            
+            <div className="space-y-4 sm:space-y-6">
+              {/* Statistics Summary - Mobile: 2x2 grid, Desktop: 4 columns */}
+              {result.vocabulary_by_difficulty && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+                  <div className="bg-red-50 border-2 border-red-200 rounded-lg p-2 sm:p-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-red-600">
+                      {result.vocabulary_by_difficulty.critical?.length || 0}
+                    </div>
+                    <div className="text-xs text-red-700 font-medium leading-tight">🔴 Rất quan trọng</div>
+                    <div className="text-xs text-gray-500">0.8 - 1.0</div>
+                  </div>
+                  <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-2 sm:p-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-orange-600">
+                      {result.vocabulary_by_difficulty.important?.length || 0}
+                    </div>
+                    <div className="text-xs text-orange-700 font-medium leading-tight">🟠 Quan trọng</div>
+                    <div className="text-xs text-gray-500">0.6 - 0.79</div>
+                  </div>
+                  <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-2 sm:p-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-yellow-600">
+                      {result.vocabulary_by_difficulty.moderate?.length || 0}
+                    </div>
+                    <div className="text-xs text-yellow-700 font-medium leading-tight">🟡 Trung bình</div>
+                    <div className="text-xs text-gray-500">0.4 - 0.59</div>
+                  </div>
+                  <div className="bg-green-50 border-2 border-green-200 rounded-lg p-2 sm:p-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">
+                      {result.vocabulary_by_difficulty.easy?.length || 0}
+                    </div>
+                    <div className="text-xs text-green-700 font-medium leading-tight">🟢 Dễ</div>
+                    <div className="text-xs text-gray-500">0.0 - 0.39</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Vocabulary List - Mobile optimized */}
+              <div className="border rounded-lg p-3 sm:p-4">
+                <h3 className="font-bold mb-3 text-base sm:text-lg text-center sm:text-left">
+                  📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ)
+                </h3>
+                
+                {result.vocabulary_by_difficulty ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Critical - Rất quan trọng */}
+                    {result.vocabulary_by_difficulty.critical?.length > 0 && (
+                      <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-red-300">
+                          <h4 className="text-base sm:text-lg font-bold text-red-600 text-center sm:text-left">
+                            🔴 Rất Quan Trọng
+                          </h4>
+                          <span className="text-sm text-red-500 text-center sm:text-left">
+                            ({result.vocabulary_by_difficulty.critical.length} từ)
+                          </span>
+                        </div>
+                        <div className="space-y-2 sm:space-y-3">
+                          {result.vocabulary_by_difficulty.critical.map((card: any, idx: number) => (
+                            <VocabularyCard key={`critical-${idx}`} card={card} speakText={speakText} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Important - Quan trọng */}
+                    {result.vocabulary_by_difficulty.important?.length > 0 && (
+                      <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-orange-300">
+                          <h4 className="text-base sm:text-lg font-bold text-orange-600 text-center sm:text-left">
+                            🟠 Quan Trọng
+                          </h4>
+                          <span className="text-sm text-orange-500 text-center sm:text-left">
+                            ({result.vocabulary_by_difficulty.important.length} từ)
+                          </span>
+                        </div>
+                        <div className="space-y-2 sm:space-y-3">
+                          {result.vocabulary_by_difficulty.important.map((card: any, idx: number) => (
+                            <VocabularyCard key={`important-${idx}`} card={card} speakText={speakText} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Moderate - Trung bình */}
+                    {result.vocabulary_by_difficulty.moderate?.length > 0 && (
+                      <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-yellow-300">
+                          <h4 className="text-base sm:text-lg font-bold text-yellow-600 text-center sm:text-left">
+                            🟡 Trung Bình
+                          </h4>
+                          <span className="text-sm text-yellow-500 text-center sm:text-left">
+                            ({result.vocabulary_by_difficulty.moderate.length} từ)
+                          </span>
+                        </div>
+                        <div className="space-y-2 sm:space-y-3">
+                          {result.vocabulary_by_difficulty.moderate.map((card: any, idx: number) => (
+                            <VocabularyCard key={`moderate-${idx}`} card={card} speakText={speakText} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Easy - Dễ */}
+                    {result.vocabulary_by_difficulty.easy?.length > 0 && (
+                      <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-green-300">
+                          <h4 className="text-base sm:text-lg font-bold text-green-600 text-center sm:text-left">
+                            🟢 Dễ
+                          </h4>
+                          <span className="text-sm text-green-500 text-center sm:text-left">
+                            ({result.vocabulary_by_difficulty.easy.length} từ)
+                          </span>
+                        </div>
+                        <div className="space-y-2 sm:space-y-3">
+                          {result.vocabulary_by_difficulty.easy.map((card: any, idx: number) => (
+                            <VocabularyCard key={`easy-${idx}`} card={card} speakText={speakText} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Fallback: Display flat list if grouping not available
+                  <div className="space-y-2 sm:space-y-3">
+                    {Array.isArray(result.vocabulary || result.flashcards) && 
+                     (result.vocabulary || result.flashcards).map((card: any, idx: number) => (
+                      <VocabularyCard key={idx} card={card} speakText={speakText} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

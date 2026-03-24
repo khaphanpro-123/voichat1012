@@ -1,28 +1,27 @@
 # 🐍 Visual Language Tutor - Python API
 
-Complete 12-Stage Vocabulary Extraction Pipeline with Knowledge Graph & Flashcard Generation
+Complete 11-Step Vocabulary Extraction Pipeline with Learned Scoring
 
-**Version**: 5.2.0-filter-only-mode  
-**Last Updated**: 2026-02-10
+**Version**: 2.0 (New Pipeline)  
+**Last Updated**: 2026-03-24
 
 ---
 
 ## 📋 Overview
 
-This Python FastAPI backend provides advanced vocabulary extraction from English documents using a 12-stage pipeline:
+This Python FastAPI backend provides advanced vocabulary extraction from English documents using an 11-step pipeline with learned scoring:
 
 1. **Document Ingestion & OCR**
-2. **Layout & Heading Detection**
-3. **Context Intelligence** (Sentence ↔ Heading)
-4. **Phrase Extraction** (PRIMARY)
-5. **Dense Retrieval** (Sentence-Level)
-6. **BM25 Filter** (Hallucination removal only)
-7. **Single-Word Extraction** (SECONDARY)
-8. **Merge Phrase & Word**
-9. **Contrastive Scoring** (Heading-Aware)
-10. **Synonym Collapse**
-11. **Knowledge Graph** (Semantic relations)
-12. **Flashcard Generation** (IPA, Audio, Synonyms)
+2. **Heading Analysis**
+3. **Structural Heading Context**
+4. **Phrase Extraction**
+5. **Single-Word Extraction**
+6. **Independent Scoring**
+7. **Merge Phrase & Word**
+8. **Learned Final Scoring**
+9. **Topic Modeling**
+10. **Within-topic Ranking**
+11. **Flashcard Generation**
 
 ---
 
@@ -223,42 +222,49 @@ Check if server is running.
 ### Pipeline Stages
 
 ```
-STAGE 1: Document Ingestion
+STAGE 1: Document Ingestion & Normalization
   ↓
 STAGE 2: Heading Detection
   ↓
-STAGE 3: Context Intelligence
-  ├─ 3A: Sentence Extraction
-  ├─ 3B: Phrase-Centric Extraction (PRIMARY)
-  └─ 3B.4: Keep ALL phrases in clusters
+STAGE 3: Context Intelligence (Structural Heading Context)
+  - Build sentences
+  - Create context map
   ↓
-STAGE 4: Dense Retrieval (Semantic)
+STAGE 4: Phrase Extraction (with Learning-to-Rank)
+  - Extract phrases
+  - Compute scores
+  - Cluster phrases
   ↓
-STAGE 5: (Removed - merged into STAGE 4)
+STAGE 5: Single-Word Extraction (with Learning-to-Rank)
+  - Extract single words
+  - Compute scores
   ↓
-STAGE 6: BM25 Filter (FILTER ONLY MODE)
-  - Remove hallucinations (BM25=0)
-  - Keep original semantic scores
+STAGE 6: Independent Scoring
+  - Semantic score (cosine similarity)
+  - Learning value (academic potential)
+  - Frequency score (log-scaled)
+  - Rarity score (IDF-based)
   ↓
-STAGE 7: Single-Word Extraction (SECONDARY)
-  - STEP 7.6 DISABLED (was too aggressive)
+STAGE 7: Merge Phrase & Word
+  - Simple union
   ↓
-STAGE 8: Merge Phrases + Words
-  - Keep 100% of both
+STAGE 8: Learned Final Scoring
+  - Regression model prediction
+  - Fallback: weighted average
   ↓
-STAGE 9: Contrastive Scoring
+STAGE 9: Topic Modeling
+  - KMeans clustering
+  - Topic name generation
   ↓
-STAGE 10: Synonym Collapse (DISABLED)
+STAGE 10: Within-topic Ranking
+  - Centrality computation
+  - Semantic role assignment (core/supporting/peripheral)
+  - Synonym grouping (similarity > 0.75)
   ↓
-STAGE 11: Knowledge Graph
-  - Build semantic relations
-  - Generate mind map
-  ↓
-STAGE 12: Flashcard Generation
-  - Group synonyms (similarity > 0.85)
-  - Add IPA phonetics
-  - Add audio URLs
-  - Add related words
+STAGE 11: Flashcard Generation
+  - Core terms
+  - Supporting terms
+  - Related terms
 ```
 
 ---
@@ -268,14 +274,14 @@ STAGE 12: Flashcard Generation
 ```
 python-api/
 ├── main.py                          # FastAPI app + endpoints
-├── complete_pipeline_12_stages.py   # Main pipeline orchestrator
-├── phrase_centric_extractor.py      # STAGE 3B: Phrase extraction
-├── single_word_extractor.py         # STAGE 7: Single word extraction
-├── phrase_word_merger.py            # STAGE 8: Merge phrases + words
-├── bm25_filter.py                   # STAGE 6: BM25 filter
+├── complete_pipeline.py             # Stages 1-5 (Document Processing)
+├── new_pipeline_learned_scoring.py  # Stages 6-11 (Learned Scoring)
+├── phrase_centric_extractor.py      # STAGE 4: Phrase extraction
+├── single_word_extractor_v2.py      # STAGE 5: Single word extraction
+├── phrase_scorer.py                 # Scoring + clustering for phrases
 ├── context_intelligence.py          # STAGE 3: Context analysis
 ├── heading_detector.py              # STAGE 2: Heading detection
-├── ensemble_extractor.py            # Ensemble methods
+├── embedding_utils.py               # Embedding utilities
 ├── requirements.txt                 # Python dependencies
 ├── Procfile                         # Railway/Render config
 ├── runtime.txt                      # Python version
@@ -433,36 +439,26 @@ Ensure document was uploaded first and `document_id` is correct.
 
 ## 📝 Changelog
 
-### v5.2.0 (2026-02-10)
-- ✅ Added STAGE 11 & 12 API endpoints
-- ✅ Added global cache for pipeline results
-- ✅ STAGE 6: Changed to filter-only mode (no re-ranking)
-- ✅ Added Railway/Render deployment config
-- ✅ Updated documentation
-
-### v5.1.0 (2026-02-09)
-- ✅ STAGE 12: Enhanced flashcard generation
-- ✅ Added IPA phonetics
-- ✅ Added audio URLs
-- ✅ Added synonym grouping
-- ✅ Added related words
-
-### v5.0.0 (2026-02-08)
-- ✅ STEP 3B.4: Keep ALL phrases in clusters
-- ✅ STEP 7.6: Disabled semantic filter
-- ✅ STAGE 8: Keep 100% phrases + words
-- ✅ STAGE 11: Added mindmap generation
+### v2.0 (2026-03-24) - NEW PIPELINE
+- ✅ Migrated to 11-step pipeline with learned scoring
+- ✅ Removed redundant Dense Retrieval stage
+- ✅ Removed broken BM25 Filter stage
+- ✅ Added Independent Scoring (4 signals)
+- ✅ Added Learned Final Scoring (regression model)
+- ✅ Added Topic Modeling (KMeans)
+- ✅ Added Within-topic Ranking
+- ✅ Improved flashcard generation
+- ✅ Cleaned up deprecated code
 
 ---
 
 ## 📚 Documentation
 
 - `README.md` - This file
-- `../DEPLOYMENT_GUIDE.md` - Deployment instructions
-- `../VOCABULARY_ANALYSIS_INTEGRATION.md` - Frontend integration
-- `../TOM_TAT_DEPLOYMENT.md` - Vietnamese summary
-- `TOM_TAT_v5.2.0.md` - Vietnamese changelog
-- `STAGE6_FILTER_ONLY_MODE.md` - BM25 filter explanation
+- `../PIPELINE_COMPARISON_ANALYSIS.md` - Pipeline comparison and verification
+- `NEW_PIPELINE_VIETNAMESE.md` - Vietnamese documentation
+- `MERGER_V2_VIETNAMESE.md` - Merger V2 documentation
+- `WORD_RANKER_VIETNAMESE.md` - Word ranker documentation
 
 ---
 
@@ -481,8 +477,8 @@ Proprietary - All rights reserved
 ## 👨‍💻 Author
 
 **Kiro AI**  
-Version: 5.2.0-filter-only-mode  
-Date: 2026-02-10
+Version: 2.0 (New Pipeline)  
+Date: 2026-03-24
 
 ---
 

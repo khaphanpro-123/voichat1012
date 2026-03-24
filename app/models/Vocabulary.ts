@@ -13,6 +13,7 @@ export interface IVocabulary extends Document {
   imagePrompt?: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   category?: string;
+  source?: string; // Source of vocabulary: voice_chat, document, manual, etc.
   sourceDocument?: mongoose.Types.ObjectId;
   
   // Spaced Repetition System
@@ -49,6 +50,7 @@ const VocabularySchema = new Schema({
     default: 'intermediate' 
   },
   category: { type: String },
+  source: { type: String }, // Source: voice_chat, document, manual, etc.
   sourceDocument: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' },
   
   // Spaced Repetition System
