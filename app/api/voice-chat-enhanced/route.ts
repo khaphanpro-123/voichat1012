@@ -115,7 +115,11 @@ Respond with ONLY valid JSON:`;
 
   const parsed = parseJsonFromAI(result.content);
   
+  console.log("🤖 AI Response:", result.content.substring(0, 200));
+  console.log("📊 Parsed JSON:", parsed ? "Success" : "Failed");
+  
   if (!parsed || !parsed.english) {
+    console.warn("⚠️ JSON parsing failed, using fallback");
     // Fallback if JSON parsing fails
     return {
       response: {
@@ -129,8 +133,20 @@ Respond with ONLY valid JSON:`;
     };
   }
 
+  console.log("✅ Parsed vocabulary:", parsed.vocabulary?.length || 0, "items");
+  console.log("✅ Parsed structures:", parsed.structures?.length || 0, "items");
+
+  // Ensure vocabulary and structures are always arrays
+  const enhancedResponse: EnhancedResponse = {
+    english: parsed.english,
+    vietnamese: parsed.vietnamese || "",
+    grammarStructure: parsed.grammarStructure,
+    vocabulary: Array.isArray(parsed.vocabulary) ? parsed.vocabulary : [],
+    structures: Array.isArray(parsed.structures) ? parsed.structures : []
+  };
+
   return {
-    response: parsed as EnhancedResponse,
+    response: enhancedResponse,
     provider: result.provider,
     model: result.model
   };
@@ -159,11 +175,17 @@ async function getIPAPronunciation(word: string): Promise<string> {
 
 // Save vocabulary to user's collection
 async function saveVocabulary(userId: string, items: VocabularyItem[]) {
-  if (!items || items.length === 0 || userId === "anonymous") return;
+  if (!items || items.length === 0 || userId === "anonymous") {
+    console.log(`⏭️ Skipping vocabulary save: items=${items?.length || 0}, userId=${userId}`);
+    return;
+  }
   
   try {
-    await connectDB();
-    const Vocabulary = (await import("@/app/models/Vocabulary")).default;
+    // Use MongoDB native client instead of Mongoose to avoid conflicts
+    const getClientPromise = (await import("@/lib/mongodb")).default;
+    const client = await getClientPromise();
+    const db = client.db("viettalk");
+    const collection = db.collection("vocabulary");
     
     console.log(`💾 Saving ${items.length} vocabulary items for user ${userId}`);
     
@@ -179,11 +201,12 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
         word: item.word.toLowerCase(),
         meaning: item.meaning || "No meaning provided",
         type: item.partOfSpeech || "other",
+        partOfSpeech: item.partOfSpeech || "other", // Keep both for compatibility
         example: example,
-        exampleTranslation: item.meaning || "Không có dịch", // Use meaning as translation fallback
-        ipa: ipa || "", // IPA pronunciation from dictionary API
+        exampleTranslation: item.meaning || "Không có dịch",
+        ipa: ipa || "",
         source: "voice_chat",
-        level: "intermediate" as const,
+        level: "intermediate",
         easeFactor: 2.5,
         interval: 1,
         repetitions: 0,
@@ -191,38 +214,45 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
         isLearned: false,
         timesReviewed: 0,
         timesCorrect: 0,
-        timesIncorrect: 0
+        timesIncorrect: 0,
+        created_at: new Date(),
+        updated_at: new Date()
       };
       
       console.log(`  💾 Saving word: ${item.word}`, vocabData);
       
-      const result = await Vocabulary.findOneAndUpdate(
+      // Use updateOne with upsert
+      const result = await collection.updateOne(
         { userId, word: item.word.toLowerCase() },
-        vocabData,
-        { upsert: true, new: true }
+        { $set: vocabData },
+        { upsert: true }
       );
       
-      console.log(`  ✅ Saved: ${result.word} (ID: ${result._id})`);
+      console.log(`  ✅ Saved: ${item.word} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
     }
     
     console.log(`✅ Successfully saved ${items.length} vocabulary items`);
   } catch (err) {
     console.error("❌ Save vocabulary error:", err);
     console.error("Error details:", err instanceof Error ? err.message : err);
+    throw err; // Re-throw to see in catch handler
   }
 }
 
 
 // Save grammar structures to user's collection
 async function saveStructures(userId: string, items: StructureItem[]) {
-  if (!items || items.length === 0 || userId === "anonymous") return;
+  if (!items || items.length === 0 || userId === "anonymous") {
+    console.log(`⏭️ Skipping structures save: items=${items?.length || 0}, userId=${userId}`);
+    return;
+  }
   
   try {
-    await connectDB();
-    
-    // Use Vocabulary model with type="structure" for now
-    // Could create a separate GrammarStructure model later
-    const Vocabulary = (await import("@/app/models/Vocabulary")).default;
+    // Use MongoDB native client instead of Mongoose
+    const getClientPromise = (await import("@/lib/mongodb")).default;
+    const client = await getClientPromise();
+    const db = client.db("viettalk");
+    const collection = db.collection("vocabulary");
     
     console.log(`💾 Saving ${items.length} grammar structures for user ${userId}`);
     
@@ -235,10 +265,11 @@ async function saveStructures(userId: string, items: StructureItem[]) {
         word: item.pattern,
         meaning: item.meaning || "No meaning provided",
         type: "structure",
+        partOfSpeech: "structure",
         example: example,
-        exampleTranslation: item.meaning || "Không có dịch", // Use meaning as translation fallback
+        exampleTranslation: item.meaning || "Không có dịch",
         source: "voice_chat",
-        level: "intermediate" as const,
+        level: "intermediate",
         easeFactor: 2.5,
         interval: 1,
         repetitions: 0,
@@ -246,24 +277,27 @@ async function saveStructures(userId: string, items: StructureItem[]) {
         isLearned: false,
         timesReviewed: 0,
         timesCorrect: 0,
-        timesIncorrect: 0
+        timesIncorrect: 0,
+        created_at: new Date(),
+        updated_at: new Date()
       };
       
       console.log(`  💾 Saving structure: ${item.pattern}`, structureData);
       
-      const result = await Vocabulary.findOneAndUpdate(
+      const result = await collection.updateOne(
         { userId, word: item.pattern, type: "structure" },
-        structureData,
-        { upsert: true, new: true }
+        { $set: structureData },
+        { upsert: true }
       );
       
-      console.log(`  ✅ Saved: ${result.word} (ID: ${result._id})`);
+      console.log(`  ✅ Saved: ${item.pattern} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
     }
     
     console.log(`✅ Successfully saved ${items.length} grammar structures`);
   } catch (err) {
     console.error("❌ Save structures error:", err);
     console.error("Error details:", err instanceof Error ? err.message : err);
+    throw err; // Re-throw to see in catch handler
   }
 }
 
@@ -377,20 +411,23 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, vocabulary: [], structures: [] });
       }
 
-      await connectDB();
-      const Vocabulary = (await import("@/app/models/Vocabulary")).default;
+      // Use MongoDB native client
+      const getClientPromise = (await import("@/lib/mongodb")).default;
+      const client = await getClientPromise();
+      const db = client.db("viettalk");
+      const collection = db.collection("vocabulary");
       
-      const vocabulary = await Vocabulary.find({ 
+      const vocabulary = await collection.find({ 
         userId, 
         source: "voice_chat",
         type: { $ne: "structure" }
-      }).sort({ createdAt: -1 }).limit(50);
+      }).sort({ created_at: -1 }).limit(50).toArray();
       
-      const structures = await Vocabulary.find({ 
+      const structures = await collection.find({ 
         userId, 
         source: "voice_chat",
         type: "structure"
-      }).sort({ createdAt: -1 }).limit(30);
+      }).sort({ created_at: -1 }).limit(30).toArray();
 
       return NextResponse.json({
         success: true,
@@ -418,10 +455,20 @@ export async function POST(req: NextRequest) {
         message, conversationHistory, level, keys
       );
 
-      // Auto-save vocabulary and structures (fire-and-forget)
+      // Auto-save vocabulary and structures
       if (autoSave && userId !== "anonymous") {
-        saveVocabulary(userId, response.vocabulary).catch(() => {});
-        saveStructures(userId, response.structures).catch(() => {});
+        console.log(`🔄 Auto-saving vocabulary for user ${userId}...`);
+        console.log(`📝 Vocabulary items to save:`, response.vocabulary?.length || 0);
+        console.log(`📝 Structure items to save:`, response.structures?.length || 0);
+        
+        saveVocabulary(userId, response.vocabulary).catch((err) => {
+          console.error("❌ Failed to save vocabulary:", err);
+        });
+        saveStructures(userId, response.structures).catch((err) => {
+          console.error("❌ Failed to save structures:", err);
+        });
+      } else {
+        console.log(`⚠️ Auto-save skipped: autoSave=${autoSave}, userId=${userId}`);
       }
 
       return NextResponse.json({

@@ -22,6 +22,7 @@ import {
   Languages,
   AlertCircle,
   Network,
+  X,
 } from "lucide-react";
 
 interface VocabularyWord {
