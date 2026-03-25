@@ -179,7 +179,7 @@ export default function GuidePage() {
                 Bước quan trọng nhất: Lấy API Key miễn phí từ Google để sử dụng các tính năng AI
               </p>
             </div>
-            <Link href="/dashboard-new/settings">
+            <Link href="/settings">
               <button className="px-6 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2">
                 <Settings className="w-5 h-5" />
                 Vào Settings
@@ -317,7 +317,7 @@ export default function GuidePage() {
                         <ExternalLink className="w-5 h-5" />
                         Lấy API Key từ Google
                       </a>
-                      <Link href="/dashboard-new/settings" className="flex-1">
+                      <Link href="/settings" className="flex-1">
                         <button className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                           <Settings className="w-5 h-5" />
                           Vào Settings

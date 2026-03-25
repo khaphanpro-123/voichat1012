@@ -74,6 +74,7 @@ export default function VocabularyPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+  const [selectedSource, setSelectedSource] = useState("all"); // New: source filter
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("vocabulary");
 
@@ -118,6 +119,7 @@ export default function VocabularyPage() {
       const data = await res.json();
       
       console.log("📚 Loaded vocabulary:", data.length, "items");
+      console.log("📊 Sample items:", data.slice(0, 3)); // Debug: show first 3 items
       
       if (Array.isArray(data)) {
         // Separate vocabulary, structures, and errors based on type or source
@@ -126,7 +128,7 @@ export default function VocabularyPage() {
           word: item.word,
           meaning: item.meaning,
           example: item.example || "",
-          type: item.type || "other",
+          type: item.type || item.partOfSpeech || "other",
           level: item.level || "intermediate",
           timesReviewed: item.timesReviewed || 0,
           isLearned: item.isLearned || false,
@@ -140,7 +142,10 @@ export default function VocabularyPage() {
         
         console.log("📊 Vocabulary stats:", {
           total: allWords.length,
-          vocabulary: allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error").length
+          vocabulary: allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error").length,
+          structures: allWords.filter((w: VocabularyWord) => w.type === "structure").length,
+          fromVoiceChat: allWords.filter((w: VocabularyWord) => w.source === "voice_chat").length,
+          fromDocument: allWords.filter((w: VocabularyWord) => w.source === "document").length,
         });
       }
     } catch (error) {
@@ -176,7 +181,8 @@ export default function VocabularyPage() {
     const matchesSearch = word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (meaning && meaning.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = selectedType === "all" || normalizeType(getWordType(word)) === selectedType;
-    return matchesSearch && matchesType;
+    const matchesSource = selectedSource === "all" || word.source === selectedSource;
+    return matchesSearch && matchesType && matchesSource;
   });
 
   const filteredStructures = structures.filter((s) =>
@@ -539,14 +545,71 @@ export default function VocabularyPage() {
                 );
               })}
             </div>
+            
+            {/* Source Filter */}
+            <div className="flex items-center gap-2 mt-4 mb-2">
+              <BookOpen className="w-5 h-5 text-gray-500" />
+              <span className="font-medium text-gray-700">Lọc theo nguồn:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => setSelectedSource("all")}
+                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "all" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+              >
+                <span>Tất cả</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "all" ? "bg-white/20" : "bg-gray-100"}`}>
+                  {vocabulary.length}
+                </span>
+              </button>
+              <button 
+                onClick={() => setSelectedSource("voice_chat")}
+                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "voice_chat" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+              >
+                <span>🎤 Voice Chat</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "voice_chat" ? "bg-white/20" : "bg-gray-100"}`}>
+                  {vocabulary.filter(v => v.source === "voice_chat").length}
+                </span>
+              </button>
+              <button 
+                onClick={() => setSelectedSource("document")}
+                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "document" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+              >
+                <span>📄 Tài liệu</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "document" ? "bg-white/20" : "bg-gray-100"}`}>
+                  {vocabulary.filter(v => v.source === "document").length}
+                </span>
+              </button>
+              <button 
+                onClick={() => setSelectedSource("manual")}
+                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "manual" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+              >
+                <span>✍️ Thủ công</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "manual" ? "bg-white/20" : "bg-gray-100"}`}>
+                  {vocabulary.filter(v => v.source === "manual").length}
+                </span>
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Search */}
+        {/* Search - Enhanced with database search */}
         <div className="relative mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input type="text" placeholder="Tìm kiếm..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500" />
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm từ vựng trong kho..." 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm" 
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Add New Word Form */}

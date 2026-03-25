@@ -156,7 +156,7 @@ export default function ImageLearnEnglish() {
                 <Cpu className="w-3 h-3" /> YOLO+OCR
               </button>
             </div>
-            <a href="/dashboard-new/settings" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
+            <a href="/settings" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition">
               <Settings className="w-5 h-5 text-white" />
             </a>
           </div>

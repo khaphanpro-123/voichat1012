@@ -66,6 +66,7 @@ export default function VoiceChatEnhanced() {
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [savedVocabulary, setSavedVocabulary] = useState<any[]>([]);
   const [savedStructures, setSavedStructures] = useState<any[]>([]);
+  const [saveNotification, setSaveNotification] = useState<string | null>(null); // New: save notification
   
   // Settings
   const [level, setLevel] = useState("A2");
@@ -302,8 +303,14 @@ export default function VoiceChatEnhanced() {
         
         if (autoSpeak) speakEnhanced(data.response);
         
-        // Refresh saved items
+        // Refresh saved items and show notification
         if (autoSave) {
+          const vocabCount = data.response.vocabulary?.length || 0;
+          const structCount = data.response.structures?.length || 0;
+          if (vocabCount > 0 || structCount > 0) {
+            setSaveNotification(`✅ Đã lưu ${vocabCount} từ vựng, ${structCount} cấu trúc`);
+            setTimeout(() => setSaveNotification(null), 3000);
+          }
           setTimeout(loadSavedItems, 1000);
         }
       } else {
@@ -485,6 +492,23 @@ export default function VoiceChatEnhanced() {
             </div>
           </div>
         )}
+
+        {/* Save Notification */}
+        <AnimatePresence>
+          {saveNotification && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-4xl mx-auto px-4 mt-4"
+            >
+              <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-3 flex items-center gap-2">
+                <Check className="w-5 h-5 text-green-400" />
+                <p className="text-green-300 text-sm">{saveNotification}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Settings Panel */}
         <AnimatePresence>

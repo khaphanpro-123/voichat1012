@@ -269,7 +269,7 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
           </div>
 
           <div className="grid grid-cols-2 gap-3 mt-4">
-            <a href="/dashboard-new/settings" className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-xl hover:scale-105 transition-transform">
+            <a href="/settings" className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-xl hover:scale-105 transition-transform">
               <Key className="w-6 h-6 mx-auto text-yellow-600" />
               <p className="text-xs mt-1 font-medium">Settings</p>
             </a>
