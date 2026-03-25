@@ -291,14 +291,14 @@ export default function SettingsPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <Link href="/dashboard-new" className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition flex-shrink-0">
-            <span className="text-xl">←</span>
+          <Link href="/dashboard-new" className="p-2 sm:p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition flex-shrink-0">
+            <span className="text-2xl sm:text-3xl">←</span>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2 truncate">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-2 truncate">
               🔑 Cài đặt API Keys
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 font-medium truncate">
+            <p className="text-base sm:text-lg text-gray-600 font-semibold truncate">
               {isLoggedIn ? `Xin chào, ${userName}` : "Chưa đăng nhập"}
             </p>
           </div>
@@ -309,18 +309,18 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-yellow-50 border-2 border-yellow-400"
+            className="mb-4 sm:mb-6 p-4 sm:p-5 rounded-2xl bg-yellow-50 border-2 border-yellow-400"
           >
-            <div className="flex items-start gap-2 sm:gap-3">
-              <span className="text-xl sm:text-2xl flex-shrink-0">⚠️</span>
+            <div className="flex items-start gap-3 sm:gap-4">
+              <span className="text-3xl sm:text-4xl flex-shrink-0">⚠️</span>
               <div className="flex-1 min-w-0">
-                <h3 className="text-yellow-800 font-bold text-base sm:text-lg mb-1">Bạn chưa đăng nhập</h3>
-                <p className="text-yellow-700 text-sm sm:text-base mb-3">
+                <h3 className="text-yellow-800 font-bold text-lg sm:text-xl mb-2">Bạn chưa đăng nhập</h3>
+                <p className="text-yellow-700 text-base sm:text-lg mb-4 font-medium">
                   Vui lòng đăng nhập để lưu và quản lý API keys của bạn.
                 </p>
                 <Link
                   href="/auth/login"
-                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-500 text-black font-bold text-sm sm:text-base rounded-lg hover:bg-yellow-400 transition"
+                  className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-yellow-500 text-black font-bold text-base sm:text-lg rounded-xl hover:bg-yellow-400 transition"
                 >
                   🔐 Đăng nhập ngay
                 </Link>
@@ -336,22 +336,22 @@ export default function SettingsPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl flex items-center gap-2 text-sm sm:text-base ${
+              className={`mb-4 sm:mb-6 p-4 sm:p-5 rounded-2xl flex items-center gap-3 text-base sm:text-lg ${
                 message.type === "success" 
                   ? "bg-green-50 border-2 border-green-400 text-green-800"
                   : "bg-red-50 border-2 border-red-400 text-red-800"
               }`}
             >
-              <span className="text-lg sm:text-xl flex-shrink-0">{message.type === "success" ? "✓" : "⚠️"}</span>
-              <span className="font-semibold flex-1">{message.text}</span>
+              <span className="text-2xl sm:text-3xl flex-shrink-0">{message.type === "success" ? "✓" : "⚠️"}</span>
+              <span className="font-bold flex-1">{message.text}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Why API Keys */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 sm:p-6 border-2 border-purple-200 mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-            <span className="text-xl sm:text-2xl">💡</span>
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 sm:p-7 border-2 border-purple-200 mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-5 flex items-center gap-3">
+            <span className="text-3xl sm:text-4xl">💡</span>
             Tại sao cần API key riêng?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -361,9 +361,9 @@ export default function SettingsPage() {
               { icon: "🔒", text: "Bảo mật - key chỉ lưu trong tài khoản bạn" },
               { icon: "💰", text: "Tự kiểm soát chi phí API" }
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-2 sm:gap-3 bg-white rounded-xl p-2 sm:p-3 shadow-sm">
-                <span className="text-xl sm:text-2xl flex-shrink-0">{item.icon}</span>
-                <span className="text-gray-800 font-medium text-sm sm:text-base">{item.text}</span>
+              <div key={i} className="flex items-center gap-3 bg-white rounded-xl p-3 sm:p-4 shadow-sm">
+                <span className="text-2xl sm:text-3xl flex-shrink-0">{item.icon}</span>
+                <span className="text-gray-800 font-bold text-base sm:text-lg">{item.text}</span>
               </div>
             ))}
           </div>
@@ -385,22 +385,22 @@ export default function SettingsPage() {
                 className={`${info.bgColor} border-2 ${info.borderColor} rounded-2xl overflow-hidden shadow-sm`}
               >
                 {/* Provider Header */}
-                <div className="p-3 sm:p-4">
-                  <div className="flex items-start gap-2 sm:gap-3 mb-3">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center text-xl sm:text-2xl shadow-md flex-shrink-0`}>
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                    <div className={`w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br ${info.color} rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-lg flex-shrink-0`}>
                       {info.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
-                        <h3 className="text-gray-900 font-bold text-base sm:text-lg">{info.name}</h3>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 className="text-gray-900 font-bold text-xl sm:text-2xl">{info.name}</h3>
                         {info.recommended && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">Khuyên dùng</span>
+                          <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold whitespace-nowrap">Khuyên dùng</span>
                         )}
                         {hasSavedKey && (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">✓ Đã lưu</span>
+                          <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold whitespace-nowrap">✓ Đã lưu</span>
                         )}
                       </div>
-                      <p className="text-gray-600 font-medium text-xs sm:text-sm">{info.description}</p>
+                      <p className="text-gray-600 font-semibold text-sm sm:text-base">{info.description}</p>
                     </div>
                   </div>
                   
@@ -408,7 +408,7 @@ export default function SettingsPage() {
                     href={info.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white ${info.textColor} rounded-lg text-sm font-semibold hover:opacity-80 shadow-sm border ${info.borderColor}`}
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 bg-white ${info.textColor} rounded-xl text-base sm:text-lg font-bold hover:opacity-80 shadow-md border-2 ${info.borderColor}`}
                   >
                     Lấy key 🔗
                   </a>
@@ -416,36 +416,36 @@ export default function SettingsPage() {
 
                 {/* Saved Key Display */}
                 {hasSavedKey && (
-                  <div className="px-3 sm:px-4 pb-2">
-                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border-2 border-green-300 shadow-sm">
-                      <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">✓</span>
-                      <span className="text-green-700 font-mono text-xs sm:text-sm flex-1 font-semibold truncate">
+                  <div className="px-4 sm:px-5 pb-3">
+                    <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white rounded-xl border-2 border-green-300 shadow-sm">
+                      <span className="text-green-600 text-2xl sm:text-3xl flex-shrink-0">✓</span>
+                      <span className="text-green-700 font-mono text-sm sm:text-base flex-1 font-bold truncate">
                         {showKeys[provider] ? savedKeys[provider] : maskKey(savedKeys[provider])}
                       </span>
                       <button
                         onClick={() => setShowKeys({ ...showKeys, [provider]: !showKeys[provider] })}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0"
+                        className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                         title={showKeys[provider] ? "Ẩn key" : "Hiện key"}
                       >
-                        <span className="text-base sm:text-lg">{showKeys[provider] ? "🙈" : "👁️"}</span>
+                        <span className="text-xl sm:text-2xl">{showKeys[provider] ? "🙈" : "👁️"}</span>
                       </button>
                       <button
                         onClick={() => copyToClipboard(savedKeys[provider])}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0"
+                        className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                         title="Copy key"
                       >
-                        <span className="text-base sm:text-lg">📋</span>
+                        <span className="text-xl sm:text-2xl">📋</span>
                       </button>
                       <button
                         onClick={() => handleDelete(provider)}
                         disabled={deleting === provider || !isLoggedIn}
-                        className="p-1.5 hover:bg-red-50 rounded-lg disabled:opacity-50 flex-shrink-0"
+                        className="p-2 hover:bg-red-50 rounded-lg disabled:opacity-50 flex-shrink-0"
                         title="Xóa key"
                       >
                         {deleting === provider ? (
-                          <div className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
+                          <div className="w-5 h-5 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
                         ) : (
-                          <span className="text-base sm:text-lg">🗑️</span>
+                          <span className="text-xl sm:text-2xl">🗑️</span>
                         )}
                       </button>
                     </div>
@@ -453,7 +453,7 @@ export default function SettingsPage() {
                 )}
 
                 {/* Input for new/update key */}
-                <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+                <div className="px-4 sm:px-5 pb-4 sm:pb-5">
                   <div className="relative">
                     <input
                       type="text"
@@ -461,11 +461,11 @@ export default function SettingsPage() {
                       onChange={(e) => setKeys({ ...keys, [provider]: e.target.value })}
                       placeholder={hasSavedKey ? `Nhập key mới để cập nhật...` : `Nhập ${info.name} API Key...`}
                       disabled={!isLoggedIn}
-                      className="w-full bg-white border-2 border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      className="w-full bg-white border-2 border-gray-300 rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                     />
                   </div>
                   {hasSavedKey && (
-                    <p className="text-gray-500 text-xs sm:text-sm mt-2 font-medium">
+                    <p className="text-gray-600 text-sm sm:text-base mt-3 font-semibold">
                       💡 Nhập key mới ở trên để thay thế key hiện tại
                     </p>
                   )}
@@ -474,12 +474,12 @@ export default function SettingsPage() {
                 {/* Video Guide Toggle */}
                 <button
                   onClick={() => setExpandedGuide(isExpanded ? null : provider)}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/50 flex items-center justify-between text-gray-600 hover:text-gray-900 hover:bg-white/80 transition border-t border-gray-200 text-sm sm:text-base"
+                  className="w-full px-4 sm:px-5 py-3 sm:py-4 bg-white/50 flex items-center justify-between text-gray-700 hover:text-gray-900 hover:bg-white/80 transition border-t-2 border-gray-200 text-base sm:text-lg"
                 >
-                  <span className="flex items-center gap-2 font-medium">
+                  <span className="flex items-center gap-2 font-bold">
                     ▶️ Xem hướng dẫn lấy API key
                   </span>
-                  <span className="text-lg">{isExpanded ? "▲" : "▼"}</span>
+                  <span className="text-xl">{isExpanded ? "▲" : "▼"}</span>
                 </button>
 
                 {/* Expanded Guide */}
@@ -511,11 +511,11 @@ export default function SettingsPage() {
 
                         {/* Steps */}
                         <div>
-                          <h4 className="text-gray-800 font-bold mb-2 text-sm sm:text-base">Các bước thực hiện:</h4>
-                          <ol className="space-y-2">
+                          <h4 className="text-gray-800 font-bold mb-3 text-base sm:text-lg">Các bước thực hiện:</h4>
+                          <ol className="space-y-3">
                             {guide.steps.map((step, i) => (
-                              <li key={i} className="flex items-start gap-2 text-gray-700 font-medium text-xs sm:text-sm">
-                                <span className={`w-5 h-5 ${info.bgColor} ${info.textColor} rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 border ${info.borderColor}`}>
+                              <li key={i} className="flex items-start gap-3 text-gray-700 font-semibold text-sm sm:text-base">
+                                <span className={`w-7 h-7 ${info.bgColor} ${info.textColor} rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 border-2 ${info.borderColor}`}>
                                   {i + 1}
                                 </span>
                                 <span className="flex-1">{step}</span>
@@ -536,11 +536,11 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving || !isLoggedIn || (!keys.groq && !keys.openai && !keys.gemini && !keys.cohere)}
-          className="w-full py-3 sm:py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-base sm:text-lg rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-4 sm:py-5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-lg sm:text-xl rounded-2xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-xl"
         >
           {saving ? (
             <>
-              <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
               Đang lưu...
             </>
           ) : (
@@ -551,20 +551,20 @@ export default function SettingsPage() {
         </button>
 
         {/* Quick Links */}
-        <div className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="mt-6 sm:mt-8 grid grid-cols-2 gap-4 sm:gap-5">
           <Link
             href="/dashboard-new/survey"
-            className="p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
+            className="p-4 sm:p-5 bg-gray-50 rounded-2xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
           >
-            <span className="text-2xl sm:text-3xl mb-2 block">📋</span>
-            <span className="text-gray-800 font-semibold text-xs sm:text-sm">Khảo sát học tập</span>
+            <span className="text-3xl sm:text-4xl mb-3 block">📋</span>
+            <span className="text-gray-800 font-bold text-sm sm:text-base">Khảo sát học tập</span>
           </Link>
           <Link
             href="/dashboard-new/guide"
-            className="p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
+            className="p-4 sm:p-5 bg-gray-50 rounded-2xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
           >
-            <span className="text-2xl sm:text-3xl mb-2 block">📖</span>
-            <span className="text-gray-800 font-semibold text-xs sm:text-sm">Hướng dẫn sử dụng</span>
+            <span className="text-3xl sm:text-4xl mb-3 block">📖</span>
+            <span className="text-gray-800 font-bold text-sm sm:text-base">Hướng dẫn sử dụng</span>
           </Link>
         </div>
       </div>
