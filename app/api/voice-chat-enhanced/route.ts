@@ -165,36 +165,50 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
     await connectDB();
     const Vocabulary = (await import("@/app/models/Vocabulary")).default;
     
+    console.log(`💾 Saving ${items.length} vocabulary items for user ${userId}`);
+    
     for (const item of items) {
       // Get IPA pronunciation
       const ipa = await getIPAPronunciation(item.word);
       
-      await Vocabulary.findOneAndUpdate(
+      // Ensure we have a valid example
+      const example = item.example || `Example: ${item.word}`;
+      
+      const vocabData = {
+        userId,
+        word: item.word.toLowerCase(),
+        meaning: item.meaning || "No meaning provided",
+        type: item.partOfSpeech || "other",
+        example: example,
+        exampleTranslation: item.meaning || "Không có dịch", // Use meaning as translation fallback
+        ipa: ipa || "", // IPA pronunciation from dictionary API
+        source: "voice_chat",
+        level: "intermediate" as const,
+        easeFactor: 2.5,
+        interval: 1,
+        repetitions: 0,
+        nextReviewDate: new Date(),
+        isLearned: false,
+        timesReviewed: 0,
+        timesCorrect: 0,
+        timesIncorrect: 0
+      };
+      
+      console.log(`  💾 Saving word: ${item.word}`, vocabData);
+      
+      const result = await Vocabulary.findOneAndUpdate(
         { userId, word: item.word.toLowerCase() },
-        {
-          userId,
-          word: item.word.toLowerCase(),
-          meaning: item.meaning,
-          type: item.partOfSpeech || "other",
-          example: item.example || "",
-          exampleTranslation: "", // Will be empty for voice chat
-          ipa: ipa, // IPA pronunciation from dictionary API
-          source: "voice_chat",
-          level: "intermediate",
-          easeFactor: 2.5,
-          interval: 1,
-          repetitions: 0,
-          nextReviewDate: new Date(),
-          isLearned: false,
-          timesReviewed: 0,
-          timesCorrect: 0,
-          timesIncorrect: 0
-        },
+        vocabData,
         { upsert: true, new: true }
       );
+      
+      console.log(`  ✅ Saved: ${result.word} (ID: ${result._id})`);
     }
+    
+    console.log(`✅ Successfully saved ${items.length} vocabulary items`);
   } catch (err) {
-    console.error("Save vocabulary error:", err);
+    console.error("❌ Save vocabulary error:", err);
+    console.error("Error details:", err instanceof Error ? err.message : err);
   }
 }
 
@@ -210,32 +224,46 @@ async function saveStructures(userId: string, items: StructureItem[]) {
     // Could create a separate GrammarStructure model later
     const Vocabulary = (await import("@/app/models/Vocabulary")).default;
     
+    console.log(`💾 Saving ${items.length} grammar structures for user ${userId}`);
+    
     for (const item of items) {
-      await Vocabulary.findOneAndUpdate(
+      // Ensure we have a valid example
+      const example = item.example || `Example: ${item.pattern}`;
+      
+      const structureData = {
+        userId,
+        word: item.pattern,
+        meaning: item.meaning || "No meaning provided",
+        type: "structure",
+        example: example,
+        exampleTranslation: item.meaning || "Không có dịch", // Use meaning as translation fallback
+        source: "voice_chat",
+        level: "intermediate" as const,
+        easeFactor: 2.5,
+        interval: 1,
+        repetitions: 0,
+        nextReviewDate: new Date(),
+        isLearned: false,
+        timesReviewed: 0,
+        timesCorrect: 0,
+        timesIncorrect: 0
+      };
+      
+      console.log(`  💾 Saving structure: ${item.pattern}`, structureData);
+      
+      const result = await Vocabulary.findOneAndUpdate(
         { userId, word: item.pattern, type: "structure" },
-        {
-          userId,
-          word: item.pattern,
-          meaning: item.meaning,
-          type: "structure",
-          example: item.example,
-          exampleTranslation: "", // Will be empty for voice chat structures
-          source: "voice_chat",
-          level: "intermediate",
-          easeFactor: 2.5,
-          interval: 1,
-          repetitions: 0,
-          nextReviewDate: new Date(),
-          isLearned: false,
-          timesReviewed: 0,
-          timesCorrect: 0,
-          timesIncorrect: 0
-        },
+        structureData,
         { upsert: true, new: true }
       );
+      
+      console.log(`  ✅ Saved: ${result.word} (ID: ${result._id})`);
     }
+    
+    console.log(`✅ Successfully saved ${items.length} grammar structures`);
   } catch (err) {
-    console.error("Save structures error:", err);
+    console.error("❌ Save structures error:", err);
+    console.error("Error details:", err instanceof Error ? err.message : err);
   }
 }
 
