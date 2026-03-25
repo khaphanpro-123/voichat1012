@@ -152,27 +152,6 @@ Respond with ONLY valid JSON:`;
   };
 }
 
-// Get IPA pronunciation for a word (basic implementation)
-async function getIPAPronunciation(word: string): Promise<string> {
-  try {
-    // For now, return empty string. Could integrate with:
-    // - Free Dictionary API: https://api.dictionaryapi.dev/api/v2/entries/en/{word}
-    // - Or use a pronunciation library
-    
-    // Simple implementation using Free Dictionary API
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data[0] && data[0].phonetics && data[0].phonetics[0]) {
-        return data[0].phonetics[0].text || "";
-      }
-    }
-  } catch (error) {
-    console.log("IPA lookup failed for:", word);
-  }
-  return "";
-}
-
 // Save vocabulary to user's collection
 async function saveVocabulary(userId: string, items: VocabularyItem[]) {
   if (!items || items.length === 0 || userId === "anonymous") {
@@ -190,9 +169,6 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
     console.log(`💾 Saving ${items.length} vocabulary items for user ${userId}`);
     
     for (const item of items) {
-      // Get IPA pronunciation
-      const ipa = await getIPAPronunciation(item.word);
-      
       // Ensure we have a valid example
       const example = item.example || `Example: ${item.word}`;
       
@@ -204,7 +180,6 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
         partOfSpeech: item.partOfSpeech || "other", // Keep both for compatibility
         example: example,
         exampleTranslation: item.meaning || "Không có dịch",
-        ipa: ipa || "",
         source: "voice_chat",
         level: "intermediate",
         easeFactor: 2.5,

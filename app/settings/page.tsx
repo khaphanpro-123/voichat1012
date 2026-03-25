@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowLeft, Key, Play, ExternalLink, CheckCircle, 
-  Copy, Eye, EyeOff, Loader2, AlertCircle,
-  Video, ChevronDown, ChevronUp, Trash2, LogIn
-} from "lucide-react";
 
 type Provider = "groq" | "openai" | "gemini" | "cohere";
 
@@ -284,7 +279,7 @@ export default function SettingsPage() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-gray-800 animate-spin" />
+        <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
       </div>
     );
   }
@@ -292,19 +287,18 @@ export default function SettingsPage() {
   const userName = session?.user?.name || session?.user?.email || "User";
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
+    <div className="min-h-screen bg-white p-3 sm:p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard-new" className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition">
-            <ArrowLeft className="w-5 h-5 text-gray-800" />
+        <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <Link href="/dashboard-new" className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition flex-shrink-0">
+            <span className="text-xl">←</span>
           </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Key className="w-7 h-7 text-yellow-500" />
-              Cài đặt API Keys
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2 truncate">
+              🔑 Cài đặt API Keys
             </h1>
-            <p className="text-gray-600 text-base font-medium">
+            <p className="text-sm sm:text-base text-gray-600 font-medium truncate">
               {isLoggedIn ? `Xin chào, ${userName}` : "Chưa đăng nhập"}
             </p>
           </div>
@@ -315,21 +309,20 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-xl bg-yellow-50 border-2 border-yellow-400"
+            className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-yellow-50 border-2 border-yellow-400"
           >
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-yellow-800 font-bold text-lg mb-1">Bạn chưa đăng nhập</h3>
-                <p className="text-yellow-700 text-base mb-3">
-                  Vui lòng đăng nhập để lưu và quản lý API keys của bạn. API keys sẽ được lưu an toàn trong tài khoản.
+            <div className="flex items-start gap-2 sm:gap-3">
+              <span className="text-xl sm:text-2xl flex-shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-yellow-800 font-bold text-base sm:text-lg mb-1">Bạn chưa đăng nhập</h3>
+                <p className="text-yellow-700 text-sm sm:text-base mb-3">
+                  Vui lòng đăng nhập để lưu và quản lý API keys của bạn.
                 </p>
                 <Link
                   href="/auth/login"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition"
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-500 text-black font-bold text-sm sm:text-base rounded-lg hover:bg-yellow-400 transition"
                 >
-                  <LogIn className="w-4 h-4" />
-                  Đăng nhập ngay
+                  🔐 Đăng nhập ngay
                 </Link>
               </div>
             </div>
@@ -343,41 +336,41 @@ export default function SettingsPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className={`mb-6 p-4 rounded-xl flex items-center gap-2 ${
+              className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl flex items-center gap-2 text-sm sm:text-base ${
                 message.type === "success" 
                   ? "bg-green-50 border-2 border-green-400 text-green-800"
                   : "bg-red-50 border-2 border-red-400 text-red-800"
               }`}
             >
-              {message.type === "success" ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-              <span className="font-semibold">{message.text}</span>
+              <span className="text-lg sm:text-xl flex-shrink-0">{message.type === "success" ? "✓" : "⚠️"}</span>
+              <span className="font-semibold flex-1">{message.text}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Why API Keys */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <div className="w-6 h-6 bg-yellow-500 rounded-full" />
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 sm:p-6 border-2 border-purple-200 mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">💡</span>
             Tại sao cần API key riêng?
           </h2>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {[
               { icon: "🚀", text: "Không giới hạn số lượt sử dụng" },
               { icon: "⚡", text: "Tốc độ phản hồi nhanh hơn" },
               { icon: "🔒", text: "Bảo mật - key chỉ lưu trong tài khoản bạn" },
               { icon: "💰", text: "Tự kiểm soát chi phí API" }
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm">
-                <span className="text-2xl">{item.icon}</span>
-                <span className="text-gray-800 font-medium">{item.text}</span>
+              <div key={i} className="flex items-center gap-2 sm:gap-3 bg-white rounded-xl p-2 sm:p-3 shadow-sm">
+                <span className="text-xl sm:text-2xl flex-shrink-0">{item.icon}</span>
+                <span className="text-gray-800 font-medium text-sm sm:text-base">{item.text}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* API Key Inputs */}
-        <div className="space-y-6 mb-8">
+        <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
           {(Object.keys(providerInfo) as Provider[]).map((provider) => {
             const info = providerInfo[provider];
             const guide = videoGuides.find(g => g.provider === provider)!;
@@ -392,66 +385,67 @@ export default function SettingsPage() {
                 className={`${info.bgColor} border-2 ${info.borderColor} rounded-2xl overflow-hidden shadow-sm`}
               >
                 {/* Provider Header */}
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center text-2xl shadow-md`}>
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-start gap-2 sm:gap-3 mb-3">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center text-xl sm:text-2xl shadow-md flex-shrink-0`}>
                       {info.icon}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-gray-900 font-bold text-lg">{info.name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
+                        <h3 className="text-gray-900 font-bold text-base sm:text-lg">{info.name}</h3>
                         {info.recommended && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Khuyên dùng</span>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">Khuyên dùng</span>
                         )}
                         {hasSavedKey && (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">✓ Đã lưu</span>
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">✓ Đã lưu</span>
                         )}
                       </div>
-                      <p className="text-gray-600 font-medium">{info.description}</p>
+                      <p className="text-gray-600 font-medium text-xs sm:text-sm">{info.description}</p>
                     </div>
                   </div>
+                  
                   <a
                     href={info.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1 px-3 py-1.5 bg-white ${info.textColor} rounded-lg text-sm font-semibold hover:opacity-80 shadow-sm border ${info.borderColor}`}
+                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white ${info.textColor} rounded-lg text-sm font-semibold hover:opacity-80 shadow-sm border ${info.borderColor}`}
                   >
-                    Lấy key <ExternalLink className="w-3 h-3" />
+                    Lấy key 🔗
                   </a>
                 </div>
 
                 {/* Saved Key Display */}
                 {hasSavedKey && (
-                  <div className="px-4 pb-2">
-                    <div className="flex items-center gap-2 p-3 bg-white rounded-xl border-2 border-green-300 shadow-sm">
-                      <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                      <span className="text-green-700 font-mono text-sm flex-1 font-semibold">
+                  <div className="px-3 sm:px-4 pb-2">
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-xl border-2 border-green-300 shadow-sm">
+                      <span className="text-green-600 text-lg sm:text-xl flex-shrink-0">✓</span>
+                      <span className="text-green-700 font-mono text-xs sm:text-sm flex-1 font-semibold truncate">
                         {showKeys[provider] ? savedKeys[provider] : maskKey(savedKeys[provider])}
                       </span>
                       <button
                         onClick={() => setShowKeys({ ...showKeys, [provider]: !showKeys[provider] })}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg"
+                        className="p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0"
                         title={showKeys[provider] ? "Ẩn key" : "Hiện key"}
                       >
-                        {showKeys[provider] ? <EyeOff className="w-4 h-4 text-gray-500" /> : <Eye className="w-4 h-4 text-gray-500" />}
+                        <span className="text-base sm:text-lg">{showKeys[provider] ? "🙈" : "👁️"}</span>
                       </button>
                       <button
                         onClick={() => copyToClipboard(savedKeys[provider])}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg"
+                        className="p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0"
                         title="Copy key"
                       >
-                        <Copy className="w-4 h-4 text-gray-500" />
+                        <span className="text-base sm:text-lg">📋</span>
                       </button>
                       <button
                         onClick={() => handleDelete(provider)}
                         disabled={deleting === provider || !isLoggedIn}
-                        className="p-1.5 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                        className="p-1.5 hover:bg-red-50 rounded-lg disabled:opacity-50 flex-shrink-0"
                         title="Xóa key"
                       >
                         {deleting === provider ? (
-                          <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
+                          <div className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
                         ) : (
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          <span className="text-base sm:text-lg">🗑️</span>
                         )}
                       </button>
                     </div>
@@ -459,7 +453,7 @@ export default function SettingsPage() {
                 )}
 
                 {/* Input for new/update key */}
-                <div className="px-4 pb-4">
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4">
                   <div className="relative">
                     <input
                       type="text"
@@ -467,11 +461,11 @@ export default function SettingsPage() {
                       onChange={(e) => setKeys({ ...keys, [provider]: e.target.value })}
                       placeholder={hasSavedKey ? `Nhập key mới để cập nhật...` : `Nhập ${info.name} API Key...`}
                       disabled={!isLoggedIn}
-                      className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      className="w-full bg-white border-2 border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     />
                   </div>
                   {hasSavedKey && (
-                    <p className="text-gray-500 text-sm mt-2 font-medium">
+                    <p className="text-gray-500 text-xs sm:text-sm mt-2 font-medium">
                       💡 Nhập key mới ở trên để thay thế key hiện tại
                     </p>
                   )}
@@ -480,13 +474,12 @@ export default function SettingsPage() {
                 {/* Video Guide Toggle */}
                 <button
                   onClick={() => setExpandedGuide(isExpanded ? null : provider)}
-                  className="w-full px-4 py-3 bg-white/50 flex items-center justify-between text-gray-600 hover:text-gray-900 hover:bg-white/80 transition border-t border-gray-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/50 flex items-center justify-between text-gray-600 hover:text-gray-900 hover:bg-white/80 transition border-t border-gray-200 text-sm sm:text-base"
                 >
                   <span className="flex items-center gap-2 font-medium">
-                    <Play className="w-4 h-4" />
-                    Xem hướng dẫn lấy API key
+                    ▶️ Xem hướng dẫn lấy API key
                   </span>
-                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <span className="text-lg">{isExpanded ? "▲" : "▼"}</span>
                 </button>
 
                 {/* Expanded Guide */}
@@ -498,36 +491,34 @@ export default function SettingsPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="p-4 bg-white/70 space-y-4 border-t border-gray-200">
-                        {/* Video Thumbnail */}
+                      <div className="p-3 sm:p-4 bg-white/70 space-y-3 sm:space-y-4 border-t border-gray-200">
+                        {/* Video Placeholder */}
                         <button
                           onClick={() => setShowVideoModal(provider)}
-                          className="relative w-full aspect-video rounded-xl overflow-hidden group shadow-md"
+                          className="relative w-full aspect-video rounded-xl overflow-hidden group shadow-md bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
                         >
                           <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-transparent z-10" />
                           <div className="absolute inset-0 flex items-center justify-center z-20">
-                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition shadow-lg">
-                              <Play className="w-8 h-8 text-white ml-1" />
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition shadow-lg">
+                              <span className="text-2xl sm:text-3xl ml-1">▶️</span>
                             </div>
                           </div>
                           <div className="absolute bottom-2 right-2 z-20 bg-black/70 px-2 py-1 rounded text-white text-xs font-semibold">
                             {guide.duration}
                           </div>
-                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                            <Video className="w-12 h-12 text-gray-400" />
-                          </div>
+                          <span className="text-4xl sm:text-5xl text-gray-400">📹</span>
                         </button>
 
                         {/* Steps */}
                         <div>
-                          <h4 className="text-gray-800 font-bold mb-2">Các bước thực hiện:</h4>
+                          <h4 className="text-gray-800 font-bold mb-2 text-sm sm:text-base">Các bước thực hiện:</h4>
                           <ol className="space-y-2">
                             {guide.steps.map((step, i) => (
-                              <li key={i} className="flex items-start gap-2 text-gray-700 font-medium">
+                              <li key={i} className="flex items-start gap-2 text-gray-700 font-medium text-xs sm:text-sm">
                                 <span className={`w-5 h-5 ${info.bgColor} ${info.textColor} rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 border ${info.borderColor}`}>
                                   {i + 1}
                                 </span>
-                                {step}
+                                <span className="flex-1">{step}</span>
                               </li>
                             ))}
                           </ol>
@@ -545,27 +536,35 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving || !isLoggedIn || (!keys.groq && !keys.openai && !keys.gemini && !keys.cohere)}
-          className="w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-lg rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-3 sm:py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-base sm:text-lg rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
         >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-          {saving ? "Đang lưu..." : !isLoggedIn ? "Đăng nhập để lưu" : "Lưu API Keys"}
+          {saving ? (
+            <>
+              <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
+              Đang lưu...
+            </>
+          ) : (
+            <>
+              {!isLoggedIn ? "🔐 Đăng nhập để lưu" : "✓ Lưu API Keys"}
+            </>
+          )}
         </button>
 
         {/* Quick Links */}
-        <div className="mt-8 grid grid-cols-2 gap-4">
+        <div className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4">
           <Link
             href="/dashboard-new/survey"
-            className="p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
+            className="p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
           >
-            <span className="text-2xl mb-2 block">📋</span>
-            <span className="text-gray-800 font-semibold">Khảo sát học tập</span>
+            <span className="text-2xl sm:text-3xl mb-2 block">📋</span>
+            <span className="text-gray-800 font-semibold text-xs sm:text-sm">Khảo sát học tập</span>
           </Link>
           <Link
             href="/dashboard-new/guide"
-            className="p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
+            className="p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition text-center shadow-sm"
           >
-            <span className="text-2xl mb-2 block">📖</span>
-            <span className="text-gray-800 font-semibold">Hướng dẫn sử dụng</span>
+            <span className="text-2xl sm:text-3xl mb-2 block">📖</span>
+            <span className="text-gray-800 font-semibold text-xs sm:text-sm">Hướng dẫn sử dụng</span>
           </Link>
         </div>
       </div>
@@ -577,7 +576,7 @@ export default function SettingsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4"
             onClick={() => setShowVideoModal(null)}
           >
             <motion.div
@@ -587,25 +586,25 @@ export default function SettingsPage() {
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl"
             >
-              <div className="p-4 flex items-center justify-between border-b border-gray-200">
-                <h3 className="text-gray-900 font-bold text-lg">
+              <div className="p-3 sm:p-4 flex items-center justify-between border-b border-gray-200">
+                <h3 className="text-gray-900 font-bold text-sm sm:text-lg truncate flex-1 pr-2">
                   {videoGuides.find(g => g.provider === showVideoModal)?.title}
                 </h3>
-                <button onClick={() => setShowVideoModal(null)} className="text-gray-500 hover:text-gray-900 text-xl font-bold">
+                <button onClick={() => setShowVideoModal(null)} className="text-gray-500 hover:text-gray-900 text-xl font-bold flex-shrink-0">
                   ✕
                 </button>
               </div>
-              <div className="aspect-video bg-gray-100 flex items-center justify-center">
+              <div className="aspect-video bg-gray-100 flex items-center justify-center p-4">
                 <div className="text-center text-gray-600">
-                  <Video className="w-16 h-16 mx-auto mb-4 text-red-500" />
-                  <p className="font-medium">Video hướng dẫn sẽ được cập nhật sớm</p>
+                  <span className="text-5xl sm:text-6xl block mb-4">📹</span>
+                  <p className="font-medium text-sm sm:text-base mb-4">Video hướng dẫn sẽ được cập nhật sớm</p>
                   <a
                     href={providerInfo[showVideoModal].link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 text-sm sm:text-base"
                   >
-                    Truy cập trực tiếp <ExternalLink className="w-4 h-4" />
+                    Truy cập trực tiếp 🔗
                   </a>
                 </div>
               </div>

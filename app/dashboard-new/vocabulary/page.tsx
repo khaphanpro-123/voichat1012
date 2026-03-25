@@ -472,120 +472,120 @@ export default function VocabularyPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 md:p-8 max-w-6xl mx-auto">
+      <div className="p-3 sm:p-4 md:p-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-teal-600" />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+              <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-teal-600" />
               Kho từ vựng
             </h1>
-            <p className="text-gray-600 mt-1">{vocabulary.length} từ vựng • {structures.length} cấu trúc</p>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">{vocabulary.length} từ vựng • {structures.length} cấu trúc</p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={loadVocabulary} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200">
-              <RefreshCw className="w-5 h-5" /> Làm mới
+          <div className="flex flex-wrap gap-2">
+            <button onClick={loadVocabulary} className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 text-sm sm:text-base">
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden xs:inline">Làm mới</span>
             </button>
             <button 
               onClick={() => setShowAddForm(!showAddForm)} 
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm sm:text-base"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Thêm từ mới
+              Thêm từ
             </button>
-            <button onClick={() => router.push("/dashboard-new/documents-simple")} className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700">
-              <Upload className="w-5 h-5" /> Upload tài liệu
+            <button onClick={() => router.push("/dashboard-new/documents-simple")} className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 text-sm sm:text-base">
+              <Upload className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden xs:inline">Upload</span>
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-xl">
+        <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 bg-gray-100 p-1 rounded-xl">
           <button onClick={() => setActiveTab("vocabulary")}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition ${activeTab === "vocabulary" ? "bg-white text-teal-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
-            <BookOpen className="w-5 h-5" />
-            Từ vựng
-            <span className="text-xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full">{vocabulary.length}</span>
+            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition text-xs sm:text-base ${activeTab === "vocabulary" ? "bg-white text-teal-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
+            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Từ vựng</span>
+            <span className="text-xs bg-teal-100 text-teal-600 px-1.5 sm:px-2 py-0.5 rounded-full">{vocabulary.length}</span>
           </button>
           <button onClick={() => setActiveTab("structures")}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition ${activeTab === "structures" ? "bg-white text-purple-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
-            <Languages className="w-5 h-5" />
-            Cấu trúc câu
-            <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">{structures.length}</span>
+            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition text-xs sm:text-base ${activeTab === "structures" ? "bg-white text-purple-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
+            <Languages className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Cấu trúc</span>
+            <span className="text-xs bg-purple-100 text-purple-600 px-1.5 sm:px-2 py-0.5 rounded-full">{structures.length}</span>
           </button>
         </div>
 
         {/* Quiz Button - only for vocabulary tab */}
         {activeTab === "vocabulary" && vocabulary.length >= 4 && (
           <motion.button onClick={startQuiz} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            className="w-full mb-6 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl shadow-lg flex items-center justify-center gap-3">
-            <Play className="w-6 h-6" />
-            <span className="text-lg font-bold">Bắt đầu Quiz</span>
-            <Zap className="w-6 h-6" />
+            className="w-full mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl shadow-lg flex items-center justify-center gap-2 sm:gap-3">
+            <Play className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-base sm:text-lg font-bold">Bắt đầu Quiz</span>
+            <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
           </motion.button>
         )}
 
         {/* Type Filter - only for vocabulary tab */}
         {activeTab === "vocabulary" && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-5 h-5 text-gray-500" />
-              <span className="font-medium text-gray-700">Lọc theo loại từ:</span>
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+              <span className="font-medium text-gray-700 text-sm sm:text-base">Lọc theo loại từ:</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {WORD_TYPES.map((type) => {
                 const count = type.key === "all" ? vocabulary.length : groupedVocabulary[type.key]?.length || 0;
                 return (
                   <button key={type.key} onClick={() => setSelectedType(type.key)}
-                    className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedType === type.key ? "bg-teal-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
+                    className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedType === type.key ? "bg-teal-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
                     <span>{type.label}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${selectedType === type.key ? "bg-white/20" : "bg-gray-100"}`}>{count}</span>
+                    <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedType === type.key ? "bg-white/20" : "bg-gray-100"}`}>{count}</span>
                   </button>
                 );
               })}
             </div>
             
             {/* Source Filter */}
-            <div className="flex items-center gap-2 mt-4 mb-2">
-              <BookOpen className="w-5 h-5 text-gray-500" />
-              <span className="font-medium text-gray-700">Lọc theo nguồn:</span>
+            <div className="flex items-center gap-2 mt-3 sm:mt-4 mb-2">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+              <span className="font-medium text-gray-700 text-sm sm:text-base">Lọc theo nguồn:</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               <button 
                 onClick={() => setSelectedSource("all")}
-                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "all" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "all" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
                 <span>Tất cả</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "all" ? "bg-white/20" : "bg-gray-100"}`}>
+                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "all" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.length}
                 </span>
               </button>
               <button 
                 onClick={() => setSelectedSource("voice_chat")}
-                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "voice_chat" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "voice_chat" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
-                <span>🎤 Voice Chat</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "voice_chat" ? "bg-white/20" : "bg-gray-100"}`}>
+                <span>🎤 Chat</span>
+                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "voice_chat" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.filter(v => v.source === "voice_chat").length}
                 </span>
               </button>
               <button 
                 onClick={() => setSelectedSource("document")}
-                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "document" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "document" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
                 <span>📄 Tài liệu</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "document" ? "bg-white/20" : "bg-gray-100"}`}>
+                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "document" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.filter(v => v.source === "document").length}
                 </span>
               </button>
               <button 
                 onClick={() => setSelectedSource("manual")}
-                className={`px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 ${selectedSource === "manual" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "manual" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
                 <span>✍️ Thủ công</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${selectedSource === "manual" ? "bg-white/20" : "bg-gray-100"}`}>
+                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "manual" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.filter(v => v.source === "manual").length}
                 </span>
               </button>
@@ -594,21 +594,21 @@ export default function VocabularyPage() {
         )}
 
         {/* Search - Enhanced with database search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="relative mb-4 sm:mb-6">
+          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Tìm kiếm từ vựng trong kho..." 
+            placeholder="Tìm kiếm..." 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm" 
+            className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2 sm:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm text-sm sm:text-base" 
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
         </div>
@@ -619,92 +619,94 @@ export default function VocabularyPage() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-6 bg-white rounded-xl shadow-lg p-6 border-2 border-green-200"
+            className="mb-4 sm:mb-6 bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6 border-2 border-green-200"
           >
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Thêm từ vựng mới
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Từ vựng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newWord.word}
+                    onChange={(e) => setNewWord({ ...newWord, word: e.target.value })}
+                    placeholder="Nhập từ..."
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Nghĩa <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newWord.meaning}
+                    onChange={(e) => setNewWord({ ...newWord, meaning: e.target.value })}
+                    placeholder="Nhập nghĩa..."
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Từ vựng <span className="text-red-500">*</span>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  Câu ví dụ
                 </label>
                 <input
                   type="text"
-                  value={newWord.word}
-                  onChange={(e) => setNewWord({ ...newWord, word: e.target.value })}
-                  placeholder="Nhập từ tiếng Anh..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  value={newWord.example}
+                  onChange={(e) => setNewWord({ ...newWord, example: e.target.value })}
+                  placeholder="Nhập câu ví dụ..."
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nghĩa tiếng Việt <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={newWord.meaning}
-                  onChange={(e) => setNewWord({ ...newWord, meaning: e.target.value })}
-                  placeholder="Nhập nghĩa..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Loại từ
+                  </label>
+                  <select
+                    value={newWord.type}
+                    onChange={(e) => setNewWord({ ...newWord, type: e.target.value })}
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                  >
+                    <option value="noun">Danh từ</option>
+                    <option value="verb">Động từ</option>
+                    <option value="adjective">Tính từ</option>
+                    <option value="adverb">Trạng từ</option>
+                    <option value="preposition">Giới từ</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Cấp độ
+                  </label>
+                  <select
+                    value={newWord.level}
+                    onChange={(e) => setNewWord({ ...newWord, level: e.target.value })}
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                  >
+                    <option value="beginner">Cơ bản</option>
+                    <option value="intermediate">Trung cấp</option>
+                    <option value="advanced">Nâng cao</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Câu ví dụ
-              </label>
-              <input
-                type="text"
-                value={newWord.example}
-                onChange={(e) => setNewWord({ ...newWord, example: e.target.value })}
-                placeholder="Nhập câu ví dụ..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loại từ
-                </label>
-                <select
-                  value={newWord.type}
-                  onChange={(e) => setNewWord({ ...newWord, type: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="noun">Danh từ</option>
-                  <option value="verb">Động từ</option>
-                  <option value="adjective">Tính từ</option>
-                  <option value="adverb">Trạng từ</option>
-                  <option value="preposition">Giới từ</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cấp độ
-                </label>
-                <select
-                  value={newWord.level}
-                  onChange={(e) => setNewWord({ ...newWord, level: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="beginner">Cơ bản</option>
-                  <option value="intermediate">Trung cấp</option>
-                  <option value="advanced">Nâng cao</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 sm:justify-end">
               <button
                 onClick={() => {
                   setShowAddForm(false);
@@ -716,14 +718,14 @@ export default function VocabularyPage() {
                     level: "intermediate"
                   });
                 }}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm sm:text-base"
               >
                 Hủy
               </button>
               <button
                 onClick={handleAddWord}
                 disabled={saving || !newWord.word || !newWord.meaning}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
               >
                 {saving ? (
                   <>
@@ -748,53 +750,49 @@ export default function VocabularyPage() {
           {activeTab === "vocabulary" && (
             <motion.div key="vocabulary" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               {filteredVocabulary.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-                  <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">{vocabulary.length === 0 ? "Chưa có từ vựng" : "Không tìm thấy"}</h3>
-                  <p className="text-gray-500">Upload tài liệu hoặc học qua hình ảnh để thêm từ vựng</p>
+                <div className="text-center py-8 sm:py-12 bg-white rounded-2xl shadow-md">
+                  <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">{vocabulary.length === 0 ? "Chưa có từ vựng" : "Không tìm thấy"}</h3>
+                  <p className="text-sm sm:text-base text-gray-500">Upload tài liệu hoặc học qua hình ảnh để thêm từ vựng</p>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-3">
-                  {filteredVocabulary.map((word: any) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">{filteredVocabulary.map((word: any) => {
                     const isPrimarySynonym = word.is_primary_synonym !== false;
                     const hasSynonymGroup = word.synonym_group_id !== undefined;
                     const similarityScore = word.similarity_to_primary;
                     
                     return (
                       <motion.div key={word._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-                        className={`rounded-xl p-4 shadow hover:shadow-md transition border ${
+                        className={`rounded-xl p-3 sm:p-4 shadow hover:shadow-md transition border ${
                           isPrimarySynonym 
                             ? 'bg-white border-gray-100' 
-                            : 'bg-blue-50 border-blue-200 ml-4'
+                            : 'bg-blue-50 border-blue-200 ml-2 sm:ml-4'
                         }`}>
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 sm:gap-2 mb-1 flex-wrap">
                               {!isPrimarySynonym && (
-                                <span className="text-blue-500" title="Từ đồng nghĩa">🔗</span>
+                                <span className="text-blue-500 text-sm sm:text-base" title="Từ đồng nghĩa">🔗</span>
                               )}
-                              <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
-                              {word.ipa && (
-                                <span className="text-sm text-gray-500 font-mono">/{word.ipa}/</span>
-                              )}
-                              <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200">
-                                <Volume2 className="w-3.5 h-3.5" />
+                              <h3 className="text-base sm:text-lg font-bold text-gray-900 break-words">{word.word}</h3>
+                              <button onClick={() => speakWord(word.word)} className="p-1 bg-teal-100 text-teal-600 rounded hover:bg-teal-200 flex-shrink-0">
+                                <Volume2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                               </button>
                             </div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">{getWordType(word)}</span>
+                            <div className="flex items-center gap-1 sm:gap-2 mb-2 flex-wrap">
+                              <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full whitespace-nowrap">{getWordType(word)}</span>
                               {!isPrimarySynonym && similarityScore && (
-                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200 whitespace-nowrap">
                                   {(similarityScore * 100).toFixed(0)}% tương đồng
                                 </span>
                               )}
-                              {word.source && <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">{word.source}</span>}
+                              {word.source && <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full whitespace-nowrap">{word.source}</span>}
                             </div>
-                            <p className="text-sm text-teal-600 font-medium mb-2">{getMeaning(word)}</p>
+                            <p className="text-sm text-teal-600 font-medium mb-2 break-words">{getMeaning(word)}</p>
                             {getExample(word) && (
-                              <div className="text-xs text-gray-600 bg-gray-50 rounded p-2">
+                              <div className="text-xs sm:text-sm text-gray-600 bg-gray-50 rounded p-2">
                                 <div className="flex items-start gap-1">
-                                  <p className="italic flex-1">&quot;{getExample(word)}&quot;</p>
+                                  <p className="italic flex-1 break-words">&quot;{getExample(word)}&quot;</p>
                                   <button 
                                     onClick={() => speakSentence(getExample(word))} 
                                     className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 flex-shrink-0"
@@ -823,43 +821,43 @@ export default function VocabularyPage() {
           {activeTab === "structures" && (
             <motion.div key="structures" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               {filteredStructures.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-                  <Languages className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Chưa có cấu trúc câu</h3>
-                  <p className="text-gray-500">Học qua hình ảnh hoặc voice chat để lưu cấu trúc câu</p>
+                <div className="text-center py-8 sm:py-12 bg-white rounded-2xl shadow-md">
+                  <Languages className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Chưa có cấu trúc câu</h3>
+                  <p className="text-sm sm:text-base text-gray-500">Học qua hình ảnh hoặc voice chat để lưu cấu trúc câu</p>
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-2 sm:gap-3 md:gap-4">
                   {filteredStructures.map((structure) => (
                     <motion.div key={structure._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5 hover:shadow-lg transition">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-purple-700 font-mono">{structure.word}</h3>
-                            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded-full">Cấu trúc</span>
+                      className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 hover:shadow-lg transition">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                            <h3 className="text-base sm:text-lg md:text-xl font-bold text-purple-700 font-mono break-words">{structure.word}</h3>
+                            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded-full whitespace-nowrap">Cấu trúc</span>
                           </div>
-                          <p className="text-gray-700 mb-2">{getMeaning(structure)}</p>
+                          <p className="text-sm sm:text-base text-gray-700 mb-2 break-words">{getMeaning(structure)}</p>
                           {getExample(structure) && (
-                            <div className="bg-white/50 rounded-lg p-3 mt-2">
+                            <div className="bg-white/50 rounded-lg p-2 sm:p-3 mt-2">
                               <div className="flex items-start gap-2">
-                                <p className="text-sm text-gray-600 flex-1">
+                                <p className="text-xs sm:text-sm text-gray-600 flex-1 break-words">
                                   <span className="font-medium text-purple-600">Ví dụ:</span> {getExample(structure)}
                                 </p>
                                 <button 
                                   onClick={() => speakSentence(getExample(structure))} 
-                                  className="p-1.5 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 flex-shrink-0"
+                                  className="p-1 sm:p-1.5 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 flex-shrink-0"
                                   title="Phát âm câu ví dụ"
                                 >
-                                  <Volume2 className="w-4 h-4" />
+                                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                               </div>
                             </div>
                           )}
                         </div>
                         <button onClick={() => deleteWord(structure._id)} disabled={deletingId === structure._id}
-                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50">
-                          {deletingId === structure._id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          className="p-1.5 sm:p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 flex-shrink-0">
+                          {deletingId === structure._id ? <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                         </button>
                       </div>
                     </motion.div>
