@@ -132,28 +132,42 @@ export default function DashboardHome() {
   // Video hướng dẫn - YouTube embed URL
   const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/1bW10HRrjy0";
 
-  // Check if user is new (first time)
+  // Check if user is new (first time) - only show once per user
   useEffect(() => {
     if (userId) {
       const tutorialKey = `l2brain_tutorial_completed_${userId}`;
       const completed = localStorage.getItem(tutorialKey);
-      if (!completed) {
+      
+      // Only show if not completed AND not already showing
+      if (!completed && !showTutorial) {
         // Show tutorial for new users after a short delay
         setTimeout(() => setShowTutorial(true), 500);
       }
     }
-  }, [userId]);
+  }, [userId]); // Only run when userId changes (login/logout)
 
   const handleTutorialComplete = () => {
     if (userId) {
-      localStorage.setItem(`l2brain_tutorial_completed_${userId}`, "true");
+      const tutorialKey = `l2brain_tutorial_completed_${userId}`;
+      localStorage.setItem(tutorialKey, "true");
+    }
+    setShowTutorial(false);
+  };
+
+  const handleTutorialClose = () => {
+    // Mark as completed even when closing (X button)
+    if (userId) {
+      const tutorialKey = `l2brain_tutorial_completed_${userId}`;
+      localStorage.setItem(tutorialKey, "true");
     }
     setShowTutorial(false);
   };
 
   // Pre-warm DB connection on mount (fire-and-forget)
   useEffect(() => {
-    fetch("/api/health").catch(() => {});
+    fetch("/api/health").catch(() => {
+      // Silently ignore health check errors
+    });
   }, []);
 
   // Load user progress (background refresh)
@@ -222,7 +236,7 @@ export default function DashboardHome() {
       {/* Onboarding Tutorial */}
       <OnboardingTutorial
         isOpen={showTutorial}
-        onClose={() => setShowTutorial(false)}
+        onClose={handleTutorialClose}
         onComplete={handleTutorialComplete}
       />
 

@@ -73,12 +73,22 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
       if (session?.user?.email) {
         try {
           const res = await fetch("/api/users/me");
+          
+          // Silently handle auth errors (401) - user not logged in
+          if (res.status === 401) {
+            return;
+          }
+          
+          if (!res.ok) {
+            return;
+          }
+          
           const data = await res.json();
           if (data.success && data.user.role === "admin") {
             setIsAdmin(true);
           }
         } catch (error) {
-          console.error("Check admin error:", error);
+          // Silently ignore errors - not critical for app functionality
         }
       }
     };
