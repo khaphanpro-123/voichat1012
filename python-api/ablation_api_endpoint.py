@@ -1,12 +1,12 @@
 """
-ABLATION STUDY API ENDPOINT - THESIS COMPLIANT VERSION
+ABLATION STUDY API ENDPOINT - 8-STEP PIPELINE VERSION
 
 Ensures TH1-TH4 produce different results according to thesis specifications.
-Uses 11-step pipeline with proper case naming and progressive improvement.
+Uses simplified 8-step pipeline with integrated scoring and normalization.
 
 Endpoint: POST /api/ablation-study
 
-VERSION: 3.0.0 - Thesis Compliant (2026-03-18)
+VERSION: 4.0.0 - 8-Step Pipeline (2026-03-29)
 """
 
 from fastapi import APIRouter, HTTPException
@@ -173,13 +173,13 @@ def run_thesis_compliant_configuration(
 @router.post("/ablation-study", response_model=AblationResponse)
 async def run_ablation_study(request: AblationRequest):
     """
-    Run Thesis-Compliant Ablation Study
+    Run 8-Step Pipeline Ablation Study
     
     Ensures TH1-TH4 produce different results according to thesis specifications:
-    - TH1: Extraction Module (Steps 1,3,4,5) - Basic extraction
+    - TH1: Extraction Module (Steps 1,3,4,5) - Phrases (2 features) + Words (4 features)
     - TH2: + Structural Context (Steps 1,2,3,4,5) - + Heading analysis  
-    - TH3: + Semantic Scoring (Steps 1-8) - + ML scoring/merging
-    - TH4: Full System (Steps 1-11) - Complete pipeline
+    - TH3: + Score Normalization (Steps 1-6) - + Shift/Normalize/Rank
+    - TH4: Full System (Steps 1-8) - + Topic Modeling + Flashcard Generation
     
     Request body:
     {
@@ -214,30 +214,30 @@ async def run_ablation_study(request: AblationRequest):
         print(f"Pipeline available: {PIPELINE_AVAILABLE}")
         print(f"{'='*80}")
         
-        # Define thesis-compliant configuration mapping
+        # Define 8-step pipeline configuration mapping
         thesis_configs = {
             'TH1: Extraction Module': {
                 'config_name': 'V1_Baseline',
-                'description': 'Cấu hình cơ bản - Bước 1,3,4,5 (Tiền xử lý + Trích xuất từ vựng)',
+                'description': 'Trích xuất cơ bản - Phrases (2 features: TF-IDF + Cohesion) + Words (4 features: TF-IDF + Length + Morph + Coverage)',
                 'steps': '1,3,4,5',
                 'expected_count': 15
             },
             'TH2: + Structural Context': {
                 'config_name': 'V2_Context',
-                'description': 'TH1 + Phân tích cấu trúc tiêu đề và ánh xạ ngữ cảnh (Bước 2-3)',
+                'description': 'TH1 + Phân tích tiêu đề và ánh xạ ngữ cảnh cấu trúc (Bước 2-3)',
                 'steps': '1,2,3,4,5',
                 'expected_count': 18
             },
-            'TH3: + Semantic Scoring': {
+            'TH3: + Score Normalization': {
                 'config_name': 'V3_Scoring',
-                'description': 'TH2 + Chấm điểm ngữ nghĩa và hợp nhất từ vựng (Bước 6-8)', 
-                'steps': '1,2,3,4,5,6,7,8',
-                'expected_count': 22
+                'description': 'TH2 + Chuẩn hóa điểm (Shift + Normalize + Sort + Rank)', 
+                'steps': '1,2,3,4,5,6',
+                'expected_count': 20
             },
             'TH4: Full System': {
                 'config_name': 'V5_Full',
-                'description': 'Hệ thống hoàn chỉnh với phân cụm chủ đề và xếp hạng (Bước 9-11)',
-                'steps': '1,2,3,4,5,6,7,8,9,10,11',
+                'description': 'Hệ thống hoàn chỉnh với Topic Modeling (KMeans) và Flashcard Generation',
+                'steps': '1,2,3,4,5,6,7,8',
                 'expected_count': 25
             }
         }
@@ -330,12 +330,12 @@ async def run_ablation_study(request: AblationRequest):
         
         # Thesis compliance verification
         thesis_compliance = {
-            'case_naming': 'TH1-TH4 (Thesis Compliant)',
-            'step_count': '11 steps (Thesis Compliant)',
+            'case_naming': 'TH1-TH4 (8-Step Pipeline)',
+            'step_count': '8 steps (Simplified Pipeline)',
             'different_results': _verify_different_results(results),
             'progressive_improvement': _verify_progressive_improvement(results),
-            'pipeline_architecture': 'Modular Semantic Pipeline',
-            'version': '3.0.0'
+            'pipeline_architecture': 'Simplified 8-Step Pipeline',
+            'version': '4.0.0'
         }
         
         print(f"\n{'='*80}")
@@ -420,7 +420,7 @@ def _verify_progressive_improvement(results: List[Dict]) -> str:
 @router.get("/ablation-study/example")
 async def get_example_request():
     """
-    Get example request for thesis-compliant ablation study
+    Get example request for 8-step pipeline ablation study
     """
     return {
         "example_request": {
@@ -449,15 +449,15 @@ Machine learning has numerous applications including natural language processing
         },
         "usage": "POST /api/ablation-study with the above JSON body",
         "expected_results": {
-            "TH1": "Basic extraction (~15 items, F1: ~0.65)",
-            "TH2": "Enhanced context (~18 items, F1: ~0.70)", 
-            "TH3": "Semantic scoring (~22 items, F1: ~0.81)",
-            "TH4": "Full system (~25 items, F1: ~0.86)"
+            "TH1": "Extraction Module (~15-18 items, F1: ~0.60-0.65) - Phrases (2 features) + Words (4 features)",
+            "TH2": "Enhanced context (~18-20 items, F1: ~0.65-0.70) - + Heading analysis", 
+            "TH3": "Score normalization (~20-22 items, F1: ~0.70-0.75) - + Shift/Normalize/Rank",
+            "TH4": "Full system (~22-25 items, F1: ~0.75-0.82) - + Topic Modeling + Flashcards"
         },
         "thesis_compliance": {
-            "case_naming": "TH1-TH4 (Thesis Compliant)",
-            "step_count": "11 steps (Thesis Compliant)",
-            "architecture": "Modular Semantic Pipeline v3.0.0"
+            "case_naming": "TH1-TH4 (8-Step Pipeline)",
+            "step_count": "8 steps (Simplified Pipeline)",
+            "architecture": "Simplified 8-Step Pipeline v4.0.0"
         }
     }
 
