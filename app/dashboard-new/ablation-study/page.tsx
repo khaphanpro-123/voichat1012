@@ -341,7 +341,7 @@ reinforcement learning`);
             <div className="text-center sm:text-left">
               <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-1 sm:mb-2">Ablation Study Analysis</h1>
               <p className="text-sm sm:text-base lg:text-xl text-gray-600">
-                Đánh giá hiệu quả từng thành phần trong pipeline 11 bước theo luận văn
+                Đánh giá hiệu quả từng thành phần trong pipeline 8 bước đơn giản hóa
               </p>
             </div>
           </div>
@@ -349,7 +349,7 @@ reinforcement learning`);
         
         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg sm:rounded-xl p-4 sm:p-6 lg:p-8">
           <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-800 mb-4 sm:mb-6 text-center sm:text-left">
-            Hướng dẫn đọc kết quả Ablation Study
+            Hướng dẫn đọc kết quả Ablation Study (Pipeline 8 Bước)
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             <div>
@@ -370,23 +370,23 @@ reinforcement learning`);
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-blue-700 mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">Cấu hình các trường hợp:</h4>
+              <h4 className="font-semibold text-blue-700 mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">Cấu hình các trường hợp (Pipeline 8 Bước):</h4>
               <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-blue-700">
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH1 - Extraction Module:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,3,4,5 - Trích xuất cơ bản (~15 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,3,4,5 - Phrases (2 features) + Words (4 features) (~15-18 từ vựng)</span>
                 </div>
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH2 - + Structural Context:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc (~18 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,2,3,4,5 - Thêm phân tích tiêu đề (~18-20 từ vựng)</span>
                 </div>
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
-                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Semantic Scoring:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-8 - Thêm chấm điểm ngữ nghĩa (~22 từ vựng)</span>
+                  <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Score Normalization:</strong>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-6 - Thêm chuẩn hóa điểm (~20-22 từ vựng)</span>
                 </div>
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH4 - Full System:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-11 - Hệ thống hoàn chỉnh (~25 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-8 - Hệ thống hoàn chỉnh (~22-25 từ vựng)</span>
                 </div>
               </div>
             </div>
@@ -804,7 +804,7 @@ reinforcement learning`);
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center sm:text-left">
-                Cấu Hình Pipeline Theo Luận Văn
+                Cấu Hình Pipeline 8 Bước
               </CardTitle>
               <CardDescription className="text-sm sm:text-base lg:text-lg">
                 Chi tiết các bước xử lý trong từng trường hợp thử nghiệm
@@ -837,24 +837,24 @@ reinforcement learning`);
                 </div>
                 <div>
                   <h4 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-purple-600 text-center sm:text-left">
-                    Thesis Configuration
+                    Pipeline 8 Bước Configuration
                   </h4>
                   <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-xs sm:text-sm lg:text-base">
                     <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH1 - Extraction Module:</strong>
-                      <span className="text-gray-700 break-words">Bước 1,3,4,5 - Chỉ trích xuất cơ bản, không có context enhancement</span>
+                      <span className="text-gray-700 break-words">Bước 1,3,4,5 - Phrases (2 features: TF-IDF + Cohesion) + Words (4 features: TF-IDF + Length + Morph + Coverage)</span>
                     </div>
                     <div className="p-3 sm:p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH2 - + Structural Context:</strong>
                       <span className="text-gray-700 break-words">Bước 1,2,3,4,5 - Thêm phân tích tiêu đề và ánh xạ ngữ cảnh cấu trúc</span>
                     </div>
                     <div className="p-3 sm:p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
-                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Semantic Scoring:</strong>
-                      <span className="text-gray-700 break-words">Bước 1-8 - Thêm thuật toán chấm điểm ngữ nghĩa và hợp nhất từ vựng</span>
+                      <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Score Normalization:</strong>
+                      <span className="text-gray-700 break-words">Bước 1-6 - Thêm chuẩn hóa điểm (Shift + Normalize + Sort + Rank)</span>
                     </div>
                     <div className="p-3 sm:p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH4 - Full System:</strong>
-                      <span className="text-gray-700 break-words">Bước 1-11 - Hệ thống hoàn chỉnh với topic modeling và ranking</span>
+                      <span className="text-gray-700 break-words">Bước 1-8 - Hệ thống hoàn chỉnh với Topic Modeling (KMeans) và Flashcard Generation</span>
                     </div>
                   </div>
                 </div>
