@@ -744,3 +744,9 @@ export default function VocabularyPage() {
             </div>
           </motion.div>
         )}
+
+      </div>
+    </div>
+  </DashboardLayout>
+  );
+}

@@ -837,7 +837,7 @@ reinforcement learning`);
                 </div>
                 <div>
                   <h4 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-purple-600 text-center sm:text-left">
-                    Pipeline 8 Bước Configuration
+                    Thesis Configuration
                   </h4>
                   <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-xs sm:text-sm lg:text-base">
                     <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
