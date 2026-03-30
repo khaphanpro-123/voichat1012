@@ -28,28 +28,21 @@ export function LoginForm() {
         return;
       }
 
-      // Wait for session to be ready
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Get session to check role
+      // Get session immediately to check role (no delay needed)
       const { getSession } = await import("next-auth/react");
       const session = await getSession();
       
-      console.log("Session after login:", session);
-      
       if (session?.user) {
         const userRole = (session.user as any).role;
-        console.log("User role from session:", userRole);
         
+        // Redirect based on role
         if (userRole === "admin") {
-          console.log("Redirecting to admin dashboard");
           router.replace("/admin");
         } else {
-          console.log("Redirecting to user dashboard");
           router.replace("/dashboard-new");
         }
       } else {
-        console.log("No session, redirecting to user dashboard");
+        // Fallback to user dashboard
         router.replace("/dashboard-new");
       }
     } catch (err) {

@@ -3,8 +3,37 @@ import { connectDB } from "@/lib/db";
 import User from "@/app/models/User";
 import bcrypt from "bcryptjs";
 
+// Simple in-memory rate limiting
+const registerAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const attempt = registerAttempts.get(ip);
+  
+  if (!attempt || now > attempt.resetAt) {
+    registerAttempts.set(ip, { count: 1, resetAt: now + 300000 }); // 5 minute window
+    return true;
+  }
+  
+  if (attempt.count >= 3) { // Max 3 registrations per 5 minutes
+    return false;
+  }
+  
+  attempt.count++;
+  return true;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { success: false, message: "Too many registration attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { username, fullName, email, password } = await req.json();
 
     // Validate input
@@ -47,8 +76,15 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    // Check if username already exists
-    const existingUsername = await User.findOne({ username: username.toLowerCase() });
+    const normalizedUsername = username.toLowerCase();
+    const normalizedEmail = email.toLowerCase();
+
+    // Check both username and email in parallel for better performance
+    const [existingUsername, existingEmail] = await Promise.all([
+      User.findOne({ username: normalizedUsername }).lean().exec(),
+      User.findOne({ email: normalizedEmail }).lean().exec()
+    ]);
+
     if (existingUsername) {
       return NextResponse.json(
         { success: false, message: "Username đã được sử dụng" },
@@ -56,8 +92,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if email already exists
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) {
       return NextResponse.json(
         { success: false, message: "Email đã được đăng ký" },
@@ -65,14 +99,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash password with cost factor 10 (faster, still secure)
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create new user
     const newUser = await User.create({
-      username: username.toLowerCase(),
+      username: normalizedUsername,
       fullName: fullName.trim(),
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       password: hashedPassword,
       createdAt: new Date(),
     });
