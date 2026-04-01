@@ -9,6 +9,7 @@ pydantic==2.5.3
 
 # Basic utilities (pre-built wheels available)
 numpy==1.26.3
+pandas==2.1.4  # For data analysis and CSV export
 
 # Document processing (lightweight)
 PyPDF2==3.0.1

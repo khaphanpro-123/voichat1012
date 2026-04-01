@@ -96,7 +96,7 @@ async function callOpenAI(
 
 /**
  * Call Groq API (FREE tier - fast inference)
- * https://console.groq.com/keys
+ * OPTIMIZED: Reduced timeout and improved error handling
  */
 async function callGroq(
   prompt: string,
@@ -107,6 +107,9 @@ async function callGroq(
   const { temperature = 0.7, maxTokens = 1024 } = config;
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -118,8 +121,12 @@ async function callGroq(
         messages: [{ role: "user", content: prompt }],
         temperature,
         max_tokens: maxTokens,
+        stream: false // Ensure non-streaming for faster response
       }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (response.status === 429) {
       return { success: false, content: "", provider: "groq", model, error: "QUOTA_EXCEEDED" };
@@ -140,6 +147,9 @@ async function callGroq(
 
     return { success: true, content, provider: "groq", model };
   } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      return { success: false, content: "", provider: "groq", model, error: "TIMEOUT" };
+    }
     return { success: false, content: "", provider: "groq", model, error: String(err) };
   }
 }

@@ -202,6 +202,7 @@ export default function EnglishLiveChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'start',
+          userId: session?.user?.id || 'anonymous',
           learnerProfile: {
             level: profile.level,
             vietnameseLevel: 'native',
@@ -307,6 +308,7 @@ export default function EnglishLiveChat() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'voice',
+            userId: session?.user?.id || 'anonymous',
             audioBase64: base64,
             conversationHistory: messages.map(m => ({
               role: m.role,

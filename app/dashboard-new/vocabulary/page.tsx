@@ -745,6 +745,132 @@ export default function VocabularyPage() {
           </motion.div>
         )}
 
+        {/* Vocabulary List */}
+        {activeTab === "vocabulary" && (
+          <div className="space-y-3 sm:space-y-4">
+            {filteredVocabulary.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 text-gray-500">
+                <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                <p className="text-sm sm:text-base">Chưa có từ vựng nào</p>
+              </div>
+            ) : (
+              filteredVocabulary.map((word) => (
+                <motion.div
+                  key={word._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6 hover:shadow-lg transition-shadow border border-gray-100"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 break-words">{word.word}</h3>
+                        <button
+                          onClick={() => speakWord(word.word)}
+                          className="flex-shrink-0 p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
+                        </button>
+                        {word.ipa && (
+                          <span className="text-xs sm:text-sm text-gray-500 font-mono">/{word.ipa}/</span>
+                        )}
+                      </div>
+                      <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 break-words">{getMeaning(word)}</p>
+                      {getExample(word) && (
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <p className="text-xs sm:text-sm md:text-base text-gray-600 italic flex-1 break-words">{getExample(word)}</p>
+                            <button
+                              onClick={() => speakSentence(getExample(word))}
+                              className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
+                            >
+                              <Volume2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                            </button>
+                          </div>
+                          {getExampleTranslation(word) && (
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1 break-words">{getExampleTranslation(word)}</p>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+                        <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-teal-100 text-teal-700 rounded-full text-xs sm:text-sm font-medium">
+                          {getWordType(word)}
+                        </span>
+                        <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm">
+                          {word.level}
+                        </span>
+                        {word.source && (
+                          <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm">
+                            {word.source === "voice_chat" ? "🎤 Chat" : word.source === "document" ? "📄 Tài liệu" : "✍️ Thủ công"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteWord(word._id)}
+                      disabled={deletingId === word._id}
+                      className="flex-shrink-0 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {deletingId === word._id ? (
+                        <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Structures List */}
+        {activeTab === "structures" && (
+          <div className="space-y-3 sm:space-y-4">
+            {filteredStructures.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 text-gray-500">
+                <Languages className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                <p className="text-sm sm:text-base">Chưa có cấu trúc nào</p>
+              </div>
+            ) : (
+              filteredStructures.map((structure) => (
+                <motion.div
+                  key={structure._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-xl shadow-md p-3 sm:p-4 md:p-6 hover:shadow-lg transition-shadow border border-purple-100"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-900 mb-2 break-words">{structure.word}</h3>
+                      <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 break-words">{getMeaning(structure)}</p>
+                      {getExample(structure) && (
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-purple-50 rounded-lg">
+                          <p className="text-xs sm:text-sm md:text-base text-gray-600 italic break-words">{getExample(structure)}</p>
+                          {getExampleTranslation(structure) && (
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1 break-words">{getExampleTranslation(structure)}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteWord(structure._id)}
+                      disabled={deletingId === structure._id}
+                      className="flex-shrink-0 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {deletingId === structure._id ? (
+                        <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   </DashboardLayout>

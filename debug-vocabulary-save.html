@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Vocabulary Save</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+        .status { font-weight: bold; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Debug Vocabulary Save System</h1>
+        <p>Tool để kiểm tra và debug các vấn đề lưu từ vựng</p>
+
+        <!-- Test 1: Check Session -->
+        <div class="test-section" id="session-test">
+            <h3>1. Kiểm tra Session & Authentication</h3>
+            <button onclick="checkSession()">Kiểm tra Session</button>
+            <div class="status" id="session-status"></div>
+            <div class="log" id="session-log"></div>
+        </div>
+
+        <!-- Test 2: Test Vocabulary API -->
+        <div class="test-section" id="vocab-api-test">
+            <h3>2. Test Vocabulary API</h3>
+            <button onclick="testVocabAPI()">Test Save Vocabulary</button>
+            <button onclick="testGetVocab()">Test Get Vocabulary</button>
+            <div class="status" id="vocab-status"></div>
+            <div class="log" id="vocab-log"></div>
+        </div>
+
+        <!-- Test 3: Test Voice Chat Enhanced -->
+        <div class="test-section" id="voice-chat-test">
+            <h3>3. Test Voice Chat Enhanced</h3>
+            <button onclick="testVoiceChat()">Test Chat với Auto-save</button>
+            <div class="status" id="voice-status"></div>
+            <div class="log" id="voice-log"></div>
+        </div>
+
+        <!-- Test 6: Test English Live Chat -->
+        <div class="test-section" id="english-chat-test">
+            <h3>6. Test English Live Chat</h3>
+            <button onclick="testEnglishLiveChat()">Test English Live Chat API</button>
+            <div class="status" id="english-status"></div>
+            <div class="log" id="english-log"></div>
+        </div>
+
+        <!-- Test 7: Test Documents Simple -->
+        <div class="test-section" id="docs-test">
+            <h3>7. Test Documents Simple (Simulation)</h3>
+            <button onclick="testDocumentsSave()">Simulate Document Analysis</button>
+            <div class="status" id="docs-status"></div>
+            <div class="log" id="docs-log"></div>
+        </div>
+
+        <!-- Test 8: Database Check -->
+        <div class="test-section" id="db-test">
+            <h3>8. Kiểm tra Database</h3>
+            <button onclick="checkDatabase()">Check MongoDB Connection</button>
+            <div class="status" id="db-status"></div>
+            <div class="log" id="db-log"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(sectionId, message, type = 'info') {
+            const logElement = document.getElementById(sectionId + '-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'orange' : 'black';
+            logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setStatus(sectionId, message, type = 'info') {
+            const statusElement = document.getElementById(sectionId + '-status');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            statusElement.textContent = message;
+            statusElement.parentElement.className = 'test-section ' + className;
+        }
+
+        async function checkSession() {
+            log('session', 'Checking session...', 'info');
+            setStatus('session', 'Đang kiểm tra...', 'warning');
+
+            try {
+                const response = await fetch('/api/auth/session');
+                const session = await response.json();
+                
+                log('session', `Session response: ${JSON.stringify(session)}`, 'info');
+                
+                if (session?.user) {
+                    log('session', `✅ User logged in: ${session.user.email}`, 'success');
+                    log('session', `✅ User ID: ${session.user.id}`, 'success');
+                    setStatus('session', '✅ Session OK - User đã đăng nhập', 'success');
+                    
+                    // Store userId for other tests
+                    window.debugUserId = session.user.id;
+                } else {
+                    log('session', '❌ No user session found', 'error');
+                    setStatus('session', '❌ Chưa đăng nhập - Cần login trước', 'error');
+                    window.debugUserId = null;
+                }
+            } catch (error) {
+                log('session', `❌ Session check failed: ${error.message}`, 'error');
+                setStatus('session', '❌ Lỗi kiểm tra session', 'error');
+                window.debugUserId = null;
+            }
+        }
+
+        async function testVocabAPI() {
+            log('vocab', 'Testing vocabulary API...', 'info');
+            setStatus('vocab', 'Đang test API...', 'warning');
+
+            try {
+                const userId = window.debugUserId;
+                if (!userId) {
+                    log('vocab', '⚠️ No user session - testing will use anonymous', 'warning');
+                }
+
+                // Test save vocabulary
+                const testWord = {
+                    word: 'debug-test-' + Date.now(),
+                    meaning: 'từ test để debug',
+                    partOfSpeech: 'noun',
+                    example: 'This is a debug test word.',
+                    source: 'debug'
+                };
+
+                log('vocab', `Saving test word: ${testWord.word}`, 'info');
+                
+                const saveResponse = await fetch('/api/vocabulary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testWord)
+                });
+
+                const saveResult = await saveResponse.json();
+                log('vocab', `Save response status: ${saveResponse.status}`, 'info');
+                log('vocab', `Save response: ${JSON.stringify(saveResult)}`, 'info');
+
+                if (saveResponse.ok && saveResult.success) {
+                    log('vocab', '✅ Vocabulary save successful', 'success');
+                    log('vocab', `✅ Saved with userId: ${saveResult.userId}`, 'success');
+                    setStatus('vocab', '✅ API hoạt động tốt', 'success');
+                } else {
+                    log('vocab', `❌ Save failed: ${saveResult.error || 'Unknown error'}`, 'error');
+                    if (saveResponse.status === 401) {
+                        log('vocab', '❌ Authentication error - user not logged in', 'error');
+                    }
+                    setStatus('vocab', '❌ API lưu từ vựng bị lỗi', 'error');
+                }
+            } catch (error) {
+                log('vocab', `❌ API test failed: ${error.message}`, 'error');
+                setStatus('vocab', '❌ Lỗi kết nối API', 'error');
+            }
+        }
+
+        async function testGetVocab() {
+            log('vocab', 'Testing get vocabulary...', 'info');
+
+            try {
+                const response = await fetch('/api/vocabulary?limit=5');
+                const vocab = await response.json();
+                
+                log('vocab', `Get response: ${JSON.stringify(vocab)}`, 'info');
+                
+                if (response.ok && Array.isArray(vocab)) {
+                    log('vocab', `✅ Found ${vocab.length} vocabulary items`, 'success');
+                    vocab.forEach((item, i) => {
+                        log('vocab', `  ${i+1}. ${item.word} - ${item.meaning}`, 'info');
+                    });
+                } else {
+                    log('vocab', `❌ Get failed: ${vocab.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log('vocab', `❌ Get vocabulary failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testVoiceChat() {
+            log('voice', 'Testing voice chat enhanced...', 'info');
+            setStatus('voice', 'Đang test voice chat...', 'warning');
+
+            try {
+                const testMessage = 'Hello, can you help me learn English?';
+                const userId = window.debugUserId || 'anonymous';
+                
+                log('voice', `Sending message: "${testMessage}"`, 'info');
+                log('voice', `Using userId: ${userId}`, 'info');
+                
+                const response = await fetch('/api/voice-chat-enhanced', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'chat',
+                        message: testMessage,
+                        level: 'A2',
+                        userId: userId,
+                        autoSave: true
+                    })
+                });
+
+                const result = await response.json();
+                log('voice', `Response status: ${response.status}`, 'info');
+                log('voice', `Response: ${JSON.stringify(result)}`, 'info');
+
+                if (response.ok && result.success) {
+                    const vocabCount = result.response?.vocabulary?.length || 0;
+                    const structCount = result.response?.structures?.length || 0;
+                    
+                    log('voice', `✅ Chat successful`, 'success');
+                    log('voice', `📚 Vocabulary extracted: ${vocabCount} items`, 'info');
+                    log('voice', `🏗️ Structures extracted: ${structCount} items`, 'info');
+                    
+                    if (vocabCount > 0) {
+                        result.response.vocabulary.forEach((item, i) => {
+                            log('voice', `  ${i+1}. ${item.word} - ${item.meaning}`, 'info');
+                        });
+                    }
+                    
+                    // Test if vocabulary was actually saved
+                    if (userId !== 'anonymous') {
+                        log('voice', 'Checking if vocabulary was saved to database...', 'info');
+                        setTimeout(async () => {
+                            try {
+                                const checkResponse = await fetch('/api/vocabulary?limit=5&source=voice_chat');
+                                const savedVocab = await checkResponse.json();
+                                if (checkResponse.ok && Array.isArray(savedVocab)) {
+                                    log('voice', `✅ Found ${savedVocab.length} saved vocabulary items`, 'success');
+                                    savedVocab.forEach((item, i) => {
+                                        log('voice', `  Saved ${i+1}. ${item.word} - ${item.meaning}`, 'success');
+                                    });
+                                } else {
+                                    log('voice', `⚠️ Could not verify saved vocabulary: ${JSON.stringify(savedVocab)}`, 'warning');
+                                }
+                            } catch (err) {
+                                log('voice', `❌ Error checking saved vocabulary: ${err.message}`, 'error');
+                            }
+                        }, 2000);
+                    }
+                    
+                    setStatus('voice', `✅ Voice chat OK - ${vocabCount} từ, ${structCount} cấu trúc`, 'success');
+                } else {
+                    log('voice', `❌ Chat failed: ${result.message || 'Unknown error'}`, 'error');
+                    setStatus('voice', '❌ Voice chat bị lỗi', 'error');
+                }
+            } catch (error) {
+                log('voice', `❌ Voice chat test failed: ${error.message}`, 'error');
+                setStatus('voice', '❌ Lỗi kết nối voice chat', 'error');
+            }
+        }
+
+        async function testEnglishLiveChat() {
+            log('english', 'Testing English Live Chat...', 'info');
+            setStatus('english', 'Đang test English Live Chat...', 'warning');
+
+            try {
+                const userId = window.debugUserId || 'anonymous';
+                
+                log('english', `Using userId: ${userId}`, 'info');
+                
+                // Test chat action
+                const response = await fetch('/api/english-live-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'chat',
+                        message: 'Hello, I want to practice English',
+                        conversationHistory: [],
+                        learnerProfile: {
+                            level: 'A2',
+                            vietnameseLevel: 'native',
+                            learningGoals: ['Daily conversation'],
+                            commonMistakes: ['Articles', 'Verb tenses'],
+                            interests: ['Music', 'Travel'],
+                            conversationCount: 0
+                        },
+                        config: {
+                            enableRecasting: true,
+                            enableIPlusOne: true,
+                            enableVietnameseSupport: true,
+                            speakingSpeed: 'normal',
+                            correctionStyle: 'implicit'
+                        },
+                        userId: userId
+                    })
+                });
+
+                const result = await response.json();
+                log('english', `Response status: ${response.status}`, 'info');
+                log('english', `Response: ${JSON.stringify(result)}`, 'info');
+
+                if (response.ok && result.success) {
+                    log('english', '✅ English Live Chat successful', 'success');
+                    log('english', `📝 Response: ${result.response}`, 'info');
+                    
+                    if (result.grammarAnalysis) {
+                        log('english', `📚 Grammar analysis found ${result.grammarAnalysis.errors?.length || 0} errors`, 'info');
+                    }
+                    
+                    setStatus('english', '✅ English Live Chat OK', 'success');
+                } else {
+                    log('english', `❌ English Live Chat failed: ${result.message || 'Unknown error'}`, 'error');
+                    setStatus('english', '❌ English Live Chat bị lỗi', 'error');
+                }
+            } catch (error) {
+                log('english', `❌ English Live Chat test failed: ${error.message}`, 'error');
+                setStatus('english', '❌ Lỗi kết nối English Live Chat', 'error');
+            }
+        }
+
+        async function testDocumentsSave() {
+            log('docs', 'Simulating documents analysis...', 'info');
+            setStatus('docs', 'Đang simulate...', 'warning');
+
+            try {
+                // Simulate vocabulary data from document analysis
+                const mockVocabulary = [
+                    {
+                        word: 'simulate-' + Date.now(),
+                        meaning: 'mô phỏng',
+                        partOfSpeech: 'verb',
+                        example: 'We simulate the document analysis process.',
+                        source: 'document'
+                    },
+                    {
+                        word: 'analysis-' + Date.now(),
+                        meaning: 'phân tích',
+                        partOfSpeech: 'noun', 
+                        example: 'The analysis shows good results.',
+                        source: 'document'
+                    }
+                ];
+
+                log('docs', `Simulating save of ${mockVocabulary.length} words`, 'info');
+
+                let savedCount = 0;
+                let failedCount = 0;
+
+                for (const item of mockVocabulary) {
+                    try {
+                        const response = await fetch('/api/vocabulary', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(item)
+                        });
+
+                        if (response.ok) {
+                            savedCount++;
+                            log('docs', `✅ Saved: ${item.word}`, 'success');
+                        } else {
+                            failedCount++;
+                            const error = await response.text();
+                            log('docs', `❌ Failed to save ${item.word}: ${error}`, 'error');
+                        }
+                    } catch (error) {
+                        failedCount++;
+                        log('docs', `❌ Error saving ${item.word}: ${error.message}`, 'error');
+                    }
+                }
+
+                if (savedCount > 0) {
+                    setStatus('docs', `✅ Documents save OK - ${savedCount} saved, ${failedCount} failed`, 'success');
+                } else {
+                    setStatus('docs', `❌ Documents save failed - ${failedCount} errors`, 'error');
+                }
+            } catch (error) {
+                log('docs', `❌ Documents test failed: ${error.message}`, 'error');
+                setStatus('docs', '❌ Lỗi test documents', 'error');
+            }
+        }
+
+        async function checkDatabase() {
+            log('db', 'Checking database connection...', 'info');
+            setStatus('db', 'Đang kiểm tra DB...', 'warning');
+
+            try {
+                const response = await fetch('/api/verify-database');
+                const result = await response.json();
+                
+                log('db', `Database response: ${JSON.stringify(result)}`, 'info');
+                
+                if (response.ok && result.success) {
+                    log('db', '✅ Database connection OK', 'success');
+                    log('db', `📊 Collections: ${result.collections?.join(', ') || 'N/A'}`, 'info');
+                    setStatus('db', '✅ Database kết nối tốt', 'success');
+                } else {
+                    log('db', `❌ Database check failed: ${result.error || 'Unknown error'}`, 'error');
+                    setStatus('db', '❌ Database có vấn đề', 'error');
+                }
+            } catch (error) {
+                log('db', `❌ Database check failed: ${error.message}`, 'error');
+                setStatus('db', '❌ Lỗi kết nối database', 'error');
+            }
+        }
+
+        // Auto-run session check on load
+        window.onload = function() {
+            checkSession();
+        };
+    </script>
+</body>
+</html>

@@ -374,19 +374,19 @@ reinforcement learning`);
               <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-blue-700">
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH1 - Extraction Module:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,3,4,5 - Phrases (2 features) + Words (4 features) (~15-18 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,3,4,5 - Trích xuất cơ bản: Phrases (2 features) + Words (4 features)</span>
                 </div>
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH2 - + Structural Context:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,2,3,4,5 - Thêm phân tích tiêu đề (~18-20 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1,2,3,4,5 - Thêm phân tích cấu trúc tiêu đề</span>
                 </div>
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Score Normalization:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-6 - Thêm chuẩn hóa điểm (~20-22 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-6 - Thêm chuẩn hóa điểm số</span>
                 </div>
                 <div className="bg-white p-3 sm:p-4 rounded-lg border">
                   <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH4 - Full System:</strong>
-                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-8 - Hệ thống hoàn chỉnh (~22-25 từ vựng)</span>
+                  <span className="text-xs sm:text-sm lg:text-base">Bước 1-8 - Hệ thống hoàn chỉnh với Topic Modeling</span>
                 </div>
               </div>
             </div>
@@ -842,7 +842,7 @@ reinforcement learning`);
                   <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-xs sm:text-sm lg:text-base">
                     <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH1 - Extraction Module:</strong>
-                      <span className="text-gray-700 break-words">Bước 1,3,4,5 - Phrases (2 features: TF-IDF + Cohesion) + Words (4 features: TF-IDF + Length + Morph + Coverage)</span>
+                      <span className="text-gray-700 break-words">Bước 1,3,4,5 - Trích xuất cơ bản: Phrases (TF-IDF + Cohesion) + Words (TF-IDF + Length + Morph + Coverage)</span>
                     </div>
                     <div className="p-3 sm:p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH2 - + Structural Context:</strong>
@@ -850,7 +850,7 @@ reinforcement learning`);
                     </div>
                     <div className="p-3 sm:p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH3 - + Score Normalization:</strong>
-                      <span className="text-gray-700 break-words">Bước 1-6 - Thêm chuẩn hóa điểm (Shift + Normalize + Sort + Rank)</span>
+                      <span className="text-gray-700 break-words">Bước 1-6 - Thêm chuẩn hóa điểm số (Min-Max Scaling + Ranking)</span>
                     </div>
                     <div className="p-3 sm:p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
                       <strong className="text-sm sm:text-base lg:text-lg block mb-1">TH4 - Full System:</strong>
