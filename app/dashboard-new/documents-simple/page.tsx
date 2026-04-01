@@ -268,7 +268,7 @@ export default function DocumentsPage() {
           ipa: item.ipa || item.phonetic || "",
           partOfSpeech: item.pos_label || "other", // Add POS tag
           type: item.pos_label || "other", // Backward compatibility
-          source: `document_${data.document_id || Date.now()}`,
+          source: "document", // Use consistent source name
           synonyms: item.synonyms || [],
         }
         

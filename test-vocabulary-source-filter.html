@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Vocabulary Source Filter</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        .status { font-weight: bold; margin: 10px 0; }
+        .source-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 15px 0; }
+        .source-card { padding: 10px; border: 1px solid #ddd; border-radius: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Vocabulary Source Filter</h1>
+        <p>Test để kiểm tra source filter trong vocabulary page</p>
+
+        <!-- Test Vocabulary API -->
+        <div class="test-section" id="vocab-test">
+            <h3>1. Kiểm tra Vocabulary API</h3>
+            <button onclick="testVocabularyAPI()">Load Vocabulary & Analyze Sources</button>
+            <div class="status" id="vocab-status">Chưa test</div>
+            <div class="source-stats" id="source-stats"></div>
+            <div class="log" id="vocab-log"></div>
+        </div>
+
+        <!-- Test Documents Simple -->
+        <div class="test-section" id="docs-test">
+            <h3>2. Test Documents Simple Source</h3>
+            <button onclick="testDocumentsSource()">Simulate Document Upload</button>
+            <div class="status" id="docs-status">Chưa test</div>
+            <div class="log" id="docs-log"></div>
+        </div>
+
+        <!-- Test Source Filter Logic -->
+        <div class="test-section" id="filter-test">
+            <h3>3. Test Source Filter Logic</h3>
+            <button onclick="testFilterLogic()">Test Filter Logic</button>
+            <div class="status" id="filter-status">Chưa test</div>
+            <div class="log" id="filter-log"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(sectionId, message, type = 'info') {
+            const logElement = document.getElementById(sectionId + '-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'orange' : 'black';
+            logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setStatus(sectionId, message, type = 'info') {
+            const statusElement = document.getElementById(sectionId + '-status');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            statusElement.textContent = message;
+            statusElement.parentElement.className = 'test-section ' + className;
+        }
+
+        async function testVocabularyAPI() {
+            log('vocab', 'Loading vocabulary from API...', 'info');
+            setStatus('vocab', 'Đang load vocabulary...', 'warning');
+
+            try {
+                const response = await fetch('/api/vocabulary?limit=1000');
+                const vocabulary = await response.json();
+                
+                log('vocab', `Loaded ${vocabulary.length} vocabulary items`, 'info');
+                
+                if (Array.isArray(vocabulary)) {
+                    // Analyze sources
+                    const sourceCounts = {};
+                    const allSources = new Set();
+                    
+                    vocabulary.forEach(item => {
+                        const source = item.source || 'unknown';
+                        allSources.add(source);
+                        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+                    });
+                    
+                    log('vocab', `Found ${allSources.size} different sources:`, 'info');
+                    
+                    // Display source statistics
+                    const statsContainer = document.getElementById('source-stats');
+                    statsContainer.innerHTML = '';
+                    
+                    Object.entries(sourceCounts).forEach(([source, count]) => {
+                        const card = document.createElement('div');
+                        card.className = 'source-card';
+                        card.innerHTML = `
+                            <strong>${source}</strong><br>
+                            <span style="font-size: 18px; color: #007bff">${count}</span> từ
+                        `;
+                        statsContainer.appendChild(card);
+                        
+                        log('vocab', `  ${source}: ${count} từ`, 'info');
+                    });
+                    
+                    // Check for document patterns
+                    const documentSources = [...allSources].filter(s => s === 'document' || s.startsWith('document_'));
+                    const voiceChatSources = [...allSources].filter(s => s === 'voice_chat' || s === 'english_live_chat');
+                    
+                    log('vocab', `Document sources: ${documentSources.join(', ')}`, 'info');
+                    log('vocab', `Voice chat sources: ${voiceChatSources.join(', ')}`, 'info');
+                    
+                    // Test filter logic
+                    const documentCount = vocabulary.filter(v => v.source === 'document' || v.source?.startsWith('document_')).length;
+                    const voiceChatCount = vocabulary.filter(v => v.source === 'voice_chat' || v.source === 'english_live_chat').length;
+                    
+                    log('vocab', `Filter test - Documents: ${documentCount}, Voice Chat: ${voiceChatCount}`, 'success');
+                    
+                    setStatus('vocab', `✅ Loaded ${vocabulary.length} từ từ ${allSources.size} nguồn`, 'success');
+                } else {
+                    log('vocab', '❌ Invalid vocabulary data format', 'error');
+                    setStatus('vocab', '❌ Dữ liệu không hợp lệ', 'error');
+                }
+            } catch (error) {
+                log('vocab', `❌ Error: ${error.message}`, 'error');
+                setStatus('vocab', '❌ Lỗi kết nối API', 'error');
+            }
+        }
+
+        async function testDocumentsSource() {
+            log('docs', 'Testing documents source value...', 'info');
+            setStatus('docs', 'Đang test documents...', 'warning');
+
+            try {
+                // Simulate saving vocabulary with document source
+                const testWord = {
+                    word: 'test-document-' + Date.now(),
+                    meaning: 'từ test từ document',
+                    partOfSpeech: 'noun',
+                    example: 'This is a test word from document.',
+                    source: 'document' // New consistent source
+                };
+
+                log('docs', `Saving test word with source: "${testWord.source}"`, 'info');
+                
+                const response = await fetch('/api/vocabulary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testWord)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    log('docs', `✅ Saved with source: ${testWord.source}`, 'success');
+                    log('docs', `Word ID: ${result.id}`, 'info');
+                    
+                    // Verify it was saved correctly
+                    setTimeout(async () => {
+                        try {
+                            const checkResponse = await fetch('/api/vocabulary?limit=5');
+                            const vocabulary = await checkResponse.json();
+                            const savedWord = vocabulary.find(v => v.word === testWord.word);
+                            
+                            if (savedWord) {
+                                log('docs', `✅ Verified: word saved with source "${savedWord.source}"`, 'success');
+                                setStatus('docs', '✅ Document source hoạt động đúng', 'success');
+                            } else {
+                                log('docs', '⚠️ Could not find saved word', 'warning');
+                                setStatus('docs', '⚠️ Không tìm thấy từ đã lưu', 'warning');
+                            }
+                        } catch (err) {
+                            log('docs', `❌ Verification error: ${err.message}`, 'error');
+                        }
+                    }, 1000);
+                } else {
+                    log('docs', `❌ Save failed: ${result.error}`, 'error');
+                    setStatus('docs', '❌ Lưu từ vựng thất bại', 'error');
+                }
+            } catch (error) {
+                log('docs', `❌ Error: ${error.message}`, 'error');
+                setStatus('docs', '❌ Lỗi test documents', 'error');
+            }
+        }
+
+        function testFilterLogic() {
+            log('filter', 'Testing filter logic...', 'info');
+            setStatus('filter', 'Đang test filter logic...', 'warning');
+
+            // Mock vocabulary data with different sources
+            const mockVocabulary = [
+                { word: 'test1', source: 'document' },
+                { word: 'test2', source: 'document_123456' },
+                { word: 'test3', source: 'document_789012' },
+                { word: 'test4', source: 'voice_chat' },
+                { word: 'test5', source: 'english_live_chat' },
+                { word: 'test6', source: 'manual' },
+                { word: 'test7', source: null },
+                { word: 'test8', source: '' }
+            ];
+
+            // Test document filter
+            const documentFilter = (word) => {
+                return word.source === 'document' || word.source?.startsWith('document_');
+            };
+
+            // Test voice chat filter
+            const voiceChatFilter = (word) => {
+                return word.source === 'voice_chat' || word.source === 'english_live_chat';
+            };
+
+            const documentResults = mockVocabulary.filter(documentFilter);
+            const voiceChatResults = mockVocabulary.filter(voiceChatFilter);
+
+            log('filter', `Document filter results: ${documentResults.length} items`, 'info');
+            documentResults.forEach(item => {
+                log('filter', `  - ${item.word} (${item.source})`, 'info');
+            });
+
+            log('filter', `Voice chat filter results: ${voiceChatResults.length} items`, 'info');
+            voiceChatResults.forEach(item => {
+                log('filter', `  - ${item.word} (${item.source})`, 'info');
+            });
+
+            // Verify expected results
+            const expectedDocuments = 3; // document, document_123456, document_789012
+            const expectedVoiceChat = 2; // voice_chat, english_live_chat
+
+            if (documentResults.length === expectedDocuments && voiceChatResults.length === expectedVoiceChat) {
+                log('filter', '✅ Filter logic working correctly!', 'success');
+                setStatus('filter', '✅ Filter logic hoạt động đúng', 'success');
+            } else {
+                log('filter', `❌ Filter logic error: expected ${expectedDocuments} documents, ${expectedVoiceChat} voice chat`, 'error');
+                setStatus('filter', '❌ Filter logic có lỗi', 'error');
+            }
+        }
+
+        // Auto-run tests on load
+        window.onload = function() {
+            log('vocab', 'Vocabulary Source Filter Tester loaded', 'info');
+            log('docs', 'Ready to test documents source', 'info');
+            log('filter', 'Ready to test filter logic', 'info');
+        };
+    </script>
+</body>
+</html>

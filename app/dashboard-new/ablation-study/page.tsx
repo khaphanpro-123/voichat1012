@@ -267,7 +267,7 @@ reinforcement learning`);
     const colors = [
       'bg-blue-50 border-blue-300',      // TH1: Extraction Module
       'bg-green-50 border-green-300',    // TH2: + Structural Context  
-      'bg-orange-50 border-orange-300',  // TH3: + Semantic Scoring
+      'bg-orange-50 border-orange-300',  // TH3: + Score Normalization
       'bg-purple-50 border-purple-300',  // TH4: Full System
     ];
     return colors[caseNum] || colors[0];

@@ -147,6 +147,10 @@ export default function VocabularyPage() {
           structures: allWords.filter((w: VocabularyWord) => w.type === "structure").length,
           fromVoiceChat: allWords.filter((w: VocabularyWord) => w.source === "voice_chat").length,
           fromDocument: allWords.filter((w: VocabularyWord) => w.source === "document").length,
+          fromDocumentPattern: allWords.filter((w: VocabularyWord) => w.source?.startsWith("document_")).length,
+          fromEnglishLiveChat: allWords.filter((w: VocabularyWord) => w.source === "english_live_chat").length,
+          fromManual: allWords.filter((w: VocabularyWord) => w.source === "manual").length,
+          allSources: [...new Set(allWords.map((w: VocabularyWord) => w.source))].filter(Boolean)
         });
       }
     } catch (error) {
@@ -182,7 +186,21 @@ export default function VocabularyPage() {
     const matchesSearch = word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (meaning && meaning.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = selectedType === "all" || normalizeType(getWordType(word)) === selectedType;
-    const matchesSource = selectedSource === "all" || word.source === selectedSource;
+    
+    // Enhanced source matching
+    let matchesSource = false;
+    if (selectedSource === "all") {
+      matchesSource = true;
+    } else if (selectedSource === "document") {
+      // Match both "document" and "document_*" patterns
+      matchesSource = word.source === "document" || word.source?.startsWith("document_");
+    } else if (selectedSource === "voice_chat") {
+      // Match both "voice_chat" and "english_live_chat"
+      matchesSource = word.source === "voice_chat" || word.source === "english_live_chat";
+    } else {
+      matchesSource = word.source === selectedSource;
+    }
+    
     return matchesSearch && matchesType && matchesSource;
   });
 
@@ -568,7 +586,7 @@ export default function VocabularyPage() {
               >
                 <span>🎤 Chat</span>
                 <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "voice_chat" ? "bg-white/20" : "bg-gray-100"}`}>
-                  {vocabulary.filter(v => v.source === "voice_chat").length}
+                  {vocabulary.filter(v => v.source === "voice_chat" || v.source === "english_live_chat").length}
                 </span>
               </button>
               <button 
@@ -577,7 +595,7 @@ export default function VocabularyPage() {
               >
                 <span>📄 Tài liệu</span>
                 <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "document" ? "bg-white/20" : "bg-gray-100"}`}>
-                  {vocabulary.filter(v => v.source === "document").length}
+                  {vocabulary.filter(v => v.source === "document" || v.source?.startsWith("document_")).length}
                 </span>
               </button>
               <button 
@@ -801,7 +819,11 @@ export default function VocabularyPage() {
                         </span>
                         {word.source && (
                           <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm">
-                            {word.source === "voice_chat" ? "🎤 Chat" : word.source === "document" ? "📄 Tài liệu" : "✍️ Thủ công"}
+                            {word.source === "voice_chat" ? "🎤 Chat" : 
+                             word.source === "english_live_chat" ? "🎤 English Chat" :
+                             word.source === "document" || word.source?.startsWith("document_") ? "📄 Tài liệu" : 
+                             word.source === "manual" ? "✍️ Thủ công" : 
+                             `📋 ${word.source}`}
                           </span>
                         )}
                       </div>
