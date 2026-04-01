@@ -193,7 +193,7 @@ export default function VocabularyPage() {
       matchesSource = true;
     } else if (selectedSource === "document") {
       // Match both "document" and "document_*" patterns
-      matchesSource = word.source === "document" || word.source?.startsWith("document_");
+      matchesSource = word.source === "document" || (word.source?.startsWith("document_") ?? false);
     } else if (selectedSource === "voice_chat") {
       // Match both "voice_chat" and "english_live_chat"
       matchesSource = word.source === "voice_chat" || word.source === "english_live_chat";
@@ -894,7 +894,6 @@ export default function VocabularyPage() {
         )}
 
       </div>
-    </div>
   </DashboardLayout>
-  );
+);
 }
