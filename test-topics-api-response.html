@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Topics API Response</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Topics API Response</h1>
+        <p>Kiểm tra xem API có trả về topics không</p>
+
+        <div style="margin-bottom: 20px;">
+            <button onclick="testTopicsAPI()">Test API với Sample Document</button>
+            <button onclick="checkCurrentAPI()">Kiểm tra API hiện tại</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testTopicsAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang test API với sample document...';
+
+            try {
+                // Sample text với nhiều chủ đề rõ ràng
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are revolutionizing data processing. Neural networks enable pattern recognition in large datasets. Deep learning models understand natural language and recognize images. Artificial intelligence helps make intelligent decisions automatically.
+
+Climate Change and Environmental Issues
+
+Climate change represents pressing global challenges. Rising temperatures cause melting ice caps and rising sea levels. Greenhouse gas emissions drive global warming. Deforestation accelerates biodiversity loss significantly.
+
+Renewable Energy Solutions
+
+Solar power harnesses energy from sunlight using photovoltaic panels. Wind energy captures kinetic energy through wind turbines. Hydroelectric power generates electricity from flowing water. Clean energy sources become more efficient and cost-effective.
+
+Medical Technology and Healthcare
+
+Medical imaging technology enables precise disease diagnosis. Surgical robots assist in minimally invasive procedures. Telemedicine provides remote healthcare services. Electronic health records improve patient care coordination.
+
+Space Exploration and Astronomy
+
+Space missions advance our understanding of the universe. Rocket propulsion systems enable spacecraft launches. Satellite technology provides global communications. Mars exploration searches for signs of life.`;
+
+                // Tạo file blob
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'sample_topics_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', 'Sample Topics Test');
+                formData.append('max_phrases', '30');
+                formData.append('max_words', '20');
+                formData.append('min_phrase_length', '2');
+                formData.append('max_phrase_length', '5');
+                formData.append('bm25_weight', '0.2');
+                formData.append('generate_flashcards', 'true');
+
+                console.log('🚀 Sending request to API...');
+
+                const response = await fetch('/api/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', [...response.headers.entries()]);
+
+                const data = await response.json();
+                console.log('📊 Full API response:', data);
+
+                if (response.ok && data) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ API Response Received!\n\n`;
+                    result += `📊 Response Structure:\n`;
+                    result += `- success: ${data.success}\n`;
+                    result += `- vocabulary_count: ${data.vocabulary_count || 'N/A'}\n`;
+                    result += `- flashcards_count: ${data.flashcards_count || 'N/A'}\n`;
+                    result += `- topics: ${data.topics ? 'EXISTS' : 'NULL/UNDEFINED'}\n`;
+                    
+                    if (data.topics) {
+                        result += `- topics.length: ${Array.isArray(data.topics) ? data.topics.length : 'NOT_ARRAY'}\n`;
+                        result += `- topics type: ${typeof data.topics}\n\n`;
+
+                        if (Array.isArray(data.topics)) {
+                            if (data.topics.length > 0) {
+                                result += `🎯 TOPICS FOUND! (${data.topics.length} topics)\n`;
+                                result += `${'='.repeat(50)}\n`;
+                                
+                                data.topics.forEach((topic, index) => {
+                                    result += `\nTopic ${index + 1}:\n`;
+                                    result += `- cluster_id: ${topic.cluster_id || 'N/A'}\n`;
+                                    result += `- topic_id: ${topic.topic_id || 'N/A'}\n`;
+                                    result += `- topic_name: ${topic.topic_name || 'N/A'}\n`;
+                                    result += `- topic_label: ${topic.topic_label || 'N/A'}\n`;
+                                    result += `- core_phrase: ${topic.core_phrase || 'N/A'}\n`;
+                                    result += `- items: ${topic.items ? topic.items.length : (topic.item_count || 'N/A')}\n`;
+                                    
+                                    if (topic.items && topic.items.length > 0) {
+                                        const phrases = topic.items.filter(item => item.type === 'phrase');
+                                        const words = topic.items.filter(item => item.type === 'word');
+                                        result += `- phrases: ${phrases.length} items\n`;
+                                        result += `- words: ${words.length} items\n`;
+                                        
+                                        if (phrases.length > 0) {
+                                            result += `- sample phrases: ${phrases.slice(0, 3).map(p => p.word || p.phrase || p.term).join(', ')}\n`;
+                                        }
+                                        if (words.length > 0) {
+                                            result += `- sample words: ${words.slice(0, 5).map(w => w.word || w.phrase || w.term).join(', ')}\n`;
+                                        }
+                                    }
+                                });
+                                
+                                result += `\n✅ CONCLUSION: Topics are working!\n`;
+                                result += `The UI should show these topics in documents-simple.\n\n`;
+                                result += `🔍 If you don't see topics in UI, check:\n`;
+                                result += `1. Browser console for JavaScript errors\n`;
+                                result += `2. React component rendering conditions\n`;
+                                result += `3. CSS display properties\n`;
+                                result += `4. Network tab to confirm API response\n`;
+                                
+                            } else {
+                                result += `⚠️  TOPICS ARRAY IS EMPTY!\n`;
+                                result += `API returned topics: [] (empty array)\n`;
+                                result += `This means Topic Modeling ran but found no topics.\n\n`;
+                                result += `Possible causes:\n`;
+                                result += `1. Not enough vocabulary items for clustering\n`;
+                                result += `2. All items have identical embeddings\n`;
+                                result += `3. KMeans clustering failed\n`;
+                                result += `4. sentence-transformers not installed\n`;
+                            }
+                        } else {
+                            result += `❌ TOPICS IS NOT AN ARRAY!\n`;
+                            result += `Type: ${typeof data.topics}\n`;
+                            result += `Value: ${JSON.stringify(data.topics)}\n`;
+                        }
+                    } else {
+                        result += `❌ NO TOPICS IN RESPONSE!\n`;
+                        result += `The API did not return a 'topics' field.\n`;
+                        result += `This means Topic Modeling is not working in the backend.\n\n`;
+                        
+                        // Check if vocabulary has cluster_id
+                        if (data.vocabulary && data.vocabulary.length > 0) {
+                            const hasClusterIds = data.vocabulary.some(item => item.cluster_id !== undefined);
+                            result += `🔍 Vocabulary cluster_id check:\n`;
+                            result += `- Vocabulary items: ${data.vocabulary.length}\n`;
+                            result += `- Has cluster_id: ${hasClusterIds}\n`;
+                            
+                            if (hasClusterIds) {
+                                const clusterIds = [...new Set(data.vocabulary.map(item => item.cluster_id).filter(id => id !== undefined))];
+                                result += `- Cluster IDs found: ${clusterIds.join(', ')}\n`;
+                                result += `- This suggests clustering worked but topics weren't formatted properly\n`;
+                            }
+                        }
+                    }
+
+                    // Show all response keys
+                    result += `\n📋 All Response Keys:\n`;
+                    Object.keys(data).forEach(key => {
+                        const value = data[key];
+                        const type = typeof value;
+                        const extra = Array.isArray(value) ? ` (array, length: ${value.length})` : '';
+                        result += `- ${key}: ${type}${extra}\n`;
+                    });
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ API Error: ${data?.detail || data?.error || 'Unknown error'}\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}\nStack: ${error.stack}`;
+                console.error('API Test Error:', error);
+            }
+        }
+
+        async function checkCurrentAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Kiểm tra API endpoint hiện tại...';
+
+            try {
+                // Test health endpoint first
+                const healthResponse = await fetch('/api/health');
+                const healthData = await healthResponse.json();
+                
+                let result = `🔍 API Health Check:\n`;
+                result += `- Status: ${healthResponse.status}\n`;
+                result += `- Response: ${JSON.stringify(healthData, null, 2)}\n\n`;
+                
+                // Test proxy endpoint
+                try {
+                    const proxyResponse = await fetch('/api/proxy/upload-document-complete', {
+                        method: 'GET'
+                    });
+                    result += `📡 Proxy Endpoint Check:\n`;
+                    result += `- Status: ${proxyResponse.status}\n`;
+                    result += `- Available: ${proxyResponse.status !== 404 ? 'YES' : 'NO'}\n\n`;
+                } catch (proxyError) {
+                    result += `📡 Proxy Endpoint: ERROR - ${proxyError.message}\n\n`;
+                }
+                
+                // Check if backend is running
+                try {
+                    const backendResponse = await fetch('/api/check-api-status');
+                    const backendData = await backendResponse.json();
+                    result += `🖥️  Backend Status:\n`;
+                    result += `- Status: ${backendResponse.status}\n`;
+                    result += `- Response: ${JSON.stringify(backendData, null, 2)}\n\n`;
+                } catch (backendError) {
+                    result += `🖥️  Backend Status: ERROR - ${backendError.message}\n\n`;
+                }
+                
+                result += `💡 Next Steps:\n`;
+                result += `1. If health check fails: Backend is down\n`;
+                result += `2. If proxy fails: Check API routing\n`;
+                result += `3. If all pass: Try uploading a document\n`;
+
+                resultDiv.className = 'result info';
+                resultDiv.textContent = result;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error checking API: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

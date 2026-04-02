@@ -216,6 +216,16 @@ export default function DocumentsPage() {
 
       setResult(data)
       
+      // Save topics to localStorage for vocabulary page
+      if (data.topics && data.topics.length > 0) {
+        try {
+          localStorage.setItem('recent_topics', JSON.stringify(data.topics));
+          console.log("🎯 Saved topics to localStorage:", data.topics.length, "topics");
+        } catch (error) {
+          console.error("Error saving topics to localStorage:", error);
+        }
+      }
+      
       // Auto-save vocabulary to database
       console.log("💾 Starting auto-save to database...")
       const saveResult = await handleSaveToDatabase(data)
@@ -537,6 +547,102 @@ export default function DocumentsPage() {
                     </div>
                     <div className="text-xs text-green-700 font-medium leading-tight">🟢 Dễ</div>
                     <div className="text-xs text-gray-500">0.0 - 0.39</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Topics Section - NEW */}
+              {result.topics && result.topics.length > 0 && (
+                <div className="border rounded-lg p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-blue-50">
+                  <h3 className="font-bold mb-3 text-base sm:text-lg text-center sm:text-left flex items-center gap-2">
+                    🎯 Chủ đề được phát hiện ({result.topics.length} chủ đề)
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                      Topic Modeling
+                    </span>
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    {result.topics.map((topic: any, index: number) => (
+                      <div key={index} className="bg-white border border-purple-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-purple-800 text-sm sm:text-base">
+                            Topic {index + 1}
+                          </h4>
+                          <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">
+                            {topic.items?.length || topic.item_count || 0} từ
+                          </span>
+                        </div>
+                        
+                        {/* Topic Name */}
+                        {(topic.topic_name || topic.topic_label) && (
+                          <p className="text-sm font-medium text-gray-700 mb-2">
+                            📌 {topic.topic_name || topic.topic_label}
+                          </p>
+                        )}
+                        
+                        {/* Topic Items */}
+                        {topic.items && topic.items.length > 0 && (
+                          <div className="space-y-2">
+                            {/* Phrases */}
+                            {topic.items.filter((item: any) => item.type === 'phrase').length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-green-600 mb-1">🔤 Cụm từ:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {topic.items
+                                    .filter((item: any) => item.type === 'phrase')
+                                    .slice(0, 3)
+                                    .map((item: any, i: number) => (
+                                      <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded border">
+                                        {item.word || item.phrase || item.term}
+                                      </span>
+                                    ))}
+                                  {topic.items.filter((item: any) => item.type === 'phrase').length > 3 && (
+                                    <span className="text-xs text-gray-500 px-2 py-1">
+                                      +{topic.items.filter((item: any) => item.type === 'phrase').length - 3} khác
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Words */}
+                            {topic.items.filter((item: any) => item.type === 'word').length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-blue-600 mb-1">📝 Từ đơn:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {topic.items
+                                    .filter((item: any) => item.type === 'word')
+                                    .slice(0, 5)
+                                    .map((item: any, i: number) => (
+                                      <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded border">
+                                        {item.word || item.phrase || item.term}
+                                      </span>
+                                    ))}
+                                  {topic.items.filter((item: any) => item.type === 'word').length > 5 && (
+                                    <span className="text-xs text-gray-500 px-2 py-1">
+                                      +{topic.items.filter((item: any) => item.type === 'word').length - 5} khác
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Core Phrase (if available) */}
+                        {topic.core_phrase && (
+                          <div className="mt-2 pt-2 border-t border-purple-100">
+                            <p className="text-xs text-purple-600">
+                              🎯 Từ khóa chính: <span className="font-medium">{topic.core_phrase}</span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-3 text-xs text-gray-600 text-center">
+                    💡 Hệ thống đã tự động phân nhóm từ vựng theo chủ đề bằng thuật toán KMeans Clustering
                   </div>
                 </div>
               )}

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend API Topics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Frontend API Topics</h1>
+        <p>Kiểm tra API endpoint mà frontend thực sự gọi</p>
+
+        <div style="margin-bottom: 20px;">
+            <button onclick="testFrontendAPI()">Test Frontend API (/api/upload-document-complete)</button>
+            <button onclick="testProxyAPI()">Test Proxy API (/api/proxy/upload-document-complete)</button>
+            <button onclick="compareAPIs()">So sánh cả 2 API</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testFrontendAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang test Frontend API endpoint...';
+
+            try {
+                // Sample text với nhiều chủ đề rõ ràng
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are revolutionizing data processing. Neural networks enable pattern recognition in large datasets. Deep learning models understand natural language and recognize images. Artificial intelligence helps make intelligent decisions automatically.
+
+Climate Change and Environmental Issues
+
+Climate change represents pressing global challenges. Rising temperatures cause melting ice caps and rising sea levels. Greenhouse gas emissions drive global warming. Deforestation accelerates biodiversity loss significantly.
+
+Renewable Energy Solutions
+
+Solar power harnesses energy from sunlight using photovoltaic panels. Wind energy captures kinetic energy through wind turbines. Hydroelectric power generates electricity from flowing water. Clean energy sources become more efficient and cost-effective.`;
+
+                // Tạo file blob
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'sample_topics_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', 'Sample Topics Test');
+                formData.append('max_phrases', '30');
+                formData.append('max_words', '20');
+                formData.append('min_phrase_length', '2');
+                formData.append('max_phrase_length', '5');
+                formData.append('bm25_weight', '0.2');
+                formData.append('generate_flashcards', 'true');
+
+                console.log('🚀 Testing Frontend API: /api/upload-document-complete');
+
+                const response = await fetch('/api/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('📡 Frontend API Response status:', response.status);
+                console.log('📡 Frontend API Response headers:', [...response.headers.entries()]);
+
+                const data = await response.json();
+                console.log('📊 Frontend API Full response:', data);
+
+                if (response.ok && data) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ Frontend API Response (/api/upload-document-complete)!\n\n`;
+                    result += `📊 Response Structure:\n`;
+                    result += `- success: ${data.success}\n`;
+                    result += `- vocabulary_count: ${data.vocabulary_count || 'N/A'}\n`;
+                    result += `- flashcards_count: ${data.flashcards_count || 'N/A'}\n`;
+                    result += `- topics: ${data.topics ? 'EXISTS' : 'NULL/UNDEFINED'}\n`;
+                    
+                    if (data.topics) {
+                        result += `- topics.length: ${Array.isArray(data.topics) ? data.topics.length : 'NOT_ARRAY'}\n`;
+                        result += `- topics type: ${typeof data.topics}\n\n`;
+
+                        if (Array.isArray(data.topics)) {
+                            if (data.topics.length > 0) {
+                                result += `🎯 TOPICS FOUND! (${data.topics.length} topics)\n`;
+                                result += `${'='.repeat(50)}\n`;
+                                
+                                data.topics.forEach((topic, index) => {
+                                    result += `\nTopic ${index + 1}:\n`;
+                                    result += `- cluster_id: ${topic.cluster_id || 'N/A'}\n`;
+                                    result += `- topic_id: ${topic.topic_id || 'N/A'}\n`;
+                                    result += `- topic_name: ${topic.topic_name || 'N/A'}\n`;
+                                    result += `- topic_label: ${topic.topic_label || 'N/A'}\n`;
+                                    result += `- core_phrase: ${topic.core_phrase || 'N/A'}\n`;
+                                    result += `- items: ${topic.items ? topic.items.length : (topic.item_count || 'N/A')}\n`;
+                                    
+                                    if (topic.items && topic.items.length > 0) {
+                                        const phrases = topic.items.filter(item => item.type === 'phrase');
+                                        const words = topic.items.filter(item => item.type === 'word');
+                                        result += `- phrases: ${phrases.length} items\n`;
+                                        result += `- words: ${words.length} items\n`;
+                                        
+                                        if (phrases.length > 0) {
+                                            result += `- sample phrases: ${phrases.slice(0, 3).map(p => p.word || p.phrase || p.term).join(', ')}\n`;
+                                        }
+                                        if (words.length > 0) {
+                                            result += `- sample words: ${words.slice(0, 5).map(w => w.word || w.phrase || w.term).join(', ')}\n`;
+                                        }
+                                    }
+                                });
+                                
+                                result += `\n✅ CONCLUSION: Frontend API returns topics!\n`;
+                                result += `The UI should show these topics.\n\n`;
+                                result += `🔍 If you still don't see topics in UI:\n`;
+                                result += `1. Check browser console for JavaScript errors\n`;
+                                result += `2. Check React component rendering conditions\n`;
+                                result += `3. Check CSS display properties\n`;
+                                result += `4. Verify the exact same API endpoint is being called\n`;
+                                
+                            } else {
+                                result += `⚠️  TOPICS ARRAY IS EMPTY!\n`;
+                                result += `Frontend API returned topics: [] (empty array)\n`;
+                                result += `This means Topic Modeling ran but found no topics.\n\n`;
+                                result += `Possible causes:\n`;
+                                result += `1. Not enough vocabulary items for clustering\n`;
+                                result += `2. All items have identical embeddings\n`;
+                                result += `3. KMeans clustering failed\n`;
+                                result += `4. sentence-transformers not installed on server\n`;
+                            }
+                        } else {
+                            result += `❌ TOPICS IS NOT AN ARRAY!\n`;
+                            result += `Type: ${typeof data.topics}\n`;
+                            result += `Value: ${JSON.stringify(data.topics)}\n`;
+                        }
+                    } else {
+                        result += `❌ NO TOPICS IN FRONTEND API RESPONSE!\n`;
+                        result += `The Frontend API did not return a 'topics' field.\n`;
+                        result += `This means the frontend is calling a different endpoint\n`;
+                        result += `or the backend is not including topics in the response.\n\n`;
+                    }
+
+                    // Show all response keys
+                    result += `\n📋 All Frontend API Response Keys:\n`;
+                    Object.keys(data).forEach(key => {
+                        const value = data[key];
+                        const type = typeof value;
+                        const extra = Array.isArray(value) ? ` (array, length: ${value.length})` : '';
+                        result += `- ${key}: ${type}${extra}\n`;
+                    });
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Frontend API Error: ${data?.detail || data?.error || 'Unknown error'}\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Frontend API Network Error: ${error.message}\nStack: ${error.stack}`;
+                console.error('Frontend API Test Error:', error);
+            }
+        }
+
+        async function testProxyAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang test Proxy API endpoint...';
+
+            try {
+                // Sample text với nhiều chủ đề rõ ràng
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are revolutionizing data processing. Neural networks enable pattern recognition in large datasets. Deep learning models understand natural language and recognize images. Artificial intelligence helps make intelligent decisions automatically.
+
+Climate Change and Environmental Issues
+
+Climate change represents pressing global challenges. Rising temperatures cause melting ice caps and rising sea levels. Greenhouse gas emissions drive global warming. Deforestation accelerates biodiversity loss significantly.
+
+Renewable Energy Solutions
+
+Solar power harnesses energy from sunlight using photovoltaic panels. Wind energy captures kinetic energy through wind turbines. Hydroelectric power generates electricity from flowing water. Clean energy sources become more efficient and cost-effective.`;
+
+                // Tạo file blob
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'sample_topics_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', 'Sample Topics Test');
+                formData.append('max_phrases', '30');
+                formData.append('max_words', '20');
+                formData.append('min_phrase_length', '2');
+                formData.append('max_phrase_length', '5');
+                formData.append('bm25_weight', '0.2');
+                formData.append('generate_flashcards', 'true');
+
+                console.log('🚀 Testing Proxy API: /api/proxy/upload-document-complete');
+
+                const response = await fetch('/api/proxy/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('📡 Proxy API Response status:', response.status);
+                console.log('📡 Proxy API Response headers:', [...response.headers.entries()]);
+
+                const data = await response.json();
+                console.log('📊 Proxy API Full response:', data);
+
+                if (response.ok && data) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ Proxy API Response (/api/proxy/upload-document-complete)!\n\n`;
+                    result += `📊 Response Structure:\n`;
+                    result += `- success: ${data.success}\n`;
+                    result += `- vocabulary_count: ${data.vocabulary_count || 'N/A'}\n`;
+                    result += `- flashcards_count: ${data.flashcards_count || 'N/A'}\n`;
+                    result += `- topics: ${data.topics ? 'EXISTS' : 'NULL/UNDEFINED'}\n`;
+                    
+                    if (data.topics) {
+                        result += `- topics.length: ${Array.isArray(data.topics) ? data.topics.length : 'NOT_ARRAY'}\n`;
+                        result += `- topics type: ${typeof data.topics}\n\n`;
+
+                        if (Array.isArray(data.topics)) {
+                            if (data.topics.length > 0) {
+                                result += `🎯 TOPICS FOUND! (${data.topics.length} topics)\n`;
+                                result += `${'='.repeat(50)}\n`;
+                                
+                                data.topics.forEach((topic, index) => {
+                                    result += `\nTopic ${index + 1}:\n`;
+                                    result += `- cluster_id: ${topic.cluster_id || 'N/A'}\n`;
+                                    result += `- topic_id: ${topic.topic_id || 'N/A'}\n`;
+                                    result += `- topic_name: ${topic.topic_name || 'N/A'}\n`;
+                                    result += `- topic_label: ${topic.topic_label || 'N/A'}\n`;
+                                    result += `- core_phrase: ${topic.core_phrase || 'N/A'}\n`;
+                                    result += `- items: ${topic.items ? topic.items.length : (topic.item_count || 'N/A')}\n`;
+                                });
+                                
+                                result += `\n✅ CONCLUSION: Proxy API returns topics!\n`;
+                                
+                            } else {
+                                result += `⚠️  TOPICS ARRAY IS EMPTY!\n`;
+                                result += `Proxy API returned topics: [] (empty array)\n`;
+                            }
+                        } else {
+                            result += `❌ TOPICS IS NOT AN ARRAY!\n`;
+                            result += `Type: ${typeof data.topics}\n`;
+                            result += `Value: ${JSON.stringify(data.topics)}\n`;
+                        }
+                    } else {
+                        result += `❌ NO TOPICS IN PROXY API RESPONSE!\n`;
+                        result += `The Proxy API did not return a 'topics' field.\n`;
+                    }
+
+                    // Show all response keys
+                    result += `\n📋 All Proxy API Response Keys:\n`;
+                    Object.keys(data).forEach(key => {
+                        const value = data[key];
+                        const type = typeof value;
+                        const extra = Array.isArray(value) ? ` (array, length: ${value.length})` : '';
+                        result += `- ${key}: ${type}${extra}\n`;
+                    });
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Proxy API Error: ${data?.detail || data?.error || 'Unknown error'}\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Proxy API Network Error: ${error.message}\nStack: ${error.stack}`;
+                console.error('Proxy API Test Error:', error);
+            }
+        }
+
+        async function compareAPIs() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang so sánh cả 2 API endpoints...';
+
+            try {
+                // Sample text
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are revolutionizing data processing. Neural networks enable pattern recognition in large datasets. Deep learning models understand natural language and recognize images.
+
+Climate Change and Environmental Issues
+
+Climate change represents pressing global challenges. Rising temperatures cause melting ice caps and rising sea levels. Greenhouse gas emissions drive global warming.
+
+Renewable Energy Solutions
+
+Solar power harnesses energy from sunlight using photovoltaic panels. Wind energy captures kinetic energy through wind turbines. Hydroelectric power generates electricity from flowing water.`;
+
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file1 = new File([blob], 'sample_test_frontend.txt', { type: 'text/plain' });
+                const file2 = new File([blob], 'sample_test_proxy.txt', { type: 'text/plain' });
+
+                const formData1 = new FormData();
+                formData1.append('file', file1);
+                formData1.append('title', 'Frontend Test');
+                formData1.append('max_phrases', '20');
+                formData1.append('max_words', '10');
+                formData1.append('generate_flashcards', 'true');
+
+                const formData2 = new FormData();
+                formData2.append('file', file2);
+                formData2.append('title', 'Proxy Test');
+                formData2.append('max_phrases', '20');
+                formData2.append('max_words', '10');
+                formData2.append('generate_flashcards', 'true');
+
+                console.log('🚀 Testing both APIs...');
+
+                // Test both APIs
+                const [frontendResponse, proxyResponse] = await Promise.all([
+                    fetch('/api/upload-document-complete', {
+                        method: 'POST',
+                        body: formData1
+                    }),
+                    fetch('/api/proxy/upload-document-complete', {
+                        method: 'POST',
+                        body: formData2
+                    })
+                ]);
+
+                const [frontendData, proxyData] = await Promise.all([
+                    frontendResponse.json(),
+                    proxyResponse.json()
+                ]);
+
+                console.log('📊 Frontend API response:', frontendData);
+                console.log('📊 Proxy API response:', proxyData);
+
+                resultDiv.className = 'result info';
+                
+                let result = `🔍 API COMPARISON RESULTS\n`;
+                result += `${'='.repeat(50)}\n\n`;
+                
+                result += `📡 Frontend API (/api/upload-document-complete):\n`;
+                result += `- Status: ${frontendResponse.status}\n`;
+                result += `- Success: ${frontendData.success}\n`;
+                result += `- Vocabulary: ${frontendData.vocabulary_count || 0}\n`;
+                result += `- Topics: ${frontendData.topics ? (Array.isArray(frontendData.topics) ? frontendData.topics.length : 'NOT_ARRAY') : 'NULL'}\n\n`;
+                
+                result += `📡 Proxy API (/api/proxy/upload-document-complete):\n`;
+                result += `- Status: ${proxyResponse.status}\n`;
+                result += `- Success: ${proxyData.success}\n`;
+                result += `- Vocabulary: ${proxyData.vocabulary_count || 0}\n`;
+                result += `- Topics: ${proxyData.topics ? (Array.isArray(proxyData.topics) ? proxyData.topics.length : 'NOT_ARRAY') : 'NULL'}\n\n`;
+                
+                // Compare topics
+                const frontendTopics = frontendData.topics || [];
+                const proxyTopics = proxyData.topics || [];
+                
+                result += `🎯 TOPICS COMPARISON:\n`;
+                result += `- Frontend API topics: ${Array.isArray(frontendTopics) ? frontendTopics.length : 'INVALID'}\n`;
+                result += `- Proxy API topics: ${Array.isArray(proxyTopics) ? proxyTopics.length : 'INVALID'}\n\n`;
+                
+                if (Array.isArray(frontendTopics) && frontendTopics.length > 0) {
+                    result += `✅ Frontend API HAS TOPICS!\n`;
+                    frontendTopics.forEach((topic, i) => {
+                        result += `  Topic ${i+1}: ${topic.topic_name || 'Unnamed'} (${topic.items ? topic.items.length : 0} items)\n`;
+                    });
+                } else {
+                    result += `❌ Frontend API NO TOPICS\n`;
+                }
+                
+                if (Array.isArray(proxyTopics) && proxyTopics.length > 0) {
+                    result += `✅ Proxy API HAS TOPICS!\n`;
+                    proxyTopics.forEach((topic, i) => {
+                        result += `  Topic ${i+1}: ${topic.topic_name || 'Unnamed'} (${topic.items ? topic.items.length : 0} items)\n`;
+                    });
+                } else {
+                    result += `❌ Proxy API NO TOPICS\n`;
+                }
+                
+                result += `\n💡 CONCLUSION:\n`;
+                if (Array.isArray(frontendTopics) && frontendTopics.length > 0) {
+                    result += `✅ Frontend API returns topics - UI should work!\n`;
+                    result += `If you don't see topics, check:\n`;
+                    result += `1. Browser console for JavaScript errors\n`;
+                    result += `2. React component rendering logic\n`;
+                    result += `3. CSS display properties\n`;
+                } else if (Array.isArray(proxyTopics) && proxyTopics.length > 0) {
+                    result += `⚠️  Only Proxy API returns topics\n`;
+                    result += `Frontend might be calling wrong endpoint\n`;
+                } else {
+                    result += `❌ Neither API returns topics\n`;
+                    result += `Backend Topic Modeling is not working\n`;
+                }
+
+                resultDiv.textContent = result;
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Comparison Error: ${error.message}\nStack: ${error.stack}`;
+                console.error('API Comparison Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

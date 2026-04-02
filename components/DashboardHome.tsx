@@ -13,6 +13,7 @@ import {
   BookOpen,
   History,
   Play,
+  Network,
 } from "lucide-react";
 import { OnboardingTutorial } from "./OnboardingTutorial";
 
@@ -103,6 +104,15 @@ const learningModes = [
     color: "from-green-400 to-emerald-500",
     href: "/dashboard-new/vocabulary",
     activity: "vocabularyLearned",
+  },
+  {
+    id: "topic-modeling",
+    title: "Topic Modeling",
+    description: "Phân nhóm từ vựng theo chủ đề tự động",
+    icon: Network,
+    color: "from-indigo-400 to-blue-500",
+    href: "/dashboard-new/topic-modeling-demo",
+    activity: "documentsUploaded",
   },
   {
     id: "learning-history",

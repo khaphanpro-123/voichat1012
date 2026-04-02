@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Topics Issue - Complete Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .topics-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .topic-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Topics Issue - Complete Analysis</h1>
+        <p>Phân tích toàn diện tại sao không thấy topics trong /documents-simple</p>
+
+        <div style="margin-bottom: 20px;">
+            <button onclick="runCompleteAnalysis()">🚀 Chạy phân tích toàn diện</button>
+            <button onclick="testUIRendering()">🎨 Test UI Rendering Logic</button>
+            <button onclick="simulateTopicsDisplay()">📊 Mô phỏng hiển thị Topics</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        <div id="topicsPreview"></div>
+    </div>
+
+    <script>
+        async function runCompleteAnalysis() {
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('topicsPreview');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang chạy phân tích toàn diện...';
+            previewDiv.innerHTML = '';
+
+            let analysisResult = `🔍 COMPLETE TOPICS ANALYSIS\n`;
+            analysisResult += `${'='.repeat(60)}\n\n`;
+
+            try {
+                // Step 1: Test API Response
+                analysisResult += `[STEP 1] Testing API Response...\n`;
+                
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are revolutionizing data processing and analysis. Neural networks enable computers to recognize complex patterns in large datasets. Deep learning models can understand natural language, recognize images, and make intelligent decisions automatically.
+
+Climate Change and Environmental Issues
+
+Climate change represents one of the most pressing global challenges of our time. Rising global temperatures are causing ice sheet melting and sea level rise worldwide. Greenhouse gas emissions from fossil fuel combustion are the primary drivers of climate change. Deforestation and habitat destruction are accelerating the loss of biodiversity.
+
+Renewable Energy Solutions
+
+Solar power technology harnesses energy from sunlight using photovoltaic panels and solar thermal systems. Wind energy systems capture kinetic energy through wind turbines installed on land and offshore locations. Hydroelectric power plants generate electricity from flowing water in rivers and dams. These clean energy sources are becoming more efficient and cost-effective.
+
+Medical Technology and Healthcare Innovation
+
+Medical imaging technology enables precise disease diagnosis and treatment planning. Surgical robots assist surgeons in performing minimally invasive procedures with greater precision. Telemedicine platforms provide remote healthcare services to patients in underserved areas. Electronic health records improve patient care coordination and medical data management.
+
+Space Exploration and Aerospace Technology
+
+Space exploration missions are advancing our understanding of the universe and planetary systems. Rocket propulsion systems enable spacecraft to escape Earth's gravitational field and travel to other planets. Satellite technology provides global communications, navigation, and Earth observation capabilities. Mars exploration rovers are searching for signs of past or present life on the red planet.`;
+
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'comprehensive_topics_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', 'Comprehensive Topics Test');
+                formData.append('max_phrases', '40');
+                formData.append('max_words', '25');
+                formData.append('min_phrase_length', '2');
+                formData.append('max_phrase_length', '5');
+                formData.append('bm25_weight', '0.2');
+                formData.append('generate_flashcards', 'true');
+
+                const response = await fetch('/api/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data) {
+                    analysisResult += `✅ API Response OK (Status: ${response.status})\n`;
+                    analysisResult += `- Success: ${data.success}\n`;
+                    analysisResult += `- Vocabulary: ${data.vocabulary_count || 0} items\n`;
+                    analysisResult += `- Flashcards: ${data.flashcards_count || 0} items\n`;
+                    analysisResult += `- Topics field exists: ${data.topics !== undefined}\n`;
+                    analysisResult += `- Topics is array: ${Array.isArray(data.topics)}\n`;
+                    analysisResult += `- Topics count: ${Array.isArray(data.topics) ? data.topics.length : 'N/A'}\n\n`;
+
+                    // Step 2: Analyze Topics Structure
+                    if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
+                        analysisResult += `[STEP 2] ✅ Topics Found! Analyzing structure...\n`;
+                        
+                        data.topics.forEach((topic, index) => {
+                            analysisResult += `\nTopic ${index + 1}:\n`;
+                            analysisResult += `- topic_id: ${topic.topic_id}\n`;
+                            analysisResult += `- topic_name: ${topic.topic_name || 'N/A'}\n`;
+                            analysisResult += `- topic_label: ${topic.topic_label || 'N/A'}\n`;
+                            analysisResult += `- core_phrase: ${topic.core_phrase || 'N/A'}\n`;
+                            analysisResult += `- items: ${topic.items ? topic.items.length : (topic.item_count || 0)}\n`;
+                            
+                            if (topic.items && topic.items.length > 0) {
+                                const phrases = topic.items.filter(item => item.type === 'phrase');
+                                const words = topic.items.filter(item => item.type === 'word');
+                                analysisResult += `  - Phrases: ${phrases.length}\n`;
+                                analysisResult += `  - Words: ${words.length}\n`;
+                                
+                                if (phrases.length > 0) {
+                                    const samplePhrases = phrases.slice(0, 3).map(p => p.word || p.phrase || p.term);
+                                    analysisResult += `  - Sample phrases: ${samplePhrases.join(', ')}\n`;
+                                }
+                                if (words.length > 0) {
+                                    const sampleWords = words.slice(0, 5).map(w => w.word || w.phrase || w.term);
+                                    analysisResult += `  - Sample words: ${sampleWords.join(', ')}\n`;
+                                }
+                            }
+                        });
+
+                        // Step 3: Test UI Rendering Conditions
+                        analysisResult += `\n[STEP 3] Testing UI Rendering Conditions...\n`;
+                        
+                        const condition1 = data.topics !== null && data.topics !== undefined;
+                        const condition2 = Array.isArray(data.topics);
+                        const condition3 = data.topics.length > 0;
+                        
+                        analysisResult += `- result.topics exists: ${condition1}\n`;
+                        analysisResult += `- result.topics is array: ${condition2}\n`;
+                        analysisResult += `- result.topics.length > 0: ${condition3}\n`;
+                        analysisResult += `- UI condition (result.topics && result.topics.length > 0): ${condition1 && condition2 && condition3}\n\n`;
+                        
+                        if (condition1 && condition2 && condition3) {
+                            analysisResult += `✅ ALL UI CONDITIONS MET!\n`;
+                            analysisResult += `The topics section SHOULD be visible in the UI.\n\n`;
+                            
+                            // Step 4: Check for potential issues
+                            analysisResult += `[STEP 4] Checking for potential UI issues...\n`;
+                            analysisResult += `\nPossible reasons why you don't see topics:\n`;
+                            analysisResult += `1. 🔍 JavaScript Error: Check browser console (F12)\n`;
+                            analysisResult += `2. 🎨 CSS Issue: Topics section might be hidden by CSS\n`;
+                            analysisResult += `3. 📱 Mobile View: Topics might be below the fold\n`;
+                            analysisResult += `4. ⚡ React Rendering: Component might not be re-rendering\n`;
+                            analysisResult += `5. 🔄 Cache Issue: Try hard refresh (Ctrl+F5)\n`;
+                            analysisResult += `6. 📊 Data Issue: Topics data might be malformed\n\n`;
+                            
+                            // Display topics preview
+                            displayTopicsPreview(data.topics);
+                            
+                            analysisResult += `[STEP 5] Recommendations:\n`;
+                            analysisResult += `1. Open browser console (F12) and look for errors\n`;
+                            analysisResult += `2. Try uploading the same document again\n`;
+                            analysisResult += `3. Check if topics appear after scrolling down\n`;
+                            analysisResult += `4. Try on different browser/device\n`;
+                            analysisResult += `5. Clear browser cache and try again\n\n`;
+                            
+                            resultDiv.className = 'result success';
+                        } else {
+                            analysisResult += `❌ UI CONDITIONS NOT MET!\n`;
+                            analysisResult += `This explains why topics are not visible.\n\n`;
+                            resultDiv.className = 'result warning';
+                        }
+                        
+                    } else if (data.topics && Array.isArray(data.topics) && data.topics.length === 0) {
+                        analysisResult += `[STEP 2] ⚠️  Topics array is empty\n`;
+                        analysisResult += `API returned topics: [] (empty array)\n`;
+                        analysisResult += `This means Topic Modeling ran but found no topics.\n\n`;
+                        analysisResult += `Possible causes:\n`;
+                        analysisResult += `1. Not enough vocabulary items for clustering\n`;
+                        analysisResult += `2. All items have identical embeddings\n`;
+                        analysisResult += `3. KMeans clustering failed\n`;
+                        analysisResult += `4. sentence-transformers not installed on server\n\n`;
+                        resultDiv.className = 'result warning';
+                        
+                    } else {
+                        analysisResult += `[STEP 2] ❌ No topics in API response\n`;
+                        analysisResult += `The API did not return a 'topics' field or it's not an array.\n`;
+                        analysisResult += `This means Topic Modeling is not working on the backend.\n\n`;
+                        resultDiv.className = 'result error';
+                    }
+
+                    // Step 6: Environment Check
+                    analysisResult += `[STEP 6] Environment Information:\n`;
+                    analysisResult += `- User Agent: ${navigator.userAgent}\n`;
+                    analysisResult += `- Screen Size: ${screen.width}x${screen.height}\n`;
+                    analysisResult += `- Viewport: ${window.innerWidth}x${window.innerHeight}\n`;
+                    analysisResult += `- Local Storage Available: ${typeof(Storage) !== "undefined"}\n`;
+                    
+                    // Check localStorage for topics
+                    try {
+                        const savedTopics = localStorage.getItem('recent_topics');
+                        if (savedTopics) {
+                            const topics = JSON.parse(savedTopics);
+                            analysisResult += `- Saved Topics in localStorage: ${Array.isArray(topics) ? topics.length : 'Invalid'}\n`;
+                        } else {
+                            analysisResult += `- Saved Topics in localStorage: None\n`;
+                        }
+                    } catch (e) {
+                        analysisResult += `- Saved Topics in localStorage: Error reading\n`;
+                    }
+
+                } else {
+                    analysisResult += `❌ API Error (Status: ${response.status})\n`;
+                    analysisResult += `Error: ${data?.error || data?.detail || 'Unknown error'}\n\n`;
+                    resultDiv.className = 'result error';
+                }
+
+                resultDiv.textContent = analysisResult;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Analysis Error: ${error.message}\n\nStack: ${error.stack}`;
+                console.error('Complete Analysis Error:', error);
+            }
+        }
+
+        function displayTopicsPreview(topics) {
+            const previewDiv = document.getElementById('topicsPreview');
+            
+            if (!topics || topics.length === 0) {
+                previewDiv.innerHTML = '';
+                return;
+            }
+
+            let html = `<div class="topics-preview">`;
+            html += `<h3>🎯 Topics Preview - This is what SHOULD appear in UI (${topics.length} topics)</h3>`;
+            
+            topics.forEach((topic, index) => {
+                html += `<div class="topic-item">`;
+                html += `<div style="font-weight: bold; color: #6f42c1;">Topic ${index + 1}: ${topic.topic_name || topic.topic_label || 'Unnamed Topic'}</div>`;
+                html += `<div style="font-size: 14px; color: #6c757d;">Items: ${topic.items ? topic.items.length : topic.item_count || topic.size || 0}</div>`;
+                
+                if (topic.core_phrase) {
+                    html += `<div style="font-size: 14px; color: #28a745;">Core: ${topic.core_phrase}</div>`;
+                }
+                
+                if (topic.items && topic.items.length > 0) {
+                    const phrases = topic.items.filter(item => item.type === 'phrase');
+                    const words = topic.items.filter(item => item.type === 'word');
+                    
+                    if (phrases.length > 0) {
+                        const phraseList = phrases.slice(0, 3).map(p => p.word || p.phrase || p.term).join(', ');
+                        html += `<div style="font-size: 13px; margin-top: 5px;"><span style="color: #17a2b8;">Phrases:</span> ${phraseList}${phrases.length > 3 ? ` (+${phrases.length - 3} more)` : ''}</div>`;
+                    }
+                    
+                    if (words.length > 0) {
+                        const wordList = words.slice(0, 5).map(w => w.word || w.phrase || w.term).join(', ');
+                        html += `<div style="font-size: 13px; margin-top: 5px;"><span style="color: #fd7e14;">Words:</span> ${wordList}${words.length > 5 ? ` (+${words.length - 5} more)` : ''}</div>`;
+                    }
+                }
+                
+                html += `</div>`;
+            });
+            
+            html += `<div style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-radius: 5px; font-size: 14px;">`;
+            html += `💡 <strong>If you see this preview but don't see topics in /documents-simple:</strong><br>`;
+            html += `1. Check browser console (F12) for JavaScript errors<br>`;
+            html += `2. Try scrolling down in the documents-simple page<br>`;
+            html += `3. Try hard refresh (Ctrl+F5) on documents-simple page<br>`;
+            html += `4. Check if you're using the same document that generated these topics`;
+            html += `</div>`;
+            
+            html += `</div>`;
+            
+            previewDiv.innerHTML = html;
+        }
+
+        async function testUIRendering() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            
+            let result = `🎨 UI RENDERING LOGIC TEST\n`;
+            result += `${'='.repeat(40)}\n\n`;
+            
+            // Test different scenarios
+            const testCases = [
+                { topics: null, description: "topics = null" },
+                { topics: undefined, description: "topics = undefined" },
+                { topics: [], description: "topics = [] (empty array)" },
+                { topics: [{ topic_name: "Test", items: [] }], description: "topics with 1 empty topic" },
+                { topics: [{ topic_name: "Test", items: [{ word: "test", type: "word" }] }], description: "topics with 1 valid topic" },
+                { topics: [
+                    { topic_name: "AI", items: [{ word: "machine learning", type: "phrase" }] },
+                    { topic_name: "Climate", items: [{ word: "global warming", type: "phrase" }] }
+                ], description: "topics with 2 valid topics" }
+            ];
+            
+            testCases.forEach((testCase, index) => {
+                const condition1 = testCase.topics !== null && testCase.topics !== undefined;
+                const condition2 = Array.isArray(testCase.topics);
+                const condition3 = testCase.topics && testCase.topics.length > 0;
+                const finalCondition = condition1 && condition2 && condition3;
+                
+                result += `Test ${index + 1}: ${testCase.description}\n`;
+                result += `- topics exists: ${condition1}\n`;
+                result += `- is array: ${condition2}\n`;
+                result += `- length > 0: ${condition3}\n`;
+                result += `- UI renders: ${finalCondition ? '✅ YES' : '❌ NO'}\n\n`;
+            });
+            
+            result += `💡 The UI condition is: result.topics && result.topics.length > 0\n`;
+            result += `This means topics will only show if:\n`;
+            result += `1. topics field exists (not null/undefined)\n`;
+            result += `2. topics is an array\n`;
+            result += `3. topics array has at least 1 item\n`;
+            
+            resultDiv.textContent = result;
+        }
+
+        async function simulateTopicsDisplay() {
+            const previewDiv = document.getElementById('topicsPreview');
+            
+            // Simulate the exact topics structure that should be returned
+            const mockTopics = [
+                {
+                    topic_id: 0,
+                    topic_name: "Machine Learning",
+                    topic_label: "Machine Learning",
+                    core_phrase: "machine learning",
+                    items: [
+                        { word: "machine learning", type: "phrase", importance_score: 0.9 },
+                        { word: "neural networks", type: "phrase", importance_score: 0.8 },
+                        { word: "algorithms", type: "word", importance_score: 0.7 },
+                        { word: "artificial", type: "word", importance_score: 0.6 }
+                    ]
+                },
+                {
+                    topic_id: 1,
+                    topic_name: "Climate Change",
+                    topic_label: "Climate Change", 
+                    core_phrase: "climate change",
+                    items: [
+                        { word: "climate change", type: "phrase", importance_score: 0.9 },
+                        { word: "global warming", type: "phrase", importance_score: 0.8 },
+                        { word: "greenhouse gas emissions", type: "phrase", importance_score: 0.7 },
+                        { word: "temperature", type: "word", importance_score: 0.6 },
+                        { word: "emissions", type: "word", importance_score: 0.5 }
+                    ]
+                },
+                {
+                    topic_id: 2,
+                    topic_name: "Renewable Energy",
+                    topic_label: "Renewable Energy",
+                    core_phrase: "renewable energy",
+                    items: [
+                        { word: "solar power", type: "phrase", importance_score: 0.8 },
+                        { word: "wind energy", type: "phrase", importance_score: 0.7 },
+                        { word: "hydroelectric power", type: "phrase", importance_score: 0.7 },
+                        { word: "solar", type: "word", importance_score: 0.6 },
+                        { word: "energy", type: "word", importance_score: 0.5 }
+                    ]
+                }
+            ];
+            
+            displayTopicsPreview(mockTopics);
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result success';
+            resultDiv.textContent = `📊 SIMULATED TOPICS DISPLAY\n\nThis shows exactly what should appear in the /documents-simple page when topics are working.\n\nIf you see this preview but don't see similar content in the actual page, then:\n\n1. ✅ Backend is working (generates topics)\n2. ✅ API is working (returns topics)\n3. ❌ Frontend UI has an issue\n\nNext steps:\n1. Check browser console for JavaScript errors\n2. Inspect the page HTML to see if topics section exists but is hidden\n3. Try uploading a document with clear topics (like the test above)\n4. Check if you're scrolling down enough to see the topics section`;
+        }
+    </script>
+</body>
+</html>

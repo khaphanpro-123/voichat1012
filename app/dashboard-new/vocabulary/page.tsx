@@ -54,7 +54,7 @@ interface QuizQuestion {
   words?: string[];
 }
 
-type TabType = "vocabulary" | "structures" | "errors";
+type TabType = "vocabulary" | "structures" | "errors" | "topics";
 
 const WORD_TYPES = [
   { key: "all", label: "Tất cả" },
@@ -72,6 +72,7 @@ export default function VocabularyPage() {
   const [vocabulary, setVocabulary] = useState<VocabularyWord[]>([]);
   const [structures, setStructures] = useState<VocabularyWord[]>([]);
   const [errors, setErrors] = useState<VocabularyWord[]>([]);
+  const [topics, setTopics] = useState<any[]>([]); // New: topics from API
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("all");
@@ -153,10 +154,30 @@ export default function VocabularyPage() {
           allSources: [...new Set(allWords.map((w: VocabularyWord) => w.source))].filter(Boolean)
         });
       }
+      
+      // Load topics from localStorage (saved from recent document uploads)
+      loadTopicsFromStorage();
+      
     } catch (error) {
       console.error("Load vocabulary error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTopicsFromStorage = () => {
+    try {
+      // Load topics from localStorage (saved from documents-simple uploads)
+      const savedTopics = localStorage.getItem('recent_topics');
+      if (savedTopics) {
+        const parsedTopics = JSON.parse(savedTopics);
+        if (Array.isArray(parsedTopics) && parsedTopics.length > 0) {
+          setTopics(parsedTopics);
+          console.log("🎯 Loaded topics from storage:", parsedTopics.length, "topics");
+        }
+      }
+    } catch (error) {
+      console.error("Error loading topics from storage:", error);
     }
   };
 
@@ -533,6 +554,12 @@ export default function VocabularyPage() {
             <span className="hidden xs:inline">Cấu trúc</span>
             <span className="text-xs bg-purple-100 text-purple-600 px-1.5 sm:px-2 py-0.5 rounded-full">{structures.length}</span>
           </button>
+          <button onClick={() => setActiveTab("topics")}
+            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition text-xs sm:text-base ${activeTab === "topics" ? "bg-white text-blue-600 shadow" : "text-gray-600 hover:text-gray-900"}`}>
+            <Network className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Chủ đề</span>
+            <span className="text-xs bg-blue-100 text-blue-600 px-1.5 sm:px-2 py-0.5 rounded-full">{topics.length}</span>
+          </button>
         </div>
 
         {/* Quiz Button - only for vocabulary tab */}
@@ -889,6 +916,146 @@ export default function VocabularyPage() {
                   </div>
                 </motion.div>
               ))
+            )}
+          </div>
+        )}
+
+        {/* Topics List */}
+        {activeTab === "topics" && (
+          <div className="space-y-3 sm:space-y-4">
+            {topics.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 text-gray-500">
+                <Network className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                <p className="text-sm sm:text-base">Chưa có chủ đề nào</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-2">
+                  Chủ đề sẽ được tạo tự động khi bạn upload tài liệu
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {topics.map((topic, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-md p-3 sm:p-4 md:p-6 hover:shadow-lg transition-shadow border border-blue-100"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-900 flex items-center gap-2">
+                        <Network className="w-5 h-5 text-blue-600" />
+                        Topic {index + 1}
+                      </h3>
+                      <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                        {topic.items?.length || topic.item_count || 0} từ
+                      </span>
+                    </div>
+                    
+                    {/* Topic Name */}
+                    {(topic.topic_name || topic.topic_label) && (
+                      <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-3 font-medium">
+                        📌 {topic.topic_name || topic.topic_label}
+                      </p>
+                    )}
+                    
+                    {/* Core Phrase */}
+                    {topic.core_phrase && (
+                      <div className="mb-3 p-2 bg-yellow-100 border border-yellow-200 rounded-lg">
+                        <p className="text-xs sm:text-sm text-yellow-800">
+                          🎯 <strong>Từ khóa chính:</strong> {topic.core_phrase}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Topic Items */}
+                    {topic.items && topic.items.length > 0 && (
+                      <div className="space-y-3">
+                        {/* Phrases */}
+                        {topic.items.filter((item: any) => item.type === 'phrase').length > 0 && (
+                          <div>
+                            <p className="text-xs sm:text-sm font-semibold text-green-600 mb-2">
+                              🔤 Cụm từ ({topic.items.filter((item: any) => item.type === 'phrase').length}):
+                            </p>
+                            <div className="flex flex-wrap gap-1 sm:gap-2">
+                              {topic.items
+                                .filter((item: any) => item.type === 'phrase')
+                                .slice(0, 4)
+                                .map((item: any, i: number) => (
+                                  <span key={i} className="text-xs sm:text-sm bg-green-100 text-green-700 px-2 py-1 rounded border border-green-200 font-medium">
+                                    {item.word || item.phrase || item.term}
+                                  </span>
+                                ))}
+                              {topic.items.filter((item: any) => item.type === 'phrase').length > 4 && (
+                                <span className="text-xs text-gray-500 px-2 py-1">
+                                  +{topic.items.filter((item: any) => item.type === 'phrase').length - 4} khác
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Words */}
+                        {topic.items.filter((item: any) => item.type === 'word').length > 0 && (
+                          <div>
+                            <p className="text-xs sm:text-sm font-semibold text-blue-600 mb-2">
+                              📝 Từ đơn ({topic.items.filter((item: any) => item.type === 'word').length}):
+                            </p>
+                            <div className="flex flex-wrap gap-1 sm:gap-2">
+                              {topic.items
+                                .filter((item: any) => item.type === 'word')
+                                .slice(0, 6)
+                                .map((item: any, i: number) => (
+                                  <span key={i} className="text-xs sm:text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 font-medium">
+                                    {item.word || item.phrase || item.term}
+                                  </span>
+                                ))}
+                              {topic.items.filter((item: any) => item.type === 'word').length > 6 && (
+                                <span className="text-xs text-gray-500 px-2 py-1">
+                                  +{topic.items.filter((item: any) => item.type === 'word').length - 6} khác
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Topic Statistics */}
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <div className="text-center">
+                          <div className="font-bold text-blue-600">
+                            {topic.items?.filter((item: any) => item.type === 'phrase').length || 0}
+                          </div>
+                          <div>Cụm từ</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold text-blue-600">
+                            {topic.items?.filter((item: any) => item.type === 'word').length || 0}
+                          </div>
+                          <div>Từ đơn</div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+            
+            {/* Topics Info */}
+            {topics.length > 0 && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-semibold mb-1">💡 Về Topic Modeling:</p>
+                    <p className="text-xs sm:text-sm leading-relaxed">
+                      Hệ thống sử dụng thuật toán <strong>KMeans Clustering</strong> để tự động phân nhóm từ vựng theo chủ đề dựa trên 
+                      semantic embeddings. Điều này giúp bạn học từ vựng theo nhóm chủ đề có liên quan, tăng hiệu quả ghi nhớ.
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}

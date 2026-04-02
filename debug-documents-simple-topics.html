@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Documents Simple Topics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .topic-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .topic-header {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Documents Simple Topics</h1>
+        <p>Kiểm tra tại sao không thấy topics trong /documents-simple</p>
+
+        <div style="margin-bottom: 20px;">
+            <button onclick="testWithSampleDocument()">Test với Sample Document</button>
+            <button onclick="testWithComplexDocument()">Test với Document phức tạp</button>
+            <button onclick="checkLocalStorage()">Kiểm tra LocalStorage</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        <div id="topicsPreview"></div>
+    </div>
+
+    <script>
+        async function testWithSampleDocument() {
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('topicsPreview');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang test với sample document...';
+            previewDiv.innerHTML = '';
+
+            try {
+                // Sample text với nhiều chủ đề rõ ràng
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are revolutionizing how we process and analyze data. Neural networks enable computers to recognize complex patterns in large datasets. Deep learning models can understand natural language, recognize images, and make intelligent decisions.
+
+Climate Change and Environmental Issues
+
+Climate change represents one of the most pressing global challenges of our time. Rising temperatures are causing melting ice caps and rising sea levels. Greenhouse gas emissions from human activities are the primary driver of global warming. Deforestation and habitat destruction are accelerating the loss of biodiversity.
+
+Renewable Energy Solutions
+
+Solar power harnesses energy from sunlight using photovoltaic panels and solar thermal systems. Wind energy captures kinetic energy through wind turbines installed on land and offshore. Hydroelectric power generates electricity from flowing water in rivers and dams. These clean energy sources are becoming more efficient and cost-effective.
+
+Technology for Sustainability
+
+Smart grids optimize energy distribution and reduce waste in electrical systems. Internet of Things devices monitor environmental conditions and energy consumption. Artificial intelligence helps predict weather patterns and optimize resource usage. Blockchain technology enables transparent tracking of carbon credits and environmental impact.`;
+
+                // Tạo file blob
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'sample_topics_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('max_phrases', '30');
+                formData.append('max_words', '20');
+                formData.append('generate_flashcards', 'true');
+
+                const response = await fetch('/api/proxy/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ API Response Successful!\n\n`;
+                    result += `📊 Response Structure:\n`;
+                    result += `- success: ${data.success}\n`;
+                    result += `- vocabulary_count: ${data.vocabulary_count}\n`;
+                    result += `- flashcards_count: ${data.flashcards_count}\n`;
+                    result += `- topics: ${data.topics ? 'EXISTS' : 'NULL/UNDEFINED'}\n`;
+                    result += `- topics.length: ${data.topics ? data.topics.length : 'N/A'}\n\n`;
+
+                    // Kiểm tra topics chi tiết
+                    if (data.topics) {
+                        if (Array.isArray(data.topics) && data.topics.length > 0) {
+                            result += `🎯 TOPICS FOUND! (${data.topics.length} topics)\n`;
+                            result += `${'='.repeat(50)}\n`;
+                            
+                            data.topics.forEach((topic, index) => {
+                                result += `\nTopic ${index + 1}:\n`;
+                                result += `- cluster_id: ${topic.cluster_id}\n`;
+                                result += `- topic_id: ${topic.topic_id}\n`;
+                                result += `- topic_name: ${topic.topic_name || 'N/A'}\n`;
+                                result += `- topic_label: ${topic.topic_label || 'N/A'}\n`;
+                                result += `- core_phrase: ${topic.core_phrase || 'N/A'}\n`;
+                                result += `- items: ${topic.items ? topic.items.length : 0}\n`;
+                                result += `- item_count: ${topic.item_count || 'N/A'}\n`;
+                                result += `- size: ${topic.size || 'N/A'}\n`;
+                                
+                                if (topic.items && topic.items.length > 0) {
+                                    const phrases = topic.items.filter(item => item.type === 'phrase');
+                                    const words = topic.items.filter(item => item.type === 'word');
+                                    result += `- phrases: ${phrases.length} (${phrases.slice(0, 3).map(p => p.word || p.phrase || p.term).join(', ')})\n`;
+                                    result += `- words: ${words.length} (${words.slice(0, 5).map(w => w.word || w.phrase || w.term).join(', ')})\n`;
+                                }
+                            });
+                            
+                            // Hiển thị preview topics
+                            displayTopicsPreview(data.topics);
+                            
+                            result += `\n✅ CONCLUSION: Topics are working!\n`;
+                            result += `The UI should show these topics in documents-simple.\n`;
+                            
+                        } else if (Array.isArray(data.topics) && data.topics.length === 0) {
+                            result += `⚠️  TOPICS ARRAY IS EMPTY!\n`;
+                            result += `API returned topics: [] (empty array)\n`;
+                            result += `This means Topic Modeling ran but found no topics.\n\n`;
+                            result += `Possible causes:\n`;
+                            result += `1. Not enough vocabulary items for clustering\n`;
+                            result += `2. All items have identical embeddings\n`;
+                            result += `3. KMeans clustering failed\n`;
+                        } else {
+                            result += `❌ TOPICS IS NOT AN ARRAY!\n`;
+                            result += `Type: ${typeof data.topics}\n`;
+                            result += `Value: ${JSON.stringify(data.topics)}\n`;
+                        }
+                    } else {
+                        result += `❌ NO TOPICS IN RESPONSE!\n`;
+                        result += `The API did not return a 'topics' field.\n`;
+                        result += `This means Topic Modeling is not working in the backend.\n\n`;
+                        
+                        result += `🔍 DEBUG - Check vocabulary for cluster_id:\n`;
+                        if (data.vocabulary && data.vocabulary.length > 0) {
+                            const hasClusterIds = data.vocabulary.some(item => item.cluster_id !== undefined);
+                            result += `- Vocabulary items: ${data.vocabulary.length}\n`;
+                            result += `- Has cluster_id: ${hasClusterIds}\n`;
+                            
+                            if (hasClusterIds) {
+                                const clusterIds = [...new Set(data.vocabulary.map(item => item.cluster_id).filter(id => id !== undefined))];
+                                result += `- Cluster IDs found: ${clusterIds.join(', ')}\n`;
+                                result += `- This suggests clustering worked but topics weren't formatted properly\n`;
+                            }
+                        }
+                    }
+
+                    // Kiểm tra raw response
+                    result += `\n📋 Raw Response Keys:\n`;
+                    Object.keys(data).forEach(key => {
+                        result += `- ${key}: ${typeof data[key]} ${Array.isArray(data[key]) ? `(array, length: ${data[key].length})` : ''}\n`;
+                    });
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ API Error: ${data.detail || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+
+        async function testWithComplexDocument() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang test với document phức tạp hơn...';
+
+            try {
+                // Document phức tạp hơn với nhiều chủ đề
+                const complexText = `Artificial Intelligence and Machine Learning Technologies
+
+Artificial intelligence represents a transformative technology that is reshaping industries worldwide. Machine learning algorithms enable computers to learn from data without explicit programming. Deep learning neural networks can process complex patterns in images, text, and speech. Natural language processing allows machines to understand and generate human language. Computer vision systems can analyze and interpret visual information with remarkable accuracy.
+
+Climate Change and Environmental Sustainability
+
+Global climate change poses unprecedented challenges to our planet's ecosystems. Rising global temperatures are causing ice sheet melting and sea level rise. Greenhouse gas emissions from fossil fuel combustion are the primary drivers of climate change. Carbon dioxide concentrations in the atmosphere have reached record levels. Deforestation and habitat destruction are accelerating biodiversity loss. Ocean acidification threatens marine ecosystems and coral reefs.
+
+Renewable Energy and Clean Technology Solutions
+
+Solar photovoltaic technology converts sunlight directly into electricity using semiconductor materials. Wind turbines harness kinetic energy from moving air masses to generate clean power. Hydroelectric dams capture energy from flowing water in rivers and streams. Geothermal systems extract heat from the Earth's core for heating and electricity generation. Energy storage batteries enable grid-scale storage of renewable energy. Smart grid technology optimizes electricity distribution and reduces transmission losses.
+
+Biotechnology and Medical Innovations
+
+Genetic engineering techniques allow scientists to modify DNA sequences in living organisms. CRISPR gene editing technology provides precise tools for genetic modification. Personalized medicine tailors treatments based on individual genetic profiles. Immunotherapy harnesses the body's immune system to fight cancer and other diseases. Stem cell research offers potential treatments for degenerative diseases. Biomarker discovery enables early disease detection and monitoring.
+
+Space Exploration and Aerospace Technology
+
+Space exploration missions are advancing our understanding of the universe and planetary systems. Rocket propulsion systems enable spacecraft to escape Earth's gravitational field. Satellite technology provides global communications, navigation, and Earth observation capabilities. Mars exploration rovers are searching for signs of past or present life. International space stations serve as platforms for scientific research in microgravity environments. Commercial spaceflight companies are making space more accessible.`;
+
+                const blob = new Blob([complexText], { type: 'text/plain' });
+                const file = new File([blob], 'complex_topics_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('max_phrases', '40');
+                formData.append('max_words', '25');
+                formData.append('generate_flashcards', 'false'); // Focus on topics
+
+                const response = await fetch('/api/proxy/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ Complex Document Test Successful!\n\n`;
+                    result += `📊 Results:\n`;
+                    result += `- Vocabulary: ${data.vocabulary_count} items\n`;
+                    result += `- Topics: ${data.topics ? data.topics.length : 0} topics\n\n`;
+
+                    if (data.topics && data.topics.length > 0) {
+                        result += `🎯 TOPICS CREATED SUCCESSFULLY!\n`;
+                        result += `Expected: 5 topics (AI, Climate, Energy, Biotech, Space)\n`;
+                        result += `Actual: ${data.topics.length} topics\n\n`;
+                        
+                        data.topics.forEach((topic, index) => {
+                            result += `Topic ${index + 1}: ${topic.topic_name || topic.topic_label || 'Unnamed'}\n`;
+                            result += `  Items: ${topic.items ? topic.items.length : topic.item_count || 0}\n`;
+                            if (topic.core_phrase) {
+                                result += `  Core: ${topic.core_phrase}\n`;
+                            }
+                        });
+                        
+                        displayTopicsPreview(data.topics);
+                        
+                        result += `\n✅ Topic Modeling is working correctly!\n`;
+                        result += `If you don't see topics in UI, check:\n`;
+                        result += `1. Browser console for JavaScript errors\n`;
+                        result += `2. Network tab to see if API response includes topics\n`;
+                        result += `3. React component rendering logic\n`;
+                        
+                    } else {
+                        result += `❌ NO TOPICS CREATED!\n`;
+                        result += `This suggests a backend issue with Topic Modeling.\n`;
+                    }
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ API Error: ${data.detail || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('topicsPreview');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            previewDiv.innerHTML = '';
+
+            try {
+                const savedTopics = localStorage.getItem('recent_topics');
+                
+                let result = `🔍 LocalStorage Check:\n\n`;
+                
+                if (savedTopics) {
+                    const topics = JSON.parse(savedTopics);
+                    result += `✅ Found topics in localStorage!\n`;
+                    result += `- Topics count: ${topics.length}\n`;
+                    result += `- Storage key: 'recent_topics'\n\n`;
+                    
+                    if (Array.isArray(topics) && topics.length > 0) {
+                        result += `📊 Topics Summary:\n`;
+                        topics.forEach((topic, index) => {
+                            result += `${index + 1}. ${topic.topic_name || topic.topic_label || 'Unnamed'} (${topic.items ? topic.items.length : topic.item_count || 0} items)\n`;
+                        });
+                        
+                        displayTopicsPreview(topics);
+                        
+                        result += `\n💡 These topics should appear in /vocabulary → Chủ đề tab\n`;
+                    } else {
+                        result += `⚠️  Topics array is empty or invalid\n`;
+                    }
+                } else {
+                    result += `❌ No topics found in localStorage\n`;
+                    result += `This means:\n`;
+                    result += `1. No documents have been uploaded yet, OR\n`;
+                    result += `2. Topics weren't saved to localStorage, OR\n`;
+                    result += `3. LocalStorage was cleared\n\n`;
+                    result += `💡 Try uploading a document first to generate topics\n`;
+                }
+                
+                // Check all localStorage keys
+                result += `\n🔍 All localStorage keys:\n`;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    result += `- ${key}\n`;
+                }
+
+                resultDiv.textContent = result;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error checking localStorage: ${error.message}`;
+            }
+        }
+
+        function displayTopicsPreview(topics) {
+            const previewDiv = document.getElementById('topicsPreview');
+            
+            if (!topics || topics.length === 0) {
+                previewDiv.innerHTML = '';
+                return;
+            }
+
+            let html = `<h3>🎯 Topics Preview (${topics.length} topics)</h3>`;
+            
+            topics.forEach((topic, index) => {
+                html += `<div class="topic-preview">`;
+                html += `<div class="topic-header">Topic ${index + 1}: ${topic.topic_name || topic.topic_label || 'Unnamed Topic'}</div>`;
+                html += `<div><strong>Items:</strong> ${topic.items ? topic.items.length : topic.item_count || topic.size || 0}</div>`;
+                
+                if (topic.core_phrase) {
+                    html += `<div><strong>Core Phrase:</strong> ${topic.core_phrase}</div>`;
+                }
+                
+                if (topic.items && topic.items.length > 0) {
+                    const phrases = topic.items.filter(item => item.type === 'phrase');
+                    const words = topic.items.filter(item => item.type === 'word');
+                    
+                    if (phrases.length > 0) {
+                        html += `<div><strong>Phrases:</strong> ${phrases.slice(0, 3).map(p => p.word || p.phrase || p.term).join(', ')}${phrases.length > 3 ? ` (+${phrases.length - 3} more)` : ''}</div>`;
+                    }
+                    
+                    if (words.length > 0) {
+                        html += `<div><strong>Words:</strong> ${words.slice(0, 5).map(w => w.word || w.phrase || w.term).join(', ')}${words.length > 5 ? ` (+${words.length - 5} more)` : ''}</div>`;
+                    }
+                }
+                
+                html += `</div>`;
+            });
+            
+            previewDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

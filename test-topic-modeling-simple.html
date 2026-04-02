@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Topic Modeling Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Simple Topic Modeling Test</h1>
+        <p>Test nhanh để kiểm tra Topic Modeling có hoạt động không</p>
+
+        <button onclick="testTopicModeling()">Test Topic Modeling</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testTopicModeling() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang test Topic Modeling...';
+
+            try {
+                // Tạo sample text với nhiều chủ đề rõ ràng
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning algorithms are transforming how we process data. Neural networks enable computers to recognize patterns in complex datasets. Deep learning models can analyze images, text, and speech with remarkable accuracy.
+
+Climate Change and Environmental Issues
+
+Climate change represents one of the most pressing challenges of our time. Global warming is causing rising sea levels and extreme weather events. Greenhouse gas emissions from human activities are the primary driver of climate change.
+
+Renewable Energy Solutions
+
+Solar power harnesses energy from sunlight using photovoltaic panels. Wind energy captures kinetic energy from moving air through wind turbines. These renewable energy sources offer sustainable alternatives to fossil fuels and help reduce carbon emissions.
+
+Technology for Environmental Protection
+
+Artificial intelligence can optimize energy consumption in smart buildings. Machine learning algorithms help predict weather patterns and climate trends. Technology solutions are essential for monitoring and protecting our environment.`;
+
+                // Tạo blob file
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'topic_test.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('max_phrases', '25');
+                formData.append('max_words', '15');
+                formData.append('generate_flashcards', 'false'); // Tắt flashcards để focus vào topics
+
+                const response = await fetch('/api/proxy/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ API Response Successful!\n\n`;
+                    result += `📊 Basic Stats:\n`;
+                    result += `- Vocabulary: ${data.vocabulary_count} items\n`;
+                    result += `- Flashcards: ${data.flashcards_count} cards\n`;
+                    result += `- Topics in response: ${data.topics ? data.topics.length : 0}\n\n`;
+
+                    // Kiểm tra topics
+                    if (data.topics && data.topics.length > 0) {
+                        result += `🎯 TOPICS FOUND! (${data.topics.length} topics)\n`;
+                        result += `${'='.repeat(50)}\n`;
+                        
+                        data.topics.forEach((topic, index) => {
+                            result += `\nTopic ${index + 1}:\n`;
+                            result += `- ID: ${topic.cluster_id || topic.topic_id || index}\n`;
+                            result += `- Name: ${topic.topic_label || topic.topic_name || 'Unnamed'}\n`;
+                            result += `- Items: ${topic.items ? topic.items.length : topic.item_count || 0}\n`;
+                            
+                            if (topic.items && topic.items.length > 0) {
+                                const phrases = topic.items.filter(item => item.type === 'phrase');
+                                const words = topic.items.filter(item => item.type === 'word');
+                                
+                                if (phrases.length > 0) {
+                                    result += `- Phrases: ${phrases.map(p => p.term || p.word || p.phrase).join(', ')}\n`;
+                                }
+                                if (words.length > 0) {
+                                    result += `- Words: ${words.map(w => w.term || w.word || w.phrase).join(', ')}\n`;
+                                }
+                            }
+                        });
+                        
+                        result += `\n✅ CONCLUSION: Topic Modeling is WORKING!\n`;
+                        result += `The system successfully grouped vocabulary into ${data.topics.length} semantic topics.\n`;
+                        
+                    } else {
+                        result += `❌ NO TOPICS FOUND!\n`;
+                        result += `${'='.repeat(50)}\n`;
+                        result += `This means Topic Modeling is NOT working.\n\n`;
+                        
+                        result += `🔍 Possible Causes:\n`;
+                        result += `1. Topic Modeling module not enabled in pipeline\n`;
+                        result += `2. Embeddings not generated (sentence-transformers issue)\n`;
+                        result += `3. Not enough vocabulary for clustering (need 3+ items)\n`;
+                        result += `4. KMeans clustering failed\n`;
+                        result += `5. Topics not included in API response\n\n`;
+                        
+                        // Debug info
+                        if (data.vocabulary && data.vocabulary.length > 0) {
+                            result += `🔍 DEBUG - Sample Vocabulary:\n`;
+                            data.vocabulary.slice(0, 5).forEach((item, i) => {
+                                result += `${i+1}. ${item.word || item.phrase || item.term} (${item.type})\n`;
+                                if (item.cluster_id !== undefined) {
+                                    result += `   Cluster ID: ${item.cluster_id}\n`;
+                                }
+                            });
+                        }
+                    }
+
+                    // Show raw response structure
+                    result += `\n📋 Response Structure:\n`;
+                    result += `- success: ${data.success}\n`;
+                    result += `- vocabulary: ${Array.isArray(data.vocabulary) ? data.vocabulary.length + ' items' : typeof data.vocabulary}\n`;
+                    result += `- topics: ${Array.isArray(data.topics) ? data.topics.length + ' items' : typeof data.topics}\n`;
+                    result += `- flashcards: ${Array.isArray(data.flashcards) ? data.flashcards.length + ' items' : typeof data.flashcards}\n`;
+                    result += `- statistics: ${typeof data.statistics}\n`;
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ API Error: ${data.detail || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

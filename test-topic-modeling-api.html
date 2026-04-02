@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Topic Modeling API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .topic-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .topic-header {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .topic-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .topic-item {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .phrase-item {
+            background: #d4edda;
+            color: #155724;
+        }
+        .word-item {
+            background: #cce5ff;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Topic Modeling API</h1>
+        <p>Test để kiểm tra xem API có trả về topics từ Topic Modeling không</p>
+
+        <!-- Test 1: Upload Document và kiểm tra Topics -->
+        <div class="test-section">
+            <h3>📄 Test 1: Upload Document và kiểm tra Topics</h3>
+            <p>Upload một document và kiểm tra xem có topics được trả về không</p>
+            
+            <input type="file" id="fileInput" accept=".txt,.pdf,.docx" style="margin-bottom: 10px;">
+            <br>
+            <button onclick="testUploadDocument()">Upload và Test Topics</button>
+            <button onclick="testWithSampleText()">Test với Sample Text</button>
+            
+            <div id="uploadResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 2: Ablation Study Topics -->
+        <div class="test-section">
+            <h3>🔬 Test 2: Ablation Study - TH4 Topics</h3>
+            <p>Chạy Ablation Study TH4 (Full System) để xem topics</p>
+            
+            <button onclick="testAblationStudyTopics()">Test Ablation Study TH4</button>
+            
+            <div id="ablationResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 3: Hiển thị Topics -->
+        <div class="test-section">
+            <h3>📊 Test 3: Hiển thị Topics (nếu có)</h3>
+            <div id="topicsDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentTopics = [];
+
+        async function testUploadDocument() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('uploadResult');
+            
+            if (!fileInput.files[0]) {
+                alert('Vui lòng chọn file trước!');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang upload và xử lý...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('max_phrases', '30');
+                formData.append('max_words', '20');
+                formData.append('generate_flashcards', 'true');
+
+                const response = await fetch('/api/proxy/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ Upload thành công!\n\n`;
+                    result += `📊 Thống kê:\n`;
+                    result += `- Vocabulary: ${data.vocabulary_count} items\n`;
+                    result += `- Flashcards: ${data.flashcards_count} cards\n`;
+                    result += `- Topics: ${data.topics ? data.topics.length : 0} topics\n\n`;
+
+                    if (data.topics && data.topics.length > 0) {
+                        result += `🎯 TOPICS FOUND:\n`;
+                        data.topics.forEach((topic, index) => {
+                            result += `\nTopic ${index + 1}:\n`;
+                            result += `- ID: ${topic.cluster_id || topic.topic_id || index}\n`;
+                            result += `- Label: ${topic.topic_label || topic.topic_name || 'Unknown'}\n`;
+                            result += `- Items: ${topic.items ? topic.items.length : topic.item_count || 0}\n`;
+                            
+                            if (topic.items && topic.items.length > 0) {
+                                result += `- Sample items: ${topic.items.slice(0, 3).map(item => item.term || item.word).join(', ')}\n`;
+                            }
+                        });
+                        
+                        currentTopics = data.topics;
+                        displayTopics(data.topics);
+                    } else {
+                        result += `❌ KHÔNG CÓ TOPICS!\n`;
+                        result += `Có thể do:\n`;
+                        result += `1. Topic Modeling không được kích hoạt\n`;
+                        result += `2. Không đủ vocabulary để clustering\n`;
+                        result += `3. Lỗi trong quá trình clustering\n`;
+                    }
+
+                    result += `\n📋 Raw Response:\n`;
+                    result += JSON.stringify(data, null, 2);
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Lỗi: ${data.detail || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+
+        async function testWithSampleText() {
+            const resultDiv = document.getElementById('uploadResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang tạo sample file và test...';
+
+            try {
+                // Tạo sample text về machine learning và climate change
+                const sampleText = `Machine Learning and Artificial Intelligence
+
+Machine learning is a subset of artificial intelligence that focuses on developing algorithms that can learn from data. Neural networks are a fundamental component of modern machine learning systems. Deep learning uses neural networks with multiple layers to process complex patterns.
+
+Climate Change and Environmental Issues
+
+Climate change refers to long-term shifts in global temperatures and weather patterns. Global warming is primarily caused by greenhouse gas emissions from human activities. Deforestation contributes significantly to climate change by reducing the Earth's capacity to absorb carbon dioxide.
+
+Renewable Energy Solutions
+
+Renewable energy sources such as solar power and wind energy offer sustainable alternatives to fossil fuels. Solar panels convert sunlight into electricity, while wind turbines harness wind power to generate clean energy. These technologies are essential for reducing carbon emissions and combating climate change.
+
+Technology and Environment
+
+The intersection of technology and environmental science presents both challenges and opportunities. Artificial intelligence can be used to optimize energy consumption and predict climate patterns. Machine learning algorithms help analyze environmental data and develop more efficient renewable energy systems.`;
+
+                // Tạo blob file
+                const blob = new Blob([sampleText], { type: 'text/plain' });
+                const file = new File([blob], 'sample_ml_climate.txt', { type: 'text/plain' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('max_phrases', '30');
+                formData.append('max_words', '20');
+                formData.append('generate_flashcards', 'true');
+
+                const response = await fetch('/api/proxy/upload-document-complete', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ Sample text processed!\n\n`;
+                    result += `📊 Thống kê:\n`;
+                    result += `- Vocabulary: ${data.vocabulary_count} items\n`;
+                    result += `- Flashcards: ${data.flashcards_count} cards\n`;
+                    result += `- Topics: ${data.topics ? data.topics.length : 0} topics\n\n`;
+
+                    if (data.topics && data.topics.length > 0) {
+                        result += `🎯 TOPICS FOUND:\n`;
+                        data.topics.forEach((topic, index) => {
+                            result += `\nTopic ${index + 1}:\n`;
+                            result += `- ID: ${topic.cluster_id || topic.topic_id || index}\n`;
+                            result += `- Label: ${topic.topic_label || topic.topic_name || 'Unknown'}\n`;
+                            result += `- Items: ${topic.items ? topic.items.length : topic.item_count || 0}\n`;
+                            
+                            if (topic.items && topic.items.length > 0) {
+                                result += `- Sample items: ${topic.items.slice(0, 5).map(item => item.term || item.word).join(', ')}\n`;
+                            }
+                        });
+                        
+                        currentTopics = data.topics;
+                        displayTopics(data.topics);
+                    } else {
+                        result += `❌ KHÔNG CÓ TOPICS!\n`;
+                        result += `Có thể do:\n`;
+                        result += `1. Topic Modeling không được kích hoạt trong pipeline\n`;
+                        result += `2. Không đủ vocabulary để clustering (cần ít nhất 3 items)\n`;
+                        result += `3. Embeddings không được tạo đúng cách\n`;
+                        result += `4. KMeans clustering failed\n`;
+                    }
+
+                    // Hiển thị vocabulary để debug
+                    if (data.vocabulary && data.vocabulary.length > 0) {
+                        result += `\n📝 VOCABULARY (first 10):\n`;
+                        data.vocabulary.slice(0, 10).forEach((item, index) => {
+                            result += `${index + 1}. ${item.word || item.term} (${item.type || 'unknown'})`;
+                            if (item.cluster_id !== undefined) {
+                                result += ` - Cluster: ${item.cluster_id}`;
+                            }
+                            result += `\n`;
+                        });
+                    }
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Lỗi: ${data.detail || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+
+        async function testAblationStudyTopics() {
+            const resultDiv = document.getElementById('ablationResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Đang chạy Ablation Study TH4...';
+
+            try {
+                const sampleText = `Machine Learning and Climate Change
+
+Machine learning algorithms are increasingly being used to address climate change challenges. Neural networks can analyze climate data to predict weather patterns and optimize renewable energy systems.
+
+Deep learning models help scientists understand complex climate phenomena such as global warming and greenhouse gas emissions. These AI technologies are essential for developing sustainable solutions to environmental problems.
+
+Renewable energy sources like solar power and wind energy benefit from machine learning optimization. Smart grids use artificial intelligence to efficiently distribute clean energy and reduce carbon emissions.`;
+
+                const groundTruth = [
+                    'machine learning',
+                    'climate change',
+                    'neural networks',
+                    'deep learning',
+                    'global warming',
+                    'renewable energy',
+                    'solar power',
+                    'wind energy',
+                    'artificial intelligence',
+                    'carbon emissions'
+                ];
+
+                const response = await fetch('/api/proxy/ablation-study', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        document_text: sampleText,
+                        ground_truth_vocabulary: groundTruth,
+                        document_title: 'ML Climate Test'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    
+                    let result = `✅ Ablation Study completed!\n\n`;
+                    
+                    // Tìm TH4 result
+                    const th4Result = data.results.find(r => r.case.includes('TH4') || r.case.includes('Full System'));
+                    
+                    if (th4Result) {
+                        result += `🎯 TH4 (Full System) Results:\n`;
+                        result += `- F1 Score: ${th4Result.f1_score.toFixed(4)}\n`;
+                        result += `- Precision: ${th4Result.precision.toFixed(4)}\n`;
+                        result += `- Recall: ${th4Result.recall.toFixed(4)}\n`;
+                        result += `- Total Words: ${th4Result.total_words}\n`;
+                        result += `- Unique Words: ${th4Result.unique_words}\n\n`;
+                        
+                        // Kiểm tra xem có topics không
+                        if (th4Result.topics && th4Result.topics.length > 0) {
+                            result += `🎯 TOPICS FOUND IN TH4:\n`;
+                            th4Result.topics.forEach((topic, index) => {
+                                result += `\nTopic ${index + 1}:\n`;
+                                result += `- Items: ${topic.items ? topic.items.length : 0}\n`;
+                                if (topic.items) {
+                                    result += `- Words: ${topic.items.map(item => item.term || item.word).join(', ')}\n`;
+                                }
+                            });
+                        } else {
+                            result += `❌ KHÔNG CÓ TOPICS trong TH4!\n`;
+                            result += `Điều này có nghĩa là Topic Modeling không hoạt động trong Ablation Study.\n`;
+                        }
+                    } else {
+                        result += `❌ Không tìm thấy TH4 result!\n`;
+                    }
+
+                    result += `\n📋 All Results:\n`;
+                    data.results.forEach(r => {
+                        result += `- ${r.case}: F1=${r.f1_score.toFixed(4)}\n`;
+                    });
+
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Lỗi: ${data.detail || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Network Error: ${error.message}`;
+            }
+        }
+
+        function displayTopics(topics) {
+            const displayDiv = document.getElementById('topicsDisplay');
+            
+            if (!topics || topics.length === 0) {
+                displayDiv.innerHTML = '<p>❌ Không có topics để hiển thị</p>';
+                return;
+            }
+
+            let html = `<h4>🎯 Topics Found (${topics.length} topics):</h4>`;
+            
+            topics.forEach((topic, index) => {
+                html += `<div class="topic-card">`;
+                html += `<div class="topic-header">`;
+                html += `Topic ${index + 1}: ${topic.topic_label || topic.topic_name || 'Unnamed Topic'}`;
+                html += ` (${topic.items ? topic.items.length : topic.item_count || 0} items)`;
+                html += `</div>`;
+                
+                if (topic.items && topic.items.length > 0) {
+                    html += `<div class="topic-items">`;
+                    topic.items.forEach(item => {
+                        const isPhrase = item.type === 'phrase' || (item.term && item.term.includes(' '));
+                        const className = isPhrase ? 'topic-item phrase-item' : 'topic-item word-item';
+                        const text = item.term || item.word || 'Unknown';
+                        html += `<span class="${className}">${text}</span>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            displayDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
