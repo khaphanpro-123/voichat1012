@@ -86,6 +86,8 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
   )
 }
 
+const PREVIEW_LIMIT = 8
+
 export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -93,6 +95,15 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string>("")
   const [maxPhrases, setMaxPhrases] = useState(40)
   const [maxWords, setMaxWords] = useState(10)
+  const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set())
+
+  const toggleTopic = (index: number) => {
+    setExpandedTopics(prev => {
+      const next = new Set(prev)
+      next.has(index) ? next.delete(index) : next.add(index)
+      return next
+    })
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -302,6 +313,11 @@ export default function DocumentsPage() {
                   {result.topics.map((topic: any, index: number) => {
                     const phrases = topic.items?.filter((item: any) => item.type === "phrase") || []
                     const words = topic.items?.filter((item: any) => item.type === "word") || []
+                    const allItems = [...phrases, ...words]
+                    const isExpanded = expandedTopics.has(index)
+                    const needsExpand = allItems.length > PREVIEW_LIMIT
+                    const visiblePhrases = isExpanded ? phrases : phrases.slice(0, PREVIEW_LIMIT)
+                    const visibleWords = isExpanded ? words : words.slice(0, Math.max(0, PREVIEW_LIMIT - phrases.length))
                     return (
                       <div key={index} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
@@ -315,11 +331,11 @@ export default function DocumentsPage() {
                         {topic.core_phrase && (
                           <p className="text-sm text-gray-500 mb-3">Từ khóa chính: <span className="font-medium text-gray-700">{topic.core_phrase}</span></p>
                         )}
-                        {phrases.length > 0 && (
+                        {visiblePhrases.length > 0 && (
                           <div className="mb-3">
                             <p className="text-sm font-medium text-gray-600 mb-2">Cụm từ</p>
                             <div className="flex flex-wrap gap-2">
-                              {phrases.map((item: any, i: number) => (
+                              {visiblePhrases.map((item: any, i: number) => (
                                 <span key={i} className="text-sm bg-green-50 text-green-800 px-3 py-1 rounded border border-green-200">
                                   {item.word || item.phrase || item.term}
                                 </span>
@@ -327,17 +343,27 @@ export default function DocumentsPage() {
                             </div>
                           </div>
                         )}
-                        {words.length > 0 && (
+                        {visibleWords.length > 0 && (
                           <div>
                             <p className="text-sm font-medium text-gray-600 mb-2">Từ đơn</p>
                             <div className="flex flex-wrap gap-2">
-                              {words.map((item: any, i: number) => (
+                              {visibleWords.map((item: any, i: number) => (
                                 <span key={i} className="text-sm bg-blue-50 text-blue-800 px-3 py-1 rounded border border-blue-200">
                                   {item.word || item.phrase || item.term}
                                 </span>
                               ))}
                             </div>
                           </div>
+                        )}
+                        {needsExpand && (
+                          <button
+                            onClick={() => toggleTopic(index)}
+                            className="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                          >
+                            {isExpanded
+                              ? "Thu gọn"
+                              : `Xem thêm ${allItems.length - PREVIEW_LIMIT} từ`}
+                          </button>
                         )}
                       </div>
                     )

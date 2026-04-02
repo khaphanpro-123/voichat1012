@@ -266,26 +266,8 @@ export default function DashboardHome() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid md:grid-cols-3 gap-6 mb-8"
+        className="grid md:grid-cols-2 gap-6 mb-8"
       >
-        {/* Streak Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-6 text-white shadow-xl">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-              <Flame className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-sm opacity-90 mb-1">Chuỗi ngày học</p>
-              <p className="text-3xl font-bold">{currentStreak} ngày</p>
-            </div>
-          </div>
-          <p className="text-sm opacity-75 mt-3">
-            {currentStreak === 0 
-              ? "Bắt đầu học ngay! 🔥" 
-              : "Tiếp tục duy trì! 🔥"}
-          </p>
-        </div>
-
         {/* XP Card */}
         <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-3xl p-6 text-white shadow-xl">
           <div className="flex items-center gap-4">

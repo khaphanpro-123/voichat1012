@@ -333,23 +333,16 @@ export default function VocabularyPage() {
       return;
     }
 
-    // Words with meaning are valid for quiz (example is optional)
-    const validWords = vocabulary.filter((w) => getMeaning(w)?.trim().length > 0);
+    // All words with a word field are valid - meaning is optional
+    const validWords = vocabulary.filter((w) => w.word?.trim().length > 0);
 
     let selectedWords = [...validWords].sort(() => Math.random() - 0.5);
     if (selectedType !== "all") {
-      selectedWords = selectedWords.filter((w) => normalizeType(getWordType(w)) === selectedType);
-    }
-    // If type filter gives < 4, fall back to all valid words
-    if (selectedWords.length < 4) {
-      selectedWords = [...validWords].sort(() => Math.random() - 0.5);
+      const typeFiltered = selectedWords.filter((w) => normalizeType(getWordType(w)) === selectedType);
+      // If type filter gives < 4, fall back to all valid words
+      selectedWords = typeFiltered.length >= 4 ? typeFiltered : selectedWords;
     }
     selectedWords = selectedWords.slice(0, 15);
-
-    if (selectedWords.length < 4) {
-      alert("Không đủ từ vựng để tạo quiz!");
-      return;
-    }
 
     const questions: QuizQuestion[] = [];
     
@@ -359,8 +352,17 @@ export default function VocabularyPage() {
       
       if (randomType === "multiple_choice") {
         // Multiple choice: What does this word mean?
-        const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
         const correctMeaning = getMeaning(word);
+        const otherWords = validWords
+          .filter((w) => w._id !== word._id && getMeaning(w)?.trim())
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+
+        // Need at least 3 other words with meaning for multiple choice
+        if (!correctMeaning?.trim() || otherWords.length < 3) {
+          // Skip this word if can't make valid options
+          return;
+        }
         const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
         questions.push({
           word,
@@ -428,9 +430,12 @@ export default function VocabularyPage() {
         }
       } else {
         // Fallback: always create multiple_choice for words without example
-        const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
         const correctMeaning = getMeaning(word);
-        if (correctMeaning && otherWords.length >= 3) {
+        const otherWords = validWords
+          .filter((w) => w._id !== word._id && getMeaning(w)?.trim())
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        if (correctMeaning?.trim() && otherWords.length >= 3) {
           const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
           questions.push({
             word,
@@ -442,6 +447,11 @@ export default function VocabularyPage() {
         }
       }
     });
+
+    if (questions.length < 1) {
+      alert("Từ vựng chưa có nghĩa (meaning). Hãy thêm nghĩa cho từ để bắt đầu quiz!");
+      return;
+    }
 
     setQuizQuestions(questions);
     setCurrentQuestionIndex(0);
