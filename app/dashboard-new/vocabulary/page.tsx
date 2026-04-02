@@ -327,15 +327,22 @@ export default function VocabularyPage() {
 
   // Quiz functions - Enhanced with multiple question types
   const startQuiz = () => {
-    const validWords = vocabulary.filter((w) => getMeaning(w)?.trim().length > 0 && getExample(w)?.trim().length > 0);
-    if (validWords.length < 4) {
-      alert("Cần ít nhất 4 từ vựng có câu ví dụ để bắt đầu quiz!");
+    // Check total vocabulary in DB (not filtered view)
+    if (vocabulary.length < 4) {
+      alert("Cần ít nhất 4 từ vựng trong kho để bắt đầu quiz!");
       return;
     }
+
+    // Words with meaning are valid for quiz (example is optional)
+    const validWords = vocabulary.filter((w) => getMeaning(w)?.trim().length > 0);
 
     let selectedWords = [...validWords].sort(() => Math.random() - 0.5);
     if (selectedType !== "all") {
       selectedWords = selectedWords.filter((w) => normalizeType(getWordType(w)) === selectedType);
+    }
+    // If type filter gives < 4, fall back to all valid words
+    if (selectedWords.length < 4) {
+      selectedWords = [...validWords].sort(() => Math.random() - 0.5);
     }
     selectedWords = selectedWords.slice(0, 15);
 
@@ -410,6 +417,20 @@ export default function VocabularyPage() {
           // Fallback to multiple choice if sentence too long/short
           const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
           const correctMeaning = getMeaning(word);
+          const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
+          questions.push({
+            word,
+            type: "multiple_choice",
+            question: `Nghĩa của từ "${word.word}" là gì?`,
+            options,
+            correctAnswer: correctMeaning
+          });
+        }
+      } else {
+        // Fallback: always create multiple_choice for words without example
+        const otherWords = validWords.filter((w) => w._id !== word._id && getMeaning(w)).sort(() => Math.random() - 0.5).slice(0, 3);
+        const correctMeaning = getMeaning(word);
+        if (correctMeaning && otherWords.length >= 3) {
           const options = [correctMeaning, ...otherWords.map((w) => getMeaning(w))].sort(() => Math.random() - 0.5);
           questions.push({
             word,
