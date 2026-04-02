@@ -2,116 +2,86 @@
 
 import { useState } from "react"
 
-// Vocabulary Card Component - Mobile Optimized
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
-  if (!card || (!card.word && !card.phrase)) return null;
-  
-  const isPrimarySynonym = card.is_primary_synonym !== false; // Default to true if not set
-  const hasSynonymGroup = card.synonym_group_id !== undefined;
-  const similarityScore = card.similarity_to_primary;
-  
+  if (!card || (!card.word && !card.phrase)) return null
+
+  const isPrimarySynonym = card.is_primary_synonym !== false
+  const similarityScore = card.similarity_to_primary
+
   return (
-    <div className={`p-3 sm:p-4 rounded-lg border transition-all ${
-      isPrimarySynonym 
-        ? 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md' 
-        : 'bg-blue-50 border-blue-200 ml-2 sm:ml-6 hover:border-blue-400 hover:shadow-sm'
+    <div className={`p-4 rounded-lg border ${
+      isPrimarySynonym
+        ? "bg-white border-gray-200"
+        : "bg-gray-50 border-gray-200 ml-4"
     }`}>
-      {/* Mobile: Stack layout, Desktop: Flex layout */}
-      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-start sm:justify-between">
-        <div className="flex-1">
-          {/* Word and Score - Mobile: Stack, Desktop: Inline */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Synonym indicator */}
-              {!isPrimarySynonym && (
-                <span className="text-blue-500" title="Từ đồng nghĩa">
-                  🔗
-                </span>
-              )}
-              
-              <p className="font-bold text-base sm:text-lg text-gray-800 break-words">
-                {card.word || card.phrase}
-              </p>
-              
-              <button
-                onClick={() => speakText(card.word || card.phrase || "")}
-                className="p-1 hover:bg-blue-100 rounded-full transition-colors flex-shrink-0"
-                title="Phát âm từ"
-              >
-                <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                </svg>
-              </button>
-            </div>
-            
-            {/* Score badge - Mobile: Top right, Desktop: Right side */}
-            <div className="self-start sm:ml-4 flex-shrink-0">
-              <div className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded-full text-xs sm:text-sm font-bold">
-                {(card.importance_score || card.final_score || 0).toFixed(2)}
-              </div>
-            </div>
-          </div>
-
-          {/* Tags - Mobile: Stack, Desktop: Inline */}
-          <div className="flex flex-wrap gap-1 mb-2">
-            {/* POS Tag */}
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 font-medium">
-              {card.pos_label || 'noun'}
-            </span>
-            
-            {/* Similarity badge for synonyms */}
-            {!isPrimarySynonym && similarityScore && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 font-medium">
-                {(similarityScore * 100).toFixed(0)}% tương đồng
-              </span>
-            )}
-          </div>
-
-          {/* Definition */}
-          {card.definition && (
-            <p className="text-sm text-gray-700 mb-2 break-words">
-              <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
-            </p>
-          )}
-
-          {/* Context sentence */}
-          {(card.context_sentence || card.supporting_sentence) && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-2">
-              <div className="flex flex-col sm:flex-row sm:items-start gap-2">
-                <p className="text-sm text-gray-700 italic flex-1 break-words">
-                  "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, '')}"
-                </p>
-                <button
-                  onClick={() => speakText((card.context_sentence || card.supporting_sentence)?.replace(/<[^>]*>/g, '') || "")}
-                  className="p-1 hover:bg-yellow-100 rounded-full transition-colors flex-shrink-0 self-start"
-                  title="Phát âm câu"
-                >
-                  <svg className="h-4 w-4 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Synonyms */}
-          {card.synonyms && card.synonyms.length > 0 && (
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-gray-600 block">🔄 Từ đồng nghĩa:</span>
-              <div className="flex flex-wrap gap-1">
-                {card.synonyms.map((syn: string, i: number) => (
-                  <span
-                    key={i}
-                    className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full border border-purple-200 break-words"
-                  >
-                    {syn}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2 flex-wrap flex-1">
+          <p className="font-semibold text-lg text-gray-900 break-words">
+            {card.word || card.phrase}
+          </p>
+          <button
+            onClick={() => speakText(card.word || card.phrase || "")}
+            className="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+            title="Phát âm"
+          >
+            <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-3 py-1 bg-blue-600 text-white rounded text-sm font-semibold flex-shrink-0">
+          {(card.importance_score || card.final_score || 0).toFixed(2)}
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-2 mb-2">
+        <span className="text-sm bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-200">
+          {card.pos_label || "noun"}
+        </span>
+        {!isPrimarySynonym && similarityScore && (
+          <span className="text-sm bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+            {(similarityScore * 100).toFixed(0)}% tương đồng
+          </span>
+        )}
+      </div>
+
+      {card.definition && (
+        <p className="text-base text-gray-700 mb-2">
+          <span className="font-medium text-gray-900">Nghĩa:</span> {card.definition}
+        </p>
+      )}
+
+      {(card.context_sentence || card.supporting_sentence) && (
+        <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-2">
+          <div className="flex items-start gap-2">
+            <p className="text-base text-gray-600 italic flex-1">
+              "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, "")}"
+            </p>
+            <button
+              onClick={() => speakText((card.context_sentence || card.supporting_sentence)?.replace(/<[^>]*>/g, "") || "")}
+              className="p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
+              title="Phát âm câu"
+            >
+              <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {card.synonyms && card.synonyms.length > 0 && (
+        <div>
+          <span className="text-sm font-medium text-gray-600">Từ đồng nghĩa: </span>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {card.synonyms.map((syn: string, i: number) => (
+              <span key={i} className="text-sm bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                {syn}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -127,14 +97,11 @@ export default function DocumentsPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
-      
-      // Check file size (50MB limit)
-      const maxSize = 50 * 1024 * 1024 // 50MB
+      const maxSize = 50 * 1024 * 1024
       if (selectedFile.size > maxSize) {
         setError(`File quá lớn (${(selectedFile.size / 1024 / 1024).toFixed(2)}MB). Vui lòng chọn file nhỏ hơn 50MB`)
         return
       }
-      
       setFile(selectedFile)
       setError("")
     }
@@ -152,15 +119,10 @@ export default function DocumentsPage() {
   }
 
   const handleUpload = async () => {
-    if (!file) {
-      setError("Vui lòng chọn file")
-      return
-    }
-
+    if (!file) { setError("Vui lòng chọn file"); return }
     setUploading(true)
     setError("")
     setResult(null)
-
     try {
       const formData = new FormData()
       formData.append("file", file)
@@ -172,73 +134,24 @@ export default function DocumentsPage() {
       formData.append("bm25_weight", "0.2")
       formData.append("generate_flashcards", "true")
 
-      const response = await fetch(`/api/upload-document-complete`, {
-        method: "POST",
-        body: formData,
-      })
-
+      const response = await fetch(`/api/upload-document-complete`, { method: "POST", body: formData })
       const data = await response.json()
 
       if (!response.ok) {
-        if (response.status === 413) {
-          setError("File quá lớn (tối đa 50MB). Vui lòng chọn file nhỏ hơn")
-          return
-        }
-        if (response.status === 504) {
-          setError("Xử lý quá lâu. File có thể quá lớn hoặc phức tạp. Vui lòng thử file nhỏ hơn")
-          return
-        }
-        if (response.status === 502) {
-          setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại...")
-          return
-        }
+        if (response.status === 413) { setError("File quá lớn (tối đa 50MB)"); return }
+        if (response.status === 504) { setError("Xử lý quá lâu. Vui lòng thử file nhỏ hơn"); return }
+        if (response.status === 502) { setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại..."); return }
         throw new Error(data.error || `Upload failed: ${response.statusText}`)
       }
-
-      if (!data || typeof data !== 'object') {
-        throw new Error('Invalid response format from server')
-      }
-
-      if (!data.flashcards && !data.vocabulary) {
-        throw new Error('Response missing flashcards or vocabulary data')
-      }
-
-      // DEBUG: Log response data structure
-      console.log("📊 Backend response:", data)
-      console.log("📊 Vocabulary items:", data.vocabulary?.length || 0)
-      console.log("📊 First vocabulary item:", data.vocabulary?.[0])
-      console.log("📊 IPA field check:", {
-        hasPhonetic: !!data.vocabulary?.[0]?.phonetic,
-        hasIpa: !!data.vocabulary?.[0]?.ipa,
-        phoneticValue: data.vocabulary?.[0]?.phonetic,
-        ipaValue: data.vocabulary?.[0]?.ipa
-      })
+      if (!data || typeof data !== "object") throw new Error("Invalid response format")
+      if (!data.flashcards && !data.vocabulary) throw new Error("Response missing vocabulary data")
 
       setResult(data)
-      
-      // Save topics to localStorage for vocabulary page
       if (data.topics && data.topics.length > 0) {
-        try {
-          localStorage.setItem('recent_topics', JSON.stringify(data.topics));
-          console.log("🎯 Saved topics to localStorage:", data.topics.length, "topics");
-        } catch (error) {
-          console.error("Error saving topics to localStorage:", error);
-        }
+        try { localStorage.setItem("recent_topics", JSON.stringify(data.topics)) } catch {}
       }
-      
-      // Auto-save vocabulary to database
-      console.log("💾 Starting auto-save to database...")
-      const saveResult = await handleSaveToDatabase(data)
-      console.log("✅ Auto-save completed:", saveResult)
-      
-      // Show success message to user
-      if (saveResult && saveResult.savedCount > 0) {
-        // You can add a toast notification here if you have a toast library
-        console.log(`✅ Đã tự động lưu ${saveResult.savedCount} từ vào kho từ vựng`)
-      }
+      await handleSaveToDatabase(data)
     } catch (err: any) {
-      console.error("Upload error:", err)
-      // Hiển thị thông báo lỗi chung
       setError("Hệ thống xử lý tài liệu đã xảy ra lỗi, vui lòng tải tệp khác")
     } finally {
       setUploading(false)
@@ -248,500 +161,233 @@ export default function DocumentsPage() {
   const handleSaveToDatabase = async (data: any) => {
     try {
       const vocabularyToSave = data.vocabulary || data.flashcards || []
-      
-      console.log("💾 Vocabulary to save:", vocabularyToSave.length, "items")
-      
-      if (vocabularyToSave.length === 0) {
-        console.log("⚠️ No vocabulary to save")
-        return { savedCount: 0, failedCount: 0 }
-      }
-
-      let savedCount = 0
-      let failedCount = 0
-      const errors: string[] = []
-
-      const savePromises = vocabularyToSave.map(async (item: any, index: number) => {
-        if (!item || (!item.word && !item.phrase)) {
-          console.log(`⚠️ Skipping item ${index}: no word/phrase`)
-          return
-        }
-
-        const level = (item.importance_score || 0) > 0.7 ? "advanced" : 
-                     (item.importance_score || 0) > 0.4 ? "intermediate" : "beginner"
-        
+      if (vocabularyToSave.length === 0) return { savedCount: 0, failedCount: 0 }
+      let savedCount = 0, failedCount = 0
+      const savePromises = vocabularyToSave.map(async (item: any) => {
+        if (!item || (!item.word && !item.phrase)) return
         const payload = {
           word: item.word || item.phrase,
           meaning: item.definition || "",
           example: item.context_sentence || item.supporting_sentence || "",
-          level: level,
+          level: (item.importance_score || 0) > 0.7 ? "advanced" : (item.importance_score || 0) > 0.4 ? "intermediate" : "beginner",
           pronunciation: item.phonetic || item.ipa || "",
           ipa: item.ipa || item.phonetic || "",
-          partOfSpeech: item.pos_label || "other", // Add POS tag
-          type: item.pos_label || "other", // Backward compatibility
-          source: "document", // Use consistent source name
+          partOfSpeech: item.pos_label || "other",
+          type: item.pos_label || "other",
+          source: "document",
           synonyms: item.synonyms || [],
         }
-        
-        // Skip if no word
-        if (!payload.word || payload.word.trim() === '') {
-          failedCount++
-          const errorMsg = `Skipped item with no word: ${JSON.stringify(item).substring(0, 100)}`
-          errors.push(errorMsg)
-          console.warn(`⚠️ ${errorMsg}`)
-          return
-        }
-
-        // DEBUG: Log first item
-        if (index === 0) {
-          console.log("💾 First item payload:", payload)
-          console.log("💾 IPA check:", {
-            hasPhonetic: !!item.phonetic,
-            hasIpa: !!item.ipa,
-            phoneticValue: item.phonetic,
-            ipaValue: item.ipa,
-            finalIpa: payload.ipa
-          })
-          console.log("💾 POS check:", {
-            hasPosLabel: !!item.pos_label,
-            posLabelValue: item.pos_label,
-            finalPartOfSpeech: payload.partOfSpeech,
-            finalType: payload.type
-          })
-        }
-        
+        if (!payload.word?.trim()) { failedCount++; return }
         try {
-          const response = await fetch("/api/vocabulary", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-          
-          if (!response.ok) {
-            failedCount++
-            const errorText = await response.text()
-            const errorMsg = `Failed to save word: ${item.word || item.phrase} - ${errorText}`
-            errors.push(errorMsg)
-            console.error(`❌ ${errorMsg}`)
-          } else {
-            savedCount++
-            if (index === 0) {
-              const result = await response.json()
-              console.log("✅ First item saved successfully:", result)
-            }
-          }
-        } catch (err: any) {
-          failedCount++
-          const errorMsg = `Error saving word: ${item.word || item.phrase} - ${err.message}`
-          errors.push(errorMsg)
-          console.error(`❌ ${errorMsg}`)
-        }
+          const res = await fetch("/api/vocabulary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+          if (res.ok) savedCount++; else failedCount++
+        } catch { failedCount++ }
       })
-
       await Promise.all(savePromises)
-      
-      console.log(`✅ Save complete: ${savedCount} saved, ${failedCount} failed`)
-      
-      // Always show errors (max 5)
-      if (errors.length > 0) {
-        console.error(`\n❌ Save errors (showing first 5 of ${errors.length}):`)
-        errors.slice(0, 5).forEach((err, i) => {
-          console.error(`  ${i + 1}. ${err}`)
-        })
-      }
-      
-      // Show user notification
-      if (savedCount > 0) {
-        console.log(`✅ Đã lưu ${savedCount} từ vào kho từ vựng`)
-      }
-      if (failedCount > 0) {
-        console.warn(`⚠️ ${failedCount} từ không lưu được - xem console để biết chi tiết`)
-      }
-      
       return { savedCount, failedCount }
-    } catch (err) {
-      console.error("❌ Save error:", err)
+    } catch {
       return { savedCount: 0, failedCount: 0 }
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile-optimized container */}
-      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
-        {/* Header - Mobile responsive */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="text-center sm:text-left">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tài liệu & Từ vựng</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Upload tài liệu để trích xuất từ vựng</p>
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Tài liệu & Từ vựng</h1>
+            <p className="text-base text-gray-500 mt-0.5">Upload tài liệu để trích xuất từ vựng</p>
           </div>
-          
-          {/* Mobile: Stack buttons, Desktop: Inline */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <button
-              onClick={() => window.location.href = '/dashboard-new'}
-              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Trang chủ
-            </button>
-            <button
-              onClick={() => window.location.href = '/dashboard-new/vocabulary'}
-              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              Xem từ vựng đã lưu
-            </button>
-          </div>
+          <button
+            onClick={() => window.location.href = "/dashboard-new/vocabulary"}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-base font-medium transition-colors"
+          >
+            Từ vựng đã lưu
+          </button>
         </div>
 
-        {/* Upload Section - Mobile optimized */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-          <div className="space-y-4">
-            {/* File upload area */}
-            <label
-              htmlFor="file-upload"
-              className="flex items-center justify-center w-full h-24 sm:h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-            >
-              <div className="text-center px-4">
-                <svg className="mx-auto h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p className="text-xs sm:text-sm text-gray-600 leading-tight">
-                  {file ? (
-                    <span className="break-words">
-                      <span className="font-medium">{file.name}</span>
-                      <span className="block text-xs text-gray-500 mt-1">
-                        ({(file.size / 1024 / 1024).toFixed(2)}MB)
-                      </span>
-                    </span>
-                  ) : (
-                    "Chọn file PDF/DOCX (tối đa 50MB)"
-                  )}
-                </p>
-              </div>
+        {/* Upload Section */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+          <label
+            htmlFor="file-upload"
+            className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <svg className="h-7 w-7 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-base text-gray-600">
+              {file ? (
+                <span className="font-medium text-gray-800">{file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)</span>
+              ) : (
+                "Chọn file PDF / DOCX (tối đa 50MB)"
+              )}
+            </p>
+            <input id="file-upload" type="file" className="hidden" accept=".pdf,.docx,.doc" onChange={handleFileChange} />
+          </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">Số cụm từ</label>
               <input
-                id="file-upload"
-                type="file"
-                className="hidden"
-                accept=".pdf,.docx,.doc"
-                onChange={handleFileChange}
+                type="number" min="10" max="100" value={maxPhrases}
+                onChange={(e) => setMaxPhrases(parseInt(e.target.value) || 40)}
+                className="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </label>
-
-            {/* Settings - Mobile: Stack, Desktop: Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Số cụm từ (phrases)
-                </label>
-                <input
-                  type="number"
-                  min="10"
-                  max="100"
-                  value={maxPhrases}
-                  onChange={(e) => setMaxPhrases(parseInt(e.target.value) || 40)}
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">Mặc định: 40</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Số từ đơn (words)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={maxWords}
-                  onChange={(e) => setMaxWords(parseInt(e.target.value) || 10)}
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">Mặc định: 10</p>
-              </div>
             </div>
-            
-            {/* Info box */}
-            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-              💡 Tổng số từ vựng sẽ trích xuất: <span className="font-bold text-blue-600">{maxPhrases + maxWords}</span> từ
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-1">Số từ đơn</label>
+              <input
+                type="number" min="0" max="50" value={maxWords}
+                onChange={(e) => setMaxWords(parseInt(e.target.value) || 10)}
+                className="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
+          </div>
 
-            {/* Error message */}
-            {error && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
-                <p className="mb-2">❌ {error}</p>
-                {(error.includes("502") || error.includes("khởi động")) && (
-                  <button
-                    onClick={handleUpload}
-                    disabled={uploading}
-                    className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 text-sm font-medium w-full sm:w-auto"
-                  >
-                    🔄 Thử lại
-                  </button>
-                )}
+          <p className="text-base text-gray-500">
+            Tổng từ vựng sẽ trích xuất: <span className="font-semibold text-gray-800">{maxPhrases + maxWords}</span> từ
+          </p>
+
+          {error && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-base border border-red-200">
+              {error}
+              {(error.includes("502") || error.includes("khởi động")) && (
+                <button onClick={handleUpload} disabled={uploading} className="mt-2 block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-base font-medium">
+                  Thử lại
+                </button>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleUpload}
+            disabled={!file || uploading}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-base font-semibold transition-colors"
+          >
+            {uploading ? "Đang xử lý..." : "Trích xuất từ vựng"}
+          </button>
+        </div>
+
+        {/* Results */}
+        {result && (
+          <div className="space-y-5">
+
+            {/* Stats */}
+            {result.vocabulary_by_difficulty && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { key: "critical", label: "Rất quan trọng", range: "0.8–1.0", color: "border-red-300 bg-red-50 text-red-700" },
+                  { key: "important", label: "Quan trọng", range: "0.6–0.79", color: "border-orange-300 bg-orange-50 text-orange-700" },
+                  { key: "moderate", label: "Trung bình", range: "0.4–0.59", color: "border-yellow-300 bg-yellow-50 text-yellow-700" },
+                  { key: "easy", label: "Dễ", range: "0.0–0.39", color: "border-green-300 bg-green-50 text-green-700" },
+                ].map(({ key, label, range, color }) => (
+                  <div key={key} className={`border-2 rounded-xl p-3 text-center ${color}`}>
+                    <div className="text-2xl font-bold">{result.vocabulary_by_difficulty[key]?.length || 0}</div>
+                    <div className="text-sm font-medium mt-0.5">{label}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{range}</div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Upload button */}
-            <button
-              onClick={handleUpload}
-              disabled={!file || uploading}
-              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
-            >
-              {uploading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang xử lý...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Trích xuất từ vựng
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Results Section - Mobile optimized */}
-        {result && (
-          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">Kết quả trích xuất</h2>
-            
-            <div className="space-y-4 sm:space-y-6">
-              {/* Statistics Summary - Mobile: 2x2 grid, Desktop: 4 columns */}
-              {result.vocabulary_by_difficulty && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
-                  <div className="bg-red-50 border-2 border-red-200 rounded-lg p-2 sm:p-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-red-600">
-                      {result.vocabulary_by_difficulty.critical?.length || 0}
-                    </div>
-                    <div className="text-xs text-red-700 font-medium leading-tight">🔴 Rất quan trọng</div>
-                    <div className="text-xs text-gray-500">0.8 - 1.0</div>
-                  </div>
-                  <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-2 sm:p-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-orange-600">
-                      {result.vocabulary_by_difficulty.important?.length || 0}
-                    </div>
-                    <div className="text-xs text-orange-700 font-medium leading-tight">🟠 Quan trọng</div>
-                    <div className="text-xs text-gray-500">0.6 - 0.79</div>
-                  </div>
-                  <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-2 sm:p-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-yellow-600">
-                      {result.vocabulary_by_difficulty.moderate?.length || 0}
-                    </div>
-                    <div className="text-xs text-yellow-700 font-medium leading-tight">🟡 Trung bình</div>
-                    <div className="text-xs text-gray-500">0.4 - 0.59</div>
-                  </div>
-                  <div className="bg-green-50 border-2 border-green-200 rounded-lg p-2 sm:p-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-green-600">
-                      {result.vocabulary_by_difficulty.easy?.length || 0}
-                    </div>
-                    <div className="text-xs text-green-700 font-medium leading-tight">🟢 Dễ</div>
-                    <div className="text-xs text-gray-500">0.0 - 0.39</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Topics Section - NEW */}
-              {result.topics && result.topics.length > 0 && (
-                <div className="border rounded-lg p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-                  <h3 className="font-bold mb-3 text-base sm:text-lg text-center sm:text-left flex items-center gap-2">
-                    🎯 Chủ đề được phát hiện ({result.topics.length} chủ đề)
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                      Topic Modeling
-                    </span>
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {result.topics.map((topic: any, index: number) => (
-                      <div key={index} className="bg-white border border-purple-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-purple-800 text-sm sm:text-base">
-                            Topic {index + 1}
-                          </h4>
-                          <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">
+            {/* Topics */}
+            {result.topics && result.topics.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Chủ đề được phát hiện ({result.topics.length} chủ đề)
+                </h2>
+                <div className="space-y-4">
+                  {result.topics.map((topic: any, index: number) => {
+                    const phrases = topic.items?.filter((item: any) => item.type === "phrase") || []
+                    const words = topic.items?.filter((item: any) => item.type === "word") || []
+                    return (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-base font-semibold text-gray-800">
+                            Chủ đề {index + 1}{(topic.topic_name || topic.topic_label) ? `: ${topic.topic_name || topic.topic_label}` : ""}
+                          </h3>
+                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                             {topic.items?.length || topic.item_count || 0} từ
                           </span>
                         </div>
-                        
-                        {/* Topic Name */}
-                        {(topic.topic_name || topic.topic_label) && (
-                          <p className="text-sm font-medium text-gray-700 mb-2">
-                            📌 {topic.topic_name || topic.topic_label}
-                          </p>
-                        )}
-                        
-                        {/* Topic Items */}
-                        {topic.items && topic.items.length > 0 && (
-                          <div className="space-y-2">
-                            {/* Phrases */}
-                            {topic.items.filter((item: any) => item.type === 'phrase').length > 0 && (
-                              <div>
-                                <p className="text-xs font-medium text-green-600 mb-1">🔤 Cụm từ:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {topic.items
-                                    .filter((item: any) => item.type === 'phrase')
-                                    .slice(0, 3)
-                                    .map((item: any, i: number) => (
-                                      <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded border">
-                                        {item.word || item.phrase || item.term}
-                                      </span>
-                                    ))}
-                                  {topic.items.filter((item: any) => item.type === 'phrase').length > 3 && (
-                                    <span className="text-xs text-gray-500 px-2 py-1">
-                                      +{topic.items.filter((item: any) => item.type === 'phrase').length - 3} khác
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Words */}
-                            {topic.items.filter((item: any) => item.type === 'word').length > 0 && (
-                              <div>
-                                <p className="text-xs font-medium text-blue-600 mb-1">📝 Từ đơn:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {topic.items
-                                    .filter((item: any) => item.type === 'word')
-                                    .slice(0, 5)
-                                    .map((item: any, i: number) => (
-                                      <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded border">
-                                        {item.word || item.phrase || item.term}
-                                      </span>
-                                    ))}
-                                  {topic.items.filter((item: any) => item.type === 'word').length > 5 && (
-                                    <span className="text-xs text-gray-500 px-2 py-1">
-                                      +{topic.items.filter((item: any) => item.type === 'word').length - 5} khác
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Core Phrase (if available) */}
                         {topic.core_phrase && (
-                          <div className="mt-2 pt-2 border-t border-purple-100">
-                            <p className="text-xs text-purple-600">
-                              🎯 Từ khóa chính: <span className="font-medium">{topic.core_phrase}</span>
-                            </p>
+                          <p className="text-sm text-gray-500 mb-3">Từ khóa chính: <span className="font-medium text-gray-700">{topic.core_phrase}</span></p>
+                        )}
+                        {phrases.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-gray-600 mb-2">Cụm từ</p>
+                            <div className="flex flex-wrap gap-2">
+                              {phrases.map((item: any, i: number) => (
+                                <span key={i} className="text-sm bg-green-50 text-green-800 px-3 py-1 rounded border border-green-200">
+                                  {item.word || item.phrase || item.term}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {words.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-gray-600 mb-2">Từ đơn</p>
+                            <div className="flex flex-wrap gap-2">
+                              {words.map((item: any, i: number) => (
+                                <span key={i} className="text-sm bg-blue-50 text-blue-800 px-3 py-1 rounded border border-blue-200">
+                                  {item.word || item.phrase || item.term}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-3 text-xs text-gray-600 text-center">
-                    💡 Hệ thống đã tự động phân nhóm từ vựng theo chủ đề bằng thuật toán KMeans Clustering
-                  </div>
+                    )
+                  })}
                 </div>
-              )}
+                <p className="text-sm text-gray-400 text-center mt-4">
+                  Phân nhóm từ vựng theo chủ đề bằng thuật toán KMeans Clustering
+                </p>
+              </div>
+            )}
 
-              {/* Vocabulary List - Mobile optimized */}
-              <div className="border rounded-lg p-3 sm:p-4">
-                <h3 className="font-bold mb-3 text-base sm:text-lg text-center sm:text-left">
-                  📚 Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ)
-                </h3>
-                
-                {result.vocabulary_by_difficulty ? (
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Critical - Rất quan trọng */}
-                    {result.vocabulary_by_difficulty.critical?.length > 0 && (
-                      <div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-red-300">
-                          <h4 className="text-base sm:text-lg font-bold text-red-600 text-center sm:text-left">
-                            🔴 Rất Quan Trọng
-                          </h4>
-                          <span className="text-sm text-red-500 text-center sm:text-left">
-                            ({result.vocabulary_by_difficulty.critical.length} từ)
-                          </span>
+            {/* Vocabulary List */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Danh sách từ vựng ({(result.vocabulary || result.flashcards)?.length || 0} từ)
+              </h2>
+
+              {result.vocabulary_by_difficulty ? (
+                <div className="space-y-6">
+                  {[
+                    { key: "critical", label: "Rất Quan Trọng", borderColor: "border-red-400", textColor: "text-red-600" },
+                    { key: "important", label: "Quan Trọng", borderColor: "border-orange-400", textColor: "text-orange-600" },
+                    { key: "moderate", label: "Trung Bình", borderColor: "border-yellow-400", textColor: "text-yellow-600" },
+                    { key: "easy", label: "Dễ", borderColor: "border-green-400", textColor: "text-green-600" },
+                  ].map(({ key, label, borderColor, textColor }) =>
+                    result.vocabulary_by_difficulty[key]?.length > 0 ? (
+                      <div key={key}>
+                        <div className={`flex items-center gap-3 mb-3 pb-2 border-b-2 ${borderColor}`}>
+                          <h3 className={`text-lg font-semibold ${textColor}`}>{label}</h3>
+                          <span className={`text-base ${textColor}`}>({result.vocabulary_by_difficulty[key].length} từ)</span>
                         </div>
-                        <div className="space-y-2 sm:space-y-3">
-                          {result.vocabulary_by_difficulty.critical.map((card: any, idx: number) => (
-                            <VocabularyCard key={`critical-${idx}`} card={card} speakText={speakText} />
+                        <div className="space-y-3">
+                          {result.vocabulary_by_difficulty[key].map((card: any, idx: number) => (
+                            <VocabularyCard key={`${key}-${idx}`} card={card} speakText={speakText} />
                           ))}
                         </div>
                       </div>
-                    )}
-
-                    {/* Important - Quan trọng */}
-                    {result.vocabulary_by_difficulty.important?.length > 0 && (
-                      <div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-orange-300">
-                          <h4 className="text-base sm:text-lg font-bold text-orange-600 text-center sm:text-left">
-                            🟠 Quan Trọng
-                          </h4>
-                          <span className="text-sm text-orange-500 text-center sm:text-left">
-                            ({result.vocabulary_by_difficulty.important.length} từ)
-                          </span>
-                        </div>
-                        <div className="space-y-2 sm:space-y-3">
-                          {result.vocabulary_by_difficulty.important.map((card: any, idx: number) => (
-                            <VocabularyCard key={`important-${idx}`} card={card} speakText={speakText} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Moderate - Trung bình */}
-                    {result.vocabulary_by_difficulty.moderate?.length > 0 && (
-                      <div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-yellow-300">
-                          <h4 className="text-base sm:text-lg font-bold text-yellow-600 text-center sm:text-left">
-                            🟡 Trung Bình
-                          </h4>
-                          <span className="text-sm text-yellow-500 text-center sm:text-left">
-                            ({result.vocabulary_by_difficulty.moderate.length} từ)
-                          </span>
-                        </div>
-                        <div className="space-y-2 sm:space-y-3">
-                          {result.vocabulary_by_difficulty.moderate.map((card: any, idx: number) => (
-                            <VocabularyCard key={`moderate-${idx}`} card={card} speakText={speakText} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Easy - Dễ */}
-                    {result.vocabulary_by_difficulty.easy?.length > 0 && (
-                      <div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 pb-2 border-b-2 border-green-300">
-                          <h4 className="text-base sm:text-lg font-bold text-green-600 text-center sm:text-left">
-                            🟢 Dễ
-                          </h4>
-                          <span className="text-sm text-green-500 text-center sm:text-left">
-                            ({result.vocabulary_by_difficulty.easy.length} từ)
-                          </span>
-                        </div>
-                        <div className="space-y-2 sm:space-y-3">
-                          {result.vocabulary_by_difficulty.easy.map((card: any, idx: number) => (
-                            <VocabularyCard key={`easy-${idx}`} card={card} speakText={speakText} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  // Fallback: Display flat list if grouping not available
-                  <div className="space-y-2 sm:space-y-3">
-                    {Array.isArray(result.vocabulary || result.flashcards) && 
-                     (result.vocabulary || result.flashcards).map((card: any, idx: number) => (
+                    ) : null
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {Array.isArray(result.vocabulary || result.flashcards) &&
+                    (result.vocabulary || result.flashcards).map((card: any, idx: number) => (
                       <VocabularyCard key={idx} card={card} speakText={speakText} />
                     ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
+
           </div>
         )}
       </div>
