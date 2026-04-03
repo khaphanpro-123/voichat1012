@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
+import getClientPromise from "@/lib/mongodb";
 import UserProgress from "@/app/models/UserProgress";
-import Vocabulary from "@/app/models/Vocabulary";
-import Document from "@/app/models/Document";
 import { taskQueue, TASK_TYPES } from "@/lib/queue";
 import "@/lib/workers";
 
@@ -58,11 +57,15 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
     
+    // Query the same DB/collection that /api/vocabulary uses (MongoClient → viettalk)
+    const mongoClient = await getClientPromise();
+    const db = mongoClient.db("viettalk");
+    
     // Run all queries in parallel for speed
     const results = await Promise.all([
       UserProgress.findOne({ userId }).lean(),
-      Vocabulary.countDocuments({ userId }),
-      Document.countDocuments({ userId }),
+      db.collection("vocabulary").countDocuments({ userId }),
+      db.collection("documents").countDocuments({ userId }),
     ]);
     
     const progressDoc = results[0] as any;

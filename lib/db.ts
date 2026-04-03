@@ -11,11 +11,12 @@ if (!cached) {
   cached = (global as any)._mongoose = { conn: null, promise: null };
 }
 
-// Optimized connection options
+// Optimized connection options - keep small for M0 free tier (500 connection limit)
 const connectionOptions = {
   dbName: process.env.MONGO_DB || undefined,
-  maxPoolSize: 10, // Connection pool
-  minPoolSize: 2,
+  maxPoolSize: 3,  // Reduced from 10 - M0 has 500 limit, many serverless instances
+  minPoolSize: 1,
+  maxIdleTimeMS: 30000,
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
   bufferCommands: true,

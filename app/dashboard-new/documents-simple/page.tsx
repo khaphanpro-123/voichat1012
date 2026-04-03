@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import DashboardLayout from "@/components/DashboardLayout"
 
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
   if (!card || (!card.word && !card.phrase)) return null
@@ -202,7 +203,8 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout>
+    <div className="bg-gray-50 min-h-screen">
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
 
         {/* Header */}
@@ -303,75 +305,85 @@ export default function DocumentsPage() {
               </div>
             )}
 
-            {/* Topics */}
+            {/* Topics - Accordion layout */}
             {result.topics && result.topics.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Chủ đề được phát hiện ({result.topics.length} chủ đề)
-                </h2>
-                <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                {/* Section header - always visible, click to collapse all */}
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Chủ đề ({result.topics.length})
+                  </h2>
+                </div>
+
+                {/* Accordion items */}
+                <div className="divide-y divide-gray-100">
                   {result.topics.map((topic: any, index: number) => {
                     const phrases = topic.items?.filter((item: any) => item.type === "phrase") || []
                     const words = topic.items?.filter((item: any) => item.type === "word") || []
                     const allItems = [...phrases, ...words]
                     const isExpanded = expandedTopics.has(index)
-                    const needsExpand = allItems.length > PREVIEW_LIMIT
-                    const visiblePhrases = isExpanded ? phrases : phrases.slice(0, PREVIEW_LIMIT)
-                    const visibleWords = isExpanded ? words : words.slice(0, Math.max(0, PREVIEW_LIMIT - phrases.length))
+                    const topicName = topic.topic_name || topic.topic_label
                     return (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-base font-semibold text-gray-800">
-                            Chủ đề {index + 1}{(topic.topic_name || topic.topic_label) ? `: ${topic.topic_name || topic.topic_label}` : ""}
-                          </h3>
-                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                            {topic.items?.length || topic.item_count || 0} từ
-                          </span>
-                        </div>
-                        {topic.core_phrase && (
-                          <p className="text-sm text-gray-500 mb-3">Từ khóa chính: <span className="font-medium text-gray-700">{topic.core_phrase}</span></p>
-                        )}
-                        {visiblePhrases.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-sm font-medium text-gray-600 mb-2">Cụm từ</p>
-                            <div className="flex flex-wrap gap-2">
-                              {visiblePhrases.map((item: any, i: number) => (
-                                <span key={i} className="text-sm bg-green-50 text-green-800 px-3 py-1 rounded border border-green-200">
-                                  {item.word || item.phrase || item.term}
-                                </span>
-                              ))}
-                            </div>
+                      <div key={index}>
+                        {/* Accordion header - always visible */}
+                        <button
+                          onClick={() => toggleTopic(index)}
+                          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium text-gray-800 truncate">
+                              {topicName || `Chủ đề ${index + 1}`}
+                            </span>
+                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0">
+                              {allItems.length} từ
+                            </span>
                           </div>
-                        )}
-                        {visibleWords.length > 0 && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-600 mb-2">Từ đơn</p>
-                            <div className="flex flex-wrap gap-2">
-                              {visibleWords.map((item: any, i: number) => (
-                                <span key={i} className="text-sm bg-blue-50 text-blue-800 px-3 py-1 rounded border border-blue-200">
-                                  {item.word || item.phrase || item.term}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {needsExpand && (
-                          <button
-                            onClick={() => toggleTopic(index)}
-                            className="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                          <svg
+                            className={`w-4 h-4 text-gray-400 flex-shrink-0 ml-2 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
                           >
-                            {isExpanded
-                              ? "Thu gọn"
-                              : `Xem thêm ${allItems.length - PREVIEW_LIMIT} từ`}
-                          </button>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        {/* Accordion body - only when expanded */}
+                        {isExpanded && (
+                          <div className="px-5 pb-4 space-y-3">
+                            {topic.core_phrase && (
+                              <p className="text-xs text-gray-500">
+                                Từ khóa: <span className="font-medium text-gray-700">{topic.core_phrase}</span>
+                              </p>
+                            )}
+                            {phrases.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-1.5">Cụm từ</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {phrases.map((item: any, i: number) => (
+                                    <span key={i} className="text-xs bg-green-50 text-green-800 px-2 py-1 rounded border border-green-200">
+                                      {item.word || item.phrase || item.term}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {words.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-1.5">Từ đơn</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {words.map((item: any, i: number) => (
+                                    <span key={i} className="text-xs bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-200">
+                                      {item.word || item.phrase || item.term}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     )
                   })}
                 </div>
-                <p className="text-sm text-gray-400 text-center mt-4">
-                  Phân nhóm từ vựng theo chủ đề bằng thuật toán KMeans Clustering
-                </p>
               </div>
             )}
 
@@ -418,5 +430,6 @@ export default function DocumentsPage() {
         )}
       </div>
     </div>
+    </DashboardLayout>
   )
 }

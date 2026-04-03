@@ -853,9 +853,9 @@ export default function VocabularyPage() {
                       </div>
                       <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 break-words">{getMeaning(word)}</p>
                       {getExample(word) && (
-                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg overflow-hidden">
                           <div className="flex items-start gap-2">
-                            <p className="text-xs sm:text-sm md:text-base text-gray-600 italic flex-1 break-words">{getExample(word)}</p>
+                            <p className="text-xs sm:text-sm text-gray-600 italic flex-1 min-w-0 line-clamp-3 break-words">{getExample(word)}</p>
                             <button
                               onClick={() => speakSentence(getExample(word))}
                               className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
@@ -864,7 +864,7 @@ export default function VocabularyPage() {
                             </button>
                           </div>
                           {getExampleTranslation(word) && (
-                            <p className="text-xs sm:text-sm text-gray-500 mt-1 break-words">{getExampleTranslation(word)}</p>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{getExampleTranslation(word)}</p>
                           )}
                         </div>
                       )}
@@ -925,10 +925,10 @@ export default function VocabularyPage() {
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-900 mb-2 break-words">{structure.word}</h3>
                       <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 break-words">{getMeaning(structure)}</p>
                       {getExample(structure) && (
-                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-purple-50 rounded-lg">
-                          <p className="text-xs sm:text-sm md:text-base text-gray-600 italic break-words">{getExample(structure)}</p>
+                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-purple-50 rounded-lg overflow-hidden">
+                          <p className="text-xs sm:text-sm text-gray-600 italic line-clamp-3 break-words">{getExample(structure)}</p>
                           {getExampleTranslation(structure) && (
-                            <p className="text-xs sm:text-sm text-gray-500 mt-1 break-words">{getExampleTranslation(structure)}</p>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{getExampleTranslation(structure)}</p>
                           )}
                         </div>
                       )}
