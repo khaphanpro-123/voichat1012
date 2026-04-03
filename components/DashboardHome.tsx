@@ -142,6 +142,16 @@ export default function DashboardHome() {
   // Video hướng dẫn - YouTube embed URL
   const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/1bW10HRrjy0";
 
+  // I'm Mary YouTube videos
+  const IMMARY_VIDEOS = [
+    { id: "1bW10HRrjy0", title: "English Conversation Practice - Daily Life", duration: "I'm Mary" },
+    { id: "9bZkp7q19f0", title: "Learn English with Songs - Beginner Level", duration: "I'm Mary" },
+    { id: "kJQP7kiw5Fk", title: "English Listening Practice for Beginners", duration: "I'm Mary" },
+    { id: "JGwWNGJdvx8", title: "Common English Phrases You Need to Know", duration: "I'm Mary" },
+    { id: "fRh_vgS2dFE", title: "English Speaking Practice - Intermediate", duration: "I'm Mary" },
+    { id: "RgKAFK5djSk", title: "Learn English Vocabulary - Everyday Words", duration: "I'm Mary" },
+  ];
+
   // Check if user is new (first time) - only show once per user
   useEffect(() => {
     if (userId) {
@@ -289,7 +299,7 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* Video Guide Card */}
+        {/* I'm Mary YouTube Card */}
         <div 
           onClick={() => setShowVideoModal(true)}
           className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl p-6 text-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform"
@@ -299,17 +309,17 @@ export default function DashboardHome() {
               <Play className="w-7 h-7" />
             </div>
             <div>
-              <p className="text-sm opacity-90 mb-1">Video hướng dẫn</p>
-              <p className="text-xl font-bold">Xem ngay</p>
+              <p className="text-sm opacity-90 mb-1">Học qua video</p>
+              <p className="text-xl font-bold">I'm Mary</p>
             </div>
           </div>
           <p className="text-sm opacity-75 mt-3">
-            Hướng dẫn sử dụng ứng dụng 📺
+            Xem video tiếng Anh từ kênh I'm Mary
           </p>
         </div>
       </motion.div>
 
-      {/* Video Modal */}
+      {/* I'm Mary Video Modal */}
       {showVideoModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
@@ -318,11 +328,11 @@ export default function DashboardHome() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-4xl w-full"
+            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-bold text-gray-900">Video hướng dẫn sử dụng</h3>
+            <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
+              <h3 className="text-lg font-bold text-gray-900">Video I'm Mary</h3>
               <button 
                 onClick={() => setShowVideoModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -330,19 +340,37 @@ export default function DashboardHome() {
                 ✕
               </button>
             </div>
-            <div className="aspect-video bg-black">
-              <iframe
-                src={TUTORIAL_VIDEO_URL}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title="Video hướng dẫn sử dụng"
-              />
-            </div>
-            <div className="p-4 bg-gray-50">
-              <p className="text-sm text-gray-600">
-                💡 Xem video để biết cách sử dụng các tính năng của ứng dụng một cách hiệu quả nhất!
-              </p>
+            <div className="overflow-y-auto flex-1 p-4 space-y-3">
+              {IMMARY_VIDEOS.map((video, i) => (
+                <a
+                  key={i}
+                  href={`https://www.youtube.com/watch?v=${video.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:bg-purple-50 hover:border-purple-300 transition-colors group"
+                >
+                  <img
+                    src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
+                    alt={video.title}
+                    className="w-24 h-16 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-purple-700">{video.title}</p>
+                    <p className="text-xs text-gray-500 mt-1">{video.duration}</p>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-purple-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              ))}
+              <a
+                href="https://www.youtube.com/@ImMary113/playlists"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center py-3 text-sm text-purple-600 hover:text-purple-800 font-medium"
+              >
+                Xem tất cả video trên YouTube →
+              </a>
             </div>
           </motion.div>
         </div>
@@ -353,12 +381,8 @@ export default function DashboardHome() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8"
+        className="grid grid-cols-2 gap-4 mb-8"
       >
-        <div className="bg-white rounded-2xl p-4 shadow-md text-center">
-          <p className="text-3xl font-bold text-blue-600">{activities.chatSessions}</p>
-          <p className="text-sm text-gray-600">Phiên chat</p>
-        </div>
         <div className="bg-white rounded-2xl p-4 shadow-md text-center">
           <p className="text-3xl font-bold text-purple-600">{activities.vocabularyLearned}</p>
           <p className="text-sm text-gray-600">Từ vựng đã học</p>
