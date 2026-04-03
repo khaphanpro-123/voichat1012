@@ -16,6 +16,7 @@ import {
   Network,
 } from "lucide-react";
 import { OnboardingTutorial } from "./OnboardingTutorial";
+import { VIDEO_SECTIONS } from "@/config/video-links";
 
 interface UserProgress {
   level: string;
@@ -142,14 +143,47 @@ export default function DashboardHome() {
   // Video hướng dẫn - YouTube embed URL
   const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/1bW10HRrjy0";
 
-  // I'm Mary YouTube videos
-  const IMMARY_VIDEOS = [
-    { id: "1bW10HRrjy0", title: "English Conversation Practice - Daily Life", duration: "I'm Mary" },
-    { id: "9bZkp7q19f0", title: "Learn English with Songs - Beginner Level", duration: "I'm Mary" },
-    { id: "kJQP7kiw5Fk", title: "English Listening Practice for Beginners", duration: "I'm Mary" },
-    { id: "JGwWNGJdvx8", title: "Common English Phrases You Need to Know", duration: "I'm Mary" },
-    { id: "fRh_vgS2dFE", title: "English Speaking Practice - Intermediate", duration: "I'm Mary" },
-    { id: "RgKAFK5djSk", title: "Learn English Vocabulary - Everyday Words", duration: "I'm Mary" },
+  // Video sources for listening practice
+  const VIDEO_SECTIONS = [
+    {
+      source: "Hướng dẫn sử dụng",
+      color: "bg-blue-100 text-blue-700",
+      videos: [
+        { id: "1bW10HRrjy0", title: "Hướng dẫn sử dụng trang web", url: "https://www.youtube.com/watch?v=1bW10HRrjy0" },
+      ]
+    },
+    {
+      source: "BBC Learning English",
+      color: "bg-red-100 text-red-700",
+      videos: [
+        { id: "dQw4w9WgXcQ", title: "6 Minute English - BBC", url: "https://www.youtube.com/@BBCLearningEnglish" },
+        { id: "dQw4w9WgXcQ", title: "English In A Minute - BBC", url: "https://www.youtube.com/@BBCLearningEnglish/videos" },
+      ]
+    },
+    {
+      source: "TED-Ed",
+      color: "bg-orange-100 text-orange-700",
+      videos: [
+        { id: "ArJ4I8TgZpI", title: "How to speak so that people want to listen", url: "https://www.youtube.com/watch?v=eIho2S0ZahI" },
+        { id: "8S0FDjFBj8o", title: "The linguistic genius of babies", url: "https://www.youtube.com/watch?v=G2XBIkHW954" },
+      ]
+    },
+    {
+      source: "I'm Mary",
+      color: "bg-purple-100 text-purple-700",
+      videos: [
+        { id: "placeholder", title: "Xem playlist I'm Mary", url: "https://www.youtube.com/@ImMary113/playlists" },
+        { id: "placeholder2", title: "Video luyện nghe tiếng Anh", url: "https://www.youtube.com/@ImMary113/videos" },
+      ]
+    },
+    {
+      source: "Postcard English",
+      color: "bg-green-100 text-green-700",
+      videos: [
+        { id: "placeholder3", title: "Xem kênh Postcard English", url: "https://www.youtube.com/@PostcardEnglish" },
+        { id: "placeholder4", title: "English Listening Practice", url: "https://www.youtube.com/@PostcardEnglish/videos" },
+      ]
+    },
   ];
 
   // Check if user is new (first time) - only show once per user
@@ -299,7 +333,7 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* I'm Mary YouTube Card */}
+        {/* Video Card */}
         <div 
           onClick={() => setShowVideoModal(true)}
           className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl p-6 text-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform"
@@ -309,17 +343,17 @@ export default function DashboardHome() {
               <Play className="w-7 h-7" />
             </div>
             <div>
-              <p className="text-sm opacity-90 mb-1">Học qua video</p>
-              <p className="text-xl font-bold">I'm Mary</p>
+              <p className="text-sm opacity-90 mb-1">Luyện nghe & Hướng dẫn</p>
+              <p className="text-xl font-bold">Xem video</p>
             </div>
           </div>
           <p className="text-sm opacity-75 mt-3">
-            Xem video tiếng Anh từ kênh I'm Mary
+            BBC, TED, I'm Mary, Postcard English
           </p>
         </div>
       </motion.div>
 
-      {/* I'm Mary Video Modal */}
+      {/* Video Modal */}
       {showVideoModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
@@ -332,7 +366,7 @@ export default function DashboardHome() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">Video I'm Mary</h3>
+              <h3 className="text-lg font-bold text-gray-900">Luyện nghe & Hướng dẫn</h3>
               <button 
                 onClick={() => setShowVideoModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -340,37 +374,45 @@ export default function DashboardHome() {
                 ✕
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 p-4 space-y-3">
-              {IMMARY_VIDEOS.map((video, i) => (
-                <a
-                  key={i}
-                  href={`https://www.youtube.com/watch?v=${video.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:bg-purple-50 hover:border-purple-300 transition-colors group"
-                >
-                  <img
-                    src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
-                    alt={video.title}
-                    className="w-24 h-16 object-cover rounded-lg flex-shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-purple-700">{video.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">{video.duration}</p>
+            <div className="overflow-y-auto flex-1 p-4 space-y-5">
+              {VIDEO_SECTIONS.map((section, si) => (
+                <div key={si}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${section.color}`}>
+                      {section.source}
+                    </span>
                   </div>
-                  <svg className="w-5 h-5 text-gray-400 group-hover:text-purple-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
+                  <div className="space-y-2">
+                    {section.videos.map((video, vi) => (
+                      <a
+                        key={vi}
+                        href={video.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors group"
+                      >
+                        {video.id && !video.id.startsWith("placeholder") ? (
+                          <img
+                            src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
+                            alt={video.title}
+                            className="w-20 h-14 object-cover rounded-lg flex-shrink-0 bg-gray-100"
+                          />
+                        ) : (
+                          <div className="w-20 h-14 rounded-lg flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                            <Play className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <p className="text-sm font-medium text-gray-800 flex-1 line-clamp-2 group-hover:text-purple-700">
+                          {video.title}
+                        </p>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    ))}
+                  </div>
+                </div>
               ))}
-              <a
-                href="https://www.youtube.com/@ImMary113/playlists"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-center py-3 text-sm text-purple-600 hover:text-purple-800 font-medium"
-              >
-                Xem tất cả video trên YouTube →
-              </a>
             </div>
           </motion.div>
         </div>
