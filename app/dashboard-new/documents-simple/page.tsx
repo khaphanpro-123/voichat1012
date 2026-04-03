@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import DashboardLayout from "@/components/DashboardLayout"
 
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
@@ -90,6 +91,7 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
 const PREVIEW_LIMIT = 8
 
 export default function DocumentsPage() {
+  const { data: session } = useSession()
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -97,6 +99,23 @@ export default function DocumentsPage() {
   const [maxPhrases, setMaxPhrases] = useState(40)
   const [maxWords, setMaxWords] = useState(10)
   const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set())
+  const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
+
+  const userId = (session?.user as any)?.id
+
+  useEffect(() => {
+    if (userId) loadDocuments()
+  }, [userId])
+
+  const loadDocuments = async () => {
+    try {
+      const res = await fetch("/api/documents-history")
+      if (res.ok) {
+        const data = await res.json()
+        setUploadedDocs(data)
+      }
+    } catch {}
+  }
 
   const toggleTopic = (index: number) => {
     setExpandedTopics(prev => {
@@ -162,6 +181,20 @@ export default function DocumentsPage() {
       if (data.topics && data.topics.length > 0) {
         try { localStorage.setItem("recent_topics", JSON.stringify(data.topics)) } catch {}
       }
+      // Save document metadata
+      try {
+        await fetch("/api/documents-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            fileSize: file.size,
+            vocabularyCount: data.vocabulary_count || data.vocabulary?.length || 0,
+            topicsCount: data.topics?.length || 0,
+          })
+        })
+        await loadDocuments()
+      } catch {}
       await handleSaveToDatabase(data)
     } catch (err: any) {
       setError("Hệ thống xử lý tài liệu đã xảy ra lỗi, vui lòng tải tệp khác")
@@ -282,6 +315,32 @@ export default function DocumentsPage() {
             {uploading ? "Đang xử lý..." : "Trích xuất từ vựng"}
           </button>
         </div>
+
+        {/* Document History */}
+        {uploadedDocs.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900">Tài liệu đã tải ({uploadedDocs.length})</h2>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {uploadedDocs.map((doc: any, i: number) => (
+                <div key={i} className="px-5 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-800 truncate">{doc.filename}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {new Date(doc.uploadedAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 text-xs text-gray-500">
+                    <span>{doc.vocabularyCount} từ</span>
+                    {doc.topicsCount > 0 && <span>{doc.topicsCount} chủ đề</span>}
+                    <span>{(doc.fileSize / 1024).toFixed(0)}KB</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Results */}
         {result && (
@@ -408,7 +467,9 @@ export default function DocumentsPage() {
                           <span className={`text-base ${textColor}`}>({result.vocabulary_by_difficulty[key].length} từ)</span>
                         </div>
                         <div className="space-y-3">
-                          {result.vocabulary_by_difficulty[key].map((card: any, idx: number) => (
+                          {[...result.vocabulary_by_difficulty[key]]
+                            .sort((a: any, b: any) => (b.importance_score || b.final_score || 0) - (a.importance_score || a.final_score || 0))
+                            .map((card: any, idx: number) => (
                             <VocabularyCard key={`${key}-${idx}`} card={card} speakText={speakText} />
                           ))}
                         </div>
@@ -419,7 +480,9 @@ export default function DocumentsPage() {
               ) : (
                 <div className="space-y-3">
                   {Array.isArray(result.vocabulary || result.flashcards) &&
-                    (result.vocabulary || result.flashcards).map((card: any, idx: number) => (
+                    [...(result.vocabulary || result.flashcards)]
+                      .sort((a: any, b: any) => (b.importance_score || b.final_score || 0) - (a.importance_score || a.final_score || 0))
+                      .map((card: any, idx: number) => (
                       <VocabularyCard key={idx} card={card} speakText={speakText} />
                     ))}
                 </div>

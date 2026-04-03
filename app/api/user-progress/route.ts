@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import getClientPromise from "@/lib/mongodb";
 import UserProgress from "@/app/models/UserProgress";
+import LearningSession from "@/app/models/LearningSession";
 import { taskQueue, TASK_TYPES } from "@/lib/queue";
 import "@/lib/workers";
 
@@ -65,12 +66,14 @@ export async function GET(req: NextRequest) {
     const results = await Promise.all([
       UserProgress.findOne({ userId }).lean(),
       db.collection("vocabulary").countDocuments({ userId }),
-      db.collection("documents").countDocuments({ userId }),
+      db.collection("document_history").countDocuments({ userId }),
+      LearningSession.countDocuments({ userId }),
     ]);
     
     const progressDoc = results[0] as any;
     const vocabularyCount = results[1] as number;
     const documentsCount = results[2] as number;
+    const chatSessionsCount = results[3] as number;
     
     // Create new progress if not exists
     if (!progressDoc) {
@@ -80,7 +83,7 @@ export async function GET(req: NextRequest) {
         success: true,
         progress: {
           ...newProgress.toObject(),
-          activities: { ...newProgress.activities, vocabularyLearned: vocabularyCount, documentsUploaded: documentsCount },
+          activities: { ...newProgress.activities, vocabularyLearned: vocabularyCount, documentsUploaded: documentsCount, chatSessions: chatSessionsCount },
           levelProgress,
         },
       });
@@ -115,6 +118,7 @@ export async function GET(req: NextRequest) {
           ...(progressDoc.activities || {}),
           vocabularyLearned: vocabularyCount,
           documentsUploaded: documentsCount,
+          chatSessions: chatSessionsCount,
         },
         levelProgress,
       },
