@@ -195,34 +195,28 @@ export default function VocabularyPage() {
     return "other";
   };
 
-  const groupedVocabulary = vocabulary.reduce((acc, word) => {
+  // Filter by source first (for accurate type counts)
+  const sourceFilteredVocabulary = vocabulary.filter((word) => {
+    if (selectedSource === "all") return true;
+    if (selectedSource === "document") return word.source === "document" || (word.source?.startsWith("document_") ?? false);
+    if (selectedSource === "voice_chat") return word.source === "voice_chat" || word.source === "english_live_chat";
+    return word.source === selectedSource;
+  });
+
+  // Count types based on source-filtered vocabulary (so badge counts match list)
+  const groupedVocabulary = sourceFilteredVocabulary.reduce((acc, word) => {
     const type = normalizeType(getWordType(word));
     if (!acc[type]) acc[type] = [];
     acc[type].push(word);
     return acc;
   }, {} as Record<string, VocabularyWord[]>);
 
-  const filteredVocabulary = vocabulary.filter((word) => {
+  const filteredVocabulary = sourceFilteredVocabulary.filter((word) => {
     const meaning = getMeaning(word);
     const matchesSearch = word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (meaning && meaning.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = selectedType === "all" || normalizeType(getWordType(word)) === selectedType;
-    
-    // Enhanced source matching
-    let matchesSource = false;
-    if (selectedSource === "all") {
-      matchesSource = true;
-    } else if (selectedSource === "document") {
-      // Match both "document" and "document_*" patterns
-      matchesSource = word.source === "document" || (word.source?.startsWith("document_") ?? false);
-    } else if (selectedSource === "voice_chat") {
-      // Match both "voice_chat" and "english_live_chat"
-      matchesSource = word.source === "voice_chat" || word.source === "english_live_chat";
-    } else {
-      matchesSource = word.source === selectedSource;
-    }
-    
-    return matchesSearch && matchesType && matchesSource;
+    return matchesSearch && matchesType;
   });
 
   const filteredStructures = structures.filter((s) =>
@@ -612,7 +606,7 @@ export default function VocabularyPage() {
             </div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {WORD_TYPES.map((type) => {
-                const count = type.key === "all" ? vocabulary.length : groupedVocabulary[type.key]?.length || 0;
+                const count = type.key === "all" ? sourceFilteredVocabulary.length : groupedVocabulary[type.key]?.length || 0;
                 return (
                   <button key={type.key} onClick={() => setSelectedType(type.key)}
                     className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedType === type.key ? "bg-teal-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>

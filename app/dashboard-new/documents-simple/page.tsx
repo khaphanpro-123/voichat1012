@@ -10,14 +10,14 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
   const similarityScore = card.similarity_to_primary
 
   return (
-    <div className={`p-4 rounded-lg border ${
+    <div className={`p-4 rounded-lg border overflow-hidden ${
       isPrimarySynonym
         ? "bg-white border-gray-200"
         : "bg-gray-50 border-gray-200 ml-4"
     }`}>
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex items-center gap-2 flex-wrap flex-1">
-          <p className="font-semibold text-lg text-gray-900 break-words">
+        <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+          <p className="font-semibold text-lg text-gray-900 break-words min-w-0">
             {card.word || card.phrase}
           </p>
           <button
@@ -53,9 +53,9 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
       )}
 
       {(card.context_sentence || card.supporting_sentence) && (
-        <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-2">
+        <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-2 overflow-hidden">
           <div className="flex items-start gap-2">
-            <p className="text-base text-gray-600 italic flex-1">
+            <p className="text-sm text-gray-600 italic flex-1 min-w-0 line-clamp-3">
               "{(card.context_sentence || card.supporting_sentence).replace(/<[^>]*>/g, "")}"
             </p>
             <button
