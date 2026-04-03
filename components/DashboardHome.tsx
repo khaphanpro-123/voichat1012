@@ -139,6 +139,7 @@ export default function DashboardHome() {
   // Onboarding tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [activeVideoTab, setActiveVideoTab] = useState(0);
 
   // Video hướng dẫn - YouTube embed URL
   const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/1bW10HRrjy0";
@@ -355,63 +356,92 @@ export default function DashboardHome() {
 
       {/* Video Modal */}
       {showVideoModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setShowVideoModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col"
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">Luyện nghe & Hướng dẫn</h3>
-              <button 
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Luyện nghe & Hướng dẫn</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Chọn nguồn để xem video</p>
+              </div>
+              <button
                 onClick={() => setShowVideoModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors text-lg"
               >
-                ✕
+                ×
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 p-4 space-y-5">
+
+            {/* Source Tabs */}
+            <div className="flex gap-1 px-4 pt-3 pb-1 overflow-x-auto flex-shrink-0 scrollbar-hide">
               {VIDEO_SECTIONS.map((section, si) => (
-                <div key={si}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${section.color}`}>
-                      {section.source}
-                    </span>
+                <button
+                  key={si}
+                  onClick={() => setActiveVideoTab(si)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    activeVideoTab === si
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {section.source}
+                </button>
+              ))}
+            </div>
+
+            {/* Video List */}
+            <div className="overflow-y-auto flex-1 px-4 py-3 space-y-2">
+              {VIDEO_SECTIONS[activeVideoTab]?.videos.map((video, vi) => (
+                <a
+                  key={vi}
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-200 active:scale-[0.98] transition-all group cursor-pointer"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden bg-gray-200">
+                    {video.id && !video.id.startsWith("DEMO") ? (
+                      <img
+                        src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100">
+                        <Play className="w-6 h-6 text-indigo-400" />
+                      </div>
+                    )}
+                    {/* Play overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-white/0 group-hover:bg-white/90 flex items-center justify-center transition-all scale-0 group-hover:scale-100">
+                        <Play className="w-3 h-3 text-indigo-600 ml-0.5" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {section.videos.map((video, vi) => (
-                      <a
-                        key={vi}
-                        href={video.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors group"
-                      >
-                        {video.id && !video.id.startsWith("placeholder") ? (
-                          <img
-                            src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
-                            alt={video.title}
-                            className="w-20 h-14 object-cover rounded-lg flex-shrink-0 bg-gray-100"
-                          />
-                        ) : (
-                          <div className="w-20 h-14 rounded-lg flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                            <Play className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                        <p className="text-sm font-medium text-gray-800 flex-1 line-clamp-2 group-hover:text-purple-700">
-                          {video.title}
-                        </p>
-                        <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    ))}
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-indigo-700 transition-colors">
+                      {video.title}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">{VIDEO_SECTIONS[activeVideoTab].source}</p>
                   </div>
-                </div>
+
+                  {/* Arrow */}
+                  <svg className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
               ))}
             </div>
           </motion.div>

@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Suspense } from "react";
 import "./globals.css";
 import Providers from "./providers";
+import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
+import { GlobalErrorHandler } from "@/components/GlobalErrorHandler";
 
 export const metadata: Metadata = {
   title: "VietTalk - Học tiếng Anh hiệu quả",
@@ -25,18 +27,21 @@ export default function RootLayout({
       <body
         className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}
       >
-        <Suspense fallback={null}>
-          <Providers>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="light"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-          </Providers>
-        </Suspense>
+        <GlobalErrorBoundary>
+          <GlobalErrorHandler />
+          <Suspense fallback={null}>
+            <Providers>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="light"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+            </Providers>
+          </Suspense>
+        </GlobalErrorBoundary>
         <Analytics />
       </body>
     </html>

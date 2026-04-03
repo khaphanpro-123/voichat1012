@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import getClientPromise from "@/lib/mongodb";
 import UserProgress from "@/app/models/UserProgress";
 import LearningSession from "@/app/models/LearningSession";
+import apiCache from "@/lib/api-cache";
 import { taskQueue, TASK_TYPES } from "@/lib/queue";
 import "@/lib/workers";
 
@@ -58,6 +59,11 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
     
+    // Cache for 60s — progress doesn't change every second
+    const cacheKey = `progress:${userId}`
+    const cached = apiCache.get<any>(cacheKey)
+    if (cached) return NextResponse.json({ success: true, progress: cached })
+
     // Query the same DB/collection that /api/vocabulary uses (MongoClient → viettalk)
     const mongoClient = await getClientPromise();
     const db = mongoClient.db("viettalk");
@@ -109,19 +115,23 @@ export async function GET(req: NextRequest) {
     
     const levelProgress = getLevelProgress(progressDoc.totalXp || 0);
     
+    const progressResult = {
+      ...progressDoc,
+      currentStreak,
+      activities: {
+        ...(progressDoc.activities || {}),
+        vocabularyLearned: vocabularyCount,
+        documentsUploaded: documentsCount,
+        chatSessions: chatSessionsCount,
+      },
+      levelProgress,
+    };
+
+    apiCache.set(cacheKey, progressResult, 60_000);
+    
     return NextResponse.json({
       success: true,
-      progress: {
-        ...progressDoc,
-        currentStreak,
-        activities: {
-          ...(progressDoc.activities || {}),
-          vocabularyLearned: vocabularyCount,
-          documentsUploaded: documentsCount,
-          chatSessions: chatSessionsCount,
-        },
-        levelProgress,
-      },
+      progress: progressResult,
     });
   } catch (error) {
     console.error("Get progress error:", error);

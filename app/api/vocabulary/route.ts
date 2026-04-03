@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/authOptions"
 import getClientPromise from "@/lib/mongodb"
+import apiCache from "@/lib/api-cache"
+import { rateLimit } from "@/lib/rate-limit"
 
 // Save vocabulary item
 export async function POST(request: NextRequest) {
@@ -17,10 +19,13 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as any).id
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID not found in session" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 })
+    }
+
+    // Rate limit: 60 saves per minute per user (document uploads can batch many words)
+    const { allowed } = rateLimit(`vocab-post:${userId}`, 60, 60_000)
+    if (!allowed) {
+      return NextResponse.json({ error: "Quá nhiều yêu cầu, vui lòng thử lại sau" }, { status: 429 })
     }
 
     const body = await request.json()
@@ -76,6 +81,7 @@ export async function POST(request: NextRequest) {
         }
       )
       
+      apiCache.invalidate(`vocab:${userId}`)
       return NextResponse.json({
         success: true,
         message: "Vocabulary updated",
@@ -102,6 +108,7 @@ export async function POST(request: NextRequest) {
       created_at: new Date(),
     })
 
+    apiCache.invalidate(`vocab:${userId}`)
     return NextResponse.json({
       success: true,
       message: "Vocabulary saved",
@@ -143,11 +150,16 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get("level")
     const source = searchParams.get("source")
 
+    // Cache key per user+params — 30s TTL
+    const cacheKey = `vocab:${userId}:${limit}:${level || ""}:${source || ""}`
+    const cached = apiCache.get(cacheKey) as any[] | null
+    if (cached) return NextResponse.json(cached)
+
     const client = await getClientPromise()
     const db = client.db("viettalk")
     const collection = db.collection("vocabulary")
 
-    const query: any = { userId }  // IMPORTANT: Filter by userId
+    const query: any = { userId }
     if (level) query.level = level
     if (source) query.source = source
     
@@ -157,6 +169,7 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .toArray()
 
+    apiCache.set(cacheKey, vocabulary, 30_000)
     return NextResponse.json(vocabulary)
   } catch (error: any) {
     console.error("Vocabulary fetch error:", error)
