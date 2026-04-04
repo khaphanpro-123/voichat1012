@@ -1,27 +1,17 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import DashboardLayout from "@/components/DashboardLayout"
 import { VIDEO_SECTIONS } from "@/config/video-links"
 
 type VideoItem = {
-  id: string
-  title: string
-  channel?: string
-  thumbnail?: string
-  source: string
-  color: string
-  url?: string
+  id: string; title: string; channel?: string; thumbnail?: string; source: string; color: string; url?: string
 }
 
 const SUGGESTED_QUERIES = [
-  "BBC 6 Minute English",
-  "TED talk English",
-  "English conversation daily",
-  "I'm Mary English",
-  "Postcard English",
-  "English listening beginner",
+  "BBC 6 Minute English", "TED talk English", "English conversation daily",
+  "I'm Mary English", "Postcard English", "English listening beginner",
 ]
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -35,9 +25,7 @@ const SOURCE_COLORS: Record<string, string> = {
 
 export default function ListeningPage() {
   const allCurated: VideoItem[] = VIDEO_SECTIONS.flatMap((s) =>
-    s.videos
-      .filter((v) => v.id && !v.id.startsWith("DEMO"))
-      .map((v) => ({ ...v, source: s.source, color: s.color }))
+    s.videos.filter((v) => v.id && !v.id.startsWith("DEMO")).map((v) => ({ ...v, source: s.source, color: s.color }))
   )
 
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(allCurated[0] || null)
@@ -47,7 +35,8 @@ export default function ListeningPage() {
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState("")
   const [hasSearched, setHasSearched] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [noApiKey, setNoApiKey] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const tabVideos: VideoItem[] = VIDEO_SECTIONS[activeTab]?.videos
     .filter((v) => v.id && !v.id.startsWith("DEMO"))
@@ -55,16 +44,21 @@ export default function ListeningPage() {
 
   const displayList = hasSearched ? searchResults : tabVideos
 
-  const handleSearch = async (q?: string) => {
-    const query = q || searchQuery.trim()
-    if (!query) return
-    setSearching(true)
-    setSearchError("")
-    setHasSearched(true)
+  const doSearch = useCallback(async (query: string) => {
+    if (!query.trim()) { setHasSearched(false); setSearchResults([]); return }
+    setSearching(true); setSearchError(""); setHasSearched(true); setNoApiKey(false)
     try {
       const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
-      if (!res.ok) { setSearchError(data.error || "Tìm kiếm thất bại"); setSearchResults([]); return }
+      if (!res.ok) {
+        if (res.status === 500 && data.error?.includes("API key")) {
+          setNoApiKey(true)
+          setSearchError("Chưa cài YOUTUBE_API_KEY. Xem hướng dẫn bên dưới.")
+        } else {
+          setSearchError(data.error || "Tìm kiếm thất bại")
+        }
+        setSearchResults([]); return
+      }
       const results: VideoItem[] = (data.videos || []).map((v: any) => ({
         id: v.id, title: v.title, channel: v.channel, thumbnail: v.thumbnail,
         source: "YouTube", color: "bg-red-100 text-red-700",
@@ -73,162 +67,137 @@ export default function ListeningPage() {
       if (results.length > 0) setSelectedVideo(results[0])
     } catch { setSearchError("Không thể kết nối. Vui lòng thử lại.") }
     finally { setSearching(false) }
+  }, [])
+
+  const handleInputChange = (value: string) => {
+    setSearchQuery(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!value.trim()) { setHasSearched(false); setSearchResults([]); setSearchError(""); return }
+    debounceRef.current = setTimeout(() => doSearch(value), 600)
   }
 
-  const gradientClass = selectedVideo
-    ? (SOURCE_COLORS[selectedVideo.source] || "from-indigo-500 to-purple-600")
-    : "from-slate-700 to-slate-900"
+  const gradientClass = selectedVideo ? (SOURCE_COLORS[selectedVideo.source] || "from-indigo-500 to-purple-600") : "from-slate-700 to-slate-900"
 
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-4 py-6">
         <div className="max-w-6xl mx-auto space-y-6">
 
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
+          <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <h1 className="text-3xl font-bold text-white">Luyện nghe</h1>
-            <p className="text-slate-400 mt-1 text-sm">Tìm kiếm và xem video tiếng Anh ngay trên trang</p>
+            <p className="text-slate-400 mt-1 text-sm">Gõ tên video — hệ thống tự tìm và phát ngay trên trang</p>
           </motion.div>
 
-          {/* Search bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+          {/* Search */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
             className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 space-y-3"
           >
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="relative">
+              {searching ? (
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
                 <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder="Tìm kiếm video tiếng Anh..."
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
-                />
-              </div>
-              <button
-                onClick={() => handleSearch()}
-                disabled={searching || !searchQuery.trim()}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-600 hover:to-purple-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2"
-              >
-                {searching ? (
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                ) : (
+              )}
+              <input
+                type="text" value={searchQuery}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { if (debounceRef.current) clearTimeout(debounceRef.current); doSearch(searchQuery) } }}
+                placeholder="Gõ tên video để tìm kiếm... (tự động tìm sau khi gõ)"
+                className="w-full pl-10 pr-10 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
+              />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(""); setHasSearched(false); setSearchResults([]); setSearchError("") }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                )}
-                Tìm
-              </button>
+                </button>
+              )}
             </div>
 
-            {/* Suggested queries */}
-            {!hasSearched && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-xs text-slate-500">Gợi ý:</span>
-                {SUGGESTED_QUERIES.map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => { setSearchQuery(q); handleSearch(q) }}
-                    className="text-xs px-3 py-1.5 bg-white/10 text-slate-300 rounded-full hover:bg-indigo-500/30 hover:text-indigo-200 border border-white/10 hover:border-indigo-400/40 transition-all"
-                  >
-                    {q}
-                  </button>
-                ))}
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-slate-500">Gợi ý:</span>
+              {SUGGESTED_QUERIES.map((q) => (
+                <button key={q} onClick={() => { setSearchQuery(q); doSearch(q) }}
+                  className="text-xs px-3 py-1.5 bg-white/10 text-slate-300 rounded-full hover:bg-indigo-500/30 hover:text-indigo-200 border border-white/10 hover:border-indigo-400/40 transition-all"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+
+            {searchError && (
+              <div className="text-xs space-y-1">
+                <p className="text-red-400">{searchError}</p>
+                {noApiKey && (
+                  <p className="text-slate-400">
+                    Cần thêm <code className="bg-white/10 px-1 rounded">YOUTUBE_API_KEY</code> vào Vercel.
+                    Lấy key miễn phí tại{" "}
+                    <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">
+                      console.cloud.google.com
+                    </a>
+                    {" "}→ Enable YouTube Data API v3 → Create API Key.
+                  </p>
+                )}
               </div>
             )}
-            {searchError && <p className="text-xs text-red-400">{searchError}</p>}
           </motion.div>
 
           {/* Main layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
             {/* Player */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.15 }}
-              className="lg:col-span-2 space-y-4"
+            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.15 }}
+              className="lg:col-span-2 space-y-3"
             >
-              {/* Video frame with gradient border */}
               <div className={`p-0.5 rounded-2xl bg-gradient-to-br ${gradientClass} shadow-2xl transition-all duration-500`}>
                 <div className="bg-black rounded-[14px] overflow-hidden">
                   <AnimatePresence mode="wait">
                     {selectedVideo ? (
-                      <motion.div
-                        key={selectedVideo.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="relative w-full"
-                        style={{ paddingBottom: "56.25%" }}
+                      <motion.div key={selectedVideo.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                        className="relative w-full" style={{ paddingBottom: "56.25%" }}
                       >
                         <iframe
                           src={`https://www.youtube.com/embed/${selectedVideo.id}?rel=0&modestbranding=1`}
                           className="absolute inset-0 w-full h-full"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                          allowFullScreen
-                          title={selectedVideo.title}
+                          allowFullScreen title={selectedVideo.title}
                         />
                       </motion.div>
                     ) : (
-                      <motion.div
-                        key="empty"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                      <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         className="aspect-video flex flex-col items-center justify-center text-slate-600 gap-3"
                       >
                         <svg className="w-16 h-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <p className="text-sm">Tìm kiếm hoặc chọn video</p>
+                        <p className="text-sm">Gõ tên video để tìm kiếm</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               </div>
 
-              {/* Video info */}
               <AnimatePresence mode="wait">
                 {selectedVideo && (
-                  <motion.div
-                    key={selectedVideo.id + "-info"}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
+                  <motion.div key={selectedVideo.id + "-info"} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
                     className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-3 flex items-start justify-between gap-3"
                   >
                     <div className="min-w-0">
                       <p className="text-white font-semibold text-sm line-clamp-2">{selectedVideo.title}</p>
                       <div className="flex items-center gap-2 mt-1.5">
-                        {selectedVideo.channel && (
-                          <span className="text-xs text-slate-400">{selectedVideo.channel}</span>
-                        )}
+                        {selectedVideo.channel && <span className="text-xs text-slate-400">{selectedVideo.channel}</span>}
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium bg-gradient-to-r ${SOURCE_COLORS[selectedVideo.source] || "from-indigo-500 to-purple-600"} text-white`}>
                           {selectedVideo.source}
                         </span>
                       </div>
                     </div>
-                    <a
-                      href={`https://www.youtube.com/watch?v=${selectedVideo.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <a href={`https://www.youtube.com/watch?v=${selectedVideo.id}`} target="_blank" rel="noopener noreferrer"
                       className="flex-shrink-0 text-xs text-slate-400 hover:text-white flex items-center gap-1 mt-0.5 transition-colors"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,19 +211,13 @@ export default function ListeningPage() {
             </motion.div>
 
             {/* Playlist */}
-            <motion.div
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+            <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.2 }}
               className="lg:col-span-1 space-y-3"
             >
-              {/* Source tabs */}
               {!hasSearched && (
                 <div className="flex gap-1.5 flex-wrap">
                   {VIDEO_SECTIONS.map((section, si) => (
-                    <button
-                      key={si}
-                      onClick={() => setActiveTab(si)}
+                    <button key={si} onClick={() => setActiveTab(si)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         activeTab === si
                           ? `bg-gradient-to-r ${SOURCE_COLORS[section.source] || "from-indigo-500 to-purple-600"} text-white shadow-lg`
@@ -272,8 +235,7 @@ export default function ListeningPage() {
                   <p className="text-sm font-medium text-slate-300">
                     {searching ? "Đang tìm..." : `${searchResults.length} kết quả`}
                   </p>
-                  <button
-                    onClick={() => { setHasSearched(false); setSearchResults([]); setSearchQuery("") }}
+                  <button onClick={() => { setHasSearched(false); setSearchResults([]); setSearchQuery("") }}
                     className="text-xs text-indigo-400 hover:text-indigo-200 transition-colors"
                   >
                     Xem gợi ý
@@ -281,16 +243,11 @@ export default function ListeningPage() {
                 </div>
               )}
 
-              {/* Video list */}
-              <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-white/20">
+              <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-0.5">
                 <AnimatePresence mode="popLayout">
                   {searching ? (
                     Array.from({ length: 5 }).map((_, i) => (
-                      <motion.div
-                        key={`skeleton-${i}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.05 }}
+                      <motion.div key={`sk-${i}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
                         className="flex gap-3 p-2.5 rounded-xl bg-white/5 animate-pulse"
                       >
                         <div className="w-20 h-14 rounded-lg bg-white/10 flex-shrink-0" />
@@ -301,11 +258,7 @@ export default function ListeningPage() {
                       </motion.div>
                     ))
                   ) : displayList.length === 0 && hasSearched ? (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-center py-10 text-slate-500 text-sm"
-                    >
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 text-slate-500 text-sm">
                       Không tìm thấy video. Thử từ khóa khác.
                     </motion.div>
                   ) : (
@@ -313,17 +266,11 @@ export default function ListeningPage() {
                       const isSelected = selectedVideo?.id === video.id
                       const grad = SOURCE_COLORS[video.source] || "from-indigo-500 to-purple-600"
                       return (
-                        <motion.div
-                          key={video.id + vi}
-                          layout
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
+                        <motion.div key={video.id + vi} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: vi * 0.04, duration: 0.25 }}
                           onClick={() => setSelectedVideo(video)}
                           className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all group ${
-                            isSelected
-                              ? "bg-white/15 border border-white/30 shadow-lg"
-                              : "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20"
+                            isSelected ? "bg-white/15 border border-white/30 shadow-lg" : "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20"
                           }`}
                         >
                           <div className="relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden">
@@ -331,17 +278,13 @@ export default function ListeningPage() {
                               <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className={`w-full h-full bg-gradient-to-br ${grad} flex items-center justify-center`}>
-                                <svg className="w-5 h-5 text-white/70" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z" />
-                                </svg>
+                                <svg className="w-5 h-5 text-white/70" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                               </div>
                             )}
                             {isSelected && (
                               <div className={`absolute inset-0 bg-gradient-to-br ${grad} opacity-40 flex items-center justify-center`}>
                                 <div className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                                  <svg className="w-3.5 h-3.5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z" />
-                                  </svg>
+                                  <svg className="w-3.5 h-3.5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                 </div>
                               </div>
                             )}
@@ -350,9 +293,7 @@ export default function ListeningPage() {
                             <p className={`text-xs font-medium line-clamp-2 transition-colors ${isSelected ? "text-white" : "text-slate-300 group-hover:text-white"}`}>
                               {video.title}
                             </p>
-                            {video.channel && (
-                              <p className="text-xs text-slate-500 mt-0.5 truncate">{video.channel}</p>
-                            )}
+                            {video.channel && <p className="text-xs text-slate-500 mt-0.5 truncate">{video.channel}</p>}
                           </div>
                         </motion.div>
                       )
