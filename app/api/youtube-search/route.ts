@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set("part", "snippet")
     url.searchParams.set("q", query)
     url.searchParams.set("type", "video")
-    url.searchParams.set("maxResults", "10")
+    url.searchParams.set("maxResults", "50")
     url.searchParams.set("relevanceLanguage", "en")
     url.searchParams.set("key", apiKey)
 

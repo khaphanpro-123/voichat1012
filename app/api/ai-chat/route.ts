@@ -7,8 +7,7 @@ const SYSTEM_PROMPT = `Bạn là trợ lý học tiếng Anh thông minh tên l�
 - Trả lời bằng tiếng Việt khi người dùng hỏi bằng tiếng Việt
 - Trả lời bằng tiếng Anh khi người dùng hỏi bằng tiếng Anh  
 - Khi giải thích từ vựng hoặc ngữ pháp, đưa ra ví dụ cụ thể
-- Định dạng câu trả lời rõ ràng, dễ đọc
-- Ngắn gọn, súc tích nhưng đầy đủ thông tin`
+- Định dạng câu trả lời rõ ràng, dễ đọc`
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const keys = await getUserApiKeys(userId)
+
     if (!keys.openaiKey && !keys.groqKey) {
       return NextResponse.json({
         error: "no_api_key",
@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Format messages for chat completions API
     const chatMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...messages.map((m: { role: string; content: string }) => ({
@@ -42,21 +41,31 @@ export async function POST(request: NextRequest) {
 
     // Try Groq first (fastest), then OpenAI
     if (keys.groqKey) {
-      const stream = await callGroqStream(keys.groqKey, chatMessages)
-      if (stream) return stream
+      const result = await tryGroq(keys.groqKey, chatMessages)
+      if (result.ok) return result.response!
+      console.error("[ai-chat] Groq failed:", result.error)
     }
+
     if (keys.openaiKey) {
-      const stream = await callOpenAIStream(keys.openaiKey, chatMessages)
-      if (stream) return stream
+      const result = await tryOpenAI(keys.openaiKey, chatMessages)
+      if (result.ok) return result.response!
+      console.error("[ai-chat] OpenAI failed:", result.error)
+      // Return specific error to user
+      return NextResponse.json({
+        error: "api_error",
+        message: `Lỗi từ AI: ${result.error}`
+      }, { status: 500 })
     }
 
     return NextResponse.json({ error: "All providers failed" }, { status: 500 })
+
   } catch (error: any) {
+    console.error("[ai-chat] Unexpected error:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-async function callGroqStream(apiKey: string, messages: any[]) {
+async function tryGroq(apiKey: string, messages: any[]): Promise<{ ok: boolean; response?: Response; error?: string }> {
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -73,21 +82,29 @@ async function callGroqStream(apiKey: string, messages: any[]) {
       }),
     })
 
-    if (!res.ok || !res.body) return null
+    if (!res.ok) {
+      const errText = await res.text()
+      return { ok: false, error: `Groq ${res.status}: ${errText.slice(0, 200)}` }
+    }
 
-    return new Response(res.body, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "X-Provider": "groq",
-      },
-    })
-  } catch {
-    return null
+    if (!res.body) return { ok: false, error: "No response body from Groq" }
+
+    return {
+      ok: true,
+      response: new Response(res.body, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "X-Provider": "groq",
+        },
+      })
+    }
+  } catch (e: any) {
+    return { ok: false, error: e.message }
   }
 }
 
-async function callOpenAIStream(apiKey: string, messages: any[]) {
+async function tryOpenAI(apiKey: string, messages: any[]): Promise<{ ok: boolean; response?: Response; error?: string }> {
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -104,16 +121,28 @@ async function callOpenAIStream(apiKey: string, messages: any[]) {
       }),
     })
 
-    if (!res.ok || !res.body) return null
+    if (!res.ok) {
+      const errText = await res.text()
+      let friendlyError = `OpenAI ${res.status}`
+      if (res.status === 401) friendlyError = "OpenAI API key không hợp lệ"
+      else if (res.status === 429) friendlyError = "OpenAI quota đã hết, vui lòng thử lại sau"
+      else if (res.status === 402) friendlyError = "Tài khoản OpenAI chưa có credit"
+      return { ok: false, error: friendlyError }
+    }
 
-    return new Response(res.body, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "X-Provider": "openai",
-      },
-    })
-  } catch {
-    return null
+    if (!res.body) return { ok: false, error: "No response body from OpenAI" }
+
+    return {
+      ok: true,
+      response: new Response(res.body, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "X-Provider": "openai",
+        },
+      })
+    }
+  } catch (e: any) {
+    return { ok: false, error: e.message }
   }
 }
