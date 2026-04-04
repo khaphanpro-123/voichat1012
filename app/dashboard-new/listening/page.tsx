@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import DashboardLayout from "@/components/DashboardLayout"
 import { VIDEO_SECTIONS } from "@/config/video-links"
 
@@ -16,12 +17,21 @@ type VideoItem = {
 
 const SUGGESTED_QUERIES = [
   "BBC 6 Minute English",
-  "English listening practice beginner",
-  "TED talk English subtitles",
+  "TED talk English",
+  "English conversation daily",
   "I'm Mary English",
   "Postcard English",
-  "English conversation daily life",
+  "English listening beginner",
 ]
+
+const SOURCE_COLORS: Record<string, string> = {
+  "BBC Learning English": "from-red-500 to-rose-600",
+  "TED-Ed": "from-orange-500 to-amber-600",
+  "I'm Mary": "from-purple-500 to-violet-600",
+  "Postcard English": "from-green-500 to-emerald-600",
+  "Hướng dẫn sử dụng": "from-blue-500 to-indigo-600",
+  "YouTube": "from-red-500 to-pink-600",
+}
 
 export default function ListeningPage() {
   const allCurated: VideoItem[] = VIDEO_SECTIONS.flatMap((s) =>
@@ -43,6 +53,8 @@ export default function ListeningPage() {
     .filter((v) => v.id && !v.id.startsWith("DEMO"))
     .map((v) => ({ ...v, source: VIDEO_SECTIONS[activeTab].source, color: VIDEO_SECTIONS[activeTab].color })) || []
 
+  const displayList = hasSearched ? searchResults : tabVideos
+
   const handleSearch = async (q?: string) => {
     const query = q || searchQuery.trim()
     if (!query) return
@@ -52,246 +64,305 @@ export default function ListeningPage() {
     try {
       const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
-      if (!res.ok) {
-        setSearchError(data.error || "Tìm kiếm thất bại")
-        setSearchResults([])
-        return
-      }
+      if (!res.ok) { setSearchError(data.error || "Tìm kiếm thất bại"); setSearchResults([]); return }
       const results: VideoItem[] = (data.videos || []).map((v: any) => ({
-        id: v.id,
-        title: v.title,
-        channel: v.channel,
-        thumbnail: v.thumbnail,
-        source: "YouTube",
-        color: "bg-red-100 text-red-700",
+        id: v.id, title: v.title, channel: v.channel, thumbnail: v.thumbnail,
+        source: "YouTube", color: "bg-red-100 text-red-700",
       }))
       setSearchResults(results)
       if (results.length > 0) setSelectedVideo(results[0])
-    } catch {
-      setSearchError("Không thể kết nối. Vui lòng thử lại.")
-    } finally {
-      setSearching(false)
-    }
+    } catch { setSearchError("Không thể kết nối. Vui lòng thử lại.") }
+    finally { setSearching(false) }
   }
 
-  const displayList = hasSearched ? searchResults : tabVideos
+  const gradientClass = selectedVideo
+    ? (SOURCE_COLORS[selectedVideo.source] || "from-indigo-500 to-purple-600")
+    : "from-slate-700 to-slate-900"
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-4 py-6">
+        <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Luyện nghe</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Tìm kiếm video tiếng Anh và xem ngay trên trang</p>
-        </div>
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <h1 className="text-3xl font-bold text-white">Luyện nghe</h1>
+            <p className="text-slate-400 mt-1 text-sm">Tìm kiếm và xem video tiếng Anh ngay trên trang</p>
+          </motion.div>
 
-        {/* Search */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Tìm kiếm video tiếng Anh... (vd: BBC 6 Minute English)"
-              className="flex-1 px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <button
-              onClick={() => handleSearch()}
-              disabled={searching || !searchQuery.trim()}
-              className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center gap-2"
-            >
-              {searching ? (
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {/* Search bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 space-y-3"
+          >
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-              )}
-              Tìm
-            </button>
-          </div>
-
-          {/* Suggested queries */}
-          {!hasSearched && (
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs text-gray-400 self-center">Gợi ý:</span>
-              {SUGGESTED_QUERIES.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => { setSearchQuery(q); handleSearch(q) }}
-                  className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-full hover:bg-indigo-100 hover:text-indigo-700 transition-colors"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {searchError && (
-            <p className="text-xs text-red-500">{searchError}</p>
-          )}
-        </div>
-
-        {/* Main layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          {/* Player */}
-          <div className="lg:col-span-2 space-y-3">
-            <div className="bg-black rounded-2xl overflow-hidden shadow-lg">
-              {selectedVideo ? (
-                <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                  <iframe
-                    key={selectedVideo.id}
-                    src={`https://www.youtube.com/embed/${selectedVideo.id}?rel=0&modestbranding=1`}
-                    className="absolute inset-0 w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                    allowFullScreen
-                    title={selectedVideo.title}
-                  />
-                </div>
-              ) : (
-                <div className="aspect-video flex flex-col items-center justify-center bg-gray-900 text-gray-500 gap-3">
-                  <svg className="w-14 h-14 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <p className="text-sm">Tìm kiếm video để bắt đầu</p>
-                </div>
-              )}
-            </div>
-
-            {selectedVideo && (
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-gray-900 line-clamp-2">{selectedVideo.title}</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    {selectedVideo.channel && (
-                      <span className="text-xs text-gray-500">{selectedVideo.channel}</span>
-                    )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${selectedVideo.color}`}>
-                      {selectedVideo.source}
-                    </span>
-                  </div>
-                </div>
-                <a
-                  href={`https://www.youtube.com/watch?v=${selectedVideo.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 mt-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  YouTube
-                </a>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Tìm kiếm video tiếng Anh..."
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
+                />
               </div>
-            )}
-          </div>
+              <button
+                onClick={() => handleSearch()}
+                disabled={searching || !searchQuery.trim()}
+                className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-600 hover:to-purple-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2"
+              >
+                {searching ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
+                Tìm
+              </button>
+            </div>
 
-          {/* Playlist */}
-          <div className="lg:col-span-1 space-y-3">
-            {/* Tabs — only show when not searching */}
+            {/* Suggested queries */}
             {!hasSearched && (
-              <div className="flex gap-1.5 flex-wrap">
-                {VIDEO_SECTIONS.map((section, si) => (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs text-slate-500">Gợi ý:</span>
+                {SUGGESTED_QUERIES.map((q) => (
                   <button
-                    key={si}
-                    onClick={() => setActiveTab(si)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      activeTab === si
-                        ? "bg-indigo-600 text-white shadow-sm"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    key={q}
+                    onClick={() => { setSearchQuery(q); handleSearch(q) }}
+                    className="text-xs px-3 py-1.5 bg-white/10 text-slate-300 rounded-full hover:bg-indigo-500/30 hover:text-indigo-200 border border-white/10 hover:border-indigo-400/40 transition-all"
                   >
-                    {section.source}
+                    {q}
                   </button>
                 ))}
               </div>
             )}
+            {searchError && <p className="text-xs text-red-400">{searchError}</p>}
+          </motion.div>
 
-            {hasSearched && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">
-                  {searching ? "Đang tìm..." : `${searchResults.length} kết quả`}
-                </p>
-                <button
-                  onClick={() => { setHasSearched(false); setSearchResults([]); setSearchQuery("") }}
-                  className="text-xs text-indigo-600 hover:text-indigo-800"
-                >
-                  Xem danh sách gợi ý
-                </button>
-              </div>
-            )}
+          {/* Main layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-            <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-0.5">
-              {searching ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex gap-3 p-2.5 rounded-xl bg-gray-50 animate-pulse">
-                    <div className="w-20 h-14 rounded-lg bg-gray-200 flex-shrink-0" />
-                    <div className="flex-1 space-y-2 py-1">
-                      <div className="h-3 bg-gray-200 rounded w-full" />
-                      <div className="h-3 bg-gray-200 rounded w-2/3" />
-                    </div>
-                  </div>
-                ))
-              ) : displayList.length === 0 && hasSearched ? (
-                <div className="text-center py-8 text-gray-400 text-sm">
-                  Không tìm thấy video. Thử từ khóa khác.
+            {/* Player */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="lg:col-span-2 space-y-4"
+            >
+              {/* Video frame with gradient border */}
+              <div className={`p-0.5 rounded-2xl bg-gradient-to-br ${gradientClass} shadow-2xl transition-all duration-500`}>
+                <div className="bg-black rounded-[14px] overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    {selectedVideo ? (
+                      <motion.div
+                        key={selectedVideo.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="relative w-full"
+                        style={{ paddingBottom: "56.25%" }}
+                      >
+                        <iframe
+                          src={`https://www.youtube.com/embed/${selectedVideo.id}?rel=0&modestbranding=1`}
+                          className="absolute inset-0 w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                          allowFullScreen
+                          title={selectedVideo.title}
+                        />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="empty"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="aspect-video flex flex-col items-center justify-center text-slate-600 gap-3"
+                      >
+                        <svg className="w-16 h-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-sm">Tìm kiếm hoặc chọn video</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              ) : (
-                displayList.map((video, vi) => {
-                  const isSelected = selectedVideo?.id === video.id
-                  return (
-                    <div
-                      key={vi}
-                      onClick={() => setSelectedVideo(video)}
-                      className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${
-                        isSelected
-                          ? "bg-indigo-50 border border-indigo-200"
-                          : "bg-gray-50 border border-transparent hover:bg-gray-100 hover:border-gray-200"
+              </div>
+
+              {/* Video info */}
+              <AnimatePresence mode="wait">
+                {selectedVideo && (
+                  <motion.div
+                    key={selectedVideo.id + "-info"}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                    className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-white font-semibold text-sm line-clamp-2">{selectedVideo.title}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {selectedVideo.channel && (
+                          <span className="text-xs text-slate-400">{selectedVideo.channel}</span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium bg-gradient-to-r ${SOURCE_COLORS[selectedVideo.source] || "from-indigo-500 to-purple-600"} text-white`}>
+                          {selectedVideo.source}
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={`https://www.youtube.com/watch?v=${selectedVideo.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 text-xs text-slate-400 hover:text-white flex items-center gap-1 mt-0.5 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      YouTube
+                    </a>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Playlist */}
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="lg:col-span-1 space-y-3"
+            >
+              {/* Source tabs */}
+              {!hasSearched && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {VIDEO_SECTIONS.map((section, si) => (
+                    <button
+                      key={si}
+                      onClick={() => setActiveTab(si)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        activeTab === si
+                          ? `bg-gradient-to-r ${SOURCE_COLORS[section.source] || "from-indigo-500 to-purple-600"} text-white shadow-lg`
+                          : "bg-white/10 text-slate-400 hover:bg-white/20 hover:text-white border border-white/10"
                       }`}
                     >
-                      <div className="relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden bg-gray-200">
-                        {video.thumbnail ? (
-                          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100">
-                            <svg className="w-5 h-5 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
-                          </div>
-                        )}
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-indigo-600/30 flex items-center justify-center">
-                            <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center shadow">
-                              <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-medium line-clamp-2 ${isSelected ? "text-indigo-700" : "text-gray-800"}`}>
-                          {video.title}
-                        </p>
-                        {video.channel && (
-                          <p className="text-xs text-gray-400 mt-0.5 truncate">{video.channel}</p>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })
+                      {section.source}
+                    </button>
+                  ))}
+                </div>
               )}
-            </div>
+
+              {hasSearched && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-300">
+                    {searching ? "Đang tìm..." : `${searchResults.length} kết quả`}
+                  </p>
+                  <button
+                    onClick={() => { setHasSearched(false); setSearchResults([]); setSearchQuery("") }}
+                    className="text-xs text-indigo-400 hover:text-indigo-200 transition-colors"
+                  >
+                    Xem gợi ý
+                  </button>
+                </div>
+              )}
+
+              {/* Video list */}
+              <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-white/20">
+                <AnimatePresence mode="popLayout">
+                  {searching ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <motion.div
+                        key={`skeleton-${i}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="flex gap-3 p-2.5 rounded-xl bg-white/5 animate-pulse"
+                      >
+                        <div className="w-20 h-14 rounded-lg bg-white/10 flex-shrink-0" />
+                        <div className="flex-1 space-y-2 py-1">
+                          <div className="h-3 bg-white/10 rounded w-full" />
+                          <div className="h-3 bg-white/10 rounded w-2/3" />
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : displayList.length === 0 && hasSearched ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-10 text-slate-500 text-sm"
+                    >
+                      Không tìm thấy video. Thử từ khóa khác.
+                    </motion.div>
+                  ) : (
+                    displayList.map((video, vi) => {
+                      const isSelected = selectedVideo?.id === video.id
+                      const grad = SOURCE_COLORS[video.source] || "from-indigo-500 to-purple-600"
+                      return (
+                        <motion.div
+                          key={video.id + vi}
+                          layout
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: vi * 0.04, duration: 0.25 }}
+                          onClick={() => setSelectedVideo(video)}
+                          className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all group ${
+                            isSelected
+                              ? "bg-white/15 border border-white/30 shadow-lg"
+                              : "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20"
+                          }`}
+                        >
+                          <div className="relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden">
+                            {video.thumbnail ? (
+                              <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className={`w-full h-full bg-gradient-to-br ${grad} flex items-center justify-center`}>
+                                <svg className="w-5 h-5 text-white/70" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
+                            )}
+                            {isSelected && (
+                              <div className={`absolute inset-0 bg-gradient-to-br ${grad} opacity-40 flex items-center justify-center`}>
+                                <div className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                  <svg className="w-3.5 h-3.5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-medium line-clamp-2 transition-colors ${isSelected ? "text-white" : "text-slate-300 group-hover:text-white"}`}>
+                              {video.title}
+                            </p>
+                            {video.channel && (
+                              <p className="text-xs text-slate-500 mt-0.5 truncate">{video.channel}</p>
+                            )}
+                          </div>
+                        </motion.div>
+                      )
+                    })
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
           </div>
         </div>
-
       </div>
     </DashboardLayout>
   )

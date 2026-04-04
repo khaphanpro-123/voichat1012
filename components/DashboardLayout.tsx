@@ -19,6 +19,8 @@ import {
   Shield,
   Bell,
   FlaskConical,
+  Bot,
+  Headphones,
 } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
 
@@ -30,6 +32,8 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: "/dashboard-new", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard-new/chat", label: "Voice Chat", icon: MessageCircle },
+  { href: "/dashboard-new/ai-chat", label: "Trợ lý AI", icon: Bot },
+  { href: "/dashboard-new/listening", label: "Luyện nghe", icon: Headphones },
   { href: "/dashboard-new/image-learning", label: "Học qua hình ảnh", icon: Camera },
   { href: "/dashboard-new/documents-simple", label: "Tải lên tài liệu", icon: FileText },
   { href: "/dashboard-new/vocabulary", label: "Từ vựng", icon: BookOpen },
