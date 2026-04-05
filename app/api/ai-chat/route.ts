@@ -2,13 +2,70 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/authOptions"
 import { getUserApiKeys } from "@/lib/getUserApiKey"
+import getClientPromise from "@/lib/mongodb"
 
-const SYSTEM_PROMPT = `Bạn là trợ lý AI thông minh tên EnglishPal AI.
+const BASE_SYSTEM_PROMPT = `Bạn là trợ lý AI thông minh tên EnglishPal AI, chuyên hỗ trợ học tiếng Anh cá nhân hóa.
 - Trả lời bằng tiếng Việt khi người dùng hỏi bằng tiếng Việt
 - Trả lời bằng tiếng Anh khi người dùng hỏi bằng tiếng Anh
 - Khi giải thích từ vựng hoặc ngữ pháp, đưa ra ví dụ cụ thể
 - Có thể trả lời mọi câu hỏi, không chỉ về tiếng Anh
-- Định dạng câu trả lời rõ ràng, dễ đọc`
+- Định dạng câu trả lời rõ ràng, dễ đọc
+- Nếu có dữ liệu học tập cá nhân của người dùng, hãy tích hợp vào câu trả lời một cách tự nhiên`
+
+// Fetch user learning data from DB to build personal context
+async function buildPersonalContext(userId: string): Promise<string> {
+  try {
+    const client = await getClientPromise()
+    const db = client.db(process.env.MONGO_DB || "viettalk")
+
+    // Fetch in parallel: vocabulary + grammar errors
+    const [vocabulary, grammarErrors] = await Promise.all([
+      db.collection("vocabulary")
+        .find({ userId })
+        .sort({ created_at: -1 })
+        .limit(40)
+        .project({ word: 1, meaning: 1, example: 1, type: 1, level: 1 })
+        .toArray(),
+      db.collection("grammar_errors")
+        .find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(15)
+        .project({ error: 1, correction: 1, explanation: 1 })
+        .toArray(),
+    ])
+
+    if (vocabulary.length === 0 && grammarErrors.length === 0) return ""
+
+    const parts: string[] = []
+
+    if (vocabulary.length > 0) {
+      const vocabList = vocabulary
+        .map((v: any) => `  - "${v.word}"${v.meaning ? `: ${v.meaning}` : ""}${v.example ? ` (vd: ${v.example})` : ""}`)
+        .join("\n")
+      parts.push(`TỪ VỰNG ĐÃ HỌC (${vocabulary.length} từ):\n${vocabList}`)
+    }
+
+    if (grammarErrors.length > 0) {
+      const errorList = grammarErrors
+        .map((e: any) => `  - Sai: "${e.error}" → Đúng: "${e.correction}"${e.explanation ? ` (${e.explanation})` : ""}`)
+        .join("\n")
+      parts.push(`LỖI NGỮ PHÁP THƯỜNG GẶP (${grammarErrors.length} lỗi):\n${errorList}`)
+    }
+
+    return `\n\n=== DỮ LIỆU HỌC TẬP CÁ NHÂN CỦA NGƯỜI DÙNG ===
+${parts.join("\n\n")}
+
+HƯỚNG DẪN SỬ DỤNG DỮ LIỆU TRÊN:
+- Nếu câu hỏi liên quan đến từ vựng đã học → nhắc lại và củng cố
+- Nếu người dùng mắc lỗi ngữ pháp đã ghi nhận → chỉ ra và giải thích
+- Ưu tiên dùng ví dụ từ từ vựng đã học để minh họa
+- Không cần liệt kê toàn bộ dữ liệu, chỉ dùng khi phù hợp với câu hỏi
+=================================================`
+  } catch (err) {
+    console.error("[ai-chat] Failed to build personal context:", err)
+    return ""
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,10 +76,17 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json()
     if (!messages?.length) return NextResponse.json({ error: "Missing messages" }, { status: 400 })
 
-    // Only use user's own keys — no server fallback
-    const keys = await getUserApiKeys(userId)
+    // Fetch user API keys + personal learning context in parallel
+    const [keys, personalContext] = await Promise.all([
+      getUserApiKeys(userId),
+      buildPersonalContext(userId),
+    ])
+
+    // Build enriched system prompt
+    const systemPrompt = BASE_SYSTEM_PROMPT + personalContext
+
     const chatMessages = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       ...messages.map((m: any) => ({ role: m.role, content: m.content }))
     ]
 
@@ -44,7 +108,7 @@ export async function POST(request: NextRequest) {
       let result: { ok: boolean; response?: Response; error?: string }
       if (p.type === "groq") result = await tryGroq(p.key!, chatMessages)
       else if (p.type === "openai") result = await tryOpenAI(p.key!, chatMessages)
-      else result = await tryGemini(p.key!, messages, SYSTEM_PROMPT)
+      else result = await tryGemini(p.key!, messages, systemPrompt)
 
       if (result.ok) return result.response!
       console.error(`[ai-chat] ${p.type} failed:`, result.error)
