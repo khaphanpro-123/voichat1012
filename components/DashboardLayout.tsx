@@ -23,6 +23,7 @@ import {
   Headphones,
 } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
+import MiniVideoPlayer from "./MiniVideoPlayer";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -300,6 +301,9 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">{children}</main>
+
+      {/* Mini Video Player - persists across navigation */}
+      <MiniVideoPlayer />
 
       {/* Notification Panel */}
       <NotificationPanel

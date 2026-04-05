@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import DashboardLayout from "@/components/DashboardLayout"
 import { VIDEO_SECTIONS } from "@/config/video-links"
+import { useVideoPlayer } from "@/contexts/VideoPlayerContext"
 
 type VideoItem = {
   id: string; title: string; channel?: string; thumbnail?: string; source: string; color: string; url?: string
@@ -37,6 +38,15 @@ export default function ListeningPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const [noApiKey, setNoApiKey] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { setVideo } = useVideoPlayer()
+
+  // Sync selected video to global context so mini player can pick it up
+  useEffect(() => {
+    if (selectedVideo?.id) {
+      setVideo({ videoId: selectedVideo.id, title: selectedVideo.title, channel: selectedVideo.channel || "" })
+    }
+  }, [selectedVideo, setVideo])
 
   const tabVideos: VideoItem[] = VIDEO_SECTIONS[activeTab]?.videos
     .filter((v) => v.id && !v.id.startsWith("DEMO"))
