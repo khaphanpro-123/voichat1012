@@ -91,7 +91,7 @@ const learningModes = [
   {
     id: "image-learning",
     title: "Học qua hình ảnh",
-    description: "Upload ảnh, học từ vựng từ hình ảnh",
+    description: "Upload ảnh, học words vựng words hình ảnh",
     icon: Camera,
     color: "from-blue-400 to-cyan-500",
     href: "/dashboard-new/image-learning",
@@ -99,8 +99,8 @@ const learningModes = [
   },
   {
     id: "vocabulary",
-    title: "Từ vựng",
-    description: "Ôn tập và học từ vựng mới",
+    title: "Vocabulary",
+    description: "Ôn tập và học words vựng mới",
     icon: BookOpen,
     color: "from-green-400 to-emerald-500",
     href: "/dashboard-new/vocabulary",
@@ -109,7 +109,7 @@ const learningModes = [
   {
     id: "topic-modeling",
     title: "Topic Modeling",
-    description: "Phân nhóm từ vựng theo chủ đề tự động",
+    description: "Phân nhóm words vựng theo chủ đề tự động",
     icon: Network,
     color: "from-indigo-400 to-blue-500",
     href: "/dashboard-new/topic-modeling-demo",
@@ -118,7 +118,7 @@ const learningModes = [
   {
     id: "learning-history",
     title: "Lịch sử học tập",
-    description: "Xem tiến trình và lỗi thường gặp",
+    description: "Xem tiến trình và errors thường gặp",
     icon: History,
     color: "from-orange-400 to-amber-500",
     href: "/dashboard-new/learning-history",
@@ -457,11 +457,11 @@ export default function DashboardHome() {
       >
         <div className="bg-white rounded-2xl p-4 shadow-md text-center">
           <p className="text-3xl font-bold text-purple-600">{activities.vocabularyLearned}</p>
-          <p className="text-sm text-gray-600">Từ vựng đã học</p>
+          <p className="text-sm text-gray-600">Vocabulary đã học</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-md text-center">
           <p className="text-3xl font-bold text-green-600">{activities.documentsUploaded}</p>
-          <p className="text-sm text-gray-600">Tài liệu</p>
+          <p className="text-sm text-gray-600">Documents</p>
         </div>
       </motion.div>
 
@@ -496,7 +496,7 @@ export default function DashboardHome() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-teal-600 font-semibold">
-                      <span>Bắt đầu học</span>
+                      <span>Start learning</span>
                       <ArrowRight className="w-4 h-4" />
                     </div>
                     <span className="text-xs text-gray-400">
@@ -519,8 +519,8 @@ export default function DashboardHome() {
       >
         <div className="bg-white rounded-2xl p-6 shadow-md border-2 border-dashed border-gray-200 text-center">
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Upload tài liệu để học từ vựng</h3>
-          <p className="text-gray-500 mb-4">Hỗ trợ PDF, Word, hình ảnh. Trích xuất từ vựng tự động với OCR.</p>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Upload documents để học words vựng</h3>
+          <p className="text-gray-500 mb-4">Hỗ trợ PDF, Word, hình ảnh. Trích xuất words vựng tự động với OCR.</p>
           <Link href="/dashboard-new/documents-simple">
             <button className="px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition">
               Bắt đầu upload

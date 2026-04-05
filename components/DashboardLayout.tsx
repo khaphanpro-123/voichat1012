@@ -32,12 +32,12 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: "/dashboard-new", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard-new/chat", label: "Voice Chat", icon: MessageCircle },
-  { href: "/dashboard-new/ai-chat", label: "Trợ lý AI", icon: Bot },
-  { href: "/dashboard-new/listening", label: "Luyện nghe", icon: Headphones },
-  { href: "/dashboard-new/image-learning", label: "Học qua hình ảnh", icon: Camera },
-  { href: "/dashboard-new/documents-simple", label: "Tải lên tài liệu", icon: FileText },
-  { href: "/dashboard-new/vocabulary", label: "Từ vựng", icon: BookOpen },
-  { href: "/dashboard-new/survey", label: "Khảo sát học tập", icon: ClipboardList },
+  { href: "/dashboard-new/ai-chat", label: "AI Assistant", icon: Bot },
+  { href: "/dashboard-new/listening", label: "Listening", icon: Headphones },
+  { href: "/dashboard-new/image-learning", label: "Image Learning", icon: Camera },
+  { href: "/dashboard-new/documents-simple", label: "Upload Document", icon: FileText },
+  { href: "/dashboard-new/vocabulary", label: "Vocabulary", icon: BookOpen },
+  { href: "/dashboard-new/survey", label: "Learning Survey", icon: ClipboardList },
   { href: "/dashboard-new/ablation-study", label: "Ablation Study", icon: FlaskConical },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -158,22 +158,22 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
                 <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                   <AlertTriangle className="w-8 h-8 text-orange-500" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Xác nhận đăng xuất</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm logout</h3>
                 <p className="text-gray-600 mb-6">
-                  Phiên học tập của bạn sẽ được kết thúc. Bạn có chắc chắn muốn đăng xuất không?
+                  Your learning session will end. Are you sure you want to log out?
                 </p>
                 <div className="flex gap-3 w-full">
                   <button
                     onClick={cancelLogout}
                     className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition"
                   >
-                    Quay lại
+                    Go back
                   </button>
                   <button
                     onClick={confirmLogout}
                     className="flex-1 px-4 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition"
                   >
-                    Đăng xuất
+                    Log out
                   </button>
                 </div>
               </div>
@@ -238,7 +238,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-gray-100 relative"
             >
               <Bell className="w-5 h-5" />
-              <span className="font-medium">Thông báo</span>
+              <span className="font-medium">Notifications</span>
               {unreadCount > 0 && (
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                   {unreadCount}
@@ -287,7 +287,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
             >
               <LogOut className="w-4 h-4" />
-              <span>Đăng xuất</span>
+              <span>Log out</span>
             </button>
           </div>
         </div>

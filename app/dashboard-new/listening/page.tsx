@@ -110,8 +110,8 @@ export default function ListeningPage() {
         <div className="max-w-6xl mx-auto space-y-6">
 
           <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <h1 className="text-3xl font-bold text-white">Luyện nghe</h1>
-            <p className="text-slate-400 mt-1 text-sm">Gõ tên video — hệ thống tự tìm và phát ngay trên trang</p>
+            <h1 className="text-3xl font-bold text-white">Listening Practice</h1>
+            <p className="text-slate-400 mt-1 text-sm">Type a video name — search and play directly on this page</p>
           </motion.div>
 
           {/* Search */}
@@ -133,7 +133,7 @@ export default function ListeningPage() {
                 type="text" value={searchQuery}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { if (debounceRef.current) clearTimeout(debounceRef.current); doSearch(searchQuery) } }}
-                placeholder="Gõ tên video để tìm kiếm... (tự động tìm sau khi gõ)"
+                placeholder="Search for a video... (auto-search as you type)"
                 className="w-full pl-10 pr-10 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
               />
               {searchQuery && (
@@ -163,8 +163,8 @@ export default function ListeningPage() {
                 <p className="text-red-400">{searchError}</p>
                 {noApiKey && (
                   <p className="text-slate-400">
-                    Cần thêm <code className="bg-white/10 px-1 rounded">YOUTUBE_API_KEY</code> vào Vercel.
-                    Lấy key miễn phí tại{" "}
+                    Add <code className="bg-white/10 px-1 rounded">YOUTUBE_API_KEY</code> to Vercel.
+                    Get a free key at{" "}
                     <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">
                       console.cloud.google.com
                     </a>
@@ -202,7 +202,7 @@ export default function ListeningPage() {
                         <svg className="w-16 h-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <p className="text-sm">Gõ tên video để tìm kiếm</p>
+                        <p className="text-sm">Type a video name to search</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -259,12 +259,12 @@ export default function ListeningPage() {
               {hasSearched && (
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-300">
-                    {searching ? "Đang tìm..." : `${searchResults.length} kết quả`}
+                    {searching ? "Searching..." : `${searchResults.length} results`}
                   </p>
                   <button onClick={() => { setHasSearched(false); setSearchResults([]); setSearchQuery("") }}
                     className="text-xs text-indigo-400 hover:text-indigo-200 transition-colors"
                   >
-                    Xem gợi ý
+                    View suggestions
                   </button>
                 </div>
               )}
@@ -285,7 +285,7 @@ export default function ListeningPage() {
                     ))
                   ) : displayList.length === 0 && hasSearched ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 text-slate-500 text-sm">
-                      Không tìm thấy video. Thử từ khóa khác.
+                      No videos found. Try a different keyword.
                     </motion.div>
                   ) : (
                     displayList.map((video, vi) => {

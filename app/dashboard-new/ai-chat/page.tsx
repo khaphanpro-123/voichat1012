@@ -53,7 +53,7 @@ export default function AiChatPage() {
   const msgs = active?.messages ?? []
 
   const newChat = () => {
-    const s: CS = { id: uid(), title: "Cuoc tro chuyen moi", messages: [], createdAt: Date.now() }
+    const s: CS = { id: uid(), title: "New conversation", messages: [], createdAt: Date.now() }
     save([s, ...sessions])
     setActiveId(s.id)
     localStorage.setItem(AK, s.id)
@@ -102,7 +102,7 @@ export default function AiChatPage() {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setMsgs(sid, [...cur, { role: "assistant", content: "Loi: " + (err.message ?? err.error ?? "Khong xac dinh") }])
+        setMsgs(sid, [...cur, { role: "assistant", content: "Error: " + (err.message ?? err.error ?? "Khong xac dinh") }])
         return
       }
       const reader = res.body!.getReader(); const dec = new TextDecoder(); let out = ""
@@ -117,7 +117,7 @@ export default function AiChatPage() {
       }
     } catch (e) {
       const err = e as Error
-      if (err.name !== "AbortError") setMsgs(sid, [...cur, { role: "assistant", content: "Loi ket noi. Thu lai." }])
+      if (err.name !== "AbortError") setMsgs(sid, [...cur, { role: "assistant", content: "Connection error. Please try again." }])
     } finally { setBusy(false); ctrl.current = null }
   }, [input, busy, activeId, sessions, setMsgs])
 
@@ -135,12 +135,12 @@ export default function AiChatPage() {
         <div className={`${sidebar ? "w-60" : "w-0"} transition-all duration-200 overflow-hidden flex-shrink-0 border-r border-gray-800 flex flex-col bg-gray-900`}>
           <div className="p-3 border-b border-gray-800">
             <button onClick={newChat} className="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium">
-              + Cuoc tro chuyen moi
+              + New conversation
             </button>
           </div>
           {ks && (
             <div className="px-3 py-2 border-b border-gray-800">
-              <p className="text-xs text-gray-500 mb-1">Ket noi AI</p>
+              <p className="text-xs text-gray-500 mb-1">AI Connection</p>
               <div className="flex flex-wrap gap-1">
                 {[{ l: "Groq", ok: ks.groq }, { l: "OpenAI", ok: ks.openai }, { l: "Gemini", ok: ks.gemini }].map(p => (
                   <span key={p.l} className={`text-xs px-2 py-0.5 rounded-full ${p.ok ? "bg-green-900 text-green-300" : "bg-gray-800 text-gray-500"}`}>
@@ -148,18 +148,18 @@ export default function AiChatPage() {
                   </span>
                 ))}
               </div>
-              {conn.length === 0 && <a href="/settings" className="text-xs text-indigo-400 hover:underline mt-1 block">Them API key trong Settings</a>}
+              {conn.length === 0 && <a href="/settings" className="text-xs text-indigo-400 hover:underline mt-1 block">Add API key in Settings</a>}
             </div>
           )}
           <div className="flex-1 overflow-y-auto">
             {sessions.length === 0
-              ? <p className="text-xs text-gray-600 text-center mt-6 px-3">Chua co cuoc tro chuyen</p>
+              ? <p className="text-xs text-gray-600 text-center mt-6 px-3">No conversations yet</p>
               : sessions.map(s => (
                 <div key={s.id} onClick={() => { setActiveId(s.id); localStorage.setItem(AK, s.id) }}
                   className={`group flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-gray-800 ${activeId === s.id ? "bg-gray-800 border-l-2 border-indigo-500" : ""}`}>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-200 truncate">{s.title}</p>
-                    <p className="text-xs text-gray-600">{s.messages.length} tin nhan</p>
+                    <p className="text-xs text-gray-600">{s.messages.length} messages</p>
                   </div>
                   <button onClick={e => delChat(s.id, e)} className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 ml-2 text-xs">x</button>
                 </div>
@@ -181,11 +181,11 @@ export default function AiChatPage() {
             {msgs.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <h2 className="text-xl font-semibold text-white mb-2">EnglishPal AI</h2>
-                <p className="text-gray-400 text-sm max-w-sm mb-4">Tro ly AI ca nhan hoa theo du lieu hoc tap cua ban.</p>
-                {conn.length > 0 && <p className="text-xs text-green-400 mb-4">Da ket noi: {conn.join(", ")}</p>}
-                {conn.length === 0 && ks && <a href="/settings" className="text-sm text-indigo-400 hover:underline mb-4 block">Vao Settings de them API key</a>}
+                <p className="text-gray-400 text-sm max-w-sm mb-4">AI assistant personalized to your learning data.</p>
+                {conn.length > 0 && <p className="text-xs text-green-400 mb-4">Connected: {conn.join(", ")}</p>}
+                {conn.length === 0 && ks && <a href="/settings" className="text-sm text-indigo-400 hover:underline mb-4 block">Go to Settings to add API key</a>}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
-                  {["Giai thich thi hien tai hoan thanh", "Sua loi ngu phap cau nay", "Tu vung business thong dung", "On lai tu vung da hoc"].map(q => (
+                  {["Explain present perfect tense", "Fix grammar in this sentence", "Common business vocabulary", "Review vocabulary I learned"].map(q => (
                     <button key={q} onClick={() => setInput(q)} className="text-left text-sm px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300">{q}</button>
                   ))}
                 </div>
@@ -210,14 +210,14 @@ export default function AiChatPage() {
             <div className="flex gap-2 items-end max-w-4xl mx-auto">
               <textarea value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-                placeholder="Nhap tin nhan... (Enter gui, Shift+Enter xuong dong)"
+                placeholder="Nhap messages... (Enter gui, Shift+Enter xuong dong)"
                 rows={1} className="flex-1 resize-none bg-gray-800 text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 style={{ minHeight: "48px", maxHeight: "128px" }}
                 onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 128) + "px" }}
               />
               {busy
-                ? <button onClick={() => ctrl.current?.abort()} className="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium flex-shrink-0">Dung</button>
-                : <button onClick={send} disabled={!input.trim()} className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium flex-shrink-0">Gui</button>
+                ? <button onClick={() => ctrl.current?.abort()} className="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium flex-shrink-0">Stop</button>
+                : <button onClick={send} disabled={!input.trim()} className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium flex-shrink-0">Send</button>
               }
             </div>
           </div>
