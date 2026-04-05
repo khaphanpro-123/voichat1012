@@ -29,7 +29,17 @@ export default function ListeningPage() {
     s.videos.filter((v) => v.id && !v.id.startsWith("DEMO")).map((v) => ({ ...v, source: s.source, color: s.color }))
   )
 
-  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(allCurated[0] || null)
+  const { video: ctxVideo, setVideo } = useVideoPlayer()
+
+  // Restore from context if available (user came back from another page)
+  const initialVideo = ctxVideo?.videoId
+    ? allCurated.find(v => v.id === ctxVideo.videoId) || {
+        id: ctxVideo.videoId, title: ctxVideo.title, channel: ctxVideo.channel,
+        source: "YouTube", color: "bg-red-100 text-red-700",
+      }
+    : allCurated[0] || null
+
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(initialVideo)
   const [activeTab, setActiveTab] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<VideoItem[]>([])
@@ -38,8 +48,6 @@ export default function ListeningPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const [noApiKey, setNoApiKey] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const { setVideo } = useVideoPlayer()
 
   // Sync selected video to global context so mini player can pick it up
   useEffect(() => {
