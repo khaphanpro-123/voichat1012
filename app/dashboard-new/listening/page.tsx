@@ -31,15 +31,15 @@ export default function ListeningPage() {
 
   const { video: ctxVideo, setVideo } = useVideoPlayer()
 
-  // Restore from context if available (user came back from another page)
-  const initialVideo = ctxVideo?.videoId
-    ? allCurated.find(v => v.id === ctxVideo.videoId) || {
-        id: ctxVideo.videoId, title: ctxVideo.title, channel: ctxVideo.channel,
-        source: "YouTube", color: "bg-red-100 text-red-700",
-      }
-    : allCurated[0] || null
+  const buildFromCtx = (ctx: typeof ctxVideo): VideoItem | null => {
+    if (!ctx?.videoId) return allCurated[0] || null
+    return allCurated.find(v => v.id === ctx.videoId) || {
+      id: ctx.videoId, title: ctx.title, channel: ctx.channel,
+      source: "YouTube", color: "bg-red-100 text-red-700",
+    }
+  }
 
-  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(initialVideo)
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(() => buildFromCtx(ctxVideo))
   const [activeTab, setActiveTab] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<VideoItem[]>([])
@@ -48,6 +48,14 @@ export default function ListeningPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const [noApiKey, setNoApiKey] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // When navigating back to this page, restore video from context
+  useEffect(() => {
+    if (ctxVideo?.videoId && selectedVideo?.id !== ctxVideo.videoId) {
+      setSelectedVideo(buildFromCtx(ctxVideo))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Sync selected video to global context so mini player can pick it up
   useEffect(() => {
