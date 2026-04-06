@@ -1,17 +1,20 @@
-import { NextRequest, NextResponse } from "next/server"
+const fs = require('fs')
+
+// ── API ROUTE ──────────────────────────────────────────────────────────────
+const apiRoute = `import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/authOptions"
 import { getUserApiKeys } from "@/lib/getUserApiKey"
 import getClientPromise from "@/lib/mongodb"
 
-const SYS = `You are EnglishPal AI, a smart assistant specializing in personalized English learning.
+const SYS = \`You are EnglishPal AI, a smart assistant specializing in personalized English learning.
 - Reply in Vietnamese when the user writes in Vietnamese
 - Reply in English when the user writes in English
 - Give concrete examples when explaining vocabulary or grammar
 - Answer any question, not just English-related ones
 - Format answers clearly and readably
 - If the user shares an image, analyze it and answer based on both the image and their question
-- If personal learning data is available, integrate it naturally into your response`
+- If personal learning data is available, integrate it naturally into your response\`
 
 async function buildPersonalContext(userId: string): Promise<string> {
   try {
@@ -26,14 +29,14 @@ async function buildPersonalContext(userId: string): Promise<string> {
     if (vocabulary.length === 0 && grammarErrors.length === 0) return ""
     const parts: string[] = []
     if (vocabulary.length > 0) {
-      parts.push(`LEARNED VOCABULARY (${vocabulary.length} words):\n` +
-        vocabulary.map((v: any) => `  - "${v.word}"${v.meaning ? ": " + v.meaning : ""}`).join("\n"))
+      parts.push(\`LEARNED VOCABULARY (\${vocabulary.length} words):\\n\` +
+        vocabulary.map((v: any) => \`  - "\${v.word}"\${v.meaning ? ": " + v.meaning : ""}\`).join("\\n"))
     }
     if (grammarErrors.length > 0) {
-      parts.push(`COMMON GRAMMAR ERRORS (${grammarErrors.length}):\n` +
-        grammarErrors.map((e: any) => `  - Wrong: "${e.error}" → Correct: "${e.correction}"`).join("\n"))
+      parts.push(\`COMMON GRAMMAR ERRORS (\${grammarErrors.length}):\\n\` +
+        grammarErrors.map((e: any) => \`  - Wrong: "\${e.error}" → Correct: "\${e.correction}"\`).join("\\n"))
     }
-    return `\n\n=== USER PERSONAL LEARNING DATA ===\n${parts.join("\n\n")}\n===================================`
+    return \`\\n\\n=== USER PERSONAL LEARNING DATA ===\\n\${parts.join("\\n\\n")}\\n===================================\`
   } catch { return "" }
 }
 
@@ -89,7 +92,7 @@ export async function POST(request: NextRequest) {
       else if (p.type === "openai") result = await tryOpenAI(p.key!, chatMsgs)
       else result = await tryGemini(p.key!, messages, systemPrompt)
       if (result.ok) return result.response!
-      console.error(`[ai-chat] ${p.type} failed:`, result.error)
+      console.error(\`[ai-chat] \${p.type} failed:\`, result.error)
     }
     return NextResponse.json({ error: "All AI providers failed. Check your API keys in Settings." }, { status: 500 })
   } catch (error: any) {
@@ -111,10 +114,10 @@ async function tryGroq(apiKey: string, messages: any[]) {
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${apiKey}\` },
       body: JSON.stringify({ model: "llama-3.1-8b-instant", messages, stream: true, max_tokens: 2048, temperature: 0.7 }),
     })
-    if (!res.ok || !res.body) { const t = await res.text().catch(() => ""); return { ok: false, error: `Groq ${res.status}: ${t.slice(0, 100)}` } }
+    if (!res.ok || !res.body) { const t = await res.text().catch(() => ""); return { ok: false, error: \`Groq \${res.status}: \${t.slice(0, 100)}\` } }
     return { ok: true, response: new Response(res.body, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } }) }
   } catch (e: any) { return { ok: false, error: e.message } }
 }
@@ -123,12 +126,12 @@ async function tryOpenAI(apiKey: string, messages: any[]) {
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${apiKey}\` },
       body: JSON.stringify({ model: "gpt-4o-mini", messages, stream: true, max_tokens: 2048, temperature: 0.7 }),
     })
     if (!res.ok || !res.body) {
       const t = await res.text().catch(() => "")
-      let msg = `OpenAI ${res.status}`
+      let msg = \`OpenAI \${res.status}\`
       if (res.status === 401) msg = "OpenAI key invalid"
       else if (res.status === 429) msg = "OpenAI quota exceeded"
       return { ok: false, error: msg }
@@ -149,22 +152,26 @@ async function tryGemini(apiKey: string, messages: any[], systemPrompt: string) 
       return { role: m.role === "assistant" ? "model" : "user", parts }
     })
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      \`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${apiKey}\`,
       { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ system_instruction: { parts: [{ text: systemPrompt }] }, contents, generationConfig: { maxOutputTokens: 2048, temperature: 0.7 } }) }
     )
-    if (!res.ok) { const t = await res.text().catch(() => ""); return { ok: false, error: `Gemini ${res.status}: ${t.slice(0, 100)}` } }
+    if (!res.ok) { const t = await res.text().catch(() => ""); return { ok: false, error: \`Gemini \${res.status}: \${t.slice(0, 100)}\` } }
     const data = await res.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
     if (!text) return { ok: false, error: "Gemini empty response" }
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       start(controller) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`))
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"))
+        controller.enqueue(encoder.encode(\`data: \${JSON.stringify({ choices: [{ delta: { content: text } }] })}\\n\\n\`))
+        controller.enqueue(encoder.encode("data: [DONE]\\n\\n"))
         controller.close()
       }
     })
     return { ok: true, response: new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } }) }
   } catch (e: any) { return { ok: false, error: e.message } }
 }
+`
+
+fs.writeFileSync('app/api/ai-chat/route.ts', apiRoute, 'utf8')
+console.log('API route:', fs.statSync('app/api/ai-chat/route.ts').size, 'bytes')

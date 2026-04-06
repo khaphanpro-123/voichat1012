@@ -1,4 +1,6 @@
-"use client"
+const fs = require('fs')
+
+const page = `"use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useSession } from "next-auth/react"
@@ -147,7 +149,7 @@ export default function AiChatPage() {
       setMsgs(sid, [...cur, { role: "assistant", content: "" }])
       while (true) {
         const { done, value } = await reader.read(); if (done) break
-        for (const line of dec.decode(value, { stream: true }).split("\n")) {
+        for (const line of dec.decode(value, { stream: true }).split("\\n")) {
           if (!line.startsWith("data: ")) continue
           const d2 = line.slice(6).trim(); if (d2 === "[DONE]") break
           try { out += JSON.parse(d2).choices?.[0]?.delta?.content ?? ""; setMsgs(sid!, [...cur, { role: "assistant", content: out }]) } catch {}
@@ -169,15 +171,15 @@ export default function AiChatPage() {
 
   return (
     <DashboardLayout>
-      <div className={`flex ${d.bg} transition-colors duration-200`} style={{ height: "100vh" }}>
+      <div className={\`flex \${d.bg} transition-colors duration-200\`} style={{ height: "100vh" }}>
 
         {/* Sidebar */}
-        <div className={`${sidebar ? "w-64" : "w-0"} transition-all duration-200 overflow-hidden flex-shrink-0 border-r ${d.sidebar} flex flex-col`}>
-          <div className={`p-3 border-b ${d.border} flex gap-2`}>
+        <div className={\`\${sidebar ? "w-64" : "w-0"} transition-all duration-200 overflow-hidden flex-shrink-0 border-r \${d.sidebar} flex flex-col\`}>
+          <div className={\`p-3 border-b \${d.border} flex gap-2\`}>
             <button onClick={newChat} className="flex-1 py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors">
               + New chat
             </button>
-            <button onClick={toggleDark} className={`p-2 rounded-lg ${d.hover} ${d.sub} transition-colors`} title="Toggle theme">
+            <button onClick={toggleDark} className={\`p-2 rounded-lg \${d.hover} \${d.sub} transition-colors\`} title="Toggle theme">
               {dark ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               ) : (
@@ -187,11 +189,11 @@ export default function AiChatPage() {
           </div>
 
           {ks && (
-            <div className={`px-3 py-2 border-b ${d.border}`}>
-              <p className={`text-xs ${d.sub} mb-1`}>AI Connection</p>
+            <div className={\`px-3 py-2 border-b \${d.border}\`}>
+              <p className={\`text-xs \${d.sub} mb-1\`}>AI Connection</p>
               <div className="flex flex-wrap gap-1">
                 {[{ l: "Groq", ok: ks.groq }, { l: "OpenAI", ok: ks.openai }, { l: "Gemini", ok: ks.gemini }].map(p => (
-                  <span key={p.l} className={`text-xs px-2 py-0.5 rounded-full ${p.ok ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" : dark ? "bg-gray-800 text-gray-500" : "bg-gray-100 text-gray-400"}`}>
+                  <span key={p.l} className={\`text-xs px-2 py-0.5 rounded-full \${p.ok ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" : dark ? "bg-gray-800 text-gray-500" : "bg-gray-100 text-gray-400"}\`}>
                     {p.ok ? "✓" : "✗"} {p.l}
                   </span>
                 ))}
@@ -202,15 +204,15 @@ export default function AiChatPage() {
 
           <div className="flex-1 overflow-y-auto">
             {sessions.length === 0
-              ? <p className={`text-xs ${d.sub} text-center mt-6 px-3`}>No conversations yet</p>
+              ? <p className={\`text-xs \${d.sub} text-center mt-6 px-3\`}>No conversations yet</p>
               : sessions.map(s => (
                 <div key={s.id} onClick={() => { setActiveId(s.id); localStorage.setItem(AK, s.id) }}
-                  className={`group flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors ${d.hover} ${activeId === s.id ? (dark ? "bg-gray-800 border-l-2 border-indigo-500" : "bg-indigo-50 border-l-2 border-indigo-500") : ""}`}>
+                  className={\`group flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors \${d.hover} \${activeId === s.id ? (dark ? "bg-gray-800 border-l-2 border-indigo-500" : "bg-indigo-50 border-l-2 border-indigo-500") : ""}\`}>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm ${d.text} truncate`}>{s.title}</p>
-                    <p className={`text-xs ${d.sub}`}>{s.messages.length} messages</p>
+                    <p className={\`text-sm \${d.text} truncate\`}>{s.title}</p>
+                    <p className={\`text-xs \${d.sub}\`}>{s.messages.length} messages</p>
                   </div>
-                  <button onClick={e => delChat(s.id, e)} className={`opacity-0 group-hover:opacity-100 ${d.sub} hover:text-red-400 ml-2 text-xs transition-opacity`}>✕</button>
+                  <button onClick={e => delChat(s.id, e)} className={\`opacity-0 group-hover:opacity-100 \${d.sub} hover:text-red-400 ml-2 text-xs transition-opacity\`}>✕</button>
                 </div>
               ))
             }
@@ -220,15 +222,15 @@ export default function AiChatPage() {
         {/* Main */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className={`flex items-center gap-3 px-4 py-3 border-b ${d.header} flex-shrink-0`}>
-            <button onClick={() => setSidebar(v => !v)} className={`${d.sub} hover:text-indigo-500 transition-colors`}>
+          <div className={\`flex items-center gap-3 px-4 py-3 border-b \${d.header} flex-shrink-0\`}>
+            <button onClick={() => setSidebar(v => !v)} className={\`\${d.sub} hover:text-indigo-500 transition-colors\`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <h1 className={`text-base font-semibold ${d.text}`}>EnglishPal AI</h1>
-            {active && <span className={`text-sm ${d.sub} truncate`}>{active.title}</span>}
+            <h1 className={\`text-base font-semibold \${d.text}\`}>EnglishPal AI</h1>
+            {active && <span className={\`text-sm \${d.sub} truncate\`}>{active.title}</span>}
             <div className="ml-auto flex items-center gap-2">
               {conn.length > 0 && <span className="text-xs text-green-500 hidden sm:block">{conn.join(" · ")}</span>}
-              <button onClick={toggleDark} className={`p-1.5 rounded-lg ${d.hover} ${d.sub} transition-colors sm:hidden`}>
+              <button onClick={toggleDark} className={\`p-1.5 rounded-lg \${d.hover} \${d.sub} transition-colors sm:hidden\`}>
                 {dark ? "☀️" : "🌙"}
               </button>
             </div>
@@ -238,18 +240,18 @@ export default function AiChatPage() {
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" onDrop={onDrop} onDragOver={e => e.preventDefault()}>
             {msgs.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className={`w-16 h-16 rounded-2xl ${dark ? "bg-indigo-600/20" : "bg-indigo-50"} flex items-center justify-center mb-4`}>
+                <div className={\`w-16 h-16 rounded-2xl \${dark ? "bg-indigo-600/20" : "bg-indigo-50"} flex items-center justify-center mb-4\`}>
                   <svg className="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
                 </div>
-                <h2 className={`text-xl font-semibold ${d.text} mb-2`}>EnglishPal AI</h2>
-                <p className={`${d.sub} text-sm max-w-sm mb-1`}>AI assistant personalized to your learning data.</p>
-                <p className={`${d.sub} text-xs mb-4`}>You can also paste or upload images to ask questions.</p>
+                <h2 className={\`text-xl font-semibold \${d.text} mb-2\`}>EnglishPal AI</h2>
+                <p className={\`\${d.sub} text-sm max-w-sm mb-1\`}>AI assistant personalized to your learning data.</p>
+                <p className={\`\${d.sub} text-xs mb-4\`}>You can also paste or upload images to ask questions.</p>
                 {conn.length > 0 && <p className="text-xs text-green-500 mb-4">Connected: {conn.join(", ")}</p>}
                 {conn.length === 0 && ks && <a href="/settings" className="text-sm text-indigo-400 hover:underline mb-4 block">Go to Settings to add API key</a>}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
                   {QUICK.map(q => (
                     <button key={q} onClick={() => setInput(q)}
-                      className={`text-left text-sm px-3 py-2 rounded-xl ${dark ? "bg-gray-800 hover:bg-gray-700 text-gray-300" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200"} transition-colors`}>
+                      className={\`text-left text-sm px-3 py-2 rounded-xl \${dark ? "bg-gray-800 hover:bg-gray-700 text-gray-300" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200"} transition-colors\`}>
                       {q}
                     </button>
                   ))}
@@ -258,12 +260,12 @@ export default function AiChatPage() {
             )}
 
             {msgs.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              <div key={i} className={\`flex \${m.role === "user" ? "justify-end" : "justify-start"}\`}>
+                <div className={\`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed \${
                   m.role === "user"
                     ? "bg-indigo-600 text-white rounded-br-sm"
-                    : `${d.msg} rounded-bl-sm`
-                }`}>
+                    : \`\${d.msg} rounded-bl-sm\`
+                }\`}>
                   {m.image && (
                     <img src={m.image} alt="uploaded" className="max-w-full rounded-xl mb-2 max-h-64 object-contain" />
                   )}
@@ -283,7 +285,7 @@ export default function AiChatPage() {
           </div>
 
           {/* Input area */}
-          <div className={`px-4 py-3 border-t ${d.header} flex-shrink-0`}>
+          <div className={\`px-4 py-3 border-t \${d.header} flex-shrink-0\`}>
             {/* Image preview */}
             {image && (
               <div className="mb-2 relative inline-block">
@@ -293,10 +295,10 @@ export default function AiChatPage() {
               </div>
             )}
 
-            <div className={`flex gap-2 items-end max-w-4xl mx-auto rounded-2xl ${dark ? "bg-gray-800" : "bg-white border border-gray-200"} px-3 py-2`}>
+            <div className={\`flex gap-2 items-end max-w-4xl mx-auto rounded-2xl \${dark ? "bg-gray-800" : "bg-white border border-gray-200"} px-3 py-2\`}>
               {/* Image upload button */}
               <button onClick={() => fileRef.current?.click()}
-                className={`flex-shrink-0 p-1.5 rounded-lg ${d.sub} hover:text-indigo-500 transition-colors`} title="Upload image">
+                className={\`flex-shrink-0 p-1.5 rounded-lg \${d.sub} hover:text-indigo-500 transition-colors\`} title="Upload image">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -307,7 +309,7 @@ export default function AiChatPage() {
               <textarea ref={textareaRef} value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
                 placeholder="Type a message or paste an image... (Enter to send)"
-                rows={1} className={`flex-1 resize-none bg-transparent ${d.text} placeholder-gray-400 text-sm focus:outline-none`}
+                rows={1} className={\`flex-1 resize-none bg-transparent \${d.text} placeholder-gray-400 text-sm focus:outline-none\`}
                 style={{ minHeight: "36px", maxHeight: "128px" }}
                 onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 128) + "px" }}
               />
@@ -323,10 +325,14 @@ export default function AiChatPage() {
                   </button>
               }
             </div>
-            <p className={`text-xs ${d.sub} text-center mt-1.5`}>Paste image with Ctrl+V · Drag & drop · or click the image icon</p>
+            <p className={\`text-xs \${d.sub} text-center mt-1.5\`}>Paste image with Ctrl+V · Drag & drop · or click the image icon</p>
           </div>
         </div>
       </div>
     </DashboardLayout>
   )
 }
+`
+
+fs.writeFileSync('app/dashboard-new/ai-chat/page.tsx', page, 'utf8')
+console.log('Page:', fs.statSync('app/dashboard-new/ai-chat/page.tsx').size, 'bytes')
