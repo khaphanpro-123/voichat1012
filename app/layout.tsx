@@ -10,6 +10,7 @@ import Providers from "./providers";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { GlobalErrorHandler } from "@/components/GlobalErrorHandler";
 import MiniVideoPlayer from "@/components/MiniVideoPlayer";
+import MiniVoicePlayer from "@/components/MiniVoicePlayer";
 
 export const metadata: Metadata = {
   title: "VietTalk - Học tiếng Anh hiệu quả",
@@ -40,6 +41,7 @@ export default function RootLayout({
               >
                 {children}
                 <MiniVideoPlayer />
+                <MiniVoicePlayer />
               </ThemeProvider>
             </Providers>
           </Suspense>

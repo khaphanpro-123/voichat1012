@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic, MicOff, Volume2, VolumeX, Settings, Send, BookOpen, 
   Languages, ChevronDown, ChevronUp, Sparkles, Save, List,
-  X, Check, AlertCircle, Loader2
+  X, Check, AlertCircle, Loader2, Square
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
+import { useVoiceChat } from "@/contexts/VoiceChatContext";
 
 interface VocabularyItem {
   word: string;
@@ -79,6 +80,32 @@ export default function VoiceChatEnhanced() {
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const finalTranscriptRef = useRef("");
+
+  // Sync state to global VoiceChat context (for mini player)
+  const { setVoiceSession } = useVoiceChat();
+  useEffect(() => {
+    const active = isListening || isSpeaking || isProcessing || messages.length > 0;
+    const lastMsg = messages.filter(m => m.role === "assistant").slice(-1)[0];
+    setVoiceSession(active ? {
+      active: true,
+      listening: isListening,
+      speaking: isSpeaking,
+      processing: isProcessing,
+      lastText: lastMsg?.content?.slice(0, 80) || "",
+    } : null);
+  }, [isListening, isSpeaking, isProcessing, messages, setVoiceSession]);
+
+  // Stop entire session
+  const stopConversation = useCallback(() => {
+    recognitionRef.current?.stop();
+    window.speechSynthesis?.cancel();
+    setMessages([]);
+    setIsListening(false);
+    setIsSpeaking(false);
+    setIsProcessing(false);
+    setCurrentTranscript("");
+    setVoiceSession(null);
+  }, [setVoiceSession]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -345,24 +372,41 @@ export default function VoiceChatEnhanced() {
     return (
       <motion.div 
         key={msg.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
         className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
       >
         <div className={`max-w-[90%] ${msg.role === "user" ? "" : "w-full"}`}>
           {/* Main bubble */}
           <div className={`rounded-2xl p-4 ${
             msg.role === "user" 
-              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white" 
-              : "bg-white/10 text-white"
+              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-lg shadow-pink-500/20" 
+              : "bg-white/10 text-white border border-white/10"
           }`}>
-            <p className="text-lg">{msg.content}</p>
+            {msg.role === "assistant" ? (
+              <motion.p
+                className="text-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+              >
+                {msg.content}
+              </motion.p>
+            ) : (
+              <p className="text-lg">{msg.content}</p>
+            )}
             
             {/* Vietnamese translation for assistant */}
             {msg.role === "assistant" && enhanced?.vietnamese && (
-              <p className="text-white/70 mt-2 pt-2 border-t border-white/20 italic">
+              <motion.p
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-white/70 mt-2 pt-2 border-t border-white/20 italic"
+              >
                 🇻🇳 {enhanced.vietnamese}
-              </p>
+              </motion.p>
             )}
           </div>
 
@@ -683,23 +727,50 @@ export default function VoiceChatEnhanced() {
 
             {/* Controls */}
             <div className="flex items-center justify-center gap-4 mb-4">
-              <motion.button 
-                onClick={isListening ? stopListening : startListening} 
-                disabled={isProcessing || isSpeaking} 
-                whileTap={{ scale: 0.95 }}
-                className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
-                  isListening ? "bg-red-500 ring-4 ring-red-500/30" : "bg-gradient-to-br from-pink-500 to-violet-500"
-                } ${(isProcessing || isSpeaking) ? "opacity-50" : ""}`}
-              >
-                {isListening ? <MicOff className="w-7 h-7 text-white" /> : <Mic className="w-7 h-7 text-white" />}
-              </motion.button>
+              {/* Mic button with ripple effect */}
+              <div className="relative">
+                {isListening && (
+                  <>
+                    <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
+                    <span className="absolute inset-[-8px] rounded-full bg-red-500/15 animate-ping" style={{ animationDelay: "0.2s" }} />
+                  </>
+                )}
+                <motion.button 
+                  onClick={isListening ? stopListening : startListening} 
+                  disabled={isProcessing || isSpeaking} 
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  animate={isListening ? { boxShadow: ["0 0 0 0 rgba(239,68,68,0.4)", "0 0 0 20px rgba(239,68,68,0)"] } : {}}
+                  transition={isListening ? { duration: 1, repeat: Infinity } : {}}
+                  className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                    isListening 
+                      ? "bg-red-500 ring-4 ring-red-500/40" 
+                      : "bg-gradient-to-br from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400"
+                  } ${(isProcessing || isSpeaking) ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {isListening ? <MicOff className="w-7 h-7 text-white" /> : <Mic className="w-7 h-7 text-white" />}
+                </motion.button>
+              </div>
               
               <button 
                 onClick={isSpeaking ? stopSpeaking : () => messages.length > 0 && messages[messages.length - 1].enhancedResponse && speakEnhanced(messages[messages.length - 1].enhancedResponse!)}
-                className="p-3 bg-white/10 text-white/80 rounded-full hover:bg-white/20"
+                className="p-3 bg-white/10 text-white/80 rounded-full hover:bg-white/20 transition-colors"
               >
                 {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
+
+              {/* Stop conversation button */}
+              {messages.length > 0 && (
+                <motion.button
+                  onClick={stopConversation}
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  className="p-3 bg-red-500/20 text-red-400 rounded-full hover:bg-red-500/30 border border-red-500/30 transition-colors"
+                  title="Stop conversation"
+                >
+                  <Square className="w-5 h-5" />
+                </motion.button>
+              )}
             </div>
 
             {/* Text input */}
