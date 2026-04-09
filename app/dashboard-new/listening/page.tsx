@@ -60,7 +60,7 @@ export default function ListeningPage() {
   // Sync selected video to global context so mini player can pick it up
   useEffect(() => {
     if (selectedVideo?.id) {
-      setVideo({ videoId: selectedVideo.id, title: selectedVideo.title, channel: selectedVideo.channel || "" })
+      setVideo({ videoId: selectedVideo.id, title: selectedVideo.title, channel: selectedVideo.channel || "", thumbnail: selectedVideo.thumbnail })
     }
   }, [selectedVideo, setVideo])
 
@@ -90,7 +90,7 @@ export default function ListeningPage() {
         source: "YouTube", color: "bg-red-100 text-red-700",
       }))
       setSearchResults(results)
-      if (results.length > 0) setSelectedVideo(results[0])
+      // Don't auto-select - let user click to choose
     } catch { setSearchError("Không thể kết nối. Vui lòng thử lại.") }
     finally { setSearching(false) }
   }, [])

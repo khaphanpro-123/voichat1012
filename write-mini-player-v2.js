@@ -1,6 +1,8 @@
-"use client"
+const fs = require('fs')
 
-import { useState, useRef, useCallback, useEffect } from "react"
+const content = `"use client"
+
+import { useState, useRef, useCallback } from "react"
 import { useVideoPlayer } from "@/contexts/VideoPlayerContext"
 import { usePathname, useRouter } from "next/navigation"
 
@@ -9,13 +11,10 @@ export default function MiniVideoPlayer() {
   const pathname = usePathname()
   const router = useRouter()
   const [minimized, setMinimized] = useState(false)
-  const [playing, setPlaying] = useState(false)
+  const [playing, setPlaying] = useState(false) // user must click to play
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const dragging = useRef(false)
   const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 })
-
-  // Reset playing state when video changes
-  useEffect(() => { setPlaying(false) }, [video?.videoId])
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -50,7 +49,7 @@ export default function MiniVideoPlayer() {
   return (
     <div
       className="fixed z-50"
-      style={{ bottom: `${16 + pos.y}px`, right: `${16 + pos.x}px`, width: minimized ? "200px" : "320px" }}
+      style={{ bottom: \`\${16 + pos.y}px\`, right: \`\${16 + pos.x}px\`, width: minimized ? "200px" : "320px" }}
     >
       <div className="rounded-2xl overflow-hidden border border-white/20 bg-gray-900 shadow-2xl">
         {/* Drag handle + controls */}
@@ -96,7 +95,7 @@ export default function MiniVideoPlayer() {
           <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
             {playing ? (
               <iframe
-                src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0&modestbranding=1`}
+                src={\`https://www.youtube.com/embed/\${video.videoId}?autoplay=1&rel=0&modestbranding=1\`}
                 className="absolute inset-0 w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -129,3 +128,7 @@ export default function MiniVideoPlayer() {
     </div>
   )
 }
+`
+
+fs.writeFileSync('components/MiniVideoPlayer.tsx', content, 'utf8')
+console.log('Written:', fs.statSync('components/MiniVideoPlayer.tsx').size, 'bytes')

@@ -6,6 +6,7 @@ interface VideoState {
   videoId: string | null
   title: string
   channel: string
+  thumbnail?: string
 }
 
 interface VideoPlayerContextType {
