@@ -128,9 +128,10 @@ export default function AiChatPage() {
       sid = s.id; setActiveId(sid); localStorage.setItem(AK, sid)
     }
     const base = sessions.find(s => s.id === sid)?.messages ?? []
-    const userMsg: Msg = { role: "user", content: text, ...(image ? { image } : {}) }
+    const userMsg: Msg = { role: "user", content: text || (image ? "Please analyze this image in detail and explain what you see." : ""), ...(image ? { image } : {}) }
     const cur: Msg[] = [...base, userMsg]
-    setMsgs(sid, cur); setInput(""); setImage(null); setBusy(true)
+    const curForDisplay = cur.map(m => m.image ? { ...m, image: undefined } : m)
+setMsgs(sid, curForDisplay); setInput(""); setImage(null); setBusy(true)
     if (textareaRef.current) { textareaRef.current.style.height = "auto" }
     ctrl.current = new AbortController()
     try {
@@ -140,22 +141,22 @@ export default function AiChatPage() {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setMsgs(sid, [...cur, { role: "assistant", content: "Error: " + (err.message ?? err.error ?? "Unknown error") }])
+        setMsgs(sid, [...curForDisplay, { role: "assistant", content: "Error: " + (err.message ?? err.error ?? "Unknown error") }])
         return
       }
       const reader = res.body!.getReader(); const dec = new TextDecoder(); let out = ""
-      setMsgs(sid, [...cur, { role: "assistant", content: "" }])
+      setMsgs(sid, [...curForDisplay, { role: "assistant", content: "" }])
       while (true) {
         const { done, value } = await reader.read(); if (done) break
         for (const line of dec.decode(value, { stream: true }).split("\n")) {
           if (!line.startsWith("data: ")) continue
           const d2 = line.slice(6).trim(); if (d2 === "[DONE]") break
-          try { out += JSON.parse(d2).choices?.[0]?.delta?.content ?? ""; setMsgs(sid!, [...cur, { role: "assistant", content: out }]) } catch {}
+          try { out += JSON.parse(d2).choices?.[0]?.delta?.content ?? ""; setMsgs(sid!, [...curForDisplay, { role: "assistant", content: out }]) } catch {}
         }
       }
     } catch (e) {
       const err = e as Error
-      if (err.name !== "AbortError") setMsgs(sid, [...cur, { role: "assistant", content: "Connection error. Please try again." }])
+      if (err.name !== "AbortError") setMsgs(sid, [...curForDisplay, { role: "assistant", content: "Connection error. Please try again." }])
     } finally { setBusy(false); ctrl.current = null }
   }, [input, image, busy, activeId, sessions, setMsgs])
 

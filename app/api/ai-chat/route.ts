@@ -10,7 +10,7 @@ const SYS = `You are EnglishPal AI, a smart assistant specializing in personaliz
 - Give concrete examples when explaining vocabulary or grammar
 - Answer any question, not just English-related ones
 - Format answers clearly and readably
-- If the user shares an image, analyze it and answer based on both the image and their question
+- When the user shares an image: carefully analyze ALL content in the image (text, questions, diagrams, etc.), then provide a detailed answer combining the image content with the user's question. If it's an exercise or test, solve it step by step.
 - If personal learning data is available, integrate it naturally into your response`
 
 async function buildPersonalContext(userId: string): Promise<string> {
@@ -77,10 +77,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "no_api_key", message: "No API key configured. Go to Settings to add Groq, OpenAI or Gemini key." }, { status: 400 })
     }
 
-    // If image present, prefer OpenAI (vision) or Gemini, skip Groq
+    // If image present, skip Groq entirely (no vision support), use OpenAI or Gemini
     const ordered = hasImage
-      ? providers.filter(p => p.type !== "groq").concat(providers.filter(p => p.type === "groq"))
+      ? providers.filter(p => p.type !== "groq")
       : providers
+
+    if (ordered.length === 0 && hasImage) {
+      return NextResponse.json({ error: "Image analysis requires OpenAI or Gemini API key. Please add one in Settings." }, { status: 400 })
+    }
 
     for (const p of ordered) {
       const chatMsgs = buildMessages(messages, systemPrompt)
