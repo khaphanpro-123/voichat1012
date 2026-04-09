@@ -161,6 +161,7 @@ setMsgs(sid, curForDisplay); setInput(""); setImage(null); setBusy(true)
   }, [input, image, busy, activeId, sessions, setMsgs])
 
   const conn = ks ? [ks.groq && "Groq", ks.openai && "OpenAI", ks.gemini && "Gemini"].filter(Boolean) : []
+  const visionSupported = ks ? (ks.openai || ks.gemini) : true // true when unknown (not loaded yet)
 
   if (!ready) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -285,6 +286,19 @@ setMsgs(sid, curForDisplay); setInput(""); setImage(null); setBusy(true)
 
           {/* Input area */}
           <div className={`px-4 py-3 border-t ${d.header} flex-shrink-0`}>
+            {/* Vision not supported warning */}
+            {image && !visionSupported && (
+              <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs">
+                <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <span>
+                  Image analysis requires <strong>OpenAI</strong> or <strong>Gemini</strong> API key.
+                  Groq does not support vision. <a href="/settings" className="underline hover:text-amber-300">Add a key in Settings</a>.
+                </span>
+              </div>
+            )}
+
             {/* Image preview */}
             {image && (
               <div className="mb-2 relative inline-block">
@@ -318,7 +332,7 @@ setMsgs(sid, curForDisplay); setInput(""); setImage(null); setBusy(true)
                     className="flex-shrink-0 p-1.5 rounded-lg bg-red-500 hover:bg-red-400 text-white transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
-                : <button onClick={send} disabled={!input.trim() && !image}
+                : <button onClick={send} disabled={(!input.trim() && !image) || (!!image && !visionSupported)}
                     className="flex-shrink-0 p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition-colors">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
                   </button>

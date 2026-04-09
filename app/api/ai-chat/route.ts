@@ -83,7 +83,10 @@ export async function POST(request: NextRequest) {
       : providers
 
     if (ordered.length === 0 && hasImage) {
-      return NextResponse.json({ error: "Image analysis requires OpenAI or Gemini API key. Please add one in Settings." }, { status: 400 })
+      return NextResponse.json({ 
+        error: "vision_not_supported",
+        message: "Image analysis requires OpenAI or Gemini API key. Groq does not support vision. Please add an OpenAI or Gemini key in Settings." 
+      }, { status: 400 })
     }
 
     for (const p of ordered) {
