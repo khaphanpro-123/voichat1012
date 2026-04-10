@@ -63,11 +63,13 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json()
     if (!messages?.length) return NextResponse.json({ error: "Missing messages" }, { status: 400 })
 
-    const [keys, personalContext] = await Promise.all([getUserApiKeys(userId), buildPersonalContext(userId)])
-    const systemPrompt = SYS + personalContext
-    // Only check the LAST user message for image (history messages never have images stored)
+    // Debug: log image presence
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user")
     const hasImage = !!(lastUserMsg?.image)
+    console.log(`[ai-chat] messages=${messages.length}, hasImage=${hasImage}, imageLen=${lastUserMsg?.image?.length || 0}`)
+
+    const [keys, personalContext] = await Promise.all([getUserApiKeys(userId), buildPersonalContext(userId)])
+    const systemPrompt = SYS + personalContext
 
     const providers = [
       { type: "groq", key: keys.groqKey },
