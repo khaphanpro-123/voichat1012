@@ -1,4 +1,6 @@
-"use client"
+const fs = require('fs')
+
+const content = `"use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { useVideoPlayer } from "@/contexts/VideoPlayerContext"
@@ -61,8 +63,8 @@ export default function MiniVideoPlayer() {
     <div
       className="fixed z-50"
       style={{
-        bottom: `${16 + pos.y}px`,
-        right: `${16 + pos.x}px`,
+        bottom: \`\${16 + pos.y}px\`,
+        right: \`\${16 + pos.x}px\`,
         // Responsive: 240px on mobile, 300px on tablet+, 320px on desktop
         width: minimized ? "160px" : "min(280px, calc(100vw - 32px))",
         maxWidth: minimized ? "160px" : "320px",
@@ -113,7 +115,7 @@ export default function MiniVideoPlayer() {
             {playing ? (
               <iframe
                 key={video.videoId}
-                src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0&modestbranding=1`}
+                src={\`https://www.youtube.com/embed/\${video.videoId}?autoplay=1&rel=0&modestbranding=1\`}
                 className="absolute inset-0 w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -139,3 +141,7 @@ export default function MiniVideoPlayer() {
     </div>
   )
 }
+`
+
+fs.writeFileSync('components/MiniVideoPlayer.tsx', content, 'utf8')
+console.log('Written:', fs.statSync('components/MiniVideoPlayer.tsx').size, 'bytes')
