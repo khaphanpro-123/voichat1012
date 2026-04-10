@@ -287,7 +287,13 @@ export default function DashboardHome() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto relative">
+      {/* Decorative background blobs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-32 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-indigo-400/8 rounded-full blur-3xl" />
+      </div>
       {/* Onboarding Tutorial */}
       <OnboardingTutorial
         isOpen={showTutorial}
@@ -455,11 +461,11 @@ export default function DashboardHome() {
         transition={{ delay: 0.15 }}
         className="grid grid-cols-2 gap-4 mb-8"
       >
-        <div className="bg-white rounded-2xl p-4 shadow-md text-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-md text-center border border-teal-100/50">
           <p className="text-3xl font-bold text-purple-600">{activities.vocabularyLearned}</p>
           <p className="text-sm text-gray-600">Vocabulary đã học</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-md text-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-md text-center border border-emerald-100/50">
           <p className="text-3xl font-bold text-green-600">{activities.documentsUploaded}</p>
           <p className="text-sm text-gray-600">Documents</p>
         </div>
@@ -481,7 +487,7 @@ export default function DashboardHome() {
               transition={{ delay: 0.3 + index * 0.1 }}
             >
               <Link href={mode.href}>
-                <div className="group bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-teal-300">
+                <div className="group bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-white hover:border-teal-200 hover:-translate-y-1">
                   <div className="flex items-start gap-4 mb-4">
                     <div
                       className={`w-14 h-14 bg-gradient-to-br ${mode.color} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
@@ -517,7 +523,7 @@ export default function DashboardHome() {
         transition={{ delay: 0.7 }}
         className="mt-8"
       >
-        <div className="bg-white rounded-2xl p-6 shadow-md border-2 border-dashed border-gray-200 text-center">
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-md border-2 border-dashed border-teal-200 text-center hover:border-teal-400 transition-colors">
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Upload documents để học words vựng</h3>
           <p className="text-gray-500 mb-4">Hỗ trợ PDF, Word, hình ảnh. Trích xuất words vựng tự động với OCR.</p>

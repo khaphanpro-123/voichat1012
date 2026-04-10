@@ -136,7 +136,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-teal-50/60 via-white to-emerald-50/40">
       {/* Logout Confirmation Modal */}
       <AnimatePresence>
         {showLogoutModal && (
@@ -192,7 +192,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white/95 backdrop-blur-sm border-r border-gray-200/80 transform transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
