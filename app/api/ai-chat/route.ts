@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    let lastError = ""
     for (const p of ordered) {
       const chatMsgs = buildMessages(messages, systemPrompt)
       let result: { ok: boolean; response?: Response; error?: string }
@@ -100,9 +101,9 @@ export async function POST(request: NextRequest) {
       else if (p.type === "openai") result = await tryOpenAI(p.key!, chatMsgs)
       else result = await tryGemini(p.key!, messages, systemPrompt)
       if (result.ok) return result.response!
-      console.error(`[ai-chat] ${p.type} failed:`, result.error)
-    }
-    return NextResponse.json({ error: "All AI providers failed. Check your API keys in Settings." }, { status: 500 })
+      lastError = result.error || ""
+      console.error(`[ai-chat] ${p.type} failed:`, result.error)    }
+    return NextResponse.json({ error: `All AI providers failed. Last error: ${lastError}. Check your API keys in Settings.` }, { status: 500 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -139,9 +140,11 @@ async function tryOpenAI(apiKey: string, messages: any[]) {
     })
     if (!res.ok || !res.body) {
       const t = await res.text().catch(() => "")
-      let msg = `OpenAI ${res.status}`
-      if (res.status === 401) msg = "OpenAI key invalid"
+      console.error("[ai-chat] OpenAI error:", res.status, t.slice(0, 300))
+      let msg = `OpenAI error ${res.status}: ${t.slice(0, 200)}`
+      if (res.status === 401) msg = "OpenAI key invalid or expired"
       else if (res.status === 429) msg = "OpenAI quota exceeded"
+      else if (res.status === 400) msg = `OpenAI bad request: ${t.slice(0, 200)}`
       return { ok: false, error: msg }
     }
     return { ok: true, response: new Response(res.body, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } }) }

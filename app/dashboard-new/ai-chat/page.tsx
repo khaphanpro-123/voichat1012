@@ -19,6 +19,28 @@ const QUICK = [
   "Review vocabulary I learned",
 ]
 
+
+// Compress image to max 800px and 0.7 quality to stay under Vercel 4.5MB limit
+async function compressImage(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 800
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX }
+        else { width = Math.round(width * MAX / height); height = MAX }
+      }
+      const canvas = document.createElement("canvas")
+      canvas.width = width; canvas.height = height
+      const ctx = canvas.getContext("2d")!
+      ctx.drawImage(img, 0, 0, width, height)
+      resolve(canvas.toDataURL("image/jpeg", 0.7))
+    }
+    img.src = dataUrl
+  })
+}
+
 export default function AiChatPage() {
   const { data: session } = useSession()
   const [sessions, setSessions] = useState<CS[]>([])
@@ -130,8 +152,9 @@ export default function AiChatPage() {
     const text = input.trim()
     if ((!text && !image) || busy) return
 
-    // Capture image before clearing state
-    const capturedImage = image
+    // Capture and compress image before clearing state
+    const rawImage = image
+    const capturedImage = rawImage ? await compressImage(rawImage) : null
 
     let sid = activeId
     if (!sid) {
