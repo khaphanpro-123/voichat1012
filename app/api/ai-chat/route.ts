@@ -65,7 +65,9 @@ export async function POST(request: NextRequest) {
 
     const [keys, personalContext] = await Promise.all([getUserApiKeys(userId), buildPersonalContext(userId)])
     const systemPrompt = SYS + personalContext
-    const hasImage = messages.some((m: any) => m.image)
+    // Only check the LAST user message for image (history messages never have images stored)
+    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user")
+    const hasImage = !!(lastUserMsg?.image)
 
     const providers = [
       { type: "groq", key: keys.groqKey },

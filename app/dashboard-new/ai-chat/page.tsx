@@ -137,7 +137,8 @@ export default function AiChatPage() {
       setSessions(prev => { const l = [s, ...prev]; localStorage.setItem(SK, JSON.stringify(l)); return l })
       sid = s.id; setActiveId(sid); localStorage.setItem(AK, sid)
     }
-    const base = sessions.find(s => s.id === sid)?.messages ?? []
+    // Strip any residual image fields from history (images are not stored in sessions)
+    const base = (sessions.find(s => s.id === sid)?.messages ?? []).map(m => ({ role: m.role, content: m.content }))
     const userMsg: Msg = { role: "user", content: text || (image ? "Please analyze this image in detail." : ""), ...(image ? { image } : {}) }
     const cur: Msg[] = [...base, userMsg]
     const curForDisplay = cur.map(m => m.image ? { ...m, image: undefined } : m)
