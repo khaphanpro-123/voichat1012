@@ -1,4 +1,90 @@
-"use client"
+const fs = require('fs')
+
+// ── API route for pronunciation ──────────────────────────────────────────
+const apiRoute = `import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/authOptions"
+import { getUserApiKeys } from "@/lib/getUserApiKey"
+
+const SYS = \`You are an English pronunciation coach and conversation partner.
+
+When the user speaks, you MUST do TWO things in this exact format:
+
+**PRONUNCIATION FEEDBACK:**
+[Analyze their pronunciation. If the text looks correct, say "Good pronunciation! Keep it up." 
+If there are likely issues based on common Vietnamese learner mistakes, point them out specifically.
+Give IPA phonetic guide for key words. Example: "how" /haʊ/, "are" /ɑːr/
+Keep this section brief - 2-3 sentences max.]
+
+**RESPONSE:**
+[Then naturally continue the conversation, answering their question or responding to what they said]
+
+Always be encouraging and supportive. Focus on the most important pronunciation points.
+Respond in Vietnamese for the feedback section, English for the conversation response.\`
+
+async function callAI(apiKey: string, type: string, messages: any[]) {
+  if (type === "groq") {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${apiKey}\` },
+      body: JSON.stringify({ model: "llama-3.1-8b-instant", messages, stream: true, max_tokens: 1024, temperature: 0.7 }),
+    })
+    if (!res.ok || !res.body) { const t = await res.text().catch(() => ""); throw new Error(\`Groq \${res.status}: \${t.slice(0,100)}\`) }
+    return new Response(res.body, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } })
+  }
+  if (type === "openai") {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${apiKey}\` },
+      body: JSON.stringify({ model: "gpt-4o-mini", messages, stream: true, max_tokens: 1024, temperature: 0.7 }),
+    })
+    if (!res.ok || !res.body) { const t = await res.text().catch(() => ""); throw new Error(\`OpenAI \${res.status}: \${t.slice(0,100)}\`) }
+    return new Response(res.body, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } })
+  }
+  if (type === "gemini") {
+    const contents = messages.filter(m => m.role !== "system").map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }))
+    const res = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${apiKey}\`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system_instruction: { parts: [{ text: SYS }] }, contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } })
+    })
+    if (!res.ok) { const t = await res.text().catch(() => ""); throw new Error(\`Gemini \${res.status}: \${t.slice(0,100)}\`) }
+    const data = await res.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({ start(c) { c.enqueue(encoder.encode(\`data: \${JSON.stringify({ choices: [{ delta: { content: text } }] })}\\n\\n\`)); c.enqueue(encoder.encode("data: [DONE]\\n\\n")); c.close() } })
+    return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } })
+  }
+  throw new Error("Unknown provider")
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = (session.user as any).id
+    const { messages } = await request.json()
+    if (!messages?.length) return NextResponse.json({ error: "Missing messages" }, { status: 400 })
+
+    const keys = await getUserApiKeys(userId)
+    const providers = [
+      { type: "groq", key: keys.groqKey },
+      { type: "openai", key: keys.openaiKey },
+      { type: "gemini", key: (keys as any).geminiKey },
+    ].filter(p => p.key?.trim())
+
+    if (!providers.length) return NextResponse.json({ error: "No API key. Add one in Settings." }, { status: 400 })
+
+    const chatMsgs = [{ role: "system", content: SYS }, ...messages]
+    for (const p of providers) {
+      try { return await callAI(p.key!, p.type, chatMsgs) } catch (e: any) { console.error(p.type, e.message) }
+    }
+    return NextResponse.json({ error: "All providers failed." }, { status: 500 })
+  } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }) }
+}
+`
+
+// ── Frontend page ────────────────────────────────────────────────────────
+const page = `"use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
@@ -31,7 +117,7 @@ export default function PronunciationPage() {
     if (!autoSpeak) return
     window.speechSynthesis?.cancel()
     // Extract only the RESPONSE part for TTS
-    const match = text.match(/\*\*RESPONSE:\*\*([\s\S]*)/)
+    const match = text.match(/\\*\\*RESPONSE:\\*\\*([\\s\\S]*)/)
     const toSpeak = match ? match[1].trim() : text
     const utt = new SpeechSynthesisUtterance(toSpeak)
     utt.lang = "en-US"; utt.rate = 0.9
@@ -62,7 +148,7 @@ export default function PronunciationPage() {
       setMessages(prev => [...prev, { role: "assistant", content: "" }])
       while (true) {
         const { done, value } = await reader.read(); if (done) break
-        for (const line of dec.decode(value, { stream: true }).split("\n")) {
+        for (const line of dec.decode(value, { stream: true }).split("\\n")) {
           if (!line.startsWith("data: ")) continue
           const d = line.slice(6).trim(); if (d === "[DONE]") break
           try { out += JSON.parse(d).choices?.[0]?.delta?.content ?? ""; setMessages(prev => [...prev.slice(0, -1), { role: "assistant", content: out }]) } catch {}
@@ -147,14 +233,14 @@ export default function PronunciationPage() {
           )}
 
           {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={\`flex \${m.role === "user" ? "justify-end" : "justify-start"}\`}>
               {m.role === "user" ? (
                 <div className="max-w-[80%]">
                   <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm shadow-md">
                     {m.content}
                   </div>
                   {m.confidence !== undefined && (
-                    <div className={`text-xs mt-1 text-right ${confidenceColor(m.confidence)}`}>
+                    <div className={\`text-xs mt-1 text-right \${confidenceColor(m.confidence)}\`}>
                       STT confidence: {Math.round(m.confidence * 100)}% — {confidenceLabel(m.confidence)}
                     </div>
                   )}
@@ -173,7 +259,7 @@ export default function PronunciationPage() {
                             <span className="text-xs font-semibold text-amber-700">Pronunciation Feedback</span>
                           </div>
                           <p className="text-xs text-amber-800 whitespace-pre-wrap leading-relaxed">
-                            {m.content.match(/\*\*PRONUNCIATION FEEDBACK:\*\*([\s\S]*?)(?=\*\*RESPONSE:|$)/)?.[1]?.trim()}
+                            {m.content.match(/\\*\\*PRONUNCIATION FEEDBACK:\\*\\*([\\s\\S]*?)(?=\\*\\*RESPONSE:|$)/)?.[1]?.trim()}
                           </p>
                         </div>
                       )}
@@ -187,7 +273,7 @@ export default function PronunciationPage() {
                             <span className="text-xs font-semibold text-violet-600">Response</span>
                           </div>
                           <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                            {m.content.match(/\*\*RESPONSE:\*\*([\s\S]*)/)?.[1]?.trim()}
+                            {m.content.match(/\\*\\*RESPONSE:\\*\\*([\\s\\S]*)/)?.[1]?.trim()}
                           </p>
                         </div>
                       )}
@@ -238,13 +324,13 @@ export default function PronunciationPage() {
                   <button
                     onClick={listening ? stopListening : startListening}
                     disabled={processing}
-                    className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all ${
+                    className={\`relative w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all \${
                       listening
                         ? "bg-red-500 scale-110"
                         : processing
                         ? "bg-gray-300 cursor-not-allowed"
                         : "bg-gradient-to-br from-violet-500 to-indigo-600 hover:scale-105 active:scale-95"
-                    }`}
+                    }\`}
                   >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {listening
@@ -270,3 +356,11 @@ export default function PronunciationPage() {
     </DashboardLayout>
   )
 }
+`
+
+fs.mkdirSync('app/api/pronunciation', { recursive: true })
+fs.mkdirSync('app/dashboard-new/pronunciation', { recursive: true })
+fs.writeFileSync('app/api/pronunciation/route.ts', apiRoute, 'utf8')
+fs.writeFileSync('app/dashboard-new/pronunciation/page.tsx', page, 'utf8')
+console.log('API:', fs.statSync('app/api/pronunciation/route.ts').size)
+console.log('Page:', fs.statSync('app/dashboard-new/pronunciation/page.tsx').size)
