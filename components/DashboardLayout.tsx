@@ -22,6 +22,7 @@ import {
   Bot,
   Headphones,
   Mic2,
+  PenLine,
 } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
 
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/dashboard-new/chat", label: "Voice Chat", icon: MessageCircle },
   { href: "/dashboard-new/ai-chat", label: "AI Assistant", icon: Bot },
   { href: "/dashboard-new/pronunciation", label: "Pronunciation", icon: Mic2 },
+  { href: "/dashboard-new/writing-practice", label: "Writing Practice", icon: PenLine },
   { href: "/dashboard-new/listening", label: "Listening", icon: Headphones },
   { href: "/dashboard-new/image-learning", label: "Image Learning", icon: Camera },
   { href: "/dashboard-new/documents-simple", label: "Upload Document", icon: FileText },
