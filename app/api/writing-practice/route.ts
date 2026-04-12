@@ -137,14 +137,12 @@ export async function POST(request: NextRequest) {
     if (!providers.length) return NextResponse.json({ error: "No API key configured. Add one in Settings." }, { status: 400 })
 
     const criteria = examType === "IELTS" ? IELTS_CRITERIA : VSTEP_CRITERIA
-    const scoreScale = examType === "IELTS" ? "Band 0-9" : "0-10 points"
 
     const isIELTS = examType === "IELTS"
     const criterion1 = isIELTS ? (taskType === "IELTS Task 1" ? "Task Achievement" : "Task Response") : "Task Fulfillment"
     const criterion2 = isIELTS ? "Coherence & Cohesion" : "Organization"
     const criterion3 = isIELTS ? "Lexical Resource" : "Vocabulary"
     const criterion4 = isIELTS ? "Grammatical Range & Accuracy" : "Grammar"
-    const scoreUnit = isIELTS ? "Band" : "/10"
 
     const systemPrompt = `You are an expert IELTS/VSTEP examiner. Grade this essay strictly according to official band descriptors.
 
