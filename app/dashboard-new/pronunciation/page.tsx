@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import DashboardLayout from "@/components/DashboardLayout"
 
-interface Msg { role: "user" | "assistant"; content: string; confidence?: number }
+interface Msg { role: "user" | "assistant"; content: string }
 
 export default function PronunciationPage() {
   const { data: session } = useSession()
@@ -13,8 +13,7 @@ export default function PronunciationPage() {
   const [processing, setProcessing] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [transcript, setTranscript] = useState("")
-  const [confidence, setConfidence] = useState<number | null>(null)
-  const [autoSpeak, setAutoSpeak] = useState(true)
+    const [autoSpeak, setAutoSpeak] = useState(true)
   const [supported, setSupported] = useState(true)
   const recRef = useRef<any>(null)
   const endRef = useRef<HTMLDivElement>(null)
@@ -43,7 +42,7 @@ export default function PronunciationPage() {
     window.speechSynthesis.speak(utt)
   }, [autoSpeak])
 
-  const sendToAI = useCallback(async (userText: string, conf: number | null) => {
+  const sendToAI = useCallback(async (userText: string) => {
     setProcessing(true)
     const history = historyRef.current
     const msgs = [...history.map(m => ({ role: m.role, content: m.content })), { role: "user", content: userText }]
@@ -79,8 +78,7 @@ export default function PronunciationPage() {
     window.speechSynthesis?.cancel()
     const rec = new SR()
     rec.continuous = false; rec.interimResults = true; rec.lang = "en-US"
-    let finalText = ""; let finalConf: number | null = null
-    rec.onstart = () => { setListening(true); setTranscript(""); setConfidence(null) }
+    let finalText = "";     rec.onstart = () => { setListening(true); setTranscript(""); setConfidence(null) }
     rec.onresult = (e: any) => {
       let interim = ""
       for (let i = 0; i < e.results.length; i++) {
@@ -88,14 +86,13 @@ export default function PronunciationPage() {
         else interim += e.results[i][0].transcript
       }
       setTranscript(finalText || interim)
-      if (finalConf !== null) setConfidence(finalConf)
-    }
+          }
     rec.onend = () => {
       setListening(false); recRef.current = null
       if (finalText.trim()) {
-        setMessages(prev => [...prev, { role: "user", content: finalText.trim(), confidence: finalConf ?? undefined }])
+        setMessages(prev => [...prev, { role: "user", content: finalText.trim(),  }])
         setTranscript("")
-        sendToAI(finalText.trim(), finalConf)
+        sendToAI(finalText.trim())
       } else { setTranscript("") }
     }
     rec.onerror = () => { setListening(false); recRef.current = null; setTranscript("") }
@@ -153,8 +150,7 @@ export default function PronunciationPage() {
                   <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm shadow-md">
                     {m.content}
                   </div>
-                  {m.confidence !== undefined && (
-                    <div className={`text-xs mt-1 text-right ${confidenceColor(m.confidence)}`}>
+                  `}>
                       STT confidence: {Math.round(m.confidence * 100)}% — {confidenceLabel(m.confidence)}
                     </div>
                   )}
@@ -162,40 +158,7 @@ export default function PronunciationPage() {
               ) : (
                 <div className="max-w-[85%] bg-white rounded-2xl rounded-bl-sm px-4 py-3 text-sm shadow-md border border-violet-100">
                   {m.content ? (
-                    <div className="space-y-3">
-                      {/* Pronunciation feedback section */}
-                      {m.content.includes("**PRONUNCIATION FEEDBACK:**") && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                            </svg>
-                            <span className="text-xs font-semibold text-amber-700">Pronunciation Feedback</span>
-                          </div>
-                          <p className="text-xs text-amber-800 whitespace-pre-wrap leading-relaxed">
-                            {m.content.match(/\*\*PRONUNCIATION FEEDBACK:\*\*([\s\S]*?)(?=\*\*RESPONSE:|$)/)?.[1]?.trim()}
-                          </p>
-                        </div>
-                      )}
-                      {/* Conversation response */}
-                      {m.content.includes("**RESPONSE:**") && (
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                            </svg>
-                            <span className="text-xs font-semibold text-violet-600">Response</span>
-                          </div>
-                          <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                            {m.content.match(/\*\*RESPONSE:\*\*([\s\S]*)/)?.[1]?.trim()}
-                          </p>
-                        </div>
-                      )}
-                      {/* Fallback if no format */}
-                      {!m.content.includes("**PRONUNCIATION FEEDBACK:**") && !m.content.includes("**RESPONSE:**") && (
-                        <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">{m.content}</p>
-                      )}
-                    </div>
+                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-sm">{m.content}</p>
                   ) : (
                     processing && i === messages.length - 1 ? (
                       <span className="flex gap-1 items-center h-4">
