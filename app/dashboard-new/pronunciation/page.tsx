@@ -150,10 +150,6 @@ export default function PronunciationPage() {
                   <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm shadow-md">
                     {m.content}
                   </div>
-                  `}>
-                      STT confidence: {Math.round(m.confidence * 100)}% — {confidenceLabel(m.confidence)}
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="max-w-[85%] bg-white rounded-2xl rounded-bl-sm px-4 py-3 text-sm shadow-md border border-violet-100">
