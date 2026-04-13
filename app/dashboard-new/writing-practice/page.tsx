@@ -185,8 +185,8 @@ export default function WritingPracticePage() {
                 </div>
 
                 {topics.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs text-gray-500 font-medium">Suggested prompts:</p>
+                  <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
+                    <p className="text-xs text-gray-500 font-medium">{topics.length} suggested prompts:</p>
                     {topics.map((t, i) => (
                       <button key={i} onClick={() => setSelectedTopic(t)}
                         className={`w-full text-left text-xs px-3 py-2.5 rounded-xl border transition-all ${selectedTopic === t ? "border-indigo-400 bg-indigo-50 text-indigo-800" : "border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50 text-gray-700"}`}>

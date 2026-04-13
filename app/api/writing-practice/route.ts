@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
 
     const messages = [
       { role: "system", content: "You are an IELTS/VSTEP writing examiner. Generate realistic exam prompts." },
-      { role: "user", content: `Generate 5 realistic ${taskType} writing prompts related to the topic: "${keyword}". 
+      { role: "user", content: `Generate 15 realistic ${taskType} writing prompts related to the topic: "${keyword}". 
 Return ONLY a JSON array of strings, no explanation. Example: ["prompt 1", "prompt 2", ...]` }
     ]
 
@@ -228,20 +228,20 @@ Return ONLY a JSON array of strings, no explanation. Example: ["prompt 1", "prom
         if (p.type === "groq") {
           const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${p.key}` },
-            body: JSON.stringify({ model: "llama-3.1-8b-instant", messages, max_tokens: 512, temperature: 0.7 }),
+            body: JSON.stringify({ model: "llama-3.1-8b-instant", messages, max_tokens: 1024, temperature: 0.7 }),
           })
           const data = await res.json(); result = data.choices?.[0]?.message?.content || ""
         } else if (p.type === "openai") {
           const res = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${p.key}` },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages, max_tokens: 512, temperature: 0.7 }),
+            body: JSON.stringify({ model: "gpt-4o-mini", messages, max_tokens: 1024, temperature: 0.7 }),
           })
           const data = await res.json(); result = data.choices?.[0]?.message?.content || ""
         } else {
           const contents = [{ role: "user", parts: [{ text: messages[1].content }] }]
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${p.key}`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 512 } })
+            body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 1024 } })
           })
           const data = await res.json(); result = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
         }
