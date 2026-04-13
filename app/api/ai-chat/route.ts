@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/authOptions"
 import { getUserApiKeys } from "@/lib/getUserApiKey"
 import getClientPromise from "@/lib/mongodb"
+import apiCache from "@/lib/api-cache"
 
 const SYS = `You are EnglishPal AI, a smart assistant specializing in personalized English learning.
 - Reply in Vietnamese when the user writes in Vietnamese
@@ -14,6 +15,11 @@ const SYS = `You are EnglishPal AI, a smart assistant specializing in personaliz
 - If personal learning data is available, integrate it naturally into your response`
 
 async function buildPersonalContext(userId: string): Promise<string> {
+  // Cache personal context for 5 minutes - vocabulary doesn't change every second
+  const cacheKey = `personal_ctx:${userId}`
+  const cached = apiCache.get(cacheKey) as string | null
+  if (cached !== null) return cached
+
   try {
     const client = await getClientPromise()
     const db = client.db(process.env.MONGO_DB || "viettalk")
@@ -23,7 +29,10 @@ async function buildPersonalContext(userId: string): Promise<string> {
       db.collection("grammar_errors").find({ userId }).sort({ createdAt: -1 }).limit(15)
         .project({ error: 1, correction: 1, explanation: 1 }).toArray(),
     ])
-    if (vocabulary.length === 0 && grammarErrors.length === 0) return ""
+    if (vocabulary.length === 0 && grammarErrors.length === 0) {
+      apiCache.set(cacheKey, "", 300_000)
+      return ""
+    }
     const parts: string[] = []
     if (vocabulary.length > 0) {
       parts.push(`LEARNED VOCABULARY (${vocabulary.length} words):\n` +
@@ -33,7 +42,9 @@ async function buildPersonalContext(userId: string): Promise<string> {
       parts.push(`COMMON GRAMMAR ERRORS (${grammarErrors.length}):\n` +
         grammarErrors.map((e: any) => `  - Wrong: "${e.error}" → Correct: "${e.correction}"`).join("\n"))
     }
-    return `\n\n=== USER PERSONAL LEARNING DATA ===\n${parts.join("\n\n")}\n===================================`
+    const result = `\n\n=== USER PERSONAL LEARNING DATA ===\n${parts.join("\n\n")}\n===================================`
+    apiCache.set(cacheKey, result, 300_000) // 5 min cache
+    return result
   } catch { return "" }
 }
 
@@ -57,10 +68,14 @@ function buildMessages(messages: any[], systemPrompt: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Run session check and body parsing in parallel for faster response
+    const [session, body] = await Promise.all([
+      getServerSession(authOptions),
+      request.json(),
+    ])
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     const userId = (session.user as any).id
-    const { messages } = await request.json()
+    const { messages } = body
     if (!messages?.length) return NextResponse.json({ error: "Missing messages" }, { status: 400 })
 
     // Debug: log image presence
@@ -68,6 +83,7 @@ export async function POST(request: NextRequest) {
     const hasImage = !!(lastUserMsg?.image)
     console.log(`[ai-chat] messages=${messages.length}, hasImage=${hasImage}, imageLen=${lastUserMsg?.image?.length || 0}`)
 
+    // Run keys fetch + personal context in parallel (both need userId, independent)
     const [keys, personalContext] = await Promise.all([getUserApiKeys(userId), buildPersonalContext(userId)])
     const systemPrompt = SYS + personalContext
 

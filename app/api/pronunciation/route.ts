@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/authOptions"
 import { getUserApiKeys } from "@/lib/getUserApiKey"
+import apiCache from "@/lib/api-cache"
 
 const SYS = `You are an English pronunciation coach and friendly conversation partner for Vietnamese learners.
 
@@ -54,10 +55,14 @@ async function callAI(apiKey: string, type: string, messages: any[]) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Run session check and body parsing in parallel
+    const [session, body] = await Promise.all([
+      getServerSession(authOptions),
+      request.json(),
+    ])
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     const userId = (session.user as any).id
-    const { messages } = await request.json()
+    const { messages } = body
     if (!messages?.length) return NextResponse.json({ error: "Missing messages" }, { status: 400 })
 
     const keys = await getUserApiKeys(userId)

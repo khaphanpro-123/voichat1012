@@ -122,10 +122,14 @@ async function callAI(apiKey: string, type: string, messages: any[]) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Parallel: session + body + keys
+    const [session, body] = await Promise.all([
+      getServerSession(authOptions),
+      request.json(),
+    ])
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     const userId = (session.user as any).id
-    const { essay, prompt, taskType, examType } = await request.json()
+    const { essay, prompt, taskType, examType } = body
     if (!essay?.trim()) return NextResponse.json({ error: "Essay is required" }, { status: 400 })
 
     const keys = await getUserApiKeys(userId)
