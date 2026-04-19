@@ -49,6 +49,15 @@ export default function ListeningPage() {
   const [noApiKey, setNoApiKey] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Shadowing mode state
+  const [shadowMode, setShadowMode] = useState(false)
+  const [shadowRecording, setShadowRecording] = useState(false)
+  const [shadowAudioUrl, setShadowAudioUrl] = useState<string | null>(null)
+  const [shadowTime, setShadowTime] = useState(0)
+  const shadowMediaRef = useRef<MediaRecorder | null>(null)
+  const shadowChunksRef = useRef<Blob[]>([])
+  const shadowTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   // When navigating back to this page, restore video from context
   useEffect(() => {
     if (ctxVideo?.videoId && selectedVideo?.id !== ctxVideo.videoId) {
@@ -103,6 +112,40 @@ export default function ListeningPage() {
   }
 
   const gradientClass = selectedVideo ? (SOURCE_COLORS[selectedVideo.source] || "from-indigo-500 to-purple-600") : "from-slate-700 to-slate-900"
+
+  const startShadowRecording = async () => {
+    if (shadowAudioUrl) { URL.revokeObjectURL(shadowAudioUrl); setShadowAudioUrl(null) }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      shadowChunksRef.current = []
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg"
+      const rec = new MediaRecorder(stream, { mimeType })
+      rec.ondataavailable = e => { if (e.data.size > 0) shadowChunksRef.current.push(e.data) }
+      rec.onstop = () => {
+        const blob = new Blob(shadowChunksRef.current, { type: mimeType })
+        setShadowAudioUrl(URL.createObjectURL(blob))
+        stream.getTracks().forEach(t => t.stop())
+      }
+      rec.start(100)
+      shadowMediaRef.current = rec
+      setShadowRecording(true)
+      setShadowTime(0)
+      shadowTimerRef.current = setInterval(() => setShadowTime(t => t + 1), 1000)
+    } catch { alert("Microphone access denied. Please allow microphone access.") }
+  }
+
+  const stopShadowRecording = () => {
+    if (shadowMediaRef.current && shadowMediaRef.current.state !== "inactive") shadowMediaRef.current.stop()
+    if (shadowTimerRef.current) { clearInterval(shadowTimerRef.current); shadowTimerRef.current = null }
+    setShadowRecording(false)
+  }
+
+  const clearShadowRecording = () => {
+    if (shadowAudioUrl) { URL.revokeObjectURL(shadowAudioUrl); setShadowAudioUrl(null) }
+    setShadowTime(0)
+  }
+
+  const formatShadowTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`
 
   return (
     <DashboardLayout>
@@ -234,6 +277,78 @@ export default function ListeningPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Shadowing Mode Panel */}
+              {selectedVideo && (
+                <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl overflow-hidden">
+                  {/* Toggle header */}
+                  <button
+                    onClick={() => setShadowMode(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${shadowRecording ? "bg-red-400 animate-pulse" : "bg-emerald-400"}`} />
+                      <span className="text-white text-sm font-semibold">Shadowing Mode</span>
+                      <span className="text-xs text-slate-400">— speak along with the video</span>
+                    </div>
+                    <svg className={`w-4 h-4 text-slate-400 transition-transform ${shadowMode ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {shadowMode && (
+                    <div className="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
+                      <p className="text-xs text-slate-400">
+                        Play the video above, then press Record and speak along. Listen back to compare your pronunciation.
+                      </p>
+
+                      {/* Controls */}
+                      <div className="flex items-center gap-3">
+                        {!shadowRecording ? (
+                          <button
+                            onClick={startShadowRecording}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-400 text-white rounded-xl text-sm font-medium transition-colors"
+                          >
+                            <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                            Record
+                          </button>
+                        ) : (
+                          <button
+                            onClick={stopShadowRecording}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-xl text-sm font-medium transition-colors"
+                          >
+                            <span className="w-2.5 h-2.5 rounded bg-white" />
+                            Stop — {formatShadowTime(shadowTime)}
+                          </button>
+                        )}
+
+                        {shadowRecording && (
+                          <div className="flex items-center gap-1.5">
+                            {[0,1,2,3,4].map(i => (
+                              <div key={i} className="w-1 bg-red-400 rounded-full animate-bounce"
+                                style={{ height: `${8 + Math.sin(i * 1.2) * 6}px`, animationDelay: `${i * 80}ms` }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Playback */}
+                      {shadowAudioUrl && !shadowRecording && (
+                        <div className="bg-white/10 rounded-xl p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-300 font-medium">Your recording</span>
+                            <button onClick={clearShadowRecording} className="text-xs text-slate-500 hover:text-red-400 transition-colors">
+                              Delete
+                            </button>
+                          </div>
+                          <audio src={shadowAudioUrl} controls className="w-full h-8" />
+                          <p className="text-xs text-slate-500">Compare with the video — notice differences in rhythm, stress, and sounds.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
 
             {/* Playlist */}
