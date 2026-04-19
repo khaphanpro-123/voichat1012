@@ -1,4 +1,6 @@
-"use client"
+const fs = require('fs')
+
+const page = `"use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
@@ -11,8 +13,8 @@ interface Msg {
 }
 
 function extractMispronouncedWords(text: string): string[] {
-  const matches = text.match(/\/([a-zA-Z]+)\//g) || []
-  return [...new Set(matches.map(m => m.replace(/\//g, "")))]
+  const matches = text.match(/\\/([a-zA-Z]+)\\//g) || []
+  return [...new Set(matches.map(m => m.replace(/\\//g, "")))]
 }
 
 function MessageContent({ content, onSpeak }: { content: string; onSpeak: (word: string) => void }) {
@@ -114,7 +116,7 @@ export default function PronunciationPage() {
       setMessages(prev => [...prev, { role: "assistant", content: "" }])
       while (true) {
         const { done, value } = await reader.read(); if (done) break
-        for (const line of dec.decode(value, { stream: true }).split("\n")) {
+        for (const line of dec.decode(value, { stream: true }).split("\\n")) {
           if (!line.startsWith("data: ")) continue
           const d = line.slice(6).trim(); if (d === "[DONE]") break
           try { out += JSON.parse(d).choices?.[0]?.delta?.content ?? ""; setMessages(prev => [...prev.slice(0, -1), { role: "assistant", content: out }]) } catch {}
@@ -197,7 +199,7 @@ export default function PronunciationPage() {
     if (mediaRecRef.current && mediaRecRef.current.state !== "inactive") mediaRecRef.current.stop()
   }
 
-  const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`
+  const formatTime = (s: number) => \`\${Math.floor(s / 60).toString().padStart(2, "0")}:\${(s % 60).toString().padStart(2, "0")}\`
 
   return (
     <DashboardLayout>
@@ -238,7 +240,7 @@ export default function PronunciationPage() {
           )}
 
           {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={\`flex \${m.role === "user" ? "justify-end" : "justify-start"}\`}>
               {m.role === "user" ? (
                 <div className="max-w-[80%] space-y-2">
                   {/* Text bubble */}
@@ -319,11 +321,11 @@ export default function PronunciationPage() {
                   <button
                     onClick={listening ? stopListening : startListening}
                     disabled={processing}
-                    className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all ${
+                    className={\`relative w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all \${
                       listening ? "bg-red-500 scale-110"
                         : processing ? "bg-gray-300 cursor-not-allowed"
                         : "bg-gradient-to-br from-violet-500 to-indigo-600 hover:scale-105 active:scale-95"
-                    }`}
+                    }\`}
                   >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {listening
@@ -353,3 +355,7 @@ export default function PronunciationPage() {
     </DashboardLayout>
   )
 }
+`
+
+fs.writeFileSync('app/dashboard-new/pronunciation/page.tsx', page, 'utf8')
+console.log('Done:', fs.statSync('app/dashboard-new/pronunciation/page.tsx').size)
