@@ -78,6 +78,9 @@ export default function VocabularyPage() {
   const [selectedType, setSelectedType] = useState("all");
   const [selectedSource, setSelectedSource] = useState("all"); // New: source filter
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedWordId, setExpandedWordId] = useState<string | null>(null)
+  const [expandData, setExpandData] = useState<Record<string, any>>({})
+  const [expandLoading, setExpandLoading] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>("vocabulary");
 
   // New word form state
@@ -269,6 +272,24 @@ export default function VocabularyPage() {
       setDeletingId(null);
     }
   };
+
+  const expandWord = async (word: any) => {
+    const id = word._id
+    if (expandedWordId === id) { setExpandedWordId(null); return }
+    setExpandedWordId(id)
+    if (expandData[id]) return // already loaded
+    setExpandLoading(id)
+    try {
+      const res = await fetch("/api/vocabulary-expand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: word.word, meaning: getMeaning(word) }),
+      })
+      const data = await res.json()
+      if (data.success) setExpandData(prev => ({ ...prev, [id]: data.data }))
+    } catch {}
+    finally { setExpandLoading(null) }
+  }
 
   const handleAddWord = async () => {
     if (!newWord.word || !newWord.meaning) {
@@ -891,6 +912,129 @@ export default function VocabularyPage() {
                         <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                       )}
                     </button>
+                  </div>
+
+                  {/* Knowledge Graph Expand Button */}
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <button
+                      onClick={() => expandWord(word)}
+                      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                        expandedWordId === word._id
+                          ? "bg-teal-100 text-teal-700"
+                          : "bg-gray-100 text-gray-600 hover:bg-teal-50 hover:text-teal-700"
+                      }`}
+                    >
+                      {expandLoading === word._id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Network className="w-3.5 h-3.5" />
+                      )}
+                      {expandedWordId === word._id ? "Thu gọn" : "Mở rộng tri thức"}
+                    </button>
+
+                    {/* Knowledge Graph Panel */}
+                    <AnimatePresence>
+                      {expandedWordId === word._id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-3 overflow-hidden"
+                        >
+                          {expandLoading === word._id ? (
+                            <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+                              <RefreshCw className="w-4 h-4 animate-spin text-teal-500" />
+                              Đang xây dựng đồ thị tri thức...
+                            </div>
+                          ) : expandData[word._id] ? (
+                            <div className="space-y-3 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-100">
+                              <h4 className="text-sm font-bold text-teal-800 flex items-center gap-1.5">
+                                <Network className="w-4 h-4" />
+                                Đồ thị tri thức: <span className="text-teal-600">"{word.word}"</span>
+                              </h4>
+
+                              {/* Collocations */}
+                              {expandData[word._id].collocations?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-600 mb-1.5">Collocations</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {expandData[word._id].collocations.map((c: string, i: number) => (
+                                      <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 font-medium">{c}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Phrases */}
+                              {expandData[word._id].phrases?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-600 mb-1.5">Phrases & Idioms</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {expandData[word._id].phrases.map((p: string, i: number) => (
+                                      <span key={i} className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 font-medium">{p}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Noun Phrases */}
+                              {expandData[word._id].nounPhrases?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-600 mb-1.5">Noun Phrases</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {expandData[word._id].nounPhrases.map((np: string, i: number) => (
+                                      <span key={i} className="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200 font-medium">{np}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Example Sentences */}
+                              {expandData[word._id].sentences?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-600 mb-1.5">Example Sentences</p>
+                                  <div className="space-y-1.5">
+                                    {expandData[word._id].sentences.map((s: string, i: number) => (
+                                      <div key={i} className="flex items-start gap-2">
+                                        <span className="text-teal-500 font-bold text-xs mt-0.5 flex-shrink-0">{i + 1}.</span>
+                                        <p className="text-xs text-gray-700 italic leading-relaxed">{s}</p>
+                                        <button onClick={() => speakSentence(s)} className="flex-shrink-0 p-0.5 hover:bg-teal-100 rounded transition-colors">
+                                          <Volume2 className="w-3 h-3 text-teal-500" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Synonyms & Antonyms */}
+                              <div className="flex flex-wrap gap-4">
+                                {expandData[word._id].synonyms?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-gray-600 mb-1">Synonyms</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {expandData[word._id].synonyms.map((s: string, i: number) => (
+                                        <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{s}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {expandData[word._id].antonyms?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-gray-600 mb-1">Antonyms</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {expandData[word._id].antonyms.map((a: string, i: number) => (
+                                        <span key={i} className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{a}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </motion.div>
               ))
