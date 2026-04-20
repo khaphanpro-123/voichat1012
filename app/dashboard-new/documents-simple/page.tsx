@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import DashboardLayout from "@/components/DashboardLayout"
+import { processFile, validateFile, detectFileType } from "@/lib/file-processing-pipeline"
 
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
   if (!card || (!card.word && !card.phrase)) return null
@@ -129,11 +130,14 @@ export default function DocumentsPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
-      const maxSize = 50 * 1024 * 1024
-      if (selectedFile.size > maxSize) {
-        setError(`File quá lớn (${(selectedFile.size / 1024 / 1024).toFixed(2)}MB). Vui lòng chọn file nhỏ hơn 50MB`)
+      
+      // Validate file
+      const validation = validateFile(selectedFile)
+      if (!validation.valid) {
+        setError(validation.error || "Invalid file")
         return
       }
+      
       setFile(selectedFile)
       setError("")
     }
@@ -142,10 +146,14 @@ export default function DocumentsPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const imageFile = e.target.files[0]
-      if (!imageFile.type.startsWith("image/")) {
-        setError("Vui lòng chọn file ảnh (JPG, PNG, etc.)")
+      
+      // Validate file
+      const validation = validateFile(imageFile)
+      if (!validation.valid) {
+        setError(validation.error || "Invalid file")
         return
       }
+      
       setFile(imageFile)
       setError("")
     }
@@ -257,10 +265,51 @@ export default function DocumentsPage() {
     setUploading(true)
     setError("")
     setResult(null)
+    
+    try {
+      const fileType = detectFileType(file)
+      console.log("[Upload] File type detected:", fileType)
+      
+      // For images, run OCR first
+      if (fileType === "image") {
+        console.log("[Upload] Running OCR on image...")
+        try {
+          const extractedText = await processFile(file)
+          if (!extractedText || extractedText.trim().length === 0) {
+            setError("Không thể trích xuất text từ ảnh. Vui lòng thử ảnh khác.")
+            setUploading(false)
+            return
+          }
+          console.log("[Upload] OCR successful, text length:", extractedText.length)
+          
+          // Create a text blob from OCR output
+          const textBlob = new Blob([extractedText], { type: "text/plain" })
+          const textFile = new File([textBlob], "ocr-output.txt", { type: "text/plain" })
+          
+          // Upload the OCR text as if it were a text file
+          await uploadToBackend(textFile, `${file.name} (OCR)`)
+        } catch (ocrError: any) {
+          setError(`Lỗi OCR: ${ocrError?.message || "Không xác định"}`)
+          setUploading(false)
+          return
+        }
+      } else {
+        // For PDF/text files, upload directly
+        await uploadToBackend(file, file.name)
+      }
+    } catch (err: any) {
+      setError("Hệ thống xử lý tài liệu đã xảy ra lỗi, vui lòng tải tệp khác")
+      console.error("[Upload] Error:", err)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const uploadToBackend = async (fileToUpload: File, displayName: string) => {
     try {
       const formData = new FormData()
-      formData.append("file", file)
-      formData.append("title", file.name)
+      formData.append("file", fileToUpload)
+      formData.append("title", displayName)
       formData.append("max_phrases", maxPhrases.toString())
       formData.append("max_words", maxWords.toString())
       formData.append("min_phrase_length", "2")
@@ -268,7 +317,10 @@ export default function DocumentsPage() {
       formData.append("bm25_weight", "0.2")
       formData.append("generate_flashcards", "true")
 
-      const response = await fetch(`/api/upload-document-complete`, { method: "POST", body: formData })
+      const response = await fetch(`/api/upload-document-complete`, { 
+        method: "POST", 
+        body: formData 
+      })
       const data = await response.json()
 
       if (!response.ok) {
@@ -284,25 +336,25 @@ export default function DocumentsPage() {
       if (data.topics && data.topics.length > 0) {
         try { localStorage.setItem("recent_topics", JSON.stringify(data.topics)) } catch {}
       }
+      
       // Save document metadata
       try {
         await fetch("/api/documents-history", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            filename: file.name,
-            fileSize: file.size,
+            filename: displayName,
+            fileSize: fileToUpload.size,
             vocabularyCount: data.vocabulary_count || data.vocabulary?.length || 0,
             topicsCount: data.topics?.length || 0,
           })
         })
         await loadDocuments()
       } catch {}
+      
       await handleSaveToDatabase(data)
     } catch (err: any) {
-      setError("Hệ thống xử lý tài liệu đã xảy ra lỗi, vui lòng tải tệp khác")
-    } finally {
-      setUploading(false)
+      throw err
     }
   }
 
