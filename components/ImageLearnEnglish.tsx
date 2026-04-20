@@ -141,7 +141,7 @@ export default function ImageLearnEnglish() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">🎯 Visual Language Tutor</h1>
+            <h1 className="text-2xl font-bold text-white"> Visual Language Tutor</h1>
             <p className="text-white/60 text-sm">Upload ảnh → Học từ vựng tiếng Anh</p>
           </div>
           <div className="flex items-center gap-3">
@@ -281,7 +281,7 @@ export default function ImageLearnEnglish() {
             {/* Generated Sentences (from Python API) */}
             {sentences.length > 0 && (
               <div className="bg-white/10 rounded-xl p-4">
-                <h2 className="text-white font-semibold mb-4">📝 Câu mẫu về ảnh</h2>
+                <h2 className="text-white font-semibold mb-4"> Câu mẫu về ảnh</h2>
                 <div className="space-y-2">
                   {sentences.map((s, i) => (
                     <div key={i} className="bg-white/5 rounded-lg p-3 flex items-center justify-between">

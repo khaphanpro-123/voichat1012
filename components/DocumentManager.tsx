@@ -194,7 +194,7 @@ export default function DocumentManager() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900">
-              📚 Quản lý Tài liệu
+               Quản lý Tài liệu
             </h1>
             <div className="flex gap-2 mt-4">
               <button
@@ -231,7 +231,7 @@ export default function DocumentManager() {
                 href="/flashcard-study"
                 className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:shadow-lg transition flex items-center gap-2"
               >
-                🃏 Flashcard
+                 Flashcard
               </a>
             </div>
           </div>

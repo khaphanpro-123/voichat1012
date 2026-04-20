@@ -354,7 +354,7 @@ export default function UploadPage() {
             >
               <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Hoàn thành! 🎉
+                Hoàn thành! 
               </h2>
               <p className="text-gray-600 mb-6">
                 Đã thêm {savedCount} từ vựng mới vào danh sách học của bạn

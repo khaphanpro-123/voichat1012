@@ -92,7 +92,7 @@ export function RegisterForm() {
       <div>
         <label className="block text-sm font-medium mb-1">Username</label>
         <input placeholder="vd: john_doe123" className={`w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.username ? (usernameValidation.isValid ? "border-green-500" : "border-red-500") : ""}`} value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })} />
-        {formData.username && <p className={`mt-1 text-xs ${usernameValidation.isValid ? "text-green-600" : "text-red-500"}`}>{usernameValidation.isValid ? "✓ " : "✗ "}{usernameValidation.message}</p>}
+        {formData.username && <p className={`mt-1 text-xs ${usernameValidation.isValid ? "text-green-600" : "text-red-500"}`}>{usernameValidation.isValid ? " " : " "}{usernameValidation.message}</p>}
       </div>
 
       <div>
@@ -103,7 +103,7 @@ export function RegisterForm() {
       <div>
         <label className="block text-sm font-medium mb-1">Email</label>
         <input type="email" placeholder="email@example.com" className={`w-full px-4 py-2.5 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.email ? (emailValidation.isValid ? "border-green-500" : "border-red-500") : ""}`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-        {formData.email && <p className={`mt-1 text-xs ${emailValidation.isValid ? "text-green-600" : "text-red-500"}`}>{emailValidation.isValid ? "✓ " : "✗ "}{emailValidation.message}</p>}
+        {formData.email && <p className={`mt-1 text-xs ${emailValidation.isValid ? "text-green-600" : "text-red-500"}`}>{emailValidation.isValid ? " " : " "}{emailValidation.message}</p>}
       </div>
 
       <div>
@@ -129,7 +129,7 @@ export function RegisterForm() {
           <input type={showConfirmPassword ? "text" : "password"} placeholder="Nhập lại mật khẩu" className={`w-full px-4 py-2.5 pr-10 rounded-lg border bg-gray-100 dark:bg-gray-700 ${formData.confirmPassword ? (passwordsMatch ? "border-green-500" : "border-red-500") : ""}`} value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
           <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
         </div>
-        {formData.confirmPassword && <p className={`mt-1 text-xs ${passwordsMatch ? "text-green-600" : "text-red-500"}`}>{passwordsMatch ? "✓ Khớp" : "✗ Không khớp"}</p>}
+        {formData.confirmPassword && <p className={`mt-1 text-xs ${passwordsMatch ? "text-green-600" : "text-red-500"}`}>{passwordsMatch ? " Khớp" : " Không khớp"}</p>}
       </div>
 
       <div className="flex items-start gap-3">

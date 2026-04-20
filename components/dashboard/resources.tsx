@@ -37,11 +37,11 @@ export default function ResourcesDashboard() {
 
   const getEmoji = (cat: string) => {
     switch (cat) {
-      case "pdf": return "📄"
-      case "video": return "🎥"
-      case "article": return "📰"
-      case "hotline": return "📞"
-      default: return "📋"
+      case "pdf": return ""
+      case "video": return ""
+      case "article": return ""
+      case "hotline": return ""
+      default: return ""
     }
   }
 
@@ -58,9 +58,9 @@ export default function ResourcesDashboard() {
   return (
     <div className="space-y-6 p-6 bg-gradient-to-b from-[#AED6F1] to-[#D7BDE2] dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl shadow-lg font-nunito">
       <h2 className="text-3xl font-bold text-foreground mb-6 flex items-center justify-center space-x-3">
-        <span className="text-4xl">🧩</span>
+        <span className="text-4xl"></span>
         <span>Quản lý Tài Nguyên Hỗ Trợ</span>
-        <span className="text-4xl">📚</span>
+        <span className="text-4xl"></span>
       </h2>
 
       <motion.div
@@ -101,7 +101,7 @@ export default function ResourcesDashboard() {
             type="submit"
             className="w-full bg-gradient-to-r from-[#ABEBC6] to-[#AED6F1] text-foreground font-semibold py-3 rounded-lg hover:from-[#AED6F1] hover:to-[#ABEBC6] transition-all"
           >
-            Thêm Tài Nguyên Mới ✨
+            Thêm Tài Nguyên Mới 
           </Button>
         </form>
       </motion.div>
@@ -119,7 +119,7 @@ export default function ResourcesDashboard() {
             <SelectValue placeholder="Lọc theo loại" />
           </SelectTrigger>
           <SelectContent className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
-            <SelectItem value="all">Tất cả Loại 📋</SelectItem>
+            <SelectItem value="all">Tất cả Loại </SelectItem>
             <SelectItem value="pdf">PDF {getEmoji("pdf")}</SelectItem>
             <SelectItem value="video">Video {getEmoji("video")}</SelectItem>
             <SelectItem value="article">Article {getEmoji("article")}</SelectItem>
@@ -147,7 +147,7 @@ export default function ResourcesDashboard() {
           </motion.div>
         ))}
         {filteredResources.length === 0 && (
-          <p className="col-span-full text-center text-muted-foreground text-lg">Không tìm thấy tài nguyên phù hợp. Hãy thử tìm kiếm khác! 🔍</p>
+          <p className="col-span-full text-center text-muted-foreground text-lg">Không tìm thấy tài nguyên phù hợp. Hãy thử tìm kiếm khác! </p>
         )}
       </div>
     </div>

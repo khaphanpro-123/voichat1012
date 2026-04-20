@@ -29,7 +29,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
   });
 }
 
-// ✅ Update hồ sơ (chỉ cho chính chủ)
+//  Update hồ sơ (chỉ cho chính chủ)
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params; // unwrap Promise
 
@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   await connectDB();
   const { fullName, avatar, bio } = await req.json();
 
-  // 👇 Khắc phục: cho phép update ngay cả khi bio = ""
+  //  Khắc phục: cho phép update ngay cả khi bio = ""
   const updateData: any = {};
   if (fullName !== undefined) updateData.fullName = fullName;
   if (avatar !== undefined) updateData.avatar = avatar;

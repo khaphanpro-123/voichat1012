@@ -499,7 +499,7 @@ export default function EnglishLiveChat() {
           <div className="flex items-center gap-3">
             {/* Level Badge */}
             <div className="px-3 py-1 bg-white/10 rounded-full text-white text-sm">
-              📊 {profile.level}
+               {profile.level}
             </div>
 
             {/* Learning History Link */}
@@ -576,9 +576,9 @@ export default function EnglishLiveChat() {
                   onChange={(e) => setProfile(p => ({ ...p, speakingSpeed: e.target.value as any }))}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
                 >
-                  <option value="slow" className="bg-gray-800">🐢 Chậm / Slow</option>
-                  <option value="normal" className="bg-gray-800">🚶 Bình thường / Normal</option>
-                  <option value="fast" className="bg-gray-800">🏃 Nhanh / Fast</option>
+                  <option value="slow" className="bg-gray-800"> Chậm / Slow</option>
+                  <option value="normal" className="bg-gray-800"> Bình thường / Normal</option>
+                  <option value="fast" className="bg-gray-800"> Nhanh / Fast</option>
                 </select>
               </div>
 
@@ -593,7 +593,7 @@ export default function EnglishLiveChat() {
                       : 'bg-white/10 border-white/20 text-white/60'
                   }`}
                 >
-                  {profile.vietnameseSupport ? '✅ Bật' : '❌ Tắt'}
+                  {profile.vietnameseSupport ? ' Bật' : ' Tắt'}
                 </button>
               </div>
             </div>
@@ -696,7 +696,7 @@ export default function EnglishLiveChat() {
                           </p>
                           {message.grammarCorrection.vietnameseExplanation && profile.vietnameseSupport && (
                             <p className="text-white/60 text-xs mt-1">
-                              💡 {message.grammarCorrection.vietnameseExplanation}
+                               {message.grammarCorrection.vietnameseExplanation}
                             </p>
                           )}
                         </motion.div>
@@ -707,12 +707,12 @@ export default function EnglishLiveChat() {
                         <div className="mt-2 flex flex-wrap gap-2">
                           {message.slaMetadata.recastUsed && (
                             <span className="px-2 py-1 bg-teal-500/20 text-teal-400 text-xs rounded-full">
-                              🔄 Recasting
+                               Recasting
                             </span>
                           )}
                           {message.slaMetadata.vietnameseHint && profile.vietnameseSupport && (
                             <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">
-                              🇻🇳 {message.slaMetadata.vietnameseHint}
+                               {message.slaMetadata.vietnameseHint}
                             </span>
                           )}
                         </div>

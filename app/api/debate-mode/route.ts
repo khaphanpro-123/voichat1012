@@ -171,7 +171,7 @@ async function analyzeImageForDebate(imageBase64: string, userLevel: number): Pr
     if (visionData.status !== 'ok') {
       // Check if it's a rate limit error - use fallback
       if (visionData.error_message?.includes('Rate limit') || visionData.error_message?.includes('429')) {
-        console.warn('⚠️ OpenAI Rate Limit on Vision - Using fallback analysis');
+        console.warn(' OpenAI Rate Limit on Vision - Using fallback analysis');
         
         // Use fallback vision data
         const fallbackVisionData = {
@@ -335,7 +335,7 @@ async function processUserResponse(
     }
 
     // Step 2: Alignment - Compare transcript with vision data
-    console.log('🔍 Alignment Request:', {
+    console.log(' Alignment Request:', {
       hasVisionData: !!sessionData.visionData,
       transcript,
       asrConfidence
@@ -352,13 +352,13 @@ async function processUserResponse(
     });
 
     const alignmentData = await alignmentResponse.json();
-    console.log('🔍 Alignment Response:', alignmentData);
+    console.log(' Alignment Response:', alignmentData);
     
     // Handle rate limit or API errors with graceful fallback
     if (alignmentData.status !== 'ok') {
       // Check if it's a rate limit error
       if (alignmentData.error_message?.includes('Rate limit') || alignmentData.error_message?.includes('429')) {
-        console.warn('⚠️ OpenAI Rate Limit - Using fallback alignment');
+        console.warn(' OpenAI Rate Limit - Using fallback alignment');
         
         // Use simple fallback alignment logic
         const fallbackAlignment = {
@@ -395,7 +395,7 @@ async function processUserResponse(
     if (feedbackData.status !== 'ok') {
       // Check if it's a rate limit error
       if (feedbackData.error_message?.includes('Rate limit') || feedbackData.error_message?.includes('429')) {
-        console.warn('⚠️ OpenAI Rate Limit on Feedback - Using fallback');
+        console.warn(' OpenAI Rate Limit on Feedback - Using fallback');
         
         // Use fallback feedback
         return await processFallbackResponse(transcript, sessionData, alignmentData, asrConfidence);

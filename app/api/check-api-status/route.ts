@@ -154,10 +154,10 @@ export async function GET(req: NextRequest) {
       recommendation = "Tất cả API đều không khả dụng. Hãy thêm Groq key (miễn phí): https://console.groq.com/keys";
     } else {
       const parts = [];
-      if (geminiModels.find(m => m.available)) parts.push("Gemini ✓");
-      if (openaiModels.find(m => m.available)) parts.push("OpenAI ✓");
-      if (groqModels.find(m => m.available)) parts.push("Groq ✓");
-      if (cohereModels.find(m => m.available)) parts.push("Cohere ✓");
+      if (geminiModels.find(m => m.available)) parts.push("Gemini ");
+      if (openaiModels.find(m => m.available)) parts.push("OpenAI ");
+      if (groqModels.find(m => m.available)) parts.push("Groq ");
+      if (cohereModels.find(m => m.available)) parts.push("Cohere ");
       recommendation = `Sẵn sàng: ${parts.join(", ")}`;
     }
 

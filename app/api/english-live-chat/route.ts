@@ -138,7 +138,7 @@ async function generateEnglishResponse(
 **Corrected form**: "${grammarAnalysis.correctedText}"
 **Main error**: ${mainError.type} - "${mainError.original}" → "${mainError.corrected}"
 
-⚠️ USE RECASTING:
+ USE RECASTING:
 - Do NOT say "That's wrong" or "You made a mistake"
 - Naturally include the correct form in your response
 - Example recast: "${recast}"
@@ -280,7 +280,7 @@ async function saveVocabularyToDatabase(
   }>
 ): Promise<{ savedCount: number; failedCount: number }> {
   if (!vocabulary || vocabulary.length === 0 || userId === 'anonymous') {
-    console.log(`⏭️ Skipping vocabulary save: items=${vocabulary?.length || 0}, userId=${userId}`);
+    console.log(`⏭ Skipping vocabulary save: items=${vocabulary?.length || 0}, userId=${userId}`);
     return { savedCount: 0, failedCount: 0 };
   }
 
@@ -288,7 +288,7 @@ async function saveVocabularyToDatabase(
   let failedCount = 0;
 
   try {
-    console.log(`💾 Saving ${vocabulary.length} vocabulary items for user ${userId}`);
+    console.log(` Saving ${vocabulary.length} vocabulary items for user ${userId}`);
 
     // Use MongoDB directly instead of internal API call
     const getClientPromise = (await import("@/lib/mongodb")).default;
@@ -327,17 +327,17 @@ async function saveVocabularyToDatabase(
         );
 
         savedCount++;
-        console.log(`✅ Saved vocabulary: ${item.word} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
+        console.log(` Saved vocabulary: ${item.word} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
       } catch (err) {
         failedCount++;
-        console.error(`❌ Error saving vocabulary: ${item.word}`, err);
+        console.error(` Error saving vocabulary: ${item.word}`, err);
       }
     }
 
-    console.log(`✅ Vocabulary save complete: ${savedCount} saved, ${failedCount} failed`);
+    console.log(` Vocabulary save complete: ${savedCount} saved, ${failedCount} failed`);
     return { savedCount, failedCount };
   } catch (error) {
-    console.error('❌ Vocabulary save error:', error);
+    console.error(' Vocabulary save error:', error);
     return { savedCount: 0, failedCount: vocabulary.length };
   }
 }
@@ -418,8 +418,8 @@ export async function POST(req: NextRequest) {
     // Action: Start new session
     if (action === 'start') {
       const welcomeMessage = learnerProfile.level === 'A1' || learnerProfile.level === 'A2'
-        ? "Hi there! 👋 I'm your English tutor. Let's practice English together! What would you like to talk about today? (Xin chào! Tôi là gia sư tiếng Anh của bạn. Hôm nay bạn muốn nói về chủ đề gì?)"
-        : "Hello! 👋 I'm excited to practice English with you today. What's on your mind?";
+        ? "Hi there!  I'm your English tutor. Let's practice English together! What would you like to talk about today? (Xin chào! Tôi là gia sư tiếng Anh của bạn. Hôm nay bạn muốn nói về chủ đề gì?)"
+        : "Hello!  I'm excited to practice English with you today. What's on your mind?";
 
       // Generate audio for welcome message
       const audioUrl = await generateSpeech(welcomeMessage, config.speakingSpeed);

@@ -95,15 +95,15 @@ export default function VerifyDatabasePage() {
             </div>
             <div className="bg-green-50 rounded-xl p-6 shadow-md border-2 border-green-200">
               <div className="text-3xl font-bold text-green-600">{results.summary.passed}</div>
-              <div className="text-sm text-green-700">✅ Passed</div>
+              <div className="text-sm text-green-700"> Passed</div>
             </div>
             <div className="bg-yellow-50 rounded-xl p-6 shadow-md border-2 border-yellow-200">
               <div className="text-3xl font-bold text-yellow-600">{results.summary.warnings}</div>
-              <div className="text-sm text-yellow-700">⚠️ Warnings</div>
+              <div className="text-sm text-yellow-700"> Warnings</div>
             </div>
             <div className="bg-red-50 rounded-xl p-6 shadow-md border-2 border-red-200">
               <div className="text-3xl font-bold text-red-600">{results.summary.failed}</div>
-              <div className="text-sm text-red-700">❌ Failed</div>
+              <div className="text-sm text-red-700"> Failed</div>
             </div>
           </div>
 

@@ -286,13 +286,13 @@ async function searchDocumentsWithAnalysis(query: string, entities: string[]): P
     for (const doc of documents) {
       if (doc.extractedText) {
         const excerpt = doc.extractedText.substring(0, 200) + '...';
-        results.push(`📄 Từ tài liệu "${doc.fileName}": ${excerpt}`);
+        results.push(` Từ tài liệu "${doc.fileName}": ${excerpt}`);
       }
     }
 
     // Add vocabulary entries
     for (const vocab of vocabularies) {
-      results.push(`📚 Từ vựng: ${vocab.word} - ${vocab.meaning}\nVí dụ: ${vocab.example}`);
+      results.push(` Từ vựng: ${vocab.word} - ${vocab.meaning}\nVí dụ: ${vocab.example}`);
     }
 
     // Calculate data source percentages
@@ -431,7 +431,7 @@ ${slaSystemPrompt}
 - Correct form: "${grammarCheck.corrected}"
 - Error types: ${grammarCheck.errors.map(e => e.type).join(', ')}
 
-⚠️ IMPORTANT: Use RECASTING technique!
+ IMPORTANT: Use RECASTING technique!
 - Do NOT say "Bạn nói sai" or "Lỗi ngữ pháp"
 - Instead, naturally include the correct form in your response
 - Example recast: "${generateRecast('grammar', grammarCheck.original, grammarCheck.corrected)}"
@@ -504,16 +504,16 @@ Use this information to provide personalized responses.
           const recast = generateRecast('grammar', grammarCheck.original, grammarCheck.corrected);
           fallbackResponse = `${encouragement} ${recast} Bạn muốn nói thêm gì không?`;
         } else {
-          fallbackResponse = `${encouragement} Câu của bạn rất tốt! Hãy tiếp tục nhé! 💪`;
+          fallbackResponse = `${encouragement} Câu của bạn rất tốt! Hãy tiếp tục nhé! `;
         }
         break;
         
       case INTENT_CATEGORIES.VOCABULARY_HELP:
-        fallbackResponse = `${encouragement} Tôi hiểu bạn muốn học từ vựng! Bạn muốn học về chủ đề gì? Tôi có thể giúp bạn với:\n\n🍜 Thức ăn\n👨‍👩‍👧 Gia đình\n🏠 Nhà cửa\n🚗 Giao thông`;
+        fallbackResponse = `${encouragement} Tôi hiểu bạn muốn học từ vựng! Bạn muốn học về chủ đề gì? Tôi có thể giúp bạn với:\n\n Thức ăn\n‍‍ Gia đình\n Nhà cửa\n Giao thông`;
         break;
         
       case INTENT_CATEGORIES.TRANSLATION:
-        fallbackResponse = `${encouragement} Tôi sẵn sàng giúp bạn dịch! Hãy viết câu cần dịch nhé. 🌐`;
+        fallbackResponse = `${encouragement} Tôi sẵn sàng giúp bạn dịch! Hãy viết câu cần dịch nhé. `;
         break;
         
       case INTENT_CATEGORIES.DOCUMENT_SEARCH:
@@ -525,7 +525,7 @@ Use this information to provide personalized responses.
         break;
         
       default:
-        fallbackResponse = `${encouragement} Xin chào! Tôi là Viet-Talk AI - trợ lý học tiếng Việt của bạn! 🇻🇳\n\nHôm nay bạn muốn:\n💬 Trò chuyện tiếng Việt\n📚 Học từ vựng mới\n🎯 Luyện phát âm\n\nBạn chọn gì?`;
+        fallbackResponse = `${encouragement} Xin chào! Tôi là Viet-Talk AI - trợ lý học tiếng Việt của bạn! \n\nHôm nay bạn muốn:\n Trò chuyện tiếng Việt\n Học từ vựng mới\n Luyện phát âm\n\nBạn chọn gì?`;
     }
     
     return { response: fallbackResponse, recastUsed: false, encouragement };

@@ -34,14 +34,14 @@ Trả về JSON (KHÔNG markdown):
 
 const VOCABULARY_EXTRACTION_PROMPT = `Bạn là hệ thống trích xuất từ vựng tiếng Anh cho người Việt.
 
-⚠️ QUAN TRỌNG - LOẠI BỎ HOÀN TOÀN:
+ QUAN TRỌNG - LOẠI BỎ HOÀN TOÀN:
 - Metadata kỹ thuật: rdf, xmlns, xmp, adobe, pdf, uuid, checksum
 - Chuỗi mã hóa: base64, hex, hash
 - Chuỗi vô nghĩa: w5m0mpceihzreszntzcex9d, rdfrdf, xxmpmeta
 - DOI, URL, đường dẫn file
 - Từ không có trong từ điển tiếng Anh
 
-✅ CHỈ TRÍCH:
+ CHỈ TRÍCH:
 1. CỤM TỪ có nghĩa (ưu tiên):
    - Noun phrases: "climate change", "artificial intelligence"
    - Phrasal verbs: "look forward to", "take care of"

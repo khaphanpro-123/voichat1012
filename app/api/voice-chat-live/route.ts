@@ -69,10 +69,10 @@ function scorePronunciation(spoken: string, target: string): { score: number; fe
   const score = Math.min(100, Math.round(accuracy));
   
   let feedback = "";
-  if (score >= 90) feedback = "Xuất sắc! Phát âm rất tốt! 🎉";
-  else if (score >= 70) feedback = "Tốt lắm! Tiếp tục luyện tập nhé! 👍";
-  else if (score >= 50) feedback = "Khá tốt! Hãy thử lại để cải thiện. 💪";
-  else feedback = "Cần luyện tập thêm. Nghe lại và thử lại nhé! 🔄";
+  if (score >= 90) feedback = "Xuất sắc! Phát âm rất tốt! ";
+  else if (score >= 70) feedback = "Tốt lắm! Tiếp tục luyện tập nhé! ";
+  else if (score >= 50) feedback = "Khá tốt! Hãy thử lại để cải thiện. ";
+  else feedback = "Cần luyện tập thêm. Nghe lại và thử lại nhé! ";
   
   return { score, feedback };
 }

@@ -127,9 +127,9 @@ export default function FlashcardClusterView({ documentId }: Props) {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'core': return '🎯'
-      case 'umbrella': return '📂'
-      default: return '📄'
+      case 'core': return ''
+      case 'umbrella': return ''
+      default: return ''
     }
   }
 

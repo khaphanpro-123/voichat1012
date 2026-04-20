@@ -273,7 +273,7 @@ export default function DashboardHome() {
           animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         >
-          🧠
+          
         </motion.div>
         <motion.p 
           className="text-gray-500"
@@ -308,7 +308,7 @@ export default function DashboardHome() {
         className="mb-8"
       >
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Xin chào, {userName}! 👋
+          Xin chào, {userName}! 
         </h1>
       </motion.div>
 

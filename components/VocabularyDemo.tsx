@@ -69,13 +69,13 @@ export default function VocabularyDemo() {
           </button>
           <div className="bg-white rounded-2xl p-6 shadow-lg">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              🎯 Demo Tính năng Từ vựng
+               Demo Tính năng Từ vựng
             </h1>
             <p className="text-gray-600">
               Mỗi từ vựng có âm thanh phát âm và hình ảnh minh họa. Bạn có thể:
             </p>
             <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-              <li>Nhấn nút 🔊 để nghe phát âm</li>
+              <li>Nhấn nút  để nghe phát âm</li>
               <li>Xem hình ảnh minh họa cho từng từ</li>
               <li>Sử dụng tính năng "Phát tự động" để nghe tất cả từ</li>
               <li>Tìm kiếm và lọc theo cấp độ</li>

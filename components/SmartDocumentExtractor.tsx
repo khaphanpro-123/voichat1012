@@ -276,7 +276,7 @@ export default function SmartDocumentExtractor() {
                 step === s ? 'bg-indigo-600 text-white' : 
                 ['upload', 'context', 'phrases', 'flashcards'].indexOf(step) > i ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
               }`}>
-                {['upload', 'context', 'phrases', 'flashcards'].indexOf(step) > i ? '✓' : i + 1}
+                {['upload', 'context', 'phrases', 'flashcards'].indexOf(step) > i ? '' : i + 1}
               </div>
               <span className={`ml-2 text-sm ${step === s ? 'text-indigo-600 font-semibold' : 'text-gray-500'}`}>
                 {s === 'upload' ? 'Upload' : s === 'context' ? 'Ngữ cảnh' : s === 'phrases' ? 'Cụm từ' : 'Flashcards'}

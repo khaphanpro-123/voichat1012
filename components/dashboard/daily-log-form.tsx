@@ -42,7 +42,7 @@ export default function DailyLogForm({ childId }: DailyLogFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ thêm dòng này
+          Authorization: `Bearer ${token}`, //  thêm dòng này
         },
         body: JSON.stringify({ ...form }),
       });

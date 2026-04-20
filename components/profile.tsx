@@ -25,7 +25,7 @@ export default function ProfilePage() {
       setError(null);
 
       try {
-        const res = await fetch("/api/profile/[userId]"); // ✅ backend tự đọc userId từ token
+        const res = await fetch("/api/profile/[userId]"); //  backend tự đọc userId từ token
         if (!res.ok) {
           throw new Error(`Lỗi tải dữ liệu (${res.status})`);
         }
@@ -78,7 +78,7 @@ export default function ProfilePage() {
         throw new Error("Không thể lưu thông tin");
       }
 
-      alert("✅ Cập nhật thành công!");
+      alert(" Cập nhật thành công!");
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -100,7 +100,7 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-500 mb-2">⏳ Đang tải dữ liệu...</p>
         )}
 
-        {error && <p className="text-sm text-red-500 mb-2">⚠️ {error}</p>}
+        {error && <p className="text-sm text-red-500 mb-2"> {error}</p>}
 
         <input
           type="text"
@@ -192,7 +192,7 @@ export default function ProfilePage() {
               : "bg-blue-500 hover:bg-blue-600"
           }`}
         >
-          {saving ? "Đang lưu..." : "💾 Lưu thông tin"}
+          {saving ? "Đang lưu..." : " Lưu thông tin"}
         </button>
       </form>
     </div>

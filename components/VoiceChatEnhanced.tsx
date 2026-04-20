@@ -335,7 +335,7 @@ export default function VoiceChatEnhanced() {
           const vocabCount = data.response.vocabulary?.length || 0;
           const structCount = data.response.structures?.length || 0;
           if (vocabCount > 0 || structCount > 0) {
-            setSaveNotification(`✅ Đã lưu ${vocabCount} từ vựng, ${structCount} cấu trúc`);
+            setSaveNotification(` Đã lưu ${vocabCount} từ vựng, ${structCount} cấu trúc`);
             setTimeout(() => setSaveNotification(null), 3000);
           }
           setTimeout(loadSavedItems, 1000);
@@ -405,7 +405,7 @@ export default function VoiceChatEnhanced() {
                 transition={{ delay: 0.3 }}
                 className="text-white/70 mt-2 pt-2 border-t border-white/20 italic"
               >
-                🇻🇳 {enhanced.vietnamese}
+                 {enhanced.vietnamese}
               </motion.p>
             )}
           </div>
@@ -418,7 +418,7 @@ export default function VoiceChatEnhanced() {
                 onClick={() => speakSingle(enhanced.english)}
                 className="flex items-center gap-1 px-3 py-1.5 bg-white/10 text-white/80 rounded-lg text-sm hover:bg-white/20"
               >
-                <Volume2 className="w-4 h-4" /> 🔊
+                <Volume2 className="w-4 h-4" /> 
               </button>
               
               {/* Expand/Collapse details */}
@@ -451,7 +451,7 @@ export default function VoiceChatEnhanced() {
                     </div>
                     <p className="text-lg font-mono text-white mb-1">{enhanced.grammarStructure.pattern}</p>
                     <p className="text-white/70 text-xs">{enhanced.grammarStructure.explanation}</p>
-                    <p className="text-white/50 text-xs">🇻🇳 {enhanced.grammarStructure.explanationVi}</p>
+                    <p className="text-white/50 text-xs"> {enhanced.grammarStructure.explanationVi}</p>
                   </div>
                 )}
 
@@ -461,7 +461,7 @@ export default function VoiceChatEnhanced() {
                     <div className="flex items-center gap-2 mb-2">
                       <BookOpen className="w-4 h-4 text-green-400" />
                       <h4 className="font-bold text-green-300 text-sm">Từ vựng</h4>
-                      {autoSave && <span className="text-xs bg-green-500/30 px-1.5 py-0.5 rounded text-green-300">✓</span>}
+                      {autoSave && <span className="text-xs bg-green-500/30 px-1.5 py-0.5 rounded text-green-300"></span>}
                     </div>
                     <div className="space-y-1.5">
                       {enhanced.vocabulary.map((v, i) => (
@@ -564,7 +564,7 @@ export default function VoiceChatEnhanced() {
               className="max-w-4xl mx-auto px-4 mt-4"
             >
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <h3 className="font-bold text-white mb-4">⚙️ Cài đặt</h3>
+                <h3 className="font-bold text-white mb-4"> Cài đặt</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <label className="text-white/70 text-sm">Trình độ</label>
@@ -590,7 +590,7 @@ export default function VoiceChatEnhanced() {
                             : "bg-white/10 text-white/70 hover:bg-white/20"
                         }`}
                       >
-                        🇺🇸 Mỹ
+                         Mỹ
                       </button>
                       <button
                         onClick={() => setVoiceAccent("UK")}
@@ -600,7 +600,7 @@ export default function VoiceChatEnhanced() {
                             : "bg-white/10 text-white/70 hover:bg-white/20"
                         }`}
                       >
-                        🇬🇧 Anh
+                         Anh
                       </button>
                     </div>
                   </div>
@@ -653,7 +653,7 @@ export default function VoiceChatEnhanced() {
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-white">📚 Từ vựng đã lưu</h3>
+                  <h3 className="font-bold text-white"> Từ vựng đã lưu</h3>
                   <button onClick={() => setShowSavedPanel(false)}>
                     <X className="w-5 h-5 text-white/60" />
                   </button>
@@ -720,8 +720,8 @@ export default function VoiceChatEnhanced() {
 
             {/* Status */}
             <p className="text-white/60 text-sm text-center mb-3">
-              {isListening ? "🎤 Đang nghe... (tự động gửi khi bạn ngừng nói)" 
-                : isSpeaking ? "🔊 Đang phát âm thanh..."
+              {isListening ? " Đang nghe... (tự động gửi khi bạn ngừng nói)" 
+                : isSpeaking ? " Đang phát âm thanh..."
                 : "Nhấn mic để nói hoặc gõ tin nhắn"}
             </p>
 

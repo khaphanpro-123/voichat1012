@@ -123,8 +123,8 @@ export default function VocabularyPage() {
       const res = await fetch(`/api/vocabulary?limit=1000`);
       const data = await res.json();
       
-      console.log("📚 Loaded vocabulary:", data.length, "items");
-      console.log("📊 Sample items:", data.slice(0, 3)); // Debug: show first 3 items
+      console.log(" Loaded vocabulary:", data.length, "items");
+      console.log(" Sample items:", data.slice(0, 3)); // Debug: show first 3 items
       
       if (Array.isArray(data)) {
         // Separate vocabulary, structures, and errors based on type or source
@@ -145,7 +145,7 @@ export default function VocabularyPage() {
         setStructures(allWords.filter((w: VocabularyWord) => w.type === "structure"));
         setErrors(allWords.filter((w: VocabularyWord) => w.type === "error"));
         
-        console.log("📊 Vocabulary stats:", {
+        console.log(" Vocabulary stats:", {
           total: allWords.length,
           vocabulary: allWords.filter((w: VocabularyWord) => w.type !== "structure" && w.type !== "error").length,
           structures: allWords.filter((w: VocabularyWord) => w.type === "structure").length,
@@ -176,7 +176,7 @@ export default function VocabularyPage() {
         const parsedTopics = JSON.parse(savedTopics);
         if (Array.isArray(parsedTopics) && parsedTopics.length > 0) {
           setTopics(parsedTopics);
-          console.log("🎯 Loaded topics from storage:", parsedTopics.length, "topics");
+          console.log(" Loaded topics from storage:", parsedTopics.length, "topics");
         }
       }
     } catch (error) {
@@ -314,7 +314,7 @@ export default function VocabularyPage() {
 
       if (res.ok) {
         const data = await res.json();
-        console.log("✅ Word saved:", data);
+        console.log(" Word saved:", data);
         
         // Reset form
         setNewWord({
@@ -517,7 +517,7 @@ export default function VocabularyPage() {
     return (
       <DashboardLayout>
         <div className="p-6 flex flex-col items-center justify-center min-h-[50vh] gap-4">
-          <motion.div className="text-4xl" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.5, repeat: Infinity }}>📚</motion.div>
+          <motion.div className="text-4xl" animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.5, repeat: Infinity }}></motion.div>
           <p className="text-gray-500">Đang tải...</p>
         </div>
       </DashboardLayout>
@@ -657,7 +657,7 @@ export default function VocabularyPage() {
                 onClick={() => setSelectedSource("voice_chat")}
                 className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "voice_chat" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
-                <span>🎤 Chat</span>
+                <span> Chat</span>
                 <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "voice_chat" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.filter(v => v.source === "voice_chat" || v.source === "english_live_chat").length}
                 </span>
@@ -666,7 +666,7 @@ export default function VocabularyPage() {
                 onClick={() => setSelectedSource("document")}
                 className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "document" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
-                <span>📄 Tài liệu</span>
+                <span> Tài liệu</span>
                 <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "document" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.filter(v => v.source === "document" || v.source?.startsWith("document_")).length}
                 </span>
@@ -675,7 +675,7 @@ export default function VocabularyPage() {
                 onClick={() => setSelectedSource("manual")}
                 className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium transition flex items-center gap-1 sm:gap-2 text-xs sm:text-sm ${selectedSource === "manual" ? "bg-purple-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}
               >
-                <span>✍️ Thủ công</span>
+                <span> Thủ công</span>
                 <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${selectedSource === "manual" ? "bg-white/20" : "bg-gray-100"}`}>
                   {vocabulary.filter(v => v.source === "manual").length}
                 </span>
@@ -892,11 +892,11 @@ export default function VocabularyPage() {
                         </span>
                         {word.source && (
                           <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm">
-                            {word.source === "voice_chat" ? "🎤 Chat" : 
-                             word.source === "english_live_chat" ? "🎤 English Chat" :
-                             word.source === "document" || word.source?.startsWith("document_") ? "📄 Tài liệu" : 
-                             word.source === "manual" ? "✍️ Thủ công" : 
-                             `📋 ${word.source}`}
+                            {word.source === "voice_chat" ? " Chat" : 
+                             word.source === "english_live_chat" ? " English Chat" :
+                             word.source === "document" || word.source?.startsWith("document_") ? " Tài liệu" : 
+                             word.source === "manual" ? " Thủ công" : 
+                             ` ${word.source}`}
                           </span>
                         )}
                       </div>
@@ -1123,7 +1123,7 @@ export default function VocabularyPage() {
                     {/* Topic Name */}
                     {(topic.topic_name || topic.topic_label) && (
                       <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-3 font-medium">
-                        📌 {topic.topic_name || topic.topic_label}
+                         {topic.topic_name || topic.topic_label}
                       </p>
                     )}
                     
@@ -1131,7 +1131,7 @@ export default function VocabularyPage() {
                     {topic.core_phrase && (
                       <div className="mb-3 p-2 bg-yellow-100 border border-yellow-200 rounded-lg">
                         <p className="text-xs sm:text-sm text-yellow-800">
-                          🎯 <strong>Từ khóa chính:</strong> {topic.core_phrase}
+                           <strong>Từ khóa chính:</strong> {topic.core_phrase}
                         </p>
                       </div>
                     )}
@@ -1143,7 +1143,7 @@ export default function VocabularyPage() {
                         {topic.items.filter((item: any) => item.type === 'phrase').length > 0 && (
                           <div>
                             <p className="text-xs sm:text-sm font-semibold text-green-600 mb-2">
-                              🔤 Cụm từ ({topic.items.filter((item: any) => item.type === 'phrase').length}):
+                               Cụm từ ({topic.items.filter((item: any) => item.type === 'phrase').length}):
                             </p>
                             <div className="flex flex-wrap gap-1 sm:gap-2">
                               {topic.items
@@ -1167,7 +1167,7 @@ export default function VocabularyPage() {
                         {topic.items.filter((item: any) => item.type === 'word').length > 0 && (
                           <div>
                             <p className="text-xs sm:text-sm font-semibold text-blue-600 mb-2">
-                              📝 Từ đơn ({topic.items.filter((item: any) => item.type === 'word').length}):
+                               Từ đơn ({topic.items.filter((item: any) => item.type === 'word').length}):
                             </p>
                             <div className="flex flex-wrap gap-1 sm:gap-2">
                               {topic.items
@@ -1217,7 +1217,7 @@ export default function VocabularyPage() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-800">
-                    <p className="font-semibold mb-1">💡 Về Topic Modeling:</p>
+                    <p className="font-semibold mb-1"> Về Topic Modeling:</p>
                     <p className="text-xs sm:text-sm leading-relaxed">
                       Hệ thống sử dụng thuật toán <strong>KMeans Clustering</strong> để tự động phân nhóm từ vựng theo chủ đề dựa trên 
                       semantic embeddings. Điều này giúp bạn học từ vựng theo nhóm chủ đề có liên quan, tăng hiệu quả ghi nhớ.

@@ -221,7 +221,7 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage({ type: "success", text: "✅ Đã lưu API keys thành công!" });
+        setMessage({ type: "success", text: " Đã lưu API keys thành công!" });
         // Update saved keys and clear input fields
         setSavedKeys(prev => ({
           groq: keys.groq || prev.groq,
@@ -254,7 +254,7 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage({ type: "success", text: `✅ Đã xóa ${providerInfo[provider].name} API key` });
+        setMessage({ type: "success", text: ` Đã xóa ${providerInfo[provider].name} API key` });
         setSavedKeys(prev => ({ ...prev, [provider]: "" }));
       } else {
         setMessage({ type: "error", text: data.message || "Lỗi khi xóa" });
@@ -562,7 +562,7 @@ export default function SettingsPage() {
                   {videoGuides.find(g => g.provider === showVideoModal)?.title}
                 </h3>
                 <button onClick={() => setShowVideoModal(null)} className="text-gray-500 hover:text-gray-900 text-xl font-bold flex-shrink-0">
-                  ✕
+                  
                 </button>
               </div>
               <div className="aspect-video bg-gray-100 flex items-center justify-center p-4">

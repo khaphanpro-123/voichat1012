@@ -18,7 +18,7 @@ export default function LearningHistoryPage() {
             animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           >
-            📊
+            
           </motion.div>
           <motion.p 
             className="text-gray-500"
@@ -41,7 +41,7 @@ export default function LearningHistoryPage() {
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            📊 Lịch sử học tập
+             Lịch sử học tập
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Theo dõi tiến trình và cải thiện kỹ năng của bạn

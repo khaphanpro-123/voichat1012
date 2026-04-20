@@ -186,7 +186,7 @@ export default function AdminNotificationsPage() {
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            📢
+            
           </motion.div>
         </div>
       </AdminLayout>
@@ -209,7 +209,7 @@ export default function AdminNotificationsPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              📢 Gửi thông báo
+               Gửi thông báo
             </h1>
             <p className="text-gray-600">
               Gửi thông báo đến tất cả người học

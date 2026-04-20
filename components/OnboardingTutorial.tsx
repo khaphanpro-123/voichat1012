@@ -35,7 +35,7 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
   const steps: TutorialStep[] = [
     {
       id: "welcome",
-      title: "Chào mừng đến với LS-BRAIN! 🎉",
+      title: "Chào mừng đến với LS-BRAIN! ",
       description: "Hãy cùng khám phá các tính năng học tiếng Anh thông minh",
       icon: <BookOpen className="w-8 h-8 text-blue-500" />,
       content: (
@@ -46,19 +46,19 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl text-center">
-              <span className="text-3xl">🎤</span>
+              <span className="text-3xl"></span>
               <p className="text-sm mt-2 font-medium">Voice Chat</p>
             </div>
             <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl text-center">
-              <span className="text-3xl">📚</span>
+              <span className="text-3xl"></span>
               <p className="text-sm mt-2 font-medium">Flashcards</p>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl text-center">
-              <span className="text-3xl">📄</span>
+              <span className="text-3xl"></span>
               <p className="text-sm mt-2 font-medium">Tài liệu</p>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-center">
-              <span className="text-3xl">📊</span>
+              <span className="text-3xl"></span>
               <p className="text-sm mt-2 font-medium">Theo dõi</p>
             </div>
           </div>
@@ -67,14 +67,14 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
     },
     {
       id: "api-key",
-      title: "Bước 1: Lấy API Key 🔑",
+      title: "Bước 1: Lấy API Key ",
       description: "Để sử dụng AI, bạn cần có API key từ Google hoặc OpenAI",
       icon: <Key className="w-8 h-8 text-yellow-500" />,
       content: (
         <div className="space-y-4">
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
             <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-              📌 Tại sao cần API Key?
+               Tại sao cần API Key?
             </h4>
             <p className="text-sm text-yellow-700 dark:text-yellow-300">
               API Key giúp kết nối với AI để xử lý giọng nói, tạo flashcard và nhiều tính năng khác.
@@ -117,14 +117,14 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
     },
     {
       id: "voice-chat",
-      title: "Bước 2: Voice Chat 🎤",
+      title: "Bước 2: Voice Chat ",
       description: "Luyện nói tiếng Anh với AI như người thật",
       icon: <Mic className="w-8 h-8 text-green-500" />,
       content: (
         <div className="space-y-4">
           <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
             <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">
-              🎯 Tính năng Voice Chat
+               Tính năng Voice Chat
             </h4>
             <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
               <li>• Nói chuyện trực tiếp với AI bằng giọng nói</li>
@@ -147,7 +147,7 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
               </div>
               <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg border">
                 <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                  <span className="text-xl">🤖</span>
+                  <span className="text-xl"></span>
                 </div>
                 <div>
                   <p className="font-medium text-sm">AI phản hồi</p>
@@ -158,21 +158,21 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center">
-            <p className="text-sm">📍 Vào <strong>English Live</strong> để bắt đầu</p>
+            <p className="text-sm"> Vào <strong>English Live</strong> để bắt đầu</p>
           </div>
         </div>
       ),
     },
     {
       id: "documents",
-      title: "Bước 3: Upload Tài liệu 📄",
+      title: "Bước 3: Upload Tài liệu ",
       description: "Tạo flashcard từ PDF, DOCX hoặc hình ảnh",
       icon: <FileText className="w-8 h-8 text-orange-500" />,
       content: (
         <div className="space-y-4">
           <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4">
             <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">
-              📚 Học từ tài liệu của bạn
+               Học từ tài liệu của bạn
             </h4>
             <p className="text-sm text-orange-700 dark:text-orange-300">
               Upload bất kỳ tài liệu nào và AI sẽ tự động trích xuất từ vựng, tạo flashcard.
@@ -183,40 +183,40 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
             <h4 className="font-semibold">Định dạng hỗ trợ:</h4>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-center">
-                <span className="text-2xl">📕</span>
+                <span className="text-2xl"></span>
                 <p className="text-xs mt-1 font-medium">PDF</p>
               </div>
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
-                <span className="text-2xl">📘</span>
+                <span className="text-2xl"></span>
                 <p className="text-xs mt-1 font-medium">DOCX</p>
               </div>
               <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
-                <span className="text-2xl">🖼️</span>
+                <span className="text-2xl"></span>
                 <p className="text-xs mt-1 font-medium">Hình ảnh</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
-                <span className="text-2xl">📝</span>
+                <span className="text-2xl"></span>
                 <p className="text-xs mt-1 font-medium">TXT</p>
               </div>
             </div>
           </div>
 
           <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 text-center">
-            <p className="text-sm">📍 Vào <strong>Documents</strong> để upload</p>
+            <p className="text-sm"> Vào <strong>Documents</strong> để upload</p>
           </div>
         </div>
       ),
     },
     {
       id: "history",
-      title: "Bước 4: Theo dõi tiến độ 📊",
+      title: "Bước 4: Theo dõi tiến độ ",
       description: "Xem lịch sử học tập và tiến bộ của bạn",
       icon: <History className="w-8 h-8 text-purple-500" />,
       content: (
         <div className="space-y-4">
           <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
             <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">
-              📈 Theo dõi tiến bộ
+               Theo dõi tiến bộ
             </h4>
             <p className="text-sm text-purple-700 dark:text-purple-300">
               Hệ thống ghi nhận mọi hoạt động học tập để bạn thấy sự tiến bộ theo thời gian.
@@ -246,26 +246,26 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
           </div>
 
           <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 text-center">
-            <p className="text-sm">📍 Vào <strong>Learning History</strong> để xem</p>
+            <p className="text-sm"> Vào <strong>Learning History</strong> để xem</p>
           </div>
         </div>
       ),
     },
     {
       id: "complete",
-      title: "Hoàn tất! 🎊",
+      title: "Hoàn tất! ",
       description: "Bạn đã sẵn sàng bắt đầu học",
       icon: <CheckCircle className="w-8 h-8 text-green-500" />,
       content: (
         <div className="space-y-4 text-center">
-          <div className="text-6xl">🎉</div>
+          <div className="text-6xl"></div>
           <h3 className="text-xl font-bold">Chúc mừng!</h3>
           <p className="text-gray-600 dark:text-gray-400">
             Bạn đã hoàn thành hướng dẫn. Hãy bắt đầu hành trình học tiếng Anh ngay!
           </p>
           
           <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-4 text-white">
-            <p className="font-medium">💡 Mẹo: Bắt đầu với Settings để nhập API Key</p>
+            <p className="font-medium"> Mẹo: Bắt đầu với Settings để nhập API Key</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mt-4">

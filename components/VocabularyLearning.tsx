@@ -216,7 +216,7 @@ export default function VocabularyLearning() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🧠 Học từ vựng thông minh
+             Học từ vựng thông minh
           </h1>
           <p className="text-gray-600">
             Hệ thống học từ vựng với thuật toán Spaced Repetition

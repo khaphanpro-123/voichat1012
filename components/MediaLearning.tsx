@@ -315,7 +315,7 @@ export default function MediaLearning() {
             <h1 className="text-4xl font-bold text-gray-900">Media Learning với Vision Engine</h1>
           </motion.div>
           <p className="text-gray-600 text-lg">
-            Học tiếng Việt từ Ảnh/Video với công nghệ Vision Engine 🔍✨
+            Học tiếng Việt từ Ảnh/Video với công nghệ Vision Engine 
           </p>
         </div>
 
@@ -337,7 +337,7 @@ export default function MediaLearning() {
               
               <div className="text-center mb-6">
                 <p className="text-gray-600 text-lg">
-                  Tải lên ảnh hoặc video, hệ thống sẽ phân tích nội dung và so sánh với mô tả của bạn 🔍🎯
+                  Tải lên ảnh hoặc video, hệ thống sẽ phân tích nội dung và so sánh với mô tả của bạn 
                 </p>
               </div>
               
@@ -458,26 +458,26 @@ export default function MediaLearning() {
                 <div className="space-y-2">
                   {mediaType === 'image' && (
                     <>
-                      <p className="text-gray-600">🔍 Nhận diện vật thể trong ảnh</p>
-                      <p className="text-gray-600">🎭 Phân tích hành động và cảm xúc</p>
-                      <p className="text-gray-600">🏞️ Xác định bối cảnh và địa điểm</p>
-                      <p className="text-gray-600">📝 Tạo mô tả chi tiết bằng tiếng Việt</p>
+                      <p className="text-gray-600"> Nhận diện vật thể trong ảnh</p>
+                      <p className="text-gray-600"> Phân tích hành động và cảm xúc</p>
+                      <p className="text-gray-600"> Xác định bối cảnh và địa điểm</p>
+                      <p className="text-gray-600"> Tạo mô tả chi tiết bằng tiếng Việt</p>
                     </>
                   )}
                   {mediaType === 'video' && (
                     <>
-                      <p className="text-gray-600">🎬 Trích xuất frames từ video</p>
-                      <p className="text-gray-600">🔍 Phân tích nội dung hình ảnh</p>
-                      <p className="text-gray-600">🎧 Chuyển đổi audio thành văn bản</p>
-                      <p className="text-gray-600">🎯 Kết hợp phân tích vision + audio</p>
+                      <p className="text-gray-600"> Trích xuất frames từ video</p>
+                      <p className="text-gray-600"> Phân tích nội dung hình ảnh</p>
+                      <p className="text-gray-600"> Chuyển đổi audio thành văn bản</p>
+                      <p className="text-gray-600"> Kết hợp phân tích vision + audio</p>
                     </>
                   )}
                   {mediaType === 'audio' && (
                     <>
-                      <p className="text-gray-600">🎧 Trích xuất âm thanh</p>
-                      <p className="text-gray-600">📝 Chuyển đổi thành văn bản tiếng Việt</p>
-                      <p className="text-gray-600">🔍 Phân tích phát âm và ngữ điệu</p>
-                      <p className="text-gray-600">🎯 Chuẩn bị cho việc so sánh</p>
+                      <p className="text-gray-600"> Trích xuất âm thanh</p>
+                      <p className="text-gray-600"> Chuyển đổi thành văn bản tiếng Việt</p>
+                      <p className="text-gray-600"> Phân tích phát âm và ngữ điệu</p>
+                      <p className="text-gray-600"> Chuẩn bị cho việc so sánh</p>
                     </>
                   )}
                 </div>
@@ -541,7 +541,7 @@ export default function MediaLearning() {
                       
                       {/* AI Caption */}
                       <div>
-                        <h4 className="font-semibold text-blue-800 mb-2">📝 Mô tả tổng quan:</h4>
+                        <h4 className="font-semibold text-blue-800 mb-2"> Mô tả tổng quan:</h4>
                         <p className="text-blue-700 bg-white p-3 rounded-lg">
                           {visionAnalysis.caption}
                         </p>
@@ -550,7 +550,7 @@ export default function MediaLearning() {
                       {/* Objects */}
                       {visionAnalysis.objects.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-blue-800 mb-2">🔍 Vật thể nhận diện:</h4>
+                          <h4 className="font-semibold text-blue-800 mb-2"> Vật thể nhận diện:</h4>
                           <div className="flex flex-wrap gap-2">
                             {visionAnalysis.objects.map((obj, index) => (
                               <span
@@ -567,7 +567,7 @@ export default function MediaLearning() {
                       {/* Actions */}
                       {visionAnalysis.actions.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-blue-800 mb-2">🎭 Hành động:</h4>
+                          <h4 className="font-semibold text-blue-800 mb-2"> Hành động:</h4>
                           <div className="flex flex-wrap gap-2">
                             {visionAnalysis.actions.map((action, index) => (
                               <span
@@ -583,7 +583,7 @@ export default function MediaLearning() {
 
                       {/* Scene */}
                       <div>
-                        <h4 className="font-semibold text-blue-800 mb-2">🏞️ Bối cảnh:</h4>
+                        <h4 className="font-semibold text-blue-800 mb-2"> Bối cảnh:</h4>
                         <p className="text-blue-700 bg-white p-2 rounded text-sm">
                           {visionAnalysis.scene}
                         </p>
@@ -592,7 +592,7 @@ export default function MediaLearning() {
                       {/* People Description */}
                       {visionAnalysis.people_description && (
                         <div>
-                          <h4 className="font-semibold text-blue-800 mb-2">👥 Mô tả người:</h4>
+                          <h4 className="font-semibold text-blue-800 mb-2"> Mô tả người:</h4>
                           <p className="text-blue-700 bg-white p-2 rounded text-sm">
                             {visionAnalysis.people_description}
                           </p>
@@ -605,7 +605,7 @@ export default function MediaLearning() {
                 {/* Audio Transcript for Video */}
                 {mediaType === 'video' && originalTranscript && (
                   <div className="mt-6">
-                    <h3 className="font-bold text-gray-900 mb-3">🎧 Nội dung audio:</h3>
+                    <h3 className="font-bold text-gray-900 mb-3"> Nội dung audio:</h3>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-gray-800">{originalTranscript}</p>
                     </div>
@@ -687,7 +687,7 @@ export default function MediaLearning() {
                       />
                       
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h4 className="font-semibold text-yellow-800 mb-2">💡 Gợi ý:</h4>
+                        <h4 className="font-semibold text-yellow-800 mb-2"> Gợi ý:</h4>
                         <ul className="text-yellow-700 text-sm space-y-1">
                           <li>• Mô tả những vật thể bạn nhìn thấy</li>
                           <li>• Nói về hành động đang diễn ra</li>
@@ -733,10 +733,10 @@ export default function MediaLearning() {
               <div className="space-y-6">
                 <Loader className="w-16 h-16 animate-spin text-blue-500 mx-auto" />
                 <div className="space-y-2">
-                  <p className="text-gray-600">🔍 So sánh với kết quả Vision Engine</p>
-                  <p className="text-gray-600">📊 Tính toán độ chính xác</p>
-                  <p className="text-gray-600">✅ Xác định điểm đúng/sai</p>
-                  <p className="text-gray-600">💡 Tạo phản hồi và gợi ý</p>
+                  <p className="text-gray-600"> So sánh với kết quả Vision Engine</p>
+                  <p className="text-gray-600"> Tính toán độ chính xác</p>
+                  <p className="text-gray-600"> Xác định điểm đúng/sai</p>
+                  <p className="text-gray-600"> Tạo phản hồi và gợi ý</p>
                 </div>
               </div>
             </motion.div>
@@ -771,7 +771,7 @@ export default function MediaLearning() {
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   {/* User Response */}
                   <div className="bg-blue-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-3">🗣️ Mô tả của bạn:</h4>
+                    <h4 className="font-semibold text-blue-800 mb-3"> Mô tả của bạn:</h4>
                     <div className="bg-white p-4 rounded-lg">
                       <p className="text-gray-800">{userResponse}</p>
                     </div>
@@ -779,7 +779,7 @@ export default function MediaLearning() {
 
                   {/* AI Analysis */}
                   <div className="bg-green-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-green-800 mb-3">🤖 Phân tích AI:</h4>
+                    <h4 className="font-semibold text-green-800 mb-3"> Phân tích AI:</h4>
                     <div className="bg-white p-4 rounded-lg">
                       <p className="text-gray-800">{visionAnalysis.caption}</p>
                     </div>
@@ -790,13 +790,13 @@ export default function MediaLearning() {
                 <div className="space-y-6">
                   {/* Accuracy Details */}
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-4">📊 Phân tích chi tiết:</h4>
+                    <h4 className="font-semibold text-gray-800 mb-4"> Phân tích chi tiết:</h4>
                     
                     <div className="grid md:grid-cols-2 gap-4">
                       {/* Correct Objects */}
                       {responseComparison.accuracy_details.objects_mentioned.length > 0 && (
                         <div>
-                          <h5 className="font-medium text-green-700 mb-2">✅ Vật thể đúng:</h5>
+                          <h5 className="font-medium text-green-700 mb-2"> Vật thể đúng:</h5>
                           <div className="flex flex-wrap gap-2">
                             {responseComparison.accuracy_details.objects_mentioned.map((obj, index) => (
                               <span key={index} className="px-2 py-1 bg-green-100 text-green-700 text-sm rounded">
@@ -810,7 +810,7 @@ export default function MediaLearning() {
                       {/* Missed Objects */}
                       {responseComparison.accuracy_details.objects_missed.length > 0 && (
                         <div>
-                          <h5 className="font-medium text-yellow-700 mb-2">⚠️ Vật thể bỏ sót:</h5>
+                          <h5 className="font-medium text-yellow-700 mb-2"> Vật thể bỏ sót:</h5>
                           <div className="flex flex-wrap gap-2">
                             {responseComparison.accuracy_details.objects_missed.map((obj, index) => (
                               <span key={index} className="px-2 py-1 bg-yellow-100 text-yellow-700 text-sm rounded">
@@ -824,7 +824,7 @@ export default function MediaLearning() {
                       {/* Incorrect Objects */}
                       {responseComparison.accuracy_details.objects_incorrect.length > 0 && (
                         <div>
-                          <h5 className="font-medium text-red-700 mb-2">❌ Vật thể sai:</h5>
+                          <h5 className="font-medium text-red-700 mb-2"> Vật thể sai:</h5>
                           <div className="flex flex-wrap gap-2">
                             {responseComparison.accuracy_details.objects_incorrect.map((obj, index) => (
                               <span key={index} className="px-2 py-1 bg-red-100 text-red-700 text-sm rounded">
@@ -838,7 +838,7 @@ export default function MediaLearning() {
                       {/* Correct Actions */}
                       {responseComparison.accuracy_details.actions_correct.length > 0 && (
                         <div>
-                          <h5 className="font-medium text-green-700 mb-2">✅ Hành động đúng:</h5>
+                          <h5 className="font-medium text-green-700 mb-2"> Hành động đúng:</h5>
                           <div className="flex flex-wrap gap-2">
                             {responseComparison.accuracy_details.actions_correct.map((action, index) => (
                               <span key={index} className="px-2 py-1 bg-green-100 text-green-700 text-sm rounded">
@@ -854,10 +854,10 @@ export default function MediaLearning() {
                   {/* Mistakes and Corrections */}
                   {responseComparison.mistakes && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                      <h4 className="font-semibold text-red-800 mb-3">🔴 Những điểm cần chú ý:</h4>
+                      <h4 className="font-semibold text-red-800 mb-3"> Những điểm cần chú ý:</h4>
                       <p className="text-red-700 mb-4">{responseComparison.mistakes}</p>
                       
-                      <h5 className="font-medium text-red-800 mb-2">💡 Câu mẫu chuẩn:</h5>
+                      <h5 className="font-medium text-red-800 mb-2"> Câu mẫu chuẩn:</h5>
                       <div className="bg-white p-4 rounded-lg">
                         <p className="text-red-700 font-medium">{responseComparison.correction}</p>
                       </div>
@@ -866,7 +866,7 @@ export default function MediaLearning() {
 
                   {/* Follow-up Question */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h4 className="font-semibold text-blue-800 mb-3">❓ Câu hỏi tiếp theo:</h4>
+                    <h4 className="font-semibold text-blue-800 mb-3"> Câu hỏi tiếp theo:</h4>
                     <p className="text-blue-700 text-lg">{responseComparison.followup}</p>
                     
                     <div className="mt-4">
@@ -1054,7 +1054,7 @@ export default function MediaLearning() {
                 {voiceRecorder.audioUrl && (
                   <div className="text-center">
                     <p className="text-gray-600 mb-4">
-                      ✅ Đã ghi âm xong! Hệ thống sẽ tự động so sánh với âm thanh gốc.
+                       Đã ghi âm xong! Hệ thống sẽ tự động so sánh với âm thanh gốc.
                     </p>
                   </div>
                 )}
@@ -1078,10 +1078,10 @@ export default function MediaLearning() {
               <div className="space-y-6">
                 <Loader className="w-16 h-16 animate-spin text-blue-500 mx-auto" />
                 <div className="space-y-2">
-                  <p className="text-gray-600">🎧 Phân tích âm thanh gốc</p>
-                  <p className="text-gray-600">🎤 Phân tích giọng nói của bạn</p>
-                  <p className="text-gray-600">🔍 So sánh phát âm và ngữ điệu</p>
-                  <p className="text-gray-600">📊 Tạo báo cáo chi tiết</p>
+                  <p className="text-gray-600"> Phân tích âm thanh gốc</p>
+                  <p className="text-gray-600"> Phân tích giọng nói của bạn</p>
+                  <p className="text-gray-600"> So sánh phát âm và ngữ điệu</p>
+                  <p className="text-gray-600"> Tạo báo cáo chi tiết</p>
                 </div>
               </div>
             </motion.div>
@@ -1129,7 +1129,7 @@ export default function MediaLearning() {
                 {/* Audio Comparison */}
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-700 mb-3">🎵 Âm thanh gốc:</h4>
+                    <h4 className="font-semibold text-gray-700 mb-3"> Âm thanh gốc:</h4>
                     {mediaPreview && (
                       <div className="space-y-3">
                         {mediaType === 'video' ? (
@@ -1151,7 +1151,7 @@ export default function MediaLearning() {
                   </div>
 
                   <div className="bg-blue-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-700 mb-3">🎤 Giọng nói của bạn:</h4>
+                    <h4 className="font-semibold text-gray-700 mb-3"> Giọng nói của bạn:</h4>
                     {userRecording && (
                       <div className="space-y-3">
                         <audio
@@ -1168,14 +1168,14 @@ export default function MediaLearning() {
                 {/* Transcription Comparison */}
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   <div>
-                    <h4 className="font-semibold text-gray-700 mb-3">📝 Văn bản gốc:</h4>
+                    <h4 className="font-semibold text-gray-700 mb-3"> Văn bản gốc:</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-gray-800">{originalTranscript}</p>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-700 mb-3">🎯 Văn bản từ giọng bạn:</h4>
+                    <h4 className="font-semibold text-gray-700 mb-3"> Văn bản từ giọng bạn:</h4>
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <p className="text-gray-800">{comparisonResult.userTranscript}</p>
                     </div>
@@ -1187,7 +1187,7 @@ export default function MediaLearning() {
                   {/* Pronunciation Errors */}
                   {comparisonResult.pronunciationErrors && comparisonResult.pronunciationErrors.length > 0 && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                      <h4 className="font-semibold text-red-800 mb-3">🔴 Lỗi phát âm cần khắc phục:</h4>
+                      <h4 className="font-semibold text-red-800 mb-3"> Lỗi phát âm cần khắc phục:</h4>
                       <div className="space-y-3">
                         {comparisonResult.pronunciationErrors.map((error: any, index: number) => (
                           <div key={index} className="bg-white p-4 rounded-lg">
@@ -1216,7 +1216,7 @@ export default function MediaLearning() {
                   {/* Positive Feedback */}
                   {comparisonResult.strengths && comparisonResult.strengths.length > 0 && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                      <h4 className="font-semibold text-green-800 mb-3">✅ Điểm mạnh của bạn:</h4>
+                      <h4 className="font-semibold text-green-800 mb-3"> Điểm mạnh của bạn:</h4>
                       <div className="space-y-2">
                         {comparisonResult.strengths.map((strength: string, index: number) => (
                           <div key={index} className="flex items-start gap-2">
@@ -1231,7 +1231,7 @@ export default function MediaLearning() {
                   {/* Improvement Suggestions */}
                   {comparisonResult.suggestions && comparisonResult.suggestions.length > 0 && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                      <h4 className="font-semibold text-yellow-800 mb-3">💡 Gợi ý cải thiện:</h4>
+                      <h4 className="font-semibold text-yellow-800 mb-3"> Gợi ý cải thiện:</h4>
                       <div className="space-y-2">
                         {comparisonResult.suggestions.map((suggestion: string, index: number) => (
                           <div key={index} className="flex items-start gap-2">
@@ -1491,7 +1491,7 @@ export default function MediaLearning() {
                       <div className="space-y-2">
                         {simplifiedResults.feedback.map((item: string, index: number) => (
                           <div key={index} className="flex items-center gap-2">
-                            {item.startsWith('✅') ? (
+                            {item.startsWith('') ? (
                               <CheckCircle className="w-4 h-4 text-green-500" />
                             ) : (
                               <XCircle className="w-4 h-4 text-red-500" />

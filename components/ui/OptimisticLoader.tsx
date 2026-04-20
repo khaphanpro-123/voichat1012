@@ -99,7 +99,7 @@ function BrainLoader({ size = "md" }: LoaderProps) {
       }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     >
-      🧠
+      
     </motion.div>
   );
 }

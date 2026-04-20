@@ -73,7 +73,7 @@ export default function ResultScreen({ result }: ResultScreenProps) {
             <Trophy className="w-10 h-10 text-white" />
           </motion.div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-            Your Personalized Vietnamese Plan is Ready! 🎉
+            Your Personalized Vietnamese Plan is Ready! 
           </h1>
           <p className="text-xl text-gray-600">
             Based on your assessment, here's your custom learning path
@@ -179,21 +179,21 @@ export default function ResultScreen({ result }: ResultScreenProps) {
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <span className="text-3xl">🎯</span>
+                <span className="text-3xl"></span>
               </div>
               <h4 className="font-bold text-gray-900 mb-2">Personalized</h4>
               <p className="text-sm text-gray-600">Tailored to your experience level and goals</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <span className="text-3xl">⚡</span>
+                <span className="text-3xl"></span>
               </div>
               <h4 className="font-bold text-gray-900 mb-2">Efficient</h4>
               <p className="text-sm text-gray-600">Focus on what matters most for your level</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <span className="text-3xl">🚀</span>
+                <span className="text-3xl"></span>
               </div>
               <h4 className="font-bold text-gray-900 mb-2">Proven</h4>
               <p className="text-sm text-gray-600">Based on language learning research</p>

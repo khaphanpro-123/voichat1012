@@ -281,7 +281,7 @@ export default function EnhancedFlashCard({
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-gray-600">
-                            🇺🇸 English Translation:
+                             English Translation:
                           </span>
                           <button
                             onClick={(e) => {
@@ -359,19 +359,19 @@ export default function EnhancedFlashCard({
               onClick={() => onRate(1)}
               className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-medium"
             >
-              😰 Rất khó
+               Rất khó
             </button>
             <button
               onClick={() => onRate(3)}
               className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition font-medium"
             >
-              🤔 Bình thường
+               Bình thường
             </button>
             <button
               onClick={() => onRate(5)}
               className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-medium"
             >
-              😊 Dễ
+               Dễ
             </button>
           </div>
         </motion.div>

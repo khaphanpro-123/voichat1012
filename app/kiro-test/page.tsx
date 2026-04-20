@@ -54,7 +54,7 @@ const KiroTestPage: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🔥 KIRO Vision Error Checker
+           KIRO Vision Error Checker
         </h1>
         <p className="text-gray-600">
           100% Comprehensive Debate Mode Analysis System
@@ -291,7 +291,7 @@ const KiroTestPage: React.FC = () => {
           {testResults.image_payload_check && (
             <Card>
               <CardHeader>
-                <CardTitle>🎯 Image Payload Check</CardTitle>
+                <CardTitle> Image Payload Check</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
@@ -321,7 +321,7 @@ const KiroTestPage: React.FC = () => {
           {testResults.hardcode_check && (
             <Card>
               <CardHeader>
-                <CardTitle>🎯 Hardcoded Accuracy Check</CardTitle>
+                <CardTitle> Hardcoded Accuracy Check</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">

@@ -141,7 +141,7 @@ export default function DebateModeWebGPU() {
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
           <h2 className="text-xl font-bold text-red-800 mb-2">
-            ❌ WebGPU Not Available
+             WebGPU Not Available
           </h2>
           <p className="text-red-700 mb-4">
             {qwen.error || whisper.error || matcher.error}
@@ -171,7 +171,7 @@ export default function DebateModeWebGPU() {
             </h1>
           </div>
           <p className="text-gray-600 text-lg">
-            🚀 100% Offline AI - No API Required
+             100% Offline AI - No API Required
           </p>
           <div className="flex items-center justify-center gap-4 mt-2 text-sm text-gray-500">
             <span className="flex items-center gap-1">
@@ -245,7 +245,7 @@ export default function DebateModeWebGPU() {
             className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-6"
           >
             <h3 className="font-bold text-blue-900 mb-3">
-              🤖 AI Vision Analysis:
+               AI Vision Analysis:
             </h3>
             <p className="text-gray-800 mb-3">{visionResult.description}</p>
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -314,7 +314,7 @@ export default function DebateModeWebGPU() {
             className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-6"
           >
             <h3 className="font-bold text-green-900 mb-2">
-              📝 Your Response:
+               Your Response:
             </h3>
             <p className="text-gray-800">{userResponse}</p>
           </motion.div>
@@ -328,7 +328,7 @@ export default function DebateModeWebGPU() {
             className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-8"
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-              🎯 Your Score
+               Your Score
             </h3>
             
             <div className="grid grid-cols-3 gap-6 mb-6">

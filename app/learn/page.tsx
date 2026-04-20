@@ -85,7 +85,7 @@ export default function LearnPage() {
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link href="/" className="text-2xl font-bold text-blue-600">
-                            🇻🇳 VietLearn
+                             VietLearn
                         </Link>
                     </div>
                     <nav className="flex items-center gap-6">

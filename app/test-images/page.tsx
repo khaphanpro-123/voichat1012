@@ -77,7 +77,7 @@ export default function TestImagesPage() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🧪 Test Hệ thống Tìm Hình ảnh
+             Test Hệ thống Tìm Hình ảnh
           </h1>
           <p className="text-gray-600">
             Kiểm tra độ chính xác của hệ thống tìm hình ảnh cho từ vựng tiếng Việt

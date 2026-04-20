@@ -287,14 +287,14 @@ export default function DocumentsPage() {
 
           {error && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-              <p className="mb-2">❌ {error}</p>
+              <p className="mb-2"> {error}</p>
               {(error.includes("502") || error.includes("khởi động")) && (
                 <button
                   onClick={handleUpload}
                   disabled={uploading}
                   className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 text-sm font-medium"
                 >
-                  🔄 Thử lại
+                   Thử lại
                 </button>
               )}
             </div>
@@ -331,14 +331,14 @@ export default function DocumentsPage() {
           <div className="space-y-4">
             <div className="p-4 bg-green-50 rounded-lg">
               <p className="text-green-800 font-medium">
-                ✅ Đã trích xuất thành công!
+                 Đã trích xuất thành công!
               </p>
               <p className="text-green-700 mt-2">
                 Số từ vựng: {result.flashcards?.length || 0}
               </p>
               {saving && (
                 <p className="text-green-600 mt-1 text-sm">
-                  💾 Đang lưu vào database...
+                   Đang lưu vào database...
                 </p>
               )}
             </div>
@@ -346,7 +346,7 @@ export default function DocumentsPage() {
             {/* Knowledge Graph Stats */}
             {result.knowledge_graph && (
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="font-bold text-lg mb-2">📊 Sơ đồ tư duy</h3>
+                <h3 className="font-bold text-lg mb-2"> Sơ đồ tư duy</h3>
                 <div className="flex gap-4 mb-3">
                   <div className="px-4 py-2 bg-blue-100 rounded-lg">
                     <div className="text-2xl font-bold text-blue-700">
@@ -365,7 +365,7 @@ export default function DocumentsPage() {
                 {/* Mindmap Links */}
                 <div className="space-y-2">
                   <p className="text-sm text-gray-600 mb-2">
-                    🔗 Xem sơ đồ tư duy trực quan:
+                     Xem sơ đồ tư duy trực quan:
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <a
@@ -374,7 +374,7 @@ export default function DocumentsPage() {
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
                     >
-                      🗺️ Markmap (Interactive)
+                       Markmap (Interactive)
                     </a>
                     <a
                       href={generateMermaidLink(result.knowledge_graph)}
@@ -382,7 +382,7 @@ export default function DocumentsPage() {
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-2"
                     >
-                      📊 Mermaid (Flowchart)
+                       Mermaid (Flowchart)
                     </a>
                     <a
                       href={generateExcalidrawLink(result.knowledge_graph)}
@@ -390,7 +390,7 @@ export default function DocumentsPage() {
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-2"
                     >
-                      ✏️ Excalidraw (Draw)
+                       Excalidraw (Draw)
                     </a>
                   </div>
                 </div>
@@ -425,7 +425,7 @@ export default function DocumentsPage() {
                         {/* Definition */}
                         {card.definition && (
                           <p className="text-sm text-gray-700 mb-2">
-                            <span className="font-semibold">📖 Nghĩa:</span> {card.definition}
+                            <span className="font-semibold"> Nghĩa:</span> {card.definition}
                           </p>
                         )}
 
@@ -450,7 +450,7 @@ export default function DocumentsPage() {
                         {/* Synonyms */}
                         {card.synonyms && card.synonyms.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            <span className="text-xs font-semibold text-gray-600">🔄 Từ đồng nghĩa:</span>
+                            <span className="text-xs font-semibold text-gray-600"> Từ đồng nghĩa:</span>
                             {card.synonyms.map((syn: string, i: number) => (
                               <span
                                 key={i}

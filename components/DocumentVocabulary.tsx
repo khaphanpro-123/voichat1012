@@ -143,7 +143,7 @@ export default function DocumentVocabulary() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 p-4">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold text-white text-center mb-6">
-          📄 Học Từ Vựng Từ Tài Liệu
+           Học Từ Vựng Từ Tài Liệu
         </h1>
         <p className="text-white/60 text-center mb-8">
           Upload PDF/Word/Ảnh → OCR → Trích xuất từ vựng → Tạo hình ảnh minh họa

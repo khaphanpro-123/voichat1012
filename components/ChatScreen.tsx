@@ -201,7 +201,7 @@ export default function ChatScreen() {
                     {/* Intent & Confidence Display */}
                     {message.intent && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                        <span>🎯 {message.intent}</span>
+                        <span> {message.intent}</span>
                         {message.confidence && (
                           <span className="font-semibold">({message.confidence}%)</span>
                         )}
@@ -211,7 +211,7 @@ export default function ChatScreen() {
                     {/* Document Results Indicator */}
                     {message.documentResults && message.documentResults.length > 0 && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                        <span>📚 Found {message.documentResults.length} docs</span>
+                        <span> Found {message.documentResults.length} docs</span>
                       </div>
                     )}
 
@@ -226,14 +226,14 @@ export default function ChatScreen() {
                     {/* SLA Metadata - Recasting Indicator */}
                     {message.slaMetadata?.recastUsed && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-700 text-xs rounded-full">
-                        <span>🔄 Recasting</span>
+                        <span> Recasting</span>
                       </div>
                     )}
 
                     {/* SLA Level Indicator */}
                     {message.slaMetadata?.learnerLevel && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
-                        <span>📊 {message.slaMetadata.learnerLevel}</span>
+                        <span> {message.slaMetadata.learnerLevel}</span>
                       </div>
                     )}
                   </div>
@@ -260,7 +260,7 @@ export default function ChatScreen() {
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-semibold text-gray-600 uppercase">🇻🇳 Tiếng Việt:</span>
+                          <span className="text-xs font-semibold text-gray-600 uppercase"> Tiếng Việt:</span>
                         </div>
                         <p className="text-gray-800 bg-white p-3 rounded-lg border border-blue-200 leading-relaxed">
                           {message.bilingualResponse.vietnamese}
@@ -269,7 +269,7 @@ export default function ChatScreen() {
                       
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-semibold text-gray-600 uppercase">🇺🇸 English:</span>
+                          <span className="text-xs font-semibold text-gray-600 uppercase"> English:</span>
                         </div>
                         <p className="text-gray-800 bg-white p-3 rounded-lg border border-blue-200 leading-relaxed italic">
                           {message.bilingualResponse.english}
@@ -369,7 +369,7 @@ export default function ChatScreen() {
                     className="mt-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-4"
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="w-5 h-5 text-green-600">📚</div>
+                      <div className="w-5 h-5 text-green-600"></div>
                       <h4 className="font-bold text-gray-900">Related Documents Found</h4>
                     </div>
                     
@@ -415,7 +415,7 @@ export default function ChatScreen() {
                     <div className="space-y-4">
                       <div>
                         <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
-                          🔴 Original:
+                           Original:
                         </p>
                         <p className="text-red-600 font-medium line-through bg-red-50 p-2 rounded">
                           {message.correction.original}
@@ -424,7 +424,7 @@ export default function ChatScreen() {
                       
                       <div>
                         <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
-                          ✅ Corrected:
+                           Corrected:
                         </p>
                         <p className="text-green-600 font-bold text-lg bg-green-50 p-2 rounded">
                           {message.correction.corrected}
@@ -435,7 +435,7 @@ export default function ChatScreen() {
                       {message.correction.errors && message.correction.errors.length > 0 && (
                         <div>
                           <p className="text-xs font-semibold text-gray-600 uppercase mb-2">
-                            🔍 Detailed Errors:
+                             Detailed Errors:
                           </p>
                           <div className="space-y-2">
                             {message.correction.errors.map((error, index) => (
@@ -462,7 +462,7 @@ export default function ChatScreen() {
                       
                       <div>
                         <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
-                          💡 Explanation:
+                           Explanation:
                         </p>
                         <p className="text-gray-700 text-sm leading-relaxed bg-blue-50 p-3 rounded">
                           {message.correction.explanation}

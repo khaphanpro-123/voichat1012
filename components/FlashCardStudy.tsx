@@ -188,7 +188,7 @@ export default function FlashCardStudy() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🃏 Flashcard Study
+             Flashcard Study
           </h1>
           <p className="text-gray-600">
             Học từ vựng với flashcard tương tác và hình ảnh minh họa
@@ -233,7 +233,7 @@ export default function FlashCardStudy() {
                 onClick={startStudySession}
                 className="px-12 py-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl font-bold rounded-3xl hover:shadow-2xl transition-all transform hover:scale-105"
               >
-                🚀 Bắt đầu học với Flashcard
+                 Bắt đầu học với Flashcard
               </button>
             </div>
 
@@ -318,7 +318,7 @@ export default function FlashCardStudy() {
               >
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                  🎉 Hoàn thành phiên học!
+                   Hoàn thành phiên học!
                 </h2>
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
                   <div>

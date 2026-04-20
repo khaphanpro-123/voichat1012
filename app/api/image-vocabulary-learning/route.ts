@@ -255,7 +255,7 @@ async function checkSentence(sentence: string, targetWord: string, keys: any) {
         explanationVi: "Hệ thống gặp lỗi khi phân tích. Vui lòng thử lại."
       }],
       vietnameseTranslation: "",
-      encouragement: "Hãy thử lại nhé! 💪"
+      encouragement: "Hãy thử lại nhé! "
     };
   }
   
@@ -405,8 +405,8 @@ export async function POST(req: NextRequest) {
             isCorrect, 
             correctWord,
             message: isCorrect 
-              ? "🎉 Chính xác! Bây giờ hãy viết 4 câu với từ này." 
-              : `❌ Chưa đúng. Từ đúng là "${correctWord}". Hãy viết 4 câu với từ này.`
+              ? " Chính xác! Bây giờ hãy viết 4 câu với từ này." 
+              : ` Chưa đúng. Từ đúng là "${correctWord}". Hãy viết 4 câu với từ này.`
           } 
         });
       }

@@ -72,19 +72,19 @@ export function HeroSection() {
           <div className="flex flex-wrap justify-center gap-8 mb-10">
             <div className="text-center flex flex-col items-center">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-2">
-                <span className="text-3xl">👨‍🎓</span>
+                <span className="text-3xl">‍</span>
               </div>
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Người học</p>
             </div>
             <div className="text-center flex flex-col items-center">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-2">
-                <span className="text-3xl">📚</span>
+                <span className="text-3xl"></span>
               </div>
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Từ vựng phong phú</p>
             </div>
             <div className="text-center flex flex-col items-center">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-2">
-                <span className="text-3xl">🤖</span>
+                <span className="text-3xl"></span>
               </div>
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">AI sẵn sàng 24/7</p>
             </div>

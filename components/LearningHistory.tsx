@@ -185,7 +185,7 @@ export default function LearningHistory({ userId }: { userId: string }) {
     return (
       <div className="text-center p-12 bg-white rounded-2xl shadow-lg">
         <div className="w-20 h-20 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-          <span className="text-4xl">🎉</span>
+          <span className="text-4xl"></span>
         </div>
         <h3 className="text-xl font-bold text-gray-700 mb-2">Chưa có lỗi nào được ghi nhận</h3>
         <p className="text-gray-500 mb-4">Bắt đầu học và viết câu để hệ thống ghi nhận lỗi tự động!</p>
@@ -337,7 +337,7 @@ export default function LearningHistory({ userId }: { userId: string }) {
                             <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
                               <CheckCircle className="w-5 h-5 text-green-500" />
                               <span className="text-green-700 font-medium">
-                                {deleting ? "Đang xóa lỗi khỏi hệ thống..." : "🎉 Chính xác! Lỗi này sẽ được xóa."}
+                                {deleting ? "Đang xóa lỗi khỏi hệ thống..." : " Chính xác! Lỗi này sẽ được xóa."}
                               </span>
                             </div>
                           ) : (

@@ -5,7 +5,7 @@ import { use } from "react";
 import PostCard from "@/components/PostCard";
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  // 🔥 Bắt buộc unwrap Promise bằng use()
+  //  Bắt buộc unwrap Promise bằng use()
   const { id } = use(params);
 
   const [user, setUser] = useState<any>(null);

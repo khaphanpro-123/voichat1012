@@ -218,16 +218,16 @@ export default function VietnameseLearnerSurvey() {
 
             const data = await res.json();
             if (data.success) {
-                setModalMessage("✅ Survey submitted successfully!");
+                setModalMessage(" Survey submitted successfully!");
                 setShowModal(true);
                 setShowResults(true);
             } else {
-                setModalMessage("❌ " + data.message);
+                setModalMessage(" " + data.message);
                 setShowModal(true);
             }
         } catch (error) {
             console.error("Error submitting survey:", error);
-            setModalMessage("⚠️ Unable to connect to server.");
+            setModalMessage(" Unable to connect to server.");
             setShowModal(true);
         } finally {
             setIsLoading(false);

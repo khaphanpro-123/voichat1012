@@ -158,7 +158,7 @@ export default function GuidePage() {
           className="text-center mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            📚 Hướng dẫn sử dụng
+             Hướng dẫn sử dụng
           </h1>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Làm theo các bước dưới đây để bắt đầu hành trình học tiếng Anh cùng AI
@@ -174,7 +174,7 @@ export default function GuidePage() {
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold mb-2">🚀 Bắt đầu nhanh</h2>
+              <h2 className="text-xl font-bold mb-2"> Bắt đầu nhanh</h2>
               <p className="opacity-90">
                 Bước quan trọng nhất: Lấy API Key miễn phí từ Google để sử dụng các tính năng AI
               </p>
@@ -289,7 +289,7 @@ export default function GuidePage() {
                             <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
                               <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                               <p className="text-sm text-blue-700 dark:text-blue-300">
-                                💡 {step.tip}
+                                 {step.tip}
                               </p>
                             </div>
                           )}
@@ -371,7 +371,7 @@ export default function GuidePage() {
           className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg"
         >
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-            ❓ Câu hỏi thường gặp
+             Câu hỏi thường gặp
           </h2>
           <div className="space-y-4">
             <div className="border-b dark:border-gray-700 pb-4">

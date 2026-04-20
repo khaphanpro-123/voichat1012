@@ -25,7 +25,7 @@ export default function DashboardNewPage() {
           animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         >
-          🧠
+          
         </motion.div>
         <motion.p 
           className="text-gray-500"

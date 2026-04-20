@@ -205,7 +205,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
           <div className="p-6 border-b border-gray-200">
             <Link href="/dashboard-new" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">🇬🇧</span>
+                <span className="text-2xl"></span>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">EnglishPal</h1>

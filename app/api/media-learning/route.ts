@@ -716,9 +716,9 @@ async function evaluateListeningAnswers(
         
         if (isCorrect) {
           correctCount++;
-          feedback.push(`✅ Câu ${index + 1}: Đúng!`);
+          feedback.push(` Câu ${index + 1}: Đúng!`);
         } else {
-          feedback.push(`❌ Câu ${index + 1}: Sai. Đáp án đúng: ${correct.blanks.join(', ')}`);
+          feedback.push(` Câu ${index + 1}: Sai. Đáp án đúng: ${correct.blanks.join(', ')}`);
           weakAreas.push('fill-in-blanks');
         }
       });
@@ -732,9 +732,9 @@ async function evaluateListeningAnswers(
         
         if (userAnswer === correct.correct) {
           correctCount++;
-          feedback.push(`✅ Câu hỏi ${index + 1}: Đúng!`);
+          feedback.push(` Câu hỏi ${index + 1}: Đúng!`);
         } else {
-          feedback.push(`❌ Câu hỏi ${index + 1}: Sai. Đáp án đúng: ${correct.options[correct.correct]}`);
+          feedback.push(` Câu hỏi ${index + 1}: Sai. Đáp án đúng: ${correct.options[correct.correct]}`);
           weakAreas.push('multiple-choice');
         }
       });
@@ -750,9 +750,9 @@ async function evaluateListeningAnswers(
         
         if (isCorrect) {
           correctCount++;
-          feedback.push(`✅ Sắp xếp câu ${index + 1}: Đúng!`);
+          feedback.push(` Sắp xếp câu ${index + 1}: Đúng!`);
         } else {
-          feedback.push(`❌ Sắp xếp câu ${index + 1}: Sai. Thứ tự đúng: ${correct.correctOrder.join(', ')}`);
+          feedback.push(` Sắp xếp câu ${index + 1}: Sai. Thứ tự đúng: ${correct.correctOrder.join(', ')}`);
           weakAreas.push('sentence-order');
         }
       });
@@ -1007,17 +1007,17 @@ export async function GET() {
     success: true,
     message: "Enhanced Media Learning API with Vision Engine is running",
     features: [
-      "🔍 Vision Engine - Image Content Analysis",
-      "🎬 Video Frame Analysis + Audio Transcription", 
-      "🎯 User Response Comparison with Vision Data",
-      "📝 Audio Transcription (Whisper-compatible)",
-      "🎤 Pronunciation Comparison",
-      "📚 Content Simplification by Level",
-      "📖 Vocabulary Extraction",
-      "🎧 Listening Exercises Generation",
-      "🗣️ Shadowing Mode",
-      "✅ Automatic Evaluation",
-      "📊 Progress Tracking"
+      " Vision Engine - Image Content Analysis",
+      " Video Frame Analysis + Audio Transcription", 
+      " User Response Comparison with Vision Data",
+      " Audio Transcription (Whisper-compatible)",
+      " Pronunciation Comparison",
+      " Content Simplification by Level",
+      " Vocabulary Extraction",
+      " Listening Exercises Generation",
+      " Shadowing Mode",
+      " Automatic Evaluation",
+      " Progress Tracking"
     ],
     visionCapabilities: {
       "objects": "Nhận diện vật thể trong ảnh/video",

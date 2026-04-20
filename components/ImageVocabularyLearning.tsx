@@ -137,14 +137,14 @@ const IMAGE_DATABASE = [
 ];
 
 const CATEGORIES = [
-  { id: "all", label: "Tất cả", icon: "🌟" },
-  { id: "animals", label: "Động vật", icon: "🐾" },
-  { id: "objects", label: "Đồ vật", icon: "📦" },
-  { id: "food", label: "Thức ăn", icon: "🍎" },
-  { id: "activities", label: "Hoạt động", icon: "🏃" },
-  { id: "nature", label: "Thiên nhiên", icon: "🌳" },
-  { id: "places", label: "Địa điểm", icon: "🏠" },
-  { id: "transportation", label: "Phương tiện", icon: "🚗" },
+  { id: "all", label: "Tất cả", icon: "" },
+  { id: "animals", label: "Động vật", icon: "" },
+  { id: "objects", label: "Đồ vật", icon: "" },
+  { id: "food", label: "Thức ăn", icon: "" },
+  { id: "activities", label: "Hoạt động", icon: "" },
+  { id: "nature", label: "Thiên nhiên", icon: "" },
+  { id: "places", label: "Địa điểm", icon: "" },
+  { id: "transportation", label: "Phương tiện", icon: "" },
 ];
 
 // Image refresh cycle (10 days)
@@ -297,14 +297,14 @@ export default function ImageVocabularyLearning() {
     setGuessAttempts(newAttempts);
 
     if (isCorrect) {
-      setGuessResult({ isCorrect: true, message: "🎉 Chính xác! Bạn đã nhập đúng từ!" });
+      setGuessResult({ isCorrect: true, message: " Chính xác! Bạn đã nhập đúng từ!" });
       setTimeout(() => setStep("sentences"), 1500);
     } else {
       if (newAttempts >= 3) {
         setShowAnswer(true);
-        setGuessResult({ isCorrect: false, message: `❌ Sai 3 lần. Từ đúng là "${selectedImage.word}"` });
+        setGuessResult({ isCorrect: false, message: ` Sai 3 lần. Từ đúng là "${selectedImage.word}"` });
       } else {
-        setGuessResult({ isCorrect: false, message: `❌ Chưa đúng! Còn ${3 - newAttempts} lần thử.` });
+        setGuessResult({ isCorrect: false, message: ` Chưa đúng! Còn ${3 - newAttempts} lần thử.` });
       }
       setUserGuess("");
     }
@@ -550,8 +550,8 @@ export default function ImageVocabularyLearning() {
             <Clock className={`w-4 h-4 ${daysLeft === 0 ? "text-green-400" : "text-blue-400"}`} />
             <span className={`text-sm ${daysLeft === 0 ? "text-green-300" : "text-blue-300"}`}>
               {daysLeft === 0
-                ? "🔄 Hôm nay thay ảnh — kho đã cập nhật!"
-                : `🕒 Còn ${daysLeft} ngày để thay ảnh mới (${IMAGE_DATABASE.length} ảnh trong kho)`
+                ? " Hôm nay thay ảnh — kho đã cập nhật!"
+                : ` Còn ${daysLeft} ngày để thay ảnh mới (${IMAGE_DATABASE.length} ảnh trong kho)`
               }
             </span>
           </div>
@@ -1051,7 +1051,7 @@ export default function ImageVocabularyLearning() {
                             )}
 
                             {s.vietnameseTranslation && (
-                              <p className="text-white/60 text-sm mt-1">🇻🇳 {s.vietnameseTranslation}</p>
+                              <p className="text-white/60 text-sm mt-1"> {s.vietnameseTranslation}</p>
                             )}
 
                             {/* Grammar errors */}
@@ -1071,7 +1071,7 @@ export default function ImageVocabularyLearning() {
                                       )}
                                     </div>
                                     {e.errorMessage && (
-                                      <p className="text-red-300 text-xs mb-1">❌ {e.errorMessage}</p>
+                                      <p className="text-red-300 text-xs mb-1"> {e.errorMessage}</p>
                                     )}
                                     <div className="flex items-center gap-2">
                                       <span className="text-red-300 line-through">{e.original || e.errorWord}</span>
@@ -1079,7 +1079,7 @@ export default function ImageVocabularyLearning() {
                                       <span className="text-green-300 font-medium">{e.corrected}</span>
                                     </div>
                                     {e.explanationVi && (
-                                      <p className="text-white/60 text-xs mt-1 italic">💡 {e.explanationVi}</p>
+                                      <p className="text-white/60 text-xs mt-1 italic"> {e.explanationVi}</p>
                                     )}
                                   </div>
                                 ))}
@@ -1090,7 +1090,7 @@ export default function ImageVocabularyLearning() {
                             {s.encouragement && (
                               <div className={`mt-2 p-2 rounded-lg ${s.isCorrect ? "bg-green-500/20" : "bg-yellow-500/20"}`}>
                                 <p className={`text-sm ${s.isCorrect ? "text-green-300" : "text-yellow-300"}`}>
-                                  💬 {s.encouragement}
+                                   {s.encouragement}
                                 </p>
                               </div>
                             )}

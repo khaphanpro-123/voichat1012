@@ -143,7 +143,7 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     message: "Visual Language Tutor API",
-    status: hasKey ? "✅ Ready (Gemini)" : "❌ API Key Missing",
+    status: hasKey ? " Ready (Gemini)" : " API Key Missing",
     model: "Gemini 1.5 Flash"
   });
 }

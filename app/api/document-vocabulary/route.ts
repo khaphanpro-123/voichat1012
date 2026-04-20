@@ -160,8 +160,8 @@ export async function GET() {
     success: true,
     message: "Document Vocabulary API",
     status: {
-      gemini: hasGemini ? "✅ Ready" : "❌ Missing",
-      openai: hasOpenAI ? "✅ Ready (DALL-E)" : "❌ Missing"
+      gemini: hasGemini ? " Ready" : " Missing",
+      openai: hasOpenAI ? " Ready (DALL-E)" : " Missing"
     },
     actions: { 
       extract: "Extract vocabulary from text (Gemini)", 

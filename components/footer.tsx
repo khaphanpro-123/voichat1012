@@ -20,7 +20,7 @@ export function Footer() {
           {/* Logo & Description */}
           <div>
             <Link href="/" className="flex items-center space-x-2 mb-4">
-              <span className="text-3xl">🧠</span>
+              <span className="text-3xl"></span>
               <span className="text-2xl font-extrabold">L2-BRAIN</span>
             </Link>
             <p className="text-gray-400 mb-6">
@@ -66,7 +66,7 @@ export function Footer() {
             <h3 className="text-lg font-bold mb-4">Liên hệ</h3>
             <ul className="space-y-3 text-gray-400">
               <li className="flex items-center space-x-3">
-                <span className="text-primary">👤</span>
+                <span className="text-primary"></span>
                 <span>Phan Văn Kha</span>
               </li>
               <li className="flex items-center space-x-3">

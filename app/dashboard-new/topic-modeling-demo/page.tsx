@@ -100,7 +100,7 @@ Sustainable development requires innovative approaches that balance economic gro
         if (data.topics && data.topics.length > 0) {
           try {
             localStorage.setItem('recent_topics', JSON.stringify(data.topics));
-            console.log("🎯 Saved topics to localStorage for vocabulary page");
+            console.log(" Saved topics to localStorage for vocabulary page");
           } catch (error) {
             console.error("Error saving topics to localStorage:", error);
           }
@@ -128,7 +128,7 @@ Sustainable development requires innovative approaches that balance economic gro
   };
 
   const getTopicIcon = (index: number) => {
-    const icons = ['🤖', '🌍', '⚡', '🔬', '🌱', '💡'];
+    const icons = ['', '', '', '', '', ''];
     return icons[index % icons.length];
   };
 
@@ -189,7 +189,7 @@ Sustainable development requires innovative approaches that balance economic gro
               variant="outline"
               className="w-full"
             >
-              📄 Tải Sample Text (AI & Climate Change)
+               Tải Sample Text (AI & Climate Change)
             </Button>
             
             <Textarea
@@ -261,7 +261,7 @@ Sustainable development requires innovative approaches that balance economic gro
                 {result.topics && result.topics.length > 0 ? (
                   <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="text-green-700 font-semibold">
-                      ✅ Topic Modeling hoạt động!
+                       Topic Modeling hoạt động!
                     </div>
                     <div className="text-xs text-green-600 mt-1">
                       Đã phân nhóm thành {result.topics.length} chủ đề
@@ -270,7 +270,7 @@ Sustainable development requires innovative approaches that balance economic gro
                 ) : (
                   <div className="text-center p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="text-red-700 font-semibold">
-                      ❌ Không tìm thấy topics
+                       Không tìm thấy topics
                     </div>
                     <div className="text-xs text-red-600 mt-1">
                       Có thể do không đủ từ vựng hoặc lỗi clustering
@@ -316,7 +316,7 @@ Sustainable development requires innovative approaches that balance economic gro
                   {(topic.topic_name || topic.topic_label) && (
                     <div className="mb-3 p-2 bg-white bg-opacity-50 rounded-lg">
                       <p className="text-sm font-semibold text-gray-700">
-                        📌 {topic.topic_name || topic.topic_label}
+                         {topic.topic_name || topic.topic_label}
                       </p>
                     </div>
                   )}
@@ -325,7 +325,7 @@ Sustainable development requires innovative approaches that balance economic gro
                   {topic.core_phrase && (
                     <div className="mb-3 p-2 bg-yellow-100 bg-opacity-70 rounded-lg">
                       <p className="text-xs text-yellow-800">
-                        🎯 <strong>Từ khóa chính:</strong> {topic.core_phrase}
+                         <strong>Từ khóa chính:</strong> {topic.core_phrase}
                       </p>
                     </div>
                   )}
@@ -337,7 +337,7 @@ Sustainable development requires innovative approaches that balance economic gro
                       {topic.items.filter(item => item.type === 'phrase').length > 0 && (
                         <div>
                           <p className="text-xs font-semibold text-green-700 mb-1">
-                            🔤 Cụm từ:
+                             Cụm từ:
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {topic.items
@@ -364,7 +364,7 @@ Sustainable development requires innovative approaches that balance economic gro
                       {topic.items.filter(item => item.type === 'word').length > 0 && (
                         <div>
                           <p className="text-xs font-semibold text-blue-700 mb-1">
-                            📝 Từ đơn:
+                             Từ đơn:
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {topic.items
@@ -396,7 +396,7 @@ Sustainable development requires innovative approaches that balance economic gro
               <div className="flex items-start gap-3">
                 <Network className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-1">💡 Cách hoạt động:</p>
+                  <p className="font-semibold mb-1"> Cách hoạt động:</p>
                   <p className="text-xs leading-relaxed">
                     1. Hệ thống trích xuất từ vựng từ văn bản<br/>
                     2. Tạo semantic embeddings cho mỗi từ/cụm từ<br/>
@@ -413,7 +413,7 @@ Sustainable development requires innovative approaches that balance economic gro
       {/* Instructions */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>📖 Hướng dẫn sử dụng</CardTitle>
+          <CardTitle> Hướng dẫn sử dụng</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex items-start gap-3">

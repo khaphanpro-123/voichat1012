@@ -228,7 +228,7 @@ export default function PronunciationPage() {
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-2">Start Speaking!</h2>
               <p className="text-gray-500 text-sm max-w-xs mb-2">Press the mic and speak in English.</p>
-              <p className="text-gray-400 text-xs max-w-xs mb-6">Your voice will be recorded so you can listen back. If you mispronounce a word, tap the <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-xs font-medium">🔊 /word/</span> button to hear the correct pronunciation.</p>
+              <p className="text-gray-400 text-xs max-w-xs mb-6">Your voice will be recorded so you can listen back. If you mispronounce a word, tap the <span className="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-xs font-medium"> /word/</span> button to hear the correct pronunciation.</p>
               <div className="grid grid-cols-2 gap-2 text-xs text-left max-w-xs">
                 {["How are you today?", "What's the weather like?", "Tell me about yourself", "I want to learn English"].map(s => (
                   <div key={s} className="bg-white rounded-xl px-3 py-2 shadow-sm border border-violet-100 text-gray-600 italic">"{s}"</div>

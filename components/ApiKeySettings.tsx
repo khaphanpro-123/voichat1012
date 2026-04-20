@@ -164,7 +164,7 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
                 m.available ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
               }`}>
                 <div className="font-medium truncate">{m.model}</div>
-                <div className="text-white/60 text-xs">{m.available ? `✓ ${m.responseTime}ms` : `✗ ${m.error}`}</div>
+                <div className="text-white/60 text-xs">{m.available ? ` ${m.responseTime}ms` : ` ${m.error}`}</div>
               </div>
             ))}
           </div>
@@ -201,7 +201,7 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
         {hasKey ? (
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <div className="flex-1 bg-white/5 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-green-400 font-mono text-xs sm:text-sm break-all">
-              ✓ {preview}
+               {preview}
             </div>
             <button onClick={() => deleteKey(keyType)} disabled={loading}
               className="w-full sm:w-auto px-4 py-2 sm:py-3 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition text-sm">
@@ -217,7 +217,7 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
                 className="w-full bg-white/5 border border-white/20 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white placeholder-white/40 pr-10 text-sm sm:text-base" />
               <button onClick={() => setShowKeys(prev => ({ ...prev, [keyType]: !prev[keyType] }))}
                 className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-1">
-                {showKeys[keyType] ? '🙈' : '👁️'}
+                {showKeys[keyType] ? '' : ''}
               </button>
             </div>
             <button onClick={() => saveKey(keyType)} disabled={!keys[keyType] || loading}
@@ -234,7 +234,7 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20">
       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <span className="text-xl sm:text-2xl">🔑</span>
+        <span className="text-xl sm:text-2xl"></span>
         <h2 className="text-lg sm:text-xl font-bold text-white">Cấu hình API Keys</h2>
       </div>
 
@@ -245,7 +245,7 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
       {/* Recommendation Banner */}
       <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-lg sm:rounded-xl border border-orange-500/30">
         <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
-          <span className="text-xl sm:text-2xl">💡</span>
+          <span className="text-xl sm:text-2xl"></span>
           <div className="flex-1">
             <h3 className="text-white font-semibold text-sm sm:text-base mb-1">Khuyên dùng: Groq hoặc Cohere (MIỄN PHÍ!)</h3>
             <p className="text-white/70 text-xs sm:text-sm mb-2 sm:mb-3">
@@ -254,11 +254,11 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
             <div className="flex flex-col sm:flex-row gap-2">
               <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-600 transition">
-                🟠 Lấy Groq Key →
+                 Lấy Groq Key →
               </a>
               <a href="https://dashboard.cohere.com/api-keys" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-purple-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-600 transition">
-                🟣 Lấy Cohere Key →
+                 Lấy Cohere Key →
               </a>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
 
       {message && (
         <div className={`mb-3 sm:mb-4 p-3 rounded-lg flex items-center gap-2 text-sm ${message.type === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-          <span>{message.type === 'success' ? '✓' : '⚠️'}</span>
+          <span>{message.type === 'success' ? '' : ''}</span>
           <span className="break-words">{message.text}</span>
         </div>
       )}
@@ -280,12 +280,12 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
       <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-white/5 rounded-lg sm:rounded-xl border border-white/10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg sm:text-xl">⚡</span>
+            <span className="text-lg sm:text-xl"></span>
             <span className="text-white font-medium text-sm sm:text-base">Kiểm tra trạng thái API</span>
           </div>
           <button onClick={checkApiStatus} disabled={checkingStatus}
             className="w-full sm:w-auto px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition flex items-center justify-center gap-2 text-xs sm:text-sm disabled:opacity-50">
-            <span className={checkingStatus ? 'animate-spin' : ''}>🔄</span>
+            <span className={checkingStatus ? 'animate-spin' : ''}></span>
             {checkingStatus ? 'Đang kiểm tra...' : 'Kiểm tra'}
           </button>
         </div>
@@ -300,10 +300,10 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
                 {apiStatus.summary.availableModels}/{apiStatus.summary.totalModels} sẵn sàng
               </span>
             </div>
-            {renderProviderSection(apiStatus.gemini, '🔷', 'Google Gemini')}
-            {renderProviderSection(apiStatus.openai, '🟢', 'OpenAI')}
-            {renderProviderSection(apiStatus.groq, '🟠', 'Groq (FREE)')}
-            {renderProviderSection(apiStatus.cohere, '🟣', 'Cohere (FREE)')}
+            {renderProviderSection(apiStatus.gemini, '', 'Google Gemini')}
+            {renderProviderSection(apiStatus.openai, '', 'OpenAI')}
+            {renderProviderSection(apiStatus.groq, '', 'Groq (FREE)')}
+            {renderProviderSection(apiStatus.cohere, '', 'Cohere (FREE)')}
             <div className={`p-3 rounded-lg text-xs sm:text-sm break-words ${
               apiStatus.summary.availableModels === 0 ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'
             }`}>
@@ -317,16 +317,16 @@ export default function ApiKeySettings({ userId = 'anonymous' }: { userId?: stri
       </div>
 
       {/* API Key Inputs */}
-      {renderKeyInput('groq', '🟠', 'Groq API Key', 'gsk_...', 'https://console.groq.com/keys', 
-        '⚡ Khuyên dùng! Miễn phí, nhanh. Dùng Llama 3.3 70B, Mixtral', true)}
+      {renderKeyInput('groq', '', 'Groq API Key', 'gsk_...', 'https://console.groq.com/keys', 
+        ' Khuyên dùng! Miễn phí, nhanh. Dùng Llama 3.3 70B, Mixtral', true)}
       
-      {renderKeyInput('cohere', '🟣', 'Cohere API Key', 'your-cohere-key', 'https://dashboard.cohere.com/api-keys', 
-        '⚡ Miễn phí! Dùng Command-R, Command-R-Plus', true)}
+      {renderKeyInput('cohere', '', 'Cohere API Key', 'your-cohere-key', 'https://dashboard.cohere.com/api-keys', 
+        ' Miễn phí! Dùng Command-R, Command-R-Plus', true)}
       
-      {renderKeyInput('gemini', '🔷', 'Google Gemini API Key', 'AIza...', 'https://aistudio.google.com/app/apikey', 
+      {renderKeyInput('gemini', '', 'Google Gemini API Key', 'AIza...', 'https://aistudio.google.com/app/apikey', 
         'Dùng cho: Phân tích hình ảnh, Voice Chat')}
       
-      {renderKeyInput('openai', '🟢', 'OpenAI API Key', 'sk-proj-...', 'https://platform.openai.com/api-keys', 
+      {renderKeyInput('openai', '', 'OpenAI API Key', 'sk-proj-...', 'https://platform.openai.com/api-keys', 
         'Dùng cho: Phân tích hình ảnh, Tạo ảnh, Giọng nói')}
     </div>
   );

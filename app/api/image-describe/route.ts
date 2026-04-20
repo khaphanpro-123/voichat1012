@@ -158,7 +158,7 @@ Return ONLY valid JSON:
       feedback: "Good effort! Your description captures some elements of the image.",
       corrections: [],
       suggestions: ["Try to add more details about what you see."],
-      encouragement: "Keep practicing! You're doing great! 💪"
+      encouragement: "Keep practicing! You're doing great! "
     };
   }
 }
@@ -240,7 +240,7 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     message: "Image Describe API - Practice describing images in English",
-    status: hasApiKey ? "✅ Ready" : "❌ API Key Missing",
+    status: hasApiKey ? " Ready" : " API Key Missing",
     actions: {
       analyze: "Upload image, get description suggestions",
       check: "Submit your description, get feedback"

@@ -20,7 +20,7 @@ export function AssessmentComplete() {
         // ví dụ API trả về { count: 2 }
         setAssessmentCount(data.count)
       } catch (error) {
-        console.error("❌ Lỗi khi tải dữ liệu đánh giá:", error)
+        console.error(" Lỗi khi tải dữ liệu đánh giá:", error)
         setAssessmentCount(0) // fallback
       } finally {
         setLoading(false)
@@ -70,7 +70,7 @@ export function AssessmentComplete() {
                 {canViewResults ? (
                   <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                     <p className="text-green-800 dark:text-green-200 font-medium mb-2">
-                      🎉 Bạn đã đủ dữ liệu để xem kết quả phân tích AI!
+                       Bạn đã đủ dữ liệu để xem kết quả phân tích AI!
                     </p>
                     <Link href="/dashboard/results">
                       <Button>

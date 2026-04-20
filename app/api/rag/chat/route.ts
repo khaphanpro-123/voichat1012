@@ -37,7 +37,7 @@ function getCohere(): CohereClient {
   return cohereClient;
 }
 
-// 🔹 Tạo embedding bằng Cohere
+//  Tạo embedding bằng Cohere
 async function embedText(text: string): Promise<number[]> {
   const resp = await getCohere().embed({
     model: "embed-multilingual-v3.0",
@@ -48,7 +48,7 @@ async function embedText(text: string): Promise<number[]> {
   return (resp.embeddings as number[][])[0];
 }
 
-// 🔹 Convert conversation từ OpenAI format → Cohere format
+//  Convert conversation từ OpenAI format → Cohere format
 function convertConversation(conv: Array<{ role: string; content: string }>) {
   return conv
     .filter((msg) => msg.role === "user" || msg.role === "assistant")
@@ -77,9 +77,9 @@ export async function POST(req: NextRequest) {
     // 2) Debug: check index info trước khi query
     try {
       const stats = await index.describeIndexStats();
-      console.log("✅ Pinecone index stats:", stats);
+      console.log(" Pinecone index stats:", stats);
     } catch (err) {
-      console.error("❌ Không thể lấy index stats từ Pinecone:", err);
+      console.error(" Không thể lấy index stats từ Pinecone:", err);
     }
 
     // 3) Tạo filter (chỉ thêm khi có giá trị thật)
@@ -128,7 +128,7 @@ Nếu không tìm thấy dữ liệu, hãy nói rõ "không có đủ dữ liệ
       sources: hits.slice(0, 5),
     });
   } catch (err: any) {
-    console.error("❌ Chat error:", err);
+    console.error(" Chat error:", err);
     return NextResponse.json(
       { success: false, error: err.message },
       { status: 500 }

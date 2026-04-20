@@ -459,7 +459,7 @@ export default function EnglishLearnerSurvey({ userId, onComplete }: EnglishLear
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-white mb-2">📋 Khảo sát học tiếng Anh</h2>
+        <h2 className="text-xl font-bold text-white mb-2"> Khảo sát học tiếng Anh</h2>
         <p className="text-white/60 text-sm">Giúp chúng tôi hiểu nhu cầu học tập của bạn để tạo kế hoạch phù hợp</p>
       </div>
 
@@ -496,7 +496,7 @@ export default function EnglishLearnerSurvey({ userId, onComplete }: EnglishLear
                   : "bg-white/10 text-white/60 hover:bg-white/20"
               }`}
             >
-              {idx + 1}. {isComplete && "✓"}
+              {idx + 1}. {isComplete && ""}
             </button>
           );
         })}

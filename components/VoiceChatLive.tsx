@@ -524,7 +524,7 @@ export default function VoiceChatLive() {
       if (data.success) {
         // Hiển thị thông báo thành công và tiếp tục luyện phát âm
         setShowVocabPrompt(false);
-        setSuccessMessage(`✅ Đã lưu câu vào từ vựng!`);
+        setSuccessMessage(` Đã lưu câu vào từ vựng!`);
         setTimeout(() => {
           setSuccessMessage(null);
           startPracticeAfterVocab();
@@ -575,7 +575,7 @@ export default function VoiceChatLive() {
               <p>{msg.content}</p>
               {msg.grammarFeedback?.hasErrors && showVietnamese && (
                 <div className="mt-2 pt-2 border-t border-white/20 text-xs">
-                  <p className="text-yellow-300">📝 {msg.grammarFeedback.suggestion}</p>
+                  <p className="text-yellow-300"> {msg.grammarFeedback.suggestion}</p>
                   {msg.grammarFeedback.vietnameseHint && (
                     <p className="text-white/60 mt-1">{msg.grammarFeedback.vietnameseHint}</p>
                   )}
@@ -619,8 +619,8 @@ export default function VoiceChatLive() {
           </motion.div>
         )}
         <p className="text-white/60 text-sm">
-          {isListening ? "🎤 Đang nghe... (tự động gửi khi bạn ngừng nói)" 
-            : isSpeaking ? "🔊 Đang phát âm thanh..."
+          {isListening ? " Đang nghe... (tự động gửi khi bạn ngừng nói)" 
+            : isSpeaking ? " Đang phát âm thanh..."
             : "Nhấn mic để nói hoặc gõ tin nhắn"}
         </p>
         <div className="flex items-center gap-4">
@@ -658,7 +658,7 @@ export default function VoiceChatLive() {
       {practiceStep === "input" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 p-4">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">🎯 Luyện phát âm</h2>
+            <h2 className="text-2xl font-bold text-white mb-2"> Luyện phát âm</h2>
             <p className="text-white/60">Nhập câu bạn muốn luyện phát âm</p>
           </div>
           <div className="w-full max-w-md">
@@ -691,7 +691,7 @@ export default function VoiceChatLive() {
                         <span className="text-green-400 font-bold">{err.corrected}</span>
                       </div>
                       <p className="text-white/70 text-sm">{err.explanation}</p>
-                      <p className="text-white/50 text-xs mt-1">🇻🇳 {err.explanationVi}</p>
+                      <p className="text-white/50 text-xs mt-1"> {err.explanationVi}</p>
                     </div>
                   ))}
                 </div>
@@ -708,7 +708,7 @@ export default function VoiceChatLive() {
                     onClick={useCorrectedSentence}
                     className="flex-1 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600"
                   >
-                    ✓ Dùng câu đúng
+                     Dùng câu đúng
                   </button>
                   <button
                     onClick={proceedWithOriginal}
@@ -806,7 +806,7 @@ export default function VoiceChatLive() {
       {practiceStep === "listen" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 p-4">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-white mb-4">📖 Nghe và lặp lại</h2>
+            <h2 className="text-xl font-bold text-white mb-4"> Nghe và lặp lại</h2>
             <div className="bg-white/10 rounded-2xl p-6 max-w-md">
               <p className="text-2xl text-white font-medium">{targetSentence}</p>
             </div>
@@ -820,8 +820,8 @@ export default function VoiceChatLive() {
 
           <div className="flex flex-col items-center gap-4">
             <p className="text-white/60 text-sm">
-              {isSpeaking ? "🔊 Đang phát âm mẫu..." 
-                : isListening ? "🎤 Đang nghe bạn nói..."
+              {isSpeaking ? " Đang phát âm mẫu..." 
+                : isListening ? " Đang nghe bạn nói..."
                 : "Nhấn mic để nói theo"}
             </p>
             <div className="flex items-center gap-4">
@@ -877,7 +877,7 @@ export default function VoiceChatLive() {
                         <div className="space-y-2">
                           <p className="text-white/60 text-sm">Cần cải thiện:</p>
                           {msg.pronunciationFeedback.errors.map((err, idx) => (
-                            <p key={idx} className="text-orange-300 text-sm">⚠️ {err}</p>
+                            <p key={idx} className="text-orange-300 text-sm"> {err}</p>
                           ))}
                         </div>
                       )}
@@ -933,7 +933,7 @@ export default function VoiceChatLive() {
           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
             mode === "chat" ? "bg-gradient-to-br from-pink-500 to-violet-500" : "bg-gradient-to-br from-teal-500 to-emerald-500"
           }`}>
-            {mode === "chat" ? "🎓" : "🎯"}
+            {mode === "chat" ? "" : ""}
           </div>
           <div>
             <h1 className="text-white font-bold">

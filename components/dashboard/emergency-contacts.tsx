@@ -43,15 +43,15 @@ export function EmergencyContacts() {
   const getIcon = (type: string) => {
     switch (type) {
       case "hospital":
-        return "🏥"
+        return ""
       case "doctor":
-        return "👨‍⚕️"
+        return "‍"
       case "center":
-        return "🏢"
+        return ""
       case "hotline":
-        return "📞"
+        return ""
       default:
-        return "📋"
+        return ""
     }
   }
 

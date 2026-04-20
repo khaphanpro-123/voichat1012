@@ -5,7 +5,7 @@
 // import { CohereClient } from "cohere-ai";
 
 // const MONGO_URI = process.env.MONGO_URI!;
-// const MONGO_DB = process.env.MONGO_DB!; // ⚠️ phải là autism_app
+// const MONGO_DB = process.env.MONGO_DB!; //  phải là autism_app
 // const PINECONE_KEY = process.env.PINECONE_API_KEY!;
 // const PINECONE_INDEX = process.env.PINECONE_INDEX!;
 // const COHERE_KEY = process.env.COHERE_API_KEY!;
@@ -14,7 +14,7 @@
 // const index = pinecone.index(PINECONE_INDEX);
 // const cohere = new CohereClient({ token: COHERE_KEY });
 
-// // 🔹 Hàm loại bỏ null/undefined trong metadata
+// //  Hàm loại bỏ null/undefined trong metadata
 // function cleanMetadata(obj: Record<string, any>) {
 //   const cleaned: Record<string, any> = {};
 //   for (const key in obj) {
@@ -25,7 +25,7 @@
 //   return cleaned;
 // }
 
-// // 🔹 Tạo embedding bằng Cohere
+// //  Tạo embedding bằng Cohere
 // async function embedText(text: string) {
 //   const resp = await cohere.embed({
 //     model: "embed-multilingual-v3.0",
@@ -108,7 +108,7 @@
 //       });
 //     }
 
-//     // 🔹 Nhúng + upsert vào Pinecone
+//     //  Nhúng + upsert vào Pinecone
 //     const batch: any[] = [];
 //     for (const d of docs) {
 //       const emb = await embedText(d.text);
@@ -129,7 +129,7 @@
 //       vectorsUpserted: batch.length,
 //     });
 //   } catch (err: any) {
-//     console.error("❌ Ingest-all error:", err);
+//     console.error(" Ingest-all error:", err);
 //     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
 //   } finally {
 //     await mongo.close();
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
       vectorsUpserted: totalVectors,
     });
   } catch (err: any) {
-    console.error("❌ Ingest-all error:", err);
+    console.error(" Ingest-all error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

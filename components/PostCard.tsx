@@ -73,13 +73,13 @@ export default function PostCard({ post, onMutateFeed }: { post: any; onMutateFe
 
       <div className="mt-3 flex items-center justify-between text-sm">
         <button className="px-3 py-2 rounded-lg hover:bg-black/5" onClick={toggleLike}>
-          👍 Thích {post.likesCount ? `(${post.likesCount})` : ""}
+           Thích {post.likesCount ? `(${post.likesCount})` : ""}
         </button>
         <button className="px-3 py-2 rounded-lg hover:bg-black/5" onClick={() => setOpen((s) => !s)}>
-          💬 Bình luận {post.commentsCount ? `(${post.commentsCount})` : ""}
+           Bình luận {post.commentsCount ? `(${post.commentsCount})` : ""}
         </button>
         <button className="px-3 py-2 rounded-lg hover:bg-black/5" onClick={share}>
-          🔗 Chia sẻ {post.sharesCount ? `(${post.sharesCount})` : ""}
+           Chia sẻ {post.sharesCount ? `(${post.sharesCount})` : ""}
         </button>
       </div>
 

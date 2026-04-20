@@ -144,7 +144,7 @@ export default function AdminUsersPage() {
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            👥
+            
           </motion.div>
         </div>
       </AdminLayout>
@@ -159,7 +159,7 @@ export default function AdminUsersPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                👥 Quản lý người dùng
+                 Quản lý người dùng
               </h1>
               <p className="text-gray-600">
                 Tổng số: {users.length} người dùng

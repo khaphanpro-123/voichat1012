@@ -152,11 +152,11 @@ export async function GET() {
       "STAGE 3: Flashcard Generation with Context"
     ],
     features: [
-      "✅ Rule-based, deterministic output",
-      "✅ Explainable scoring logic",
-      "✅ Context-aware sentence selection",
-      "✅ Automatic word highlighting",
-      "✅ Quality filtering (proper nouns, technical terms)"
+      " Rule-based, deterministic output",
+      " Explainable scoring logic",
+      " Context-aware sentence selection",
+      " Automatic word highlighting",
+      " Quality filtering (proper nouns, technical terms)"
     ],
     usage: {
       method: "POST",

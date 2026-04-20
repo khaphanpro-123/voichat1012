@@ -115,11 +115,11 @@ Respond with ONLY valid JSON:`;
 
   const parsed = parseJsonFromAI(result.content);
   
-  console.log("🤖 AI Response:", result.content.substring(0, 200));
-  console.log("📊 Parsed JSON:", parsed ? "Success" : "Failed");
+  console.log(" AI Response:", result.content.substring(0, 200));
+  console.log(" Parsed JSON:", parsed ? "Success" : "Failed");
   
   if (!parsed || !parsed.english) {
-    console.warn("⚠️ JSON parsing failed, using fallback");
+    console.warn(" JSON parsing failed, using fallback");
     // Fallback if JSON parsing fails
     return {
       response: {
@@ -133,8 +133,8 @@ Respond with ONLY valid JSON:`;
     };
   }
 
-  console.log("✅ Parsed vocabulary:", parsed.vocabulary?.length || 0, "items");
-  console.log("✅ Parsed structures:", parsed.structures?.length || 0, "items");
+  console.log(" Parsed vocabulary:", parsed.vocabulary?.length || 0, "items");
+  console.log(" Parsed structures:", parsed.structures?.length || 0, "items");
 
   // Ensure vocabulary and structures are always arrays
   const enhancedResponse: EnhancedResponse = {
@@ -155,7 +155,7 @@ Respond with ONLY valid JSON:`;
 // Save vocabulary to user's collection
 async function saveVocabulary(userId: string, items: VocabularyItem[]) {
   if (!items || items.length === 0 || userId === "anonymous") {
-    console.log(`⏭️ Skipping vocabulary save: items=${items?.length || 0}, userId=${userId}`);
+    console.log(`⏭ Skipping vocabulary save: items=${items?.length || 0}, userId=${userId}`);
     return;
   }
   
@@ -166,7 +166,7 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
     const db = client.db("viettalk");
     const collection = db.collection("vocabulary");
     
-    console.log(`💾 Saving ${items.length} vocabulary items for user ${userId}`);
+    console.log(` Saving ${items.length} vocabulary items for user ${userId}`);
     
     for (const item of items) {
       // Ensure we have a valid example
@@ -194,7 +194,7 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
         updated_at: new Date()
       };
       
-      console.log(`  💾 Saving word: ${item.word}`, vocabData);
+      console.log(`   Saving word: ${item.word}`, vocabData);
       
       // Use updateOne with upsert
       const result = await collection.updateOne(
@@ -203,12 +203,12 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
         { upsert: true }
       );
       
-      console.log(`  ✅ Saved: ${item.word} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
+      console.log(`   Saved: ${item.word} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
     }
     
-    console.log(`✅ Successfully saved ${items.length} vocabulary items`);
+    console.log(` Successfully saved ${items.length} vocabulary items`);
   } catch (err) {
-    console.error("❌ Save vocabulary error:", err);
+    console.error(" Save vocabulary error:", err);
     console.error("Error details:", err instanceof Error ? err.message : err);
     throw err; // Re-throw to see in catch handler
   }
@@ -218,7 +218,7 @@ async function saveVocabulary(userId: string, items: VocabularyItem[]) {
 // Save grammar structures to user's collection
 async function saveStructures(userId: string, items: StructureItem[]) {
   if (!items || items.length === 0 || userId === "anonymous") {
-    console.log(`⏭️ Skipping structures save: items=${items?.length || 0}, userId=${userId}`);
+    console.log(`⏭ Skipping structures save: items=${items?.length || 0}, userId=${userId}`);
     return;
   }
   
@@ -229,7 +229,7 @@ async function saveStructures(userId: string, items: StructureItem[]) {
     const db = client.db("viettalk");
     const collection = db.collection("vocabulary");
     
-    console.log(`💾 Saving ${items.length} grammar structures for user ${userId}`);
+    console.log(` Saving ${items.length} grammar structures for user ${userId}`);
     
     for (const item of items) {
       // Ensure we have a valid example
@@ -257,7 +257,7 @@ async function saveStructures(userId: string, items: StructureItem[]) {
         updated_at: new Date()
       };
       
-      console.log(`  💾 Saving structure: ${item.pattern}`, structureData);
+      console.log(`   Saving structure: ${item.pattern}`, structureData);
       
       const result = await collection.updateOne(
         { userId, word: item.pattern, type: "structure" },
@@ -265,12 +265,12 @@ async function saveStructures(userId: string, items: StructureItem[]) {
         { upsert: true }
       );
       
-      console.log(`  ✅ Saved: ${item.pattern} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
+      console.log(`   Saved: ${item.pattern} (matched: ${result.matchedCount}, modified: ${result.modifiedCount}, upserted: ${result.upsertedCount})`);
     }
     
-    console.log(`✅ Successfully saved ${items.length} grammar structures`);
+    console.log(` Successfully saved ${items.length} grammar structures`);
   } catch (err) {
-    console.error("❌ Save structures error:", err);
+    console.error(" Save structures error:", err);
     console.error("Error details:", err instanceof Error ? err.message : err);
     throw err; // Re-throw to see in catch handler
   }
@@ -432,18 +432,18 @@ export async function POST(req: NextRequest) {
 
       // Auto-save vocabulary and structures
       if (autoSave && userId !== "anonymous") {
-        console.log(`🔄 Auto-saving vocabulary for user ${userId}...`);
-        console.log(`📝 Vocabulary items to save:`, response.vocabulary?.length || 0);
-        console.log(`📝 Structure items to save:`, response.structures?.length || 0);
+        console.log(` Auto-saving vocabulary for user ${userId}...`);
+        console.log(` Vocabulary items to save:`, response.vocabulary?.length || 0);
+        console.log(` Structure items to save:`, response.structures?.length || 0);
         
         saveVocabulary(userId, response.vocabulary).catch((err) => {
-          console.error("❌ Failed to save vocabulary:", err);
+          console.error(" Failed to save vocabulary:", err);
         });
         saveStructures(userId, response.structures).catch((err) => {
-          console.error("❌ Failed to save structures:", err);
+          console.error(" Failed to save structures:", err);
         });
       } else {
-        console.log(`⚠️ Auto-save skipped: autoSave=${autoSave}, userId=${userId}`);
+        console.log(` Auto-save skipped: autoSave=${autoSave}, userId=${userId}`);
       }
 
       return NextResponse.json({

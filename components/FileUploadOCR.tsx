@@ -346,8 +346,8 @@ export default function FileUploadOCR() {
           </h3>
           <p className="text-sm text-gray-600">{s.description}</p>
         </div>
-        {s.status === "completed" && <span className="text-green-600 font-semibold">✓ Hoàn thành</span>}
-        {s.status === "error" && <span className="text-red-600 font-semibold">✗ Lỗi</span>}
+        {s.status === "completed" && <span className="text-green-600 font-semibold"> Hoàn thành</span>}
+        {s.status === "error" && <span className="text-red-600 font-semibold"> Lỗi</span>}
       </div>
     );
   };
@@ -356,7 +356,7 @@ export default function FileUploadOCR() {
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">📚 Tải lên nguồn tài liệu</h1>
+          <h1 className="text-4xl font-bold text-gray-900"> Tải lên nguồn tài liệu</h1>
           {step !== "upload" && step !== "processing" && (
             <button onClick={resetAll} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition">
               <RefreshCw className="w-5 h-5" /> Upload file mới
@@ -376,7 +376,7 @@ export default function FileUploadOCR() {
           {step === "processing" && (
             <motion.div key="processing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
               <div className="bg-white rounded-3xl shadow-xl p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">🔄 Đang xử lý tài liệu...</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center"> Đang xử lý tài liệu...</h2>
                 <div className="space-y-4">
                   {processSteps.map(s => <ProcessingStepItem key={s.id} step={s} />)}
                 </div>

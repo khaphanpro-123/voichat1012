@@ -85,7 +85,7 @@ export default function TestVoicePage() {
             <h1 className="text-4xl font-bold text-gray-900">Voice Analysis Test</h1>
           </motion.div>
           <p className="text-gray-600 text-lg">
-            Test các tính năng phân tích voice mới 🎤✨
+            Test các tính năng phân tích voice mới 
           </p>
         </div>
 

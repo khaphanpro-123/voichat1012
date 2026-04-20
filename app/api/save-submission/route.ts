@@ -10,22 +10,22 @@ let isConnected: boolean = false;
 async function connectDB(): Promise<void> {
     // Nếu đã kết nối, không làm gì nữa
     if (isConnected) {
-        console.log("✅ MongoDB đã được kết nối");
+        console.log(" MongoDB đã được kết nối");
         return;
     }
 
     // Kiểm tra biến môi trường MONGO_URI
     if (!MONGO_URI) {
-        throw new Error("⚠️ MONGO_URI chưa được cấu hình trong .env");
+        throw new Error(" MONGO_URI chưa được cấu hình trong .env");
     }
 
     try {
         // Thử kết nối với MongoDB
         await mongoose.connect(MONGO_URI);
         isConnected = true;
-        console.log("✅ MongoDB đã được kết nối thành công");
+        console.log(" MongoDB đã được kết nối thành công");
     } catch (error) {
-        console.error("❌ Lỗi kết nối MongoDB:", error);
+        console.error(" Lỗi kết nối MongoDB:", error);
         // Ném lỗi để được xử lý bởi khối catch chính
         throw new Error("Không thể kết nối với cơ sở dữ liệu");
     }

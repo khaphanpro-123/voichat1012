@@ -86,7 +86,7 @@ export default function UserDetailPage() {
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            📊
+            
           </motion.div>
         </div>
       </AdminLayout>
@@ -201,7 +201,7 @@ export default function UserDetailPage() {
           {sessionsByDate.length > 0 && (
             <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                📈 Hoạt động 30 ngày gần đây
+                 Hoạt động 30 ngày gần đây
               </h2>
               <div className="flex items-end gap-2 h-48">
                 {sessionsByDate.map((day) => (
@@ -228,7 +228,7 @@ export default function UserDetailPage() {
           {/* Recent Sessions */}
           <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
-              🎯 Phiên học gần đây
+               Phiên học gần đây
             </h2>
             <div className="space-y-3">
               {sessions.slice(0, 10).map((session) => (
@@ -257,7 +257,7 @@ export default function UserDetailPage() {
           {/* Recent Vocabulary */}
           <div className="bg-white rounded-xl p-6 shadow-lg">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
-              📚 Từ vựng gần đây
+               Từ vựng gần đây
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {vocabulary.slice(0, 12).map((vocab) => (

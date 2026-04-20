@@ -428,9 +428,9 @@ export default function ImageDescribe() {
                 </div>
 
                 <h2 className="text-2xl font-bold text-white mb-2">
-                  {feedback.score >= 80 ? 'Excellent! 🎉' : 
-                   feedback.score >= 60 ? 'Good job! 👍' : 
-                   'Keep practicing! 💪'}
+                  {feedback.score >= 80 ? 'Excellent! ' : 
+                   feedback.score >= 60 ? 'Good job! ' : 
+                   'Keep practicing! '}
                 </h2>
                 <p className="text-white/60">{feedback.encouragement}</p>
               </div>

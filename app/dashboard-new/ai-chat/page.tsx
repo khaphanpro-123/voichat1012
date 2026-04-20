@@ -308,7 +308,7 @@ export default function AiChatPage() {
                 <div className="flex flex-wrap gap-1">
                   {[{ l: "Groq", ok: ks.groq }, { l: "OpenAI", ok: ks.openai }, { l: "Gemini", ok: ks.gemini }].map(p => (
                     <span key={p.l} className={`text-xs px-2 py-0.5 rounded-full ${p.ok ? "bg-green-100 text-green-700" : dark ? "bg-gray-800 text-gray-500" : "bg-gray-100 text-gray-400"}`}>
-                      {p.ok ? "✓" : "✗"} {p.l}
+                      {p.ok ? "" : ""} {p.l}
                     </span>
                   ))}
                 </div>
@@ -325,7 +325,7 @@ export default function AiChatPage() {
                       <p className={`text-sm ${textCls} truncate leading-tight`}>{s.title}</p>
                       <p className={`text-xs ${subCls}`}>{s.messages.length} messages</p>
                     </div>
-                    <button onClick={e => delChat(s.id, e)} className={`opacity-0 group-hover:opacity-100 ${subCls} hover:text-red-400 text-xs transition-opacity`}>✕</button>
+                    <button onClick={e => delChat(s.id, e)} className={`opacity-0 group-hover:opacity-100 ${subCls} hover:text-red-400 text-xs transition-opacity`}></button>
                   </div>
                 ))
               }
@@ -399,7 +399,7 @@ export default function AiChatPage() {
               {image && (
                 <div className="mb-2 relative inline-block">
                   <img src={image} alt="preview" className="h-16 rounded-xl object-cover border-2 border-indigo-400" />
-                  <button onClick={() => setImage(null)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600">✕</button>
+                  <button onClick={() => setImage(null)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600"></button>
                 </div>
               )}
 

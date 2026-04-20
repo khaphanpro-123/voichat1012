@@ -56,7 +56,7 @@ export default function AdminDashboard() {
             animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            👨‍💼
+            ‍
           </motion.div>
         </div>
       </AdminLayout>
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              👨‍💼 Admin Dashboard
+              ‍ Admin Dashboard
             </h1>
             <p className="text-gray-600">Quản lý hệ thống và người dùng</p>
           </div>

@@ -167,7 +167,7 @@ export default function VocabularyQuiz({ questions, onExit, onComplete, speakWor
               {showResult && (
                 <div className={`mt-4 p-4 rounded-xl ${isCorrect ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
                   <p className={`font-medium ${isCorrect ? "text-green-700" : "text-red-700"}`}>
-                    {isCorrect ? "✓ Chính xác!" : `✗ Đáp án đúng: ${currentQ.correctAnswer}`}
+                    {isCorrect ? " Chính xác!" : ` Đáp án đúng: ${currentQ.correctAnswer}`}
                   </p>
                 </div>
               )}
@@ -180,7 +180,7 @@ export default function VocabularyQuiz({ questions, onExit, onComplete, speakWor
               {currentQ.word.exampleTranslation && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
                   <p className="text-sm text-blue-700">
-                    <span className="font-semibold">💡 Gợi ý:</span> {currentQ.word.exampleTranslation}
+                    <span className="font-semibold"> Gợi ý:</span> {currentQ.word.exampleTranslation}
                   </p>
                 </div>
               )}
@@ -234,7 +234,7 @@ export default function VocabularyQuiz({ questions, onExit, onComplete, speakWor
               {showResult && (
                 <div className={`mt-4 p-4 rounded-xl ${isCorrect ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
                   <p className={`font-medium mb-2 ${isCorrect ? "text-green-700" : "text-red-700"}`}>
-                    {isCorrect ? "✓ Chính xác!" : "✗ Câu đúng:"}
+                    {isCorrect ? " Chính xác!" : " Câu đúng:"}
                   </p>
                   {!isCorrect && (
                     <>

@@ -214,11 +214,11 @@ export default function DebateMode() {
           speakText(data.nextQuestion);
         }
       } else if (data.message?.includes('Rate limit') || data.message?.includes('quota')) {
-        alert('⚠️ Đã đạt giới hạn API. Hệ thống đang sử dụng chế độ fallback.');
+        alert(' Đã đạt giới hạn API. Hệ thống đang sử dụng chế độ fallback.');
       }
     } catch (error) {
       console.error('Response submission error:', error);
-      alert('❌ Có lỗi xảy ra. Vui lòng thử lại.');
+      alert(' Có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -306,7 +306,7 @@ export default function DebateMode() {
             <h1 className="text-4xl font-bold text-gray-900">Debate Mode</h1>
           </motion.div>
           <p className="text-gray-600 text-lg">
-            Luyện Speaking từ hình ảnh với phương pháp cá nhân hóa 🗣️✨
+            Luyện Speaking từ hình ảnh với phương pháp cá nhân hóa 
           </p>
         </div>
 
@@ -584,7 +584,7 @@ export default function DebateMode() {
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        ✍️ Nhập Text
+                         Nhập Text
                       </button>
                       <button
                         onClick={() => setInputMode('voice')}
@@ -594,7 +594,7 @@ export default function DebateMode() {
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        🎤 Ghi Âm
+                         Ghi Âm
                       </button>
                     </div>
 
@@ -671,7 +671,7 @@ export default function DebateMode() {
                               className="w-full mb-2"
                             />
                             <p className="text-sm text-green-700 text-center">
-                              ✅ Ghi âm hoàn tất! Đang xử lý...
+                               Ghi âm hoàn tất! Đang xử lý...
                             </p>
                           </div>
                         )}
@@ -708,7 +708,7 @@ export default function DebateMode() {
                         </button>
 
                         <p className="text-sm text-gray-500 text-center">
-                          💡 Nhấn ghi âm, nói câu trả lời, rồi nhấn dừng. Hệ thống sẽ tự động phân tích!
+                           Nhấn ghi âm, nói câu trả lời, rồi nhấn dừng. Hệ thống sẽ tự động phân tích!
                         </p>
                       </div>
                     )}
