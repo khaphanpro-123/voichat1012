@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import DashboardLayout from "@/components/DashboardLayout"
 
@@ -100,6 +100,9 @@ export default function DocumentsPage() {
   const [maxWords, setMaxWords] = useState(10)
   const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set())
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
+  const [cameraActive, setCameraActive] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const userId = (session?.user as any)?.id
 
@@ -135,6 +138,57 @@ export default function DocumentsPage() {
       }
       setFile(selectedFile)
       setError("")
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const imageFile = e.target.files[0]
+      if (!imageFile.type.startsWith("image/")) {
+        setError("Vui lòng chọn file ảnh (JPG, PNG, etc.)")
+        return
+      }
+      setFile(imageFile)
+      setError("")
+    }
+  }
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        setCameraActive(true)
+      }
+    } catch (err) {
+      setError("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.")
+    }
+  }
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+      tracks.forEach(track => track.stop())
+      setCameraActive(false)
+    }
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext("2d")
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth
+        canvasRef.current.height = videoRef.current.videoHeight
+        context.drawImage(videoRef.current, 0, 0)
+        canvasRef.current.toBlob((blob) => {
+          if (blob) {
+            const imageFile = new File([blob], "captured-image.jpg", { type: "image/jpeg" })
+            setFile(imageFile)
+            stopCamera()
+            setError("")
+          }
+        }, "image/jpeg", 0.95)
+      }
     }
   }
 
@@ -272,6 +326,47 @@ export default function DocumentsPage() {
             </p>
             <input id="file-upload" type="file" className="hidden" accept=".pdf,.docx,.doc" onChange={handleFileChange} />
           </label>
+
+          {/* Image and Camera Options */}
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+              <svg className="h-6 w-6 text-blue-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="text-xs text-blue-600 font-medium">Chọn ảnh</p>
+              <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+            </label>
+
+            <button
+              onClick={cameraActive ? stopCamera : startCamera}
+              className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-green-300 rounded-lg hover:bg-green-50 transition-colors"
+            >
+              <svg className="h-6 w-6 text-green-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <p className="text-xs text-green-600 font-medium">{cameraActive ? "Dừng" : "Chụp ảnh"}</p>
+            </button>
+          </div>
+
+          {/* Camera Preview */}
+          {cameraActive && (
+            <div className="space-y-3">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full rounded-lg bg-black"
+              />
+              <button
+                onClick={capturePhoto}
+                className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
+              >
+                Chụp ảnh
+              </button>
+            </div>
+          )}
+
+          <canvas ref={canvasRef} className="hidden" />
 
           <div className="grid grid-cols-2 gap-4">
             <div>

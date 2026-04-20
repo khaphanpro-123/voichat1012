@@ -140,7 +140,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-teal-50/60 via-white to-emerald-50/40">
+    <div className="flex h-screen bg-amber-50">
       {/* Logout Confirmation Modal */}
       <AnimatePresence>
         {showLogoutModal && (
@@ -187,22 +187,32 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
       </AnimatePresence>
 
       {/* Mobile Menu Button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition border border-gray-200"
       >
         {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
+      </motion.button>
 
       {/* Sidebar */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white/95 backdrop-blur-sm border-r border-gray-200/80 transform transition-transform duration-300 ${
+      <motion.aside
+        initial={false}
+        animate={{ x: isSidebarOpen ? 0 : -256 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-200">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="p-6 border-b border-gray-200"
+          >
             <Link href="/dashboard-new" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl flex items-center justify-center">
                 <span className="text-2xl"></span>
@@ -212,32 +222,46 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
                 <p className="text-xs text-gray-500">Level: {level}</p>
               </div>
             </Link>
-          </div>
+          </motion.div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {navItems.map((item) => {
+            {navItems.map((item, index) => {
               const isActive = pathname === item.href || 
                 (item.href !== "/dashboard-new" && pathname?.startsWith(item.href));
               return (
-                <Link
+                <motion.div
                   key={item.href}
-                  href={item.href}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                    isActive
-                      ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <item.icon className="w-5 h-5" />
+                    </motion.div>
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                </motion.div>
               );
             })}
 
             {/* Notifications Button */}
-            <button
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setShowNotifications(!showNotifications)}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-gray-100 relative"
             >
@@ -248,30 +272,41 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
                   {unreadCount}
                 </span>
               )}
-            </button>
+            </motion.button>
 
             {/* Admin Section */}
             {isAdmin && (
               <>
                 <div className="my-4 border-t border-gray-200" />
-                <Link
-                  href="/admin"
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                    pathname?.startsWith("/admin")
-                      ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <Shield className="w-5 h-5" />
-                  <span className="font-medium">Admin</span>
-                </Link>
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                      pathname?.startsWith("/admin")
+                        ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Shield className="w-5 h-5" />
+                    <span className="font-medium">Admin</span>
+                  </Link>
+                </motion.div>
               </>
             )}
           </nav>
 
           {/* User Info */}
-          <div className="p-4 border-t border-gray-200">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="p-4 border-t border-gray-200"
+          >
             <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl">
               {userAvatar ? (
                 <img src={userAvatar} alt={userName} className="w-10 h-10 rounded-full object-cover" />
@@ -286,24 +321,44 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
               </div>
             </div>
             
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleLogout}
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
             >
               <LogOut className="w-4 h-4" />
               <span>Log out</span>
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setIsSidebarOpen(false)} />
-      )}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.3 }}
+        >
+          {children}
+        </motion.div>
+      </main>
 
       {/* Notification Panel */}
       <NotificationPanel
