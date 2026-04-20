@@ -1,14 +1,3 @@
-"""
-ABLATION STUDY API ENDPOINT - 8-STEP PIPELINE VERSION
-
-Ensures TH1-TH4 produce different results according to thesis specifications.
-Uses simplified 8-step pipeline with integrated scoring and normalization.
-
-Endpoint: POST /api/ablation-study
-
-VERSION: 4.0.0 - 8-Step Pipeline (2026-03-29)
-"""
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Optional

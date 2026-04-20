@@ -56,7 +56,7 @@ export default function AiChatPage() {
   const msgs = active?.messages ?? []
 
   const newChat = () => {
-    const s: CS = { id: uid(), title: "Cuoc tro chuyen moi", messages: [], createdAt: Date.now() }
+    const s: CS = { id: uid(), title: "New chat", messages: [], createdAt: Date.now() }
     save([s, ...sessions])
     setActiveId(s.id)
     localStorage.setItem(AK, s.id)
@@ -138,7 +138,7 @@ export default function AiChatPage() {
         <div className={\`\${sidebar ? "w-60" : "w-0"} transition-all duration-200 overflow-hidden flex-shrink-0 border-r border-gray-800 flex flex-col bg-gray-900\`}>
           <div className="p-3 border-b border-gray-800">
             <button onClick={newChat} className="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium">
-              + Cuoc tro chuyen moi
+              New chat
             </button>
           </div>
           {ks && (
@@ -156,7 +156,7 @@ export default function AiChatPage() {
           )}
           <div className="flex-1 overflow-y-auto">
             {sessions.length === 0
-              ? <p className="text-xs text-gray-600 text-center mt-6 px-3">Chua co cuoc tro chuyen</p>
+              ? <p className="text-xs text-gray-600 text-center mt-6 px-3">Sorry, currently havn't last session</p>
               : sessions.map(s => (
                 <div key={s.id} onClick={() => { setActiveId(s.id); localStorage.setItem(AK, s.id) }}
                   className={\`group flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-gray-800 \${activeId === s.id ? "bg-gray-800 border-l-2 border-indigo-500" : ""}\`}>
@@ -213,7 +213,7 @@ export default function AiChatPage() {
             <div className="flex gap-2 items-end max-w-4xl mx-auto">
               <textarea value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-                placeholder="Nhap tin nhan... (Enter gui, Shift+Enter xuong dong)"
+                placeholder="What thing do you want to search from my answer"
                 rows={1} className="flex-1 resize-none bg-gray-800 text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 style={{ minHeight: "48px", maxHeight: "128px" }}
                 onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 128) + "px" }}

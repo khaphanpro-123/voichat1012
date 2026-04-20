@@ -61,7 +61,7 @@ export function HeroSection() {
           {/* Subtitle */}
           <p
             className="w-full text-center text-xl lg:text-2xl font-medium text-gray-700 dark:text-gray-300 mb-8 max-w-3xl mx-auto"
-            style={{ animationDelay: "0.3s" }}
+            style={{ animationDelay: "0.1s" }}
           >
             Luyện nói tiếng Anh như người bản xứ với Voice Chat AI. 
             Học từ vựng qua hình ảnh, nhận phản hồi ngữ pháp tức thì, 

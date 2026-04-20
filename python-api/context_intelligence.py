@@ -649,4 +649,4 @@ if __name__ == "__main__":
         print(f"   Score: {ctx['sentenceScore']:.3f}")
         print(f"   {ctx['explanation']}")
     
-    print("\n✅ Test completed!")
+    print("\n Test completed!")

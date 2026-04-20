@@ -88,8 +88,6 @@ function VocabularyCard({ card, speakText }: { card: any; speakText: (text: stri
   )
 }
 
-const PREVIEW_LIMIT = 8
-
 export default function DocumentsPage() {
   const { data: session } = useSession()
   const [file, setFile] = useState<File | null>(null)
@@ -155,13 +153,42 @@ export default function DocumentsPage() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        setCameraActive(true)
+      // Try with environment camera first, fallback to any camera
+      let stream: MediaStream | null = null
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "environment" } 
+        })
+      } catch {
+        // Fallback to any available camera
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true 
+        })
       }
-    } catch (err) {
-      setError("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.")
+      
+      if (videoRef.current && stream) {
+        videoRef.current.srcObject = stream
+        // Wait for video to load before setting camera active
+        const handleLoadedMetadata = () => {
+          setCameraActive(true)
+          videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata)
+        }
+        videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata)
+        
+        // Timeout fallback in case loadedmetadata doesn't fire
+        setTimeout(() => {
+          if (videoRef.current?.srcObject) {
+            setCameraActive(true)
+          }
+        }, 1000)
+      }
+    } catch (err: any) {
+      const errorMessage = err?.name === "NotAllowedError" 
+        ? "Vui lòng cấp quyền truy cập camera trong cài đặt"
+        : err?.name === "NotFoundError"
+        ? "Không tìm thấy camera trên thiết bị"
+        : "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập."
+      setError(errorMessage)
     }
   }
 
@@ -174,21 +201,43 @@ export default function DocumentsPage() {
   }
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d")
-      if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth
-        canvasRef.current.height = videoRef.current.videoHeight
-        context.drawImage(videoRef.current, 0, 0)
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            const imageFile = new File([blob], "captured-image.jpg", { type: "image/jpeg" })
-            setFile(imageFile)
-            stopCamera()
-            setError("")
-          }
-        }, "image/jpeg", 0.95)
+    if (!videoRef.current || !canvasRef.current) {
+      setError("Lỗi: Camera hoặc canvas không khả dụng")
+      return
+    }
+
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    
+    // Check if video is ready
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError("Camera chưa sẵn sàng. Vui lòng đợi một chút...")
+      return
+    }
+
+    try {
+      const context = canvas.getContext("2d")
+      if (!context) {
+        setError("Lỗi: Không thể lấy canvas context")
+        return
       }
+
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      context.drawImage(video, 0, 0)
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const imageFile = new File([blob], "captured-image.jpg", { type: "image/jpeg" })
+          setFile(imageFile)
+          stopCamera()
+          setError("")
+        } else {
+          setError("Lỗi: Không thể chuyển đổi ảnh")
+        }
+      }, "image/jpeg", 0.95)
+    } catch (err: any) {
+      setError(`Lỗi chụp ảnh: ${err?.message || "Không xác định"}`)
     }
   }
 
@@ -355,11 +404,13 @@ export default function DocumentsPage() {
                 ref={videoRef}
                 autoPlay
                 playsInline
-                className="w-full rounded-lg bg-black"
+                muted
+                className="w-full rounded-lg bg-black object-cover"
+                style={{ aspectRatio: "4/3" }}
               />
               <button
                 onClick={capturePhoto}
-                className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
+                className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 text-sm font-medium transition-colors"
               >
                 Chụp ảnh
               </button>

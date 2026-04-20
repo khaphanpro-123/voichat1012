@@ -1,6 +1,4 @@
-"""
-Download required NLTK data
-"""
+
 
 import nltk
 
@@ -21,8 +19,8 @@ for package in packages:
     try:
         print(f"Downloading {package}...")
         nltk.download(package, quiet=True)
-        print(f"✅ {package} downloaded")
+        print(f" {package} downloaded")
     except Exception as e:
-        print(f"⚠️  {package}: {e}")
+        print(f"  {package}: {e}")
 
-print("\n✅ All NLTK data downloaded!")
+print("\n All NLTK data downloaded!")

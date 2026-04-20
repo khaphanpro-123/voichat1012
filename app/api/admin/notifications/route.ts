@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET - Get all notifications (admin view)
 export async function GET(req: NextRequest) {
   try {
     const authCheck = await checkAdminAuth();

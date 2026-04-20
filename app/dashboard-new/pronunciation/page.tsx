@@ -313,7 +313,7 @@ export default function PronunciationPage() {
                   {listening && (
                     <>
                       <span className="absolute inset-0 rounded-full bg-red-400/30 animate-ping" />
-                      <span className="absolute inset-[-8px] rounded-full bg-red-400/15 animate-ping" style={{ animationDelay: "0.3s" }} />
+                      <span className="absolute inset-[-8px] rounded-full bg-red-400/15 animate-ping" style={{ animationDelay: "0.1s" }} />
                     </>
                   )}
                   <button

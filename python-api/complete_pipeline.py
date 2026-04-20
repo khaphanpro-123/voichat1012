@@ -1,23 +1,4 @@
-"""
-COMPLETE PIPELINE - NEW VERSION (Learned Scoring)
 
-Pipeline Flow:
-1. Document Ingestion & Normalization
-2. Heading Detection
-3. Context Intelligence
-4. Phrase Extraction (with Learning-to-Rank)
-5. Single Word Extraction (with Learning-to-Rank)
-6. Independent Scoring
-7. Merge
-8. Learned Final Scoring
-9. Topic Modeling
-10. Within-Topic Ranking
-11. Flashcard Generation
-
-Author: Kiro AI
-Date: 2026-02-28
-Version: 2.0 (New Pipeline)
-"""
 
 import numpy as np
 from typing import List, Dict, Optional
@@ -62,26 +43,26 @@ class CompletePipelineNew:
         
         # Stage 2: Heading Detection
         self.heading_detector = HeadingDetector()
-        print("✅ Heading Detector initialized")
+        print(" Heading Detector initialized")
         
         # Stage 3: Context Intelligence (using functions)
         # No initialization needed - uses functions directly
-        print("✅ Context Intelligence ready")
+        print(" Context Intelligence ready")
         
         # Stage 4: Phrase Extraction
         self.phrase_extractor = PhraseCentricExtractor()
-        print("✅ Phrase Extractor initialized (with L2R)")
+        print(" Phrase Extractor initialized (with L2R)")
         
         # Stage 5: Single Word Extraction
         self.word_extractor = SingleWordExtractorV2()
-        print("✅ Word Extractor initialized (with L2R)")
+        print(" Word Extractor initialized (with L2R)")
         
         # Stages 6-11: New Pipeline
         self.new_pipeline = NewPipelineLearnedScoring(
             n_topics=n_topics,
             model_path=model_path
         )
-        print("✅ New Pipeline initialized (Learned Scoring)")
+        print(" New Pipeline initialized (Learned Scoring)")
         
         print("="*80)
         print("PIPELINE READY")
@@ -346,7 +327,7 @@ class CompletePipelineNew:
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(cleaned_result, f, indent=2, ensure_ascii=False)
         
-        print(f"✅ Exported to {output_path}")
+        print(f" Exported to {output_path}")
     
     def _clean_numpy_arrays(self, obj):
         """
@@ -412,7 +393,7 @@ class CompletePipelineNew:
                 # Return first token's POS
                 return pos_tags[0][1] if pos_tags else ""
         except Exception as e:
-            print(f"  ⚠️  POS tagging error for '{word}': {e}")
+            print(f"POS tagging error for '{word}': {e}")
             return ""
     
     def _get_pos_label(self, pos: str) -> str:
@@ -487,7 +468,7 @@ if __name__ == "__main__":
     )
     
     # Print results
-    print("\n📊 RESULTS:")
+    print("\nRESULTS:")
     print("-" * 80)
     print(f"Total vocabulary: {result['statistics']['total_items']}")
     print(f"Phrases: {result['statistics']['phrases']}")
@@ -495,7 +476,7 @@ if __name__ == "__main__":
     print(f"Topics: {result['statistics']['num_topics']}")
     print(f"Flashcards: {result['statistics']['num_flashcards']}")
     
-    print("\n📊 TOPICS:")
+    print("\nTOPICS:")
     print("-" * 80)
     for topic in result['topics']:
         print(f"\nTopic {topic['topic_id']}: {topic['topic_name']}")
@@ -508,7 +489,7 @@ if __name__ == "__main__":
             role = item.get('semantic_role', 'unknown')
             print(f"    - {text} (score: {score:.3f}, role: {role})")
     
-    print("\n📊 FLASHCARDS (Top 5):")
+    print("\nFLASHCARDS (Top 5):")
     print("-" * 80)
     for i, flashcard in enumerate(result['flashcards'][:5], 1):
         print(f"\n{i}. {flashcard['text']}")
@@ -520,5 +501,5 @@ if __name__ == "__main__":
     # Export to JSON
     pipeline.export_to_json(result, "test_output.json")
     
-    print("\n✅ Test completed!")
+    print("\n Test completed!")
 

@@ -55,6 +55,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   const [isAdmin, setIsAdmin] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
 
   useEffect(() => {
     const loadProgress = async () => {
@@ -77,12 +78,20 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
   }, [session]);
 
   useEffect(() => {
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     const checkAdmin = async () => {
       if (session?.user?.email) {
         try {
           const res = await fetch("/api/users/me");
           
-          // Silently handle auth errors (401) - user not logged in
           if (res.status === 401) {
             return;
           }
@@ -96,7 +105,7 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
             setIsAdmin(true);
           }
         } catch (error) {
-          // Silently ignore errors - not critical for app functionality
+          // Silently ignore errors
         }
       }
     };
@@ -187,162 +196,63 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
       </AnimatePresence>
 
       {/* Mobile Menu Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition border border-gray-200"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:shadow-xl active:scale-95 transition border border-gray-200"
       >
         {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </motion.button>
+      </button>
 
       {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: isSidebarOpen ? 0 : -256 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="p-6 border-b border-gray-200"
-          >
-            <Link href="/dashboard-new" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <span className="text-2xl"></span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">EnglishPal</h1>
-                <p className="text-xs text-gray-500">Level: {level}</p>
-              </div>
-            </Link>
-          </motion.div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {navItems.map((item, index) => {
-              const isActive = pathname === item.href || 
-                (item.href !== "/dashboard-new" && pathname?.startsWith(item.href));
-              return (
-                <motion.div
-                  key={item.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                      isActive
-                        ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <item.icon className="w-5 h-5" />
-                    </motion.div>
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                </motion.div>
-              );
-            })}
-
-            {/* Notifications Button */}
-            <motion.button
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-gray-100 relative"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="font-medium">Notifications</span>
-              {unreadCount > 0 && (
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </motion.button>
-
-            {/* Admin Section */}
-            {isAdmin && (
-              <>
-                <div className="my-4 border-t border-gray-200" />
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                      pathname?.startsWith("/admin")
-                        ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <Shield className="w-5 h-5" />
-                    <span className="font-medium">Admin</span>
-                  </Link>
-                </motion.div>
-              </>
-            )}
-          </nav>
-
-          {/* User Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="p-4 border-t border-gray-200"
-          >
-            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl">
-              {userAvatar ? (
-                <img src={userAvatar} alt={userName} className="w-10 h-10 rounded-full object-cover" />
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {userInitial}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
-                <p className="text-xs text-gray-600">{level}</p>
-              </div>
-            </div>
-            
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleLogout}
-              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Log out</span>
-            </motion.button>
-          </motion.div>
-        </div>
-      </motion.aside>
+      {isLargeScreen ? (
+        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
+          <SidebarContent
+            level={level}
+            navItems={navItems}
+            pathname={pathname}
+            isAdmin={isAdmin}
+            unreadCount={unreadCount}
+            showNotifications={showNotifications}
+            setShowNotifications={setShowNotifications}
+            userName={userName}
+            userInitial={userInitial}
+            userAvatar={userAvatar}
+            handleLogout={handleLogout}
+          />
+        </aside>
+      ) : (
+        <motion.aside
+          initial={false}
+          animate={{ x: isSidebarOpen ? 0 : -256 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col"
+        >
+          <SidebarContent
+            level={level}
+            navItems={navItems}
+            pathname={pathname}
+            isAdmin={isAdmin}
+            unreadCount={unreadCount}
+            showNotifications={showNotifications}
+            setShowNotifications={setShowNotifications}
+            userName={userName}
+            userInitial={userInitial}
+            userAvatar={userAvatar}
+            handleLogout={handleLogout}
+            onNavClick={() => setIsSidebarOpen(false)}
+          />
+        </motion.aside>
+      )}
 
       {/* Overlay for mobile */}
       <AnimatePresence>
-        {isSidebarOpen && (
+        {isSidebarOpen && !isLargeScreen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -367,5 +277,165 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
         onNotificationRead={() => setUnreadCount((prev) => Math.max(0, prev - 1))}
       />
     </div>
+  );
+}
+
+interface SidebarContentProps {
+  level: string;
+  navItems: typeof navItems;
+  pathname: string;
+  isAdmin: boolean;
+  unreadCount: number;
+  showNotifications: boolean;
+  setShowNotifications: (show: boolean) => void;
+  userName: string;
+  userInitial: string;
+  userAvatar?: string | null;
+  handleLogout: () => void;
+  onNavClick?: () => void;
+}
+
+function SidebarContent({
+  level,
+  navItems,
+  pathname,
+  isAdmin,
+  unreadCount,
+  showNotifications,
+  setShowNotifications,
+  userName,
+  userInitial,
+  userAvatar,
+  handleLogout,
+  onNavClick,
+}: SidebarContentProps) {
+  return (
+    <>
+      {/* Logo */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="p-6 border-b border-gray-200"
+      >
+        <Link href="/dashboard-new" className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl flex items-center justify-center">
+            <span className="text-2xl"></span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">EnglishPal</h1>
+            <p className="text-xs text-gray-500">Level: {level}</p>
+          </div>
+        </Link>
+      </motion.div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {navItems.map((item, index) => {
+          const isActive = pathname === item.href || 
+            (item.href !== "/dashboard-new" && pathname?.startsWith(item.href));
+          return (
+            <motion.div
+              key={item.href}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Link
+                href={item.href}
+                onClick={onNavClick}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  isActive
+                    ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <item.icon className="w-5 h-5" />
+                </motion.div>
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            </motion.div>
+          );
+        })}
+
+        {/* Notifications Button */}
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={() => setShowNotifications(!showNotifications)}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-gray-100 relative"
+        >
+          <Bell className="w-5 h-5" />
+          <span className="font-medium">Notifications</span>
+          {unreadCount > 0 && (
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </motion.button>
+
+        {/* Admin Section */}
+        {isAdmin && (
+          <>
+            <div className="my-4 border-t border-gray-200" />
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Link
+                href="/admin"
+                onClick={onNavClick}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  pathname?.startsWith("/admin")
+                    ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Shield className="w-5 h-5" />
+                <span className="font-medium">Admin</span>
+              </Link>
+            </motion.div>
+          </>
+        )}
+      </nav>
+
+      {/* User Info */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="p-4 border-t border-gray-200"
+      >
+        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl">
+          {userAvatar ? (
+            <img src={userAvatar} alt={userName} className="w-10 h-10 rounded-full object-cover" />
+          ) : (
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
+              {userInitial}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
+            <p className="text-xs text-gray-600">{level}</p>
+          </div>
+        </div>
+        
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleLogout}
+          className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Log out</span>
+        </motion.button>
+      </motion.div>
+    </>
   );
 }

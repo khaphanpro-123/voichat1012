@@ -1,5 +1,4 @@
 "use client";
-
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -44,8 +43,6 @@ export default function AdminNotificationsPage() {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      
-      // Create preview for images
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -77,7 +74,6 @@ export default function AdminNotificationsPage() {
 
       const data = await res.json();
       if (data.secure_url) {
-        // Set the URL based on type
         if (formData.type === "image") {
           setFormData(prev => ({ ...prev, mediaUrl: data.secure_url }));
         } else if (formData.type === "audio") {
@@ -97,8 +93,6 @@ export default function AdminNotificationsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate URLs based on type
     if (formData.type === "image" || formData.type === "audio") {
       if (!formData.mediaUrl) {
         alert(`Vui lòng upload hoặc nhập URL ${formData.type === "image" ? "hình ảnh" : "âm thanh"}`);
@@ -119,15 +113,12 @@ export default function AdminNotificationsPage() {
     setLoading(true);
 
     try {
-      // Prepare payload based on type
       const payload: any = {
         title: formData.title,
         content: formData.content,
         type: formData.type,
         targetUsers: formData.targetUsers,
       };
-
-      // Add URL based on type
       if (formData.type === "image" || formData.type === "audio") {
         if (formData.mediaUrl) {
           payload.mediaUrl = formData.mediaUrl;

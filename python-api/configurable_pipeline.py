@@ -53,20 +53,20 @@ class ConfigurablePipeline:
         
         if 2 in enabled_stages:
             self.heading_detector = HeadingDetector()
-            print(f"   ✅ Stage 2: Heading Detector")
+            print(f"    Stage 2: Heading Detector")
         
         if 4 in enabled_stages:
             self.phrase_extractor = PhraseCentricExtractor()
-            print(f"   ✅ Stage 4: Phrase Extractor")
+            print(f"    Stage 4: Phrase Extractor")
         
         if 5 in enabled_stages:
             self.word_extractor = SingleWordExtractorV2()
-            print(f"   ✅ Stage 5: Word Extractor")
+            print(f"    Stage 5: Word Extractor")
         
         # New pipeline for stages 6-11 (if any are enabled)
         if any(stage in enabled_stages for stage in [6, 7, 8, 9, 10, 11]):
             self.new_pipeline = NewPipelineLearnedScoring(n_topics=n_topics)
-            print(f"   ✅ Stages 6-11: New Pipeline")
+            print(f"    Stages 6-11: New Pipeline")
     
     def process_document(
         self,
