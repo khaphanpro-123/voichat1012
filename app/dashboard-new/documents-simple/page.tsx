@@ -161,91 +161,156 @@ export default function DocumentsPage() {
 
   const startCamera = async () => {
     try {
+      console.log("[Camera] Starting camera...");
+      setError(""); // Clear previous errors
+      
       // Try with environment camera first, fallback to any camera
-      let stream: MediaStream | null = null
+      let stream: MediaStream | null = null;
       try {
+        console.log("[Camera] Requesting environment camera...");
         stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment" } 
-        })
-      } catch {
+          video: { 
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        });
+        console.log("[Camera] Environment camera granted");
+      } catch (envError) {
+        console.log("[Camera] Environment camera failed, trying any camera...");
         // Fallback to any available camera
         stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true 
-        })
+          video: { 
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        });
+        console.log("[Camera] Any camera granted");
       }
       
-      if (videoRef.current && stream) {
-        videoRef.current.srcObject = stream
-        // Wait for video to load before setting camera active
-        const handleLoadedMetadata = () => {
-          setCameraActive(true)
-          videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata)
-        }
-        videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata)
-        
-        // Timeout fallback in case loadedmetadata doesn't fire
-        setTimeout(() => {
-          if (videoRef.current?.srcObject) {
-            setCameraActive(true)
-          }
-        }, 1000)
+      if (!stream) {
+        throw new Error("No camera stream obtained");
       }
+
+      if (!videoRef.current) {
+        throw new Error("Video ref not available");
+      }
+
+      videoRef.current.srcObject = stream;
+      console.log("[Camera] Stream assigned to video element");
+      
+      // Wait for video to load before setting camera active
+      let metadataLoaded = false;
+      
+      const handleLoadedMetadata = () => {
+        console.log("[Camera] Video metadata loaded");
+        metadataLoaded = true;
+        setCameraActive(true);
+        videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      };
+      
+      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+      
+      // Timeout fallback - if metadata doesn't load in 2 seconds, activate anyway
+      const timeoutId = setTimeout(() => {
+        if (!metadataLoaded && videoRef.current?.srcObject) {
+          console.log("[Camera] Timeout - activating camera anyway");
+          setCameraActive(true);
+          videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        }
+      }, 2000);
+      
+      // Cleanup timeout if metadata loads
+      const cleanupTimeout = () => clearTimeout(timeoutId);
+      videoRef.current.addEventListener("loadedmetadata", cleanupTimeout, { once: true });
+      
     } catch (err: any) {
-      const errorMessage = err?.name === "NotAllowedError" 
-        ? "Vui lòng cấp quyền truy cập camera trong cài đặt"
-        : err?.name === "NotFoundError"
-        ? "Không tìm thấy camera trên thiết bị"
-        : "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập."
-      setError(errorMessage)
+      console.error("[Camera] Error:", err);
+      let errorMessage = "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.";
+      
+      if (err?.name === "NotAllowedError") {
+        errorMessage = "Vui lòng cấp quyền truy cập camera trong cài đặt";
+      } else if (err?.name === "NotFoundError") {
+        errorMessage = "Không tìm thấy camera trên thiết bị";
+      } else if (err?.name === "NotReadableError") {
+        errorMessage = "Camera đang được sử dụng bởi ứng dụng khác";
+      } else if (err?.name === "SecurityError") {
+        errorMessage = "Không thể truy cập camera (lỗi bảo mật). Hãy sử dụng HTTPS";
+      } else if (err?.message) {
+        errorMessage = `Lỗi camera: ${err.message}`;
+      }
+      
+      setError(errorMessage);
+      setCameraActive(false);
     }
   }
 
   const stopCamera = () => {
+    console.log("[Camera] Stopping camera...");
     if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-      tracks.forEach(track => track.stop())
-      setCameraActive(false)
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      console.log("[Camera] Stopping", tracks.length, "tracks");
+      tracks.forEach((track) => {
+        console.log("[Camera] Stopping track:", track.kind);
+        track.stop();
+      });
+      videoRef.current.srcObject = null;
+      setCameraActive(false);
+      console.log("[Camera] Camera stopped");
     }
   }
 
   const capturePhoto = () => {
+    console.log("[Capture] Starting photo capture...");
+    
     if (!videoRef.current || !canvasRef.current) {
-      setError("Lỗi: Camera hoặc canvas không khả dụng")
-      return
+      console.error("[Capture] Missing refs");
+      setError("Lỗi: Camera hoặc canvas không khả dụng");
+      return;
     }
 
-    const video = videoRef.current
-    const canvas = canvasRef.current
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    console.log("[Capture] Video dimensions:", video.videoWidth, "x", video.videoHeight);
     
     // Check if video is ready
     if (video.videoWidth === 0 || video.videoHeight === 0) {
-      setError("Camera chưa sẵn sàng. Vui lòng đợi một chút...")
-      return
+      console.warn("[Capture] Video not ready yet");
+      setError("Camera chưa sẵn sàng. Vui lòng đợi một chút...");
+      return;
     }
 
     try {
-      const context = canvas.getContext("2d")
+      const context = canvas.getContext("2d");
       if (!context) {
-        setError("Lỗi: Không thể lấy canvas context")
-        return
+        console.error("[Capture] Cannot get canvas context");
+        setError("Lỗi: Không thể lấy canvas context");
+        return;
       }
 
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      context.drawImage(video, 0, 0)
+      console.log("[Capture] Drawing image to canvas...");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0);
       
+      console.log("[Capture] Converting to blob...");
       canvas.toBlob((blob) => {
         if (blob) {
-          const imageFile = new File([blob], "captured-image.jpg", { type: "image/jpeg" })
-          setFile(imageFile)
-          stopCamera()
-          setError("")
+          console.log("[Capture] Blob created, size:", blob.size);
+          const imageFile = new File([blob], "captured-image.jpg", { type: "image/jpeg" });
+          setFile(imageFile);
+          stopCamera();
+          setError("");
+          console.log("[Capture] Photo captured successfully");
         } else {
-          setError("Lỗi: Không thể chuyển đổi ảnh")
+          console.error("[Capture] Blob is null");
+          setError("Lỗi: Không thể chuyển đổi ảnh");
         }
-      }, "image/jpeg", 0.95)
+      }, "image/jpeg", 0.95);
     } catch (err: any) {
-      setError(`Lỗi chụp ảnh: ${err?.message || "Không xác định"}`)
+      console.error("[Capture] Error:", err);
+      setError(`Lỗi chụp ảnh: ${err?.message || "Không xác định"}`);
     }
   }
 
@@ -452,19 +517,26 @@ export default function DocumentsPage() {
           {/* Camera Preview */}
           {cameraActive && (
             <div className="space-y-3">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full rounded-lg bg-black object-cover"
-                style={{ aspectRatio: "4/3" }}
-              />
+              <div className="relative w-full bg-black rounded-lg overflow-hidden" style={{ aspectRatio: "4/3" }}>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <button
                 onClick={capturePhoto}
-                className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 text-sm font-medium transition-colors"
+                className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 text-sm font-medium transition-colors"
               >
                 Chụp ảnh
+              </button>
+              <button
+                onClick={stopCamera}
+                className="w-full py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm font-medium transition-colors"
+              >
+                Hủy
               </button>
             </div>
           )}
