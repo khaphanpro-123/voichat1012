@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react"
 import DashboardLayout from "@/components/DashboardLayout"
+import ScoringCriteria from "@/components/ScoringCriteria"
 
 type ExamType = "VSTEP" | "IELTS"
 type TaskType = "VSTEP Email" | "VSTEP Essay" | "IELTS Task 1" | "IELTS Task 2"
@@ -167,9 +168,9 @@ export default function WritingPracticePage() {
             <p className="text-xs text-gray-500 mt-2 bg-gray-50 rounded-lg px-3 py-2">{TASK_DESCRIPTIONS[taskType]}</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left: Topic search + Writing area */}
-            <div className="space-y-4">
+            <div className="lg:col-span-2 space-y-4">
               {/* Topic search */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">Search for a topic</label>
@@ -259,40 +260,46 @@ export default function WritingPracticePage() {
               </div>
             </div>
 
-            {/* Right: Feedback */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 min-h-[400px]">
-              <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                AI Feedback & Score
-              </h2>
+            {/* Right: Scoring Criteria + Feedback */}
+            <div className="space-y-4">
+              {/* Scoring Criteria */}
+              <ScoringCriteria examType={examType} />
 
-              {!submitted && !feedback && (
-                <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-3">
-                    <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+              {/* Feedback */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 min-h-[400px]">
+                <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  AI Feedback & Score
+                </h2>
+
+                {!submitted && !feedback && (
+                  <div className="flex flex-col items-center justify-center h-64 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-3">
+                      <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm">Write your essay and submit to get detailed feedback</p>
+                    <p className="text-gray-400 text-xs mt-1">Scored based on {examType} criteria</p>
                   </div>
-                  <p className="text-gray-500 text-sm">Write your essay and submit to get detailed feedback</p>
-                  <p className="text-gray-400 text-xs mt-1">Scored based on {examType} criteria</p>
-                </div>
-              )}
+                )}
 
-              {grading && !feedback && (
-                <div className="flex flex-col items-center justify-center h-64 gap-3">
-                  <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-gray-500">Analyzing your essay...</p>
-                  <p className="text-xs text-gray-400">This may take 10-20 seconds</p>
-                </div>
-              )}
+                {grading && !feedback && (
+                  <div className="flex flex-col items-center justify-center h-64 gap-3">
+                    <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-gray-500">Analyzing your essay...</p>
+                    <p className="text-xs text-gray-400">This may take 10-20 seconds</p>
+                  </div>
+                )}
 
-              {feedback && (
-                <div className="overflow-y-auto max-h-[600px] pr-1">
-                  <ScoreSection content={feedback} />
-                </div>
-              )}
+                {feedback && (
+                  <div className="overflow-y-auto max-h-[600px] pr-1">
+                    <ScoreSection content={feedback} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

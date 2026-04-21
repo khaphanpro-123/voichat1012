@@ -124,25 +124,34 @@ export default function VocabularyPage() {
     return "";
   };
 
-  const fetchVietnameseTranslation = async (word: VocabularyWord) => {
+  const fetchVietnameseTranslation = async (word: VocabularyWord, expandData?: any) => {
     if (vietnameseTranslations[word._id]) return; // Already fetched
     
     try {
-      const res = await fetch("/api/translate-vietnamese", {
+      const res = await fetch("/api/translate-vocabulary-full", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          word: word.word,
           meaning: getMeaning(word),
-          example: getExample(word)
+          example: getExample(word),
+          collocations: expandData?.collocations || [],
+          phrases: expandData?.phrases || [],
+          nounPhrases: expandData?.nounPhrases || [],
+          sentences: expandData?.sentences || [],
+          synonyms: expandData?.synonyms || [],
+          antonyms: expandData?.antonyms || []
         })
       });
       
       if (res.ok) {
         const data = await res.json();
-        setVietnameseTranslations(prev => ({
-          ...prev,
-          [word._id]: data
-        }));
+        if (data.success) {
+          setVietnameseTranslations(prev => ({
+            ...prev,
+            [word._id]: data.data
+          }));
+        }
       }
     } catch (err) {
       console.error("Translation fetch error:", err);
@@ -325,7 +334,11 @@ export default function VocabularyPage() {
         body: JSON.stringify({ word: word.word, meaning: getMeaning(word) }),
       })
       const data = await res.json()
-      if (data.success) setExpandData(prev => ({ ...prev, [id]: data.data }))
+      if (data.success) {
+        setExpandData(prev => ({ ...prev, [id]: data.data }))
+        // Fetch Vietnamese translations for all expanded elements
+        await fetchVietnameseTranslation(word, data.data)
+      }
     } catch {}
     finally { setExpandLoading(null) }
   }
@@ -1012,7 +1025,12 @@ export default function VocabularyPage() {
                                   <p className="text-xs font-semibold text-gray-600 mb-1.5">Collocations</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {expandData[word._id].collocations.map((c: string, i: number) => (
-                                      <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 font-medium">{c}</span>
+                                      <div key={i} className="flex flex-col gap-0.5">
+                                        <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 font-medium">{c}</span>
+                                        {vietnameseTranslations[word._id]?.collocationsVi?.[i] && (
+                                          <span className="text-xs text-teal-600 px-2.5 italic">→ {vietnameseTranslations[word._id].collocationsVi[i]}</span>
+                                        )}
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
@@ -1024,7 +1042,12 @@ export default function VocabularyPage() {
                                   <p className="text-xs font-semibold text-gray-600 mb-1.5">Phrases & Idioms</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {expandData[word._id].phrases.map((p: string, i: number) => (
-                                      <span key={i} className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 font-medium">{p}</span>
+                                      <div key={i} className="flex flex-col gap-0.5">
+                                        <span className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 font-medium">{p}</span>
+                                        {vietnameseTranslations[word._id]?.phrasesVi?.[i] && (
+                                          <span className="text-xs text-teal-600 px-2.5 italic">→ {vietnameseTranslations[word._id].phrasesVi[i]}</span>
+                                        )}
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
@@ -1036,7 +1059,12 @@ export default function VocabularyPage() {
                                   <p className="text-xs font-semibold text-gray-600 mb-1.5">Noun Phrases</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {expandData[word._id].nounPhrases.map((np: string, i: number) => (
-                                      <span key={i} className="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200 font-medium">{np}</span>
+                                      <div key={i} className="flex flex-col gap-0.5">
+                                        <span className="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200 font-medium">{np}</span>
+                                        {vietnameseTranslations[word._id]?.nounPhrasesVi?.[i] && (
+                                          <span className="text-xs text-teal-600 px-2.5 italic">→ {vietnameseTranslations[word._id].nounPhrasesVi[i]}</span>
+                                        )}
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
@@ -1048,12 +1076,19 @@ export default function VocabularyPage() {
                                   <p className="text-xs font-semibold text-gray-600 mb-1.5">Example Sentences</p>
                                   <div className="space-y-1.5">
                                     {expandData[word._id].sentences.map((s: string, i: number) => (
-                                      <div key={i} className="flex items-start gap-2">
-                                        <span className="text-teal-500 font-bold text-xs mt-0.5 flex-shrink-0">{i + 1}.</span>
-                                        <p className="text-xs text-gray-700 italic leading-relaxed">{s}</p>
-                                        <button onClick={() => speakSentence(s)} className="flex-shrink-0 p-0.5 hover:bg-teal-100 rounded transition-colors">
-                                          <Volume2 className="w-3 h-3 text-teal-500" />
-                                        </button>
+                                      <div key={i} className="flex flex-col gap-1">
+                                        <div className="flex items-start gap-2">
+                                          <span className="text-teal-500 font-bold text-xs mt-0.5 flex-shrink-0">{i + 1}.</span>
+                                          <div className="flex-1">
+                                            <p className="text-xs text-gray-700 italic leading-relaxed">{s}</p>
+                                            {vietnameseTranslations[word._id]?.sentencesVi?.[i] && (
+                                              <p className="text-xs text-teal-600 italic leading-relaxed mt-0.5">→ {vietnameseTranslations[word._id].sentencesVi[i]}</p>
+                                            )}
+                                          </div>
+                                          <button onClick={() => speakSentence(s)} className="flex-shrink-0 p-0.5 hover:bg-teal-100 rounded transition-colors">
+                                            <Volume2 className="w-3 h-3 text-teal-500" />
+                                          </button>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
@@ -1067,7 +1102,12 @@ export default function VocabularyPage() {
                                     <p className="text-xs font-semibold text-gray-600 mb-1">Synonyms</p>
                                     <div className="flex flex-wrap gap-1">
                                       {expandData[word._id].synonyms.map((s: string, i: number) => (
-                                        <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{s}</span>
+                                        <div key={i} className="flex flex-col gap-0.5">
+                                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{s}</span>
+                                          {vietnameseTranslations[word._id]?.synonymsVi?.[i] && (
+                                            <span className="text-xs text-teal-600 px-2 italic">→ {vietnameseTranslations[word._id].synonymsVi[i]}</span>
+                                          )}
+                                        </div>
                                       ))}
                                     </div>
                                   </div>
@@ -1077,7 +1117,12 @@ export default function VocabularyPage() {
                                     <p className="text-xs font-semibold text-gray-600 mb-1">Antonyms</p>
                                     <div className="flex flex-wrap gap-1">
                                       {expandData[word._id].antonyms.map((a: string, i: number) => (
-                                        <span key={i} className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{a}</span>
+                                        <div key={i} className="flex flex-col gap-0.5">
+                                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{a}</span>
+                                          {vietnameseTranslations[word._id]?.antonymsVi?.[i] && (
+                                            <span className="text-xs text-teal-600 px-2 italic">→ {vietnameseTranslations[word._id].antonymsVi[i]}</span>
+                                          )}
+                                        </div>
                                       ))}
                                     </div>
                                   </div>
