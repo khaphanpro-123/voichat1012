@@ -30,6 +30,7 @@ interface VocabularyWord {
   word: string;
   meaning: string;
   vietnamese?: string;
+  meaningVi?: string;
   example: string;
   exampleTranslation?: string;
   exampleEn?: string;
@@ -81,7 +82,8 @@ export default function VocabularyPage() {
   const [expandedWordId, setExpandedWordId] = useState<string | null>(null)
   const [expandData, setExpandData] = useState<Record<string, any>>({})
   const [expandLoading, setExpandLoading] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<TabType>("vocabulary");
+  const [activeTab, setActiveTab] = useState<TabType>("vocabulary")
+  const [vietnameseTranslations, setVietnameseTranslations] = useState<Record<string, any>>({});
 
   // New word form state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -109,6 +111,43 @@ export default function VocabularyPage() {
   const getExample = (word: VocabularyWord): string => word.example || word.exampleEn || "";
   const getExampleTranslation = (word: VocabularyWord): string => word.exampleTranslation || word.exampleVi || "";
   const getWordType = (word: VocabularyWord): string => word.partOfSpeech || word.type || "other";
+  
+  const getMeaningVi = (word: VocabularyWord): string => {
+    if (word.meaningVi) return word.meaningVi;
+    if (vietnameseTranslations[word._id]?.meaningVi) return vietnameseTranslations[word._id].meaningVi;
+    return "";
+  };
+
+  const getExampleVi = (word: VocabularyWord): string => {
+    if (word.exampleVi) return word.exampleVi;
+    if (vietnameseTranslations[word._id]?.exampleVi) return vietnameseTranslations[word._id].exampleVi;
+    return "";
+  };
+
+  const fetchVietnameseTranslation = async (word: VocabularyWord) => {
+    if (vietnameseTranslations[word._id]) return; // Already fetched
+    
+    try {
+      const res = await fetch("/api/translate-vietnamese", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meaning: getMeaning(word),
+          example: getExample(word)
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setVietnameseTranslations(prev => ({
+          ...prev,
+          [word._id]: data
+        }));
+      }
+    } catch (err) {
+      console.error("Translation fetch error:", err);
+    }
+  };
   
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/login");
@@ -867,6 +906,9 @@ export default function VocabularyPage() {
                         )}
                       </div>
                       <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 break-words">{getMeaning(word)}</p>
+                      {getMeaningVi(word) && (
+                        <p className="text-sm sm:text-base text-teal-600 mb-2 break-words italic">→ {getMeaningVi(word)}</p>
+                      )}
                       {getExample(word) && (
                         <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg overflow-hidden">
                           <div className="flex items-start gap-2">
@@ -880,6 +922,17 @@ export default function VocabularyPage() {
                           </div>
                           {getExampleTranslation(word) && (
                             <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{getExampleTranslation(word)}</p>
+                          )}
+                          {getExampleVi(word) && (
+                            <p className="text-xs text-teal-600 mt-1 line-clamp-2 break-words italic">→ {getExampleVi(word)}</p>
+                          )}
+                          {!getExampleVi(word) && !getExampleTranslation(word) && (
+                            <button
+                              onClick={() => fetchVietnameseTranslation(word)}
+                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium"
+                            >
+                              Dịch sang Tiếng Việt
+                            </button>
                           )}
                         </div>
                       )}

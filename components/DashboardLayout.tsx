@@ -25,6 +25,7 @@ import {
   PenLine,
 } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
+import FloatingAiChat from "./FloatingAiChat";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -276,6 +277,9 @@ export default function DashboardLayout({ children, userLevel = "Beginner" }: Da
         onClose={() => setShowNotifications(false)}
         onNotificationRead={() => setUnreadCount((prev) => Math.max(0, prev - 1))}
       />
+
+      {/* Floating AI Chat */}
+      <FloatingAiChat />
     </div>
   );
 }
