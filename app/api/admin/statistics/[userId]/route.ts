@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import User from "@/app/models/User";
-import UserProgress from "@/app/models/UserProgress";
-import LearningSession from "@/app/models/LearningSession";
-import Vocabulary from "@/app/models/Vocabulary";
+import { ObjectId } from "mongodb";
+import getClientPromise, { connectToDatabase } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/adminAuth";
 
 export async function GET(
@@ -21,10 +18,19 @@ export async function GET(
 
     const { userId } = params;
 
-    await connectDB();
+    // Validate userId format
+    if (!ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
+
+    const { db } = await connectToDatabase();
+    const userObjectId = new ObjectId(userId);
 
     // Get user info
-    const user = await User.findById(userId).select("-password");
+    const user = await db.collection("users").findOne({ _id: userObjectId });
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
@@ -32,49 +38,64 @@ export async function GET(
       );
     }
 
+    // Get vocabulary count and list
+    const totalVocabulary = await db
+      .collection("vocabulary")
+      .countDocuments({ userId: userObjectId });
+
+    const vocabulary = await db
+      .collection("vocabulary")
+      .find({ userId: userObjectId })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
+
+    // Get learning sessions count and list
+    const totalSessions = await db
+      .collection("learning_sessions")
+      .countDocuments({ userId: userObjectId });
+
+    const sessions = await db
+      .collection("learning_sessions")
+      .find({ userId: userObjectId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
     // Get user progress
-    const progress = await UserProgress.findOne({ userId });
-
-    // Get learning sessions
-    const sessions = await LearningSession.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(20);
-
-    // Get vocabulary
-    const vocabulary = await Vocabulary.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
-
-    // Calculate statistics
-    const totalSessions = await LearningSession.countDocuments({ userId });
-    const totalVocabulary = await Vocabulary.countDocuments({ userId });
+    const progress = await db
+      .collection("user_progress")
+      .findOne({ userId: userObjectId });
 
     // Get session activity by date (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const sessionsByDate = await LearningSession.aggregate([
-      {
-        $match: {
-          userId: user._id,
-          createdAt: { $gte: thirtyDaysAgo },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+    const sessionsByDate = await db
+      .collection("learning_sessions")
+      .aggregate([
+        {
+          $match: {
+            userId: userObjectId,
+            createdAt: { $gte: thirtyDaysAgo },
           },
-          count: { $sum: 1 },
         },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ])
+      .toArray();
 
     return NextResponse.json({
       success: true,
       user: {
-        ...user.toObject(),
+        ...user,
         progress,
         stats: {
           totalSessions,

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import User from "@/app/models/User";
-import UserProgress from "@/app/models/UserProgress";
-import LearningSession from "@/app/models/LearningSession";
-import Vocabulary from "@/app/models/Vocabulary";
+import { ObjectId } from "mongodb";
+import { connectToDatabase } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 import { checkAdminAuth } from "@/lib/adminAuth";
 
@@ -18,21 +15,32 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    const { db } = await connectToDatabase();
 
-    const users = await User.find({ role: "user" })
-      .select("-password")
-      .sort({ createdAt: -1 });
+    const users = await db
+      .collection("users")
+      .find({ role: "user" })
+      .project({ password: 0 })
+      .sort({ createdAt: -1 })
+      .toArray();
 
     // Get statistics for each user
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
-        const progress = await UserProgress.findOne({ userId: user._id });
-        const sessionCount = await LearningSession.countDocuments({ userId: user._id });
-        const vocabularyCount = await Vocabulary.countDocuments({ userId: user._id });
+        const progress = await db
+          .collection("user_progress")
+          .findOne({ userId: user._id });
+
+        const sessionCount = await db
+          .collection("learning_sessions")
+          .countDocuments({ userId: user._id });
+
+        const vocabularyCount = await db
+          .collection("vocabulary")
+          .countDocuments({ userId: user._id });
 
         return {
-          ...user.toObject(),
+          ...user,
           stats: {
             level: progress?.level || "Beginner",
             totalSessions: sessionCount,
@@ -77,10 +85,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    const { db } = await connectToDatabase();
 
     // Check if username exists
-    const existingUsername = await User.findOne({ username: username.toLowerCase() });
+    const existingUsername = await db
+      .collection("users")
+      .findOne({ username: username.toLowerCase() });
     if (existingUsername) {
       return NextResponse.json(
         { success: false, message: "Username đã được sử dụng" },
@@ -89,7 +99,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if email exists
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    const existingEmail = await db
+      .collection("users")
+      .findOne({ email: email.toLowerCase() });
     if (existingEmail) {
       return NextResponse.json(
         { success: false, message: "Email đã được đăng ký" },
@@ -101,23 +113,25 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
-    const newUser = await User.create({
+    const result = await db.collection("users").insertOne({
       username: username.toLowerCase(),
       fullName: fullName.trim(),
       email: email.toLowerCase(),
       password: hashedPassword,
       role: "user",
       emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     return NextResponse.json({
       success: true,
       message: "Tạo tài khoản thành công",
       user: {
-        id: newUser._id,
-        username: newUser.username,
-        fullName: newUser.fullName,
-        email: newUser.email,
+        id: result.insertedId,
+        username: username.toLowerCase(),
+        fullName: fullName.trim(),
+        email: email.toLowerCase(),
       },
     });
   } catch (error: any) {
@@ -150,13 +164,21 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    if (!ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
+
+    const { db } = await connectToDatabase();
+    const userObjectId = new ObjectId(userId);
 
     // Delete user and all related data
-    await User.findByIdAndDelete(userId);
-    await UserProgress.deleteMany({ userId });
-    await LearningSession.deleteMany({ userId });
-    await Vocabulary.deleteMany({ userId });
+    await db.collection("users").deleteOne({ _id: userObjectId });
+    await db.collection("user_progress").deleteMany({ userId: userObjectId });
+    await db.collection("learning_sessions").deleteMany({ userId: userObjectId });
+    await db.collection("vocabulary").deleteMany({ userId: userObjectId });
 
     return NextResponse.json({
       success: true,

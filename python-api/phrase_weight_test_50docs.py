@@ -1,8 +1,3 @@
-"""
-Optimized Phrase Weight Test - 50 Documents
-Chạy nhanh hơn để có kết quả trong 5-7 phút
-"""
-
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -11,13 +6,9 @@ from typing import List, Dict, Tuple
 import pandas as pd
 import random
 from collections import defaultdict
-
-# Load embedding model
-print("🔄 Loading SBERT model...")
+print(" Loading SBERT model...")
 embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-print("✅ Model loaded\n")
-
-# Domain-specific vocabulary pools
+print(" Model loaded\n")
 DOMAIN_VOCABULARIES = {
     "technology": {
         "topics": ["artificial intelligence", "machine learning", "cloud computing", "cybersecurity", 
@@ -226,15 +217,15 @@ def run_experiment():
     print("="*80)
     
     # Generate 50 documents
-    print("\n📝 Generating 50 synthetic documents...")
+    print("\n Generating 50 synthetic documents...")
     documents = generate_documents(50)
-    print(f"✅ Generated {len(documents)} documents")
+    print(f"Generated {len(documents)} documents")
     
     # Domain distribution
     domain_counts = defaultdict(int)
     for doc_data in documents.values():
         domain_counts[doc_data["domain"]] += 1
-    print(f"📊 Domain distribution: {dict(domain_counts)}\n")
+    print(f" Domain distribution: {dict(domain_counts)}\n")
     
     # Weight configurations to test
     weight_configs = [
@@ -308,9 +299,7 @@ def run_experiment():
             "Avg_F1@15": round(avg_f1_15, 4),
             "Std_F1@15": round(std_f1_15, 4),
         })
-        
         print(f"F1@10={avg_f1_10:.4f}±{std_f1_10:.4f}")
-    
     # Create results DataFrame
     df = pd.DataFrame(results)
     
@@ -324,12 +313,12 @@ def run_experiment():
     
     # Save to CSV
     df.to_csv("phrase_weight_50docs_results.csv", index=False)
-    print("\n✅ Results saved to: phrase_weight_50docs_results.csv")
+    print("\n Results saved to: phrase_weight_50docs_results.csv")
     
     # Find best configuration
     best_row = df.iloc[0]
     print("\n" + "="*80)
-    print("🏆 BEST CONFIGURATION")
+    print(" BEST CONFIGURATION")
     print("="*80)
     print(f"Config: {best_row['Config']}")
     print(f"w1 (TF-IDF): {best_row['w1']}")
@@ -337,18 +326,15 @@ def run_experiment():
     print(f"Avg F1@5:  {best_row['Avg_F1@5']} ± {best_row['Std_F1@5']}")
     print(f"Avg F1@10: {best_row['Avg_F1@10']} ± {best_row['Std_F1@10']}")
     print(f"Avg_F1@15: {best_row['Avg_F1@15']} ± {best_row['Std_F1@15']}")
-    
     # Statistical significance test
     print("\n" + "="*80)
-    print("📊 STATISTICAL ANALYSIS")
+    print(" STATISTICAL ANALYSIS")
     print("="*80)
-    
     # Compare top 3 configurations
     top_3 = df.head(3)
     print("\nTop 3 Configurations:")
     for idx, row in top_3.iterrows():
         print(f"  {row['Config']:30s} | F1@10: {row['Avg_F1@10']:.4f} ± {row['Std_F1@10']:.4f}")
-    
     # Check if differences are significant
     best_f1 = best_row['Avg_F1@10']
     best_std = best_row['Std_F1@10']
@@ -359,21 +345,21 @@ def run_experiment():
     combined_std = np.sqrt(best_std**2 + second_std**2)
     
     if diff > combined_std:
-        print(f"\n✅ Best config is SIGNIFICANTLY better (diff={diff:.4f} > std={combined_std:.4f})")
+        print(f"\n Best config is SIGNIFICANTLY better (diff={diff:.4f} > std={combined_std:.4f})")
     else:
-        print(f"\n⚠️  Best config is NOT significantly better (diff={diff:.4f} <= std={combined_std:.4f})")
+        print(f"\n  Best config is NOT significantly better (diff={diff:.4f} <= std={combined_std:.4f})")
         print("   → Multiple configs may be equally good")
     
     return df
 
 if __name__ == "__main__":
-    print("🚀 Starting phrase weight optimization...")
-    print("📊 Testing 15 weight configurations on 50 documents")
-    print("⏱️  Estimated time: 5-7 minutes\n")
+    print(" Starting phrase weight optimization...")
+    print(" Testing 15 weight configurations on 50 documents")
+    print(" Estimated time: 5-7 minutes\n")
     
     results_df = run_experiment()
     
     print("\n" + "="*80)
-    print("✅ EXPERIMENT COMPLETE")
+    print(" EXPERIMENT COMPLETE")
     print("="*80)
     print("Results saved to: phrase_weight_50docs_results.csv")
