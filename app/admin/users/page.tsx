@@ -76,10 +76,13 @@ export default function AdminUsersPage() {
     try {
       const res = await fetch("/api/admin/users");
       const data = await res.json();
+      console.log("Admin users API response:", { status: res.status, data });
+      
       if (data.success) {
         setUsers(data.users);
         setFilteredUsers(data.users);
       } else {
+        console.error("API error:", data.message);
         if (res.status === 403) {
           router.push("/dashboard-new");
         }

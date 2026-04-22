@@ -24,32 +24,49 @@ export async function GET(req: NextRequest) {
       .sort({ createdAt: -1 })
       .toArray();
 
+    console.log(`[Admin API] Found ${users.length} users`);
+
     // Get statistics for each user
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
-        const progress = await db
-          .collection("user_progress")
-          .findOne({ userId: user._id });
+        try {
+          const progress = await db
+            .collection("user_progress")
+            .findOne({ userId: user._id });
 
-        const sessionCount = await db
-          .collection("learning_sessions")
-          .countDocuments({ userId: user._id });
+          const sessionCount = await db
+            .collection("learning_sessions")
+            .countDocuments({ userId: user._id });
 
-        const vocabularyCount = await db
-          .collection("vocabulary")
-          .countDocuments({ userId: user._id });
+          const vocabularyCount = await db
+            .collection("vocabulary")
+            .countDocuments({ userId: user._id });
 
-        return {
-          ...user,
-          stats: {
-            level: progress?.level || "Beginner",
-            totalSessions: sessionCount,
-            vocabularyCount: vocabularyCount,
-            lastActive: progress?.updatedAt || user.createdAt,
-          },
-        };
+          return {
+            ...user,
+            stats: {
+              level: progress?.level || "Beginner",
+              totalSessions: sessionCount,
+              vocabularyCount: vocabularyCount,
+              lastActive: progress?.updatedAt || user.createdAt,
+            },
+          };
+        } catch (err) {
+          console.error(`[Admin API] Error getting stats for user ${user._id}:`, err);
+          return {
+            ...user,
+            stats: {
+              level: "Beginner",
+              totalSessions: 0,
+              vocabularyCount: 0,
+              lastActive: user.createdAt,
+            },
+          };
+        }
       })
     );
+
+    console.log(`[Admin API] Returning ${usersWithStats.length} users with stats`);
 
     return NextResponse.json({
       success: true,
@@ -57,9 +74,9 @@ export async function GET(req: NextRequest) {
       total: usersWithStats.length,
     });
   } catch (error: any) {
-    console.error("Get users error:", error);
+    console.error("[Admin API] Get users error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: "Server error: " + error.message },
       { status: 500 }
     );
   }
