@@ -941,7 +941,15 @@ export default function VocabularyPage() {
                           )}
                           {!getExampleVi(word) && !getExampleTranslation(word) && (
                             <button
-                              onClick={() => fetchVietnameseTranslation(word)}
+                              onClick={async () => {
+                                // First expand knowledge graph if not already expanded
+                                if (!expandData[word._id]) {
+                                  await expandWord(word);
+                                } else {
+                                  // If already expanded, just fetch translation
+                                  await fetchVietnameseTranslation(word, expandData[word._id]);
+                                }
+                              }}
                               className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium"
                             >
                               Dịch sang Tiếng Việt
@@ -1128,6 +1136,17 @@ export default function VocabularyPage() {
                                   </div>
                                 )}
                               </div>
+
+                              {/* Translate Knowledge Graph Button */}
+                              {!vietnameseTranslations[word._id] && (
+                                <button
+                                  onClick={() => fetchVietnameseTranslation(word, expandData[word._id])}
+                                  className="mt-3 w-full px-3 py-2 bg-teal-100 text-teal-700 hover:bg-teal-200 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                  <Languages className="w-3.5 h-3.5" />
+                                  Dịch toàn bộ đồ thị tri thức sang Tiếng Việt
+                                </button>
+                              )}
                             </div>
                           ) : null}
                         </motion.div>
