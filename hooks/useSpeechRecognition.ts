@@ -44,7 +44,7 @@ export function useSpeechRecognition() {
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      console.warn("⚠️ Speech Recognition is not supported in this browser.");
+      console.warn(" Speech Recognition is not supported in this browser.");
       setIsSupported(false);
       return;
     }
@@ -58,12 +58,12 @@ export function useSpeechRecognition() {
     recognition.lang = "vi-VN"; // Vietnamese language
 
     recognition.onstart = () => {
-      console.log("🎤 Speech recognition started");
+      console.log(" Speech recognition started");
       setIsListening(true);
     };
 
     recognition.onend = () => {
-      console.log("🎤 Speech recognition ended");
+      console.log(" Speech recognition ended");
       setIsListening(false);
     };
 

@@ -95,7 +95,7 @@ def run_thesis_compliant_configuration(
 ) -> Dict:
     """Run a single thesis-compliant configuration"""
     
-    print(f"\n🔬 RUNNING {th_name}")
+    print(f"\n RUNNING {th_name}")
     print(f"   Pipeline Config: {config_name}")
     
     start_time = time.time()
@@ -121,7 +121,7 @@ def run_thesis_compliant_configuration(
             
         else:
             # Fallback simulation
-            print(f"   ⚠️ Using fallback simulation")
+            print(f"  Using fallback simulation")
             
             # Simulate different results based on configuration
             config_mapping = {
@@ -161,34 +161,6 @@ def run_thesis_compliant_configuration(
 
 @router.post("/ablation-study", response_model=AblationResponse)
 async def run_ablation_study(request: AblationRequest):
-    """
-    Run 8-Step Pipeline Ablation Study
-    
-    Ensures TH1-TH4 produce different results according to thesis specifications:
-    - TH1: Extraction Module (Steps 1,3,4,5) - Phrases (2 features) + Words (4 features)
-    - TH2: + Structural Context (Steps 1,2,3,4,5) - + Heading analysis  
-    - TH3: + Score Normalization (Steps 1-6) - + Shift/Normalize/Rank
-    - TH4: Full System (Steps 1-8) - + Topic Modeling + Flashcard Generation
-    
-    Request body:
-    {
-        "document_text": "Machine learning is...",
-        "ground_truth_vocabulary": ["machine learning", "algorithm", ...],
-        "document_title": "ML Basics"
-    }
-    
-    Response:
-    {
-        "success": true,
-        "summary": {
-            "best_case": "TH4: Full System",
-            "best_f1": 0.87,
-            "improvement": "32.3%"
-        },
-        "results": [...],
-        "thesis_compliance": {...}
-    }
-    """
     try:
         total_start = time.time()
         
@@ -202,8 +174,6 @@ async def run_ablation_study(request: AblationRequest):
         print(f"Ground truth size: {len(ground_truth)}")
         print(f"Pipeline available: {PIPELINE_AVAILABLE}")
         print(f"{'='*80}")
-        
-        # Define 8-step pipeline configuration mapping
         thesis_configs = {
             'TH1: Extraction Module': {
                 'config_name': 'V1_Baseline',
@@ -279,12 +249,12 @@ async def run_ablation_study(request: AblationRequest):
                 
                 results.append(result_entry)
                 
-                print(f"   📊 {th_name}: F1={metrics['f1_score']:.3f}, "
+                print(f"  {th_name}: F1={metrics['f1_score']:.3f}, "
                       f"Vocab={config_result['vocabulary_count']}, "
                       f"Complexity={pipeline_complexity}")
                 
             except Exception as e:
-                print(f"   ❌ {th_name} failed: {str(e)}")
+                print(f"    {th_name} failed: {str(e)}")
                 continue
         
         if not results:
@@ -344,7 +314,7 @@ async def run_ablation_study(request: AblationRequest):
         )
         
     except Exception as e:
-        print(f"❌ Thesis-compliant ablation study failed: {str(e)}")
+        print(f" Thesis-compliant ablation study failed: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
@@ -374,11 +344,11 @@ def _verify_different_results(results: List[Dict]) -> str:
     vocab_unique = len(set(vocab_counts)) == len(vocab_counts)
     
     if f1_unique and vocab_unique:
-        return "✅ All configurations produce different results"
+        return " All configurations produce different results"
     elif f1_unique:
-        return "✅ F1 scores different, vocabulary counts may overlap"
+        return " F1 scores different, vocabulary counts may overlap"
     else:
-        return "⚠️ Some configurations produce similar results"
+        return " Some configurations produce similar results"
 
 
 def _verify_progressive_improvement(results: List[Dict]) -> str:
@@ -399,11 +369,11 @@ def _verify_progressive_improvement(results: List[Dict]) -> str:
     improvement_rate = improvements / (len(f1_scores) - 1) if len(f1_scores) > 1 else 0
     
     if improvement_rate >= 0.8:
-        return "✅ Strong progressive improvement"
+        return " Strong progressive improvement"
     elif improvement_rate >= 0.5:
-        return "✅ Moderate progressive improvement"
+        return " Moderate progressive improvement"
     else:
-        return "⚠️ Limited progressive improvement"
+        return " Limited progressive improvement"
 
 
 @router.get("/ablation-study/example")
@@ -475,11 +445,11 @@ def _verify_different_results(results: List[Dict]) -> str:
     vocab_unique = len(set(vocab_counts)) == len(vocab_counts)
     
     if f1_unique and vocab_unique:
-        return "✅ All configurations produce different results"
+        return " All configurations produce different results"
     elif f1_unique:
-        return "✅ F1 scores different, vocabulary counts may overlap"
+        return " F1 scores different, vocabulary counts may overlap"
     else:
-        return "⚠️ Some configurations produce similar results"
+        return " Some configurations produce similar results"
 
 
 def _verify_progressive_improvement(results: List[Dict]) -> str:
@@ -500,8 +470,8 @@ def _verify_progressive_improvement(results: List[Dict]) -> str:
     improvement_rate = improvements / (len(f1_scores) - 1) if len(f1_scores) > 1 else 0
     
     if improvement_rate >= 0.8:
-        return "✅ Strong progressive improvement"
+        return " Strong progressive improvement"
     elif improvement_rate >= 0.5:
-        return "✅ Moderate progressive improvement"
+        return " Moderate progressive improvement"
     else:
-        return "⚠️ Limited progressive improvement"
+        return " Limited progressive improvement"

@@ -1,11 +1,3 @@
-"""
-Word Weight Optimization Test - 50 Documents
-Tối ưu trọng số w1, w2, w3, w4 cho từ đơn (4 features)
-
-Formula:
-final_score = w1×tfidf + w2×word_length + w3×morphological + w4×coverage_penalty
-"""
-
 import numpy as np
 import re
 import math
@@ -15,8 +7,7 @@ import random
 from collections import defaultdict, Counter
 from nltk import word_tokenize, pos_tag, sent_tokenize
 from nltk.stem import WordNetLemmatizer
-
-print("🔄 Loading NLTK resources...")
+print(" Loading NLTK resources...")
 import nltk
 try:
     nltk.data.find('tokenizers/punkt')
@@ -31,7 +22,7 @@ try:
 except LookupError:
     nltk.download('wordnet', quiet=True)
 
-print("✅ NLTK loaded\n")
+print(" NLTK loaded\n")
 
 # Domain-specific vocabulary pools
 DOMAIN_VOCABULARIES = {
@@ -298,15 +289,15 @@ def run_experiment():
     print("="*80)
     
     # Generate 50 documents
-    print("\n📝 Generating 50 synthetic documents...")
+    print("\n Generating 50 synthetic documents...")
     documents = generate_documents(50)
-    print(f"✅ Generated {len(documents)} documents")
+    print(f" Generated {len(documents)} documents")
     
     # Domain distribution
     domain_counts = defaultdict(int)
     for doc_data in documents.values():
         domain_counts[doc_data["domain"]] += 1
-    print(f"📊 Domain distribution: {dict(domain_counts)}\n")
+    print(f" Domain distribution: {dict(domain_counts)}\n")
     
     # Weight configurations to test
     weight_configs = [
@@ -407,12 +398,12 @@ def run_experiment():
     
     # Save to CSV
     df.to_csv("word_weight_50docs_results.csv", index=False)
-    print("\n✅ Results saved to: word_weight_50docs_results.csv")
+    print("\n Results saved to: word_weight_50docs_results.csv")
     
     # Find best configuration
     best_row = df.iloc[0]
     print("\n" + "="*80)
-    print("🏆 BEST CONFIGURATION")
+    print(" BEST CONFIGURATION")
     print("="*80)
     print(f"Config: {best_row['Config']}")
     print(f"w1 (TF-IDF): {best_row['w1']}")
@@ -425,7 +416,7 @@ def run_experiment():
     
     # Statistical significance test
     print("\n" + "="*80)
-    print("📊 STATISTICAL ANALYSIS")
+    print(" STATISTICAL ANALYSIS")
     print("="*80)
     
     # Compare top 3 configurations
@@ -444,21 +435,21 @@ def run_experiment():
     combined_std = np.sqrt(best_std**2 + second_std**2)
     
     if diff > combined_std:
-        print(f"\n✅ Best config is SIGNIFICANTLY better (diff={diff:.4f} > std={combined_std:.4f})")
+        print(f"\n Best config is SIGNIFICANTLY better (diff={diff:.4f} > std={combined_std:.4f})")
     else:
-        print(f"\n⚠️  Best config is NOT significantly better (diff={diff:.4f} <= std={combined_std:.4f})")
+        print(f"\n  Best config is NOT significantly better (diff={diff:.4f} <= std={combined_std:.4f})")
         print("   → Multiple configs may be equally good")
     
     return df
 
 if __name__ == "__main__":
-    print("🚀 Starting word weight optimization...")
-    print("📊 Testing 15 weight configurations on 50 documents")
-    print("⏱️  Estimated time: 3-5 minutes\n")
+    print(" Starting word weight optimization...")
+    print(" Testing 15 weight configurations on 50 documents")
+    print("  Estimated time: 3-5 minutes\n")
     
     results_df = run_experiment()
     
     print("\n" + "="*80)
-    print("✅ EXPERIMENT COMPLETE")
+    print(" EXPERIMENT COMPLETE")
     print("="*80)
     print("Results saved to: word_weight_50docs_results.csv")

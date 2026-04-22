@@ -1,5 +1,3 @@
-
-
 import numpy as np
 from typing import List, Dict, Optional
 import json
@@ -12,31 +10,12 @@ from single_word_extractor_v2 import SingleWordExtractorV2
 from new_pipeline_learned_scoring import NewPipelineLearnedScoring
 
 
-class CompletePipelineNew:
-    """
-    Complete vocabulary extraction pipeline with learned scoring
-    
-    Stages:
-    1. Document Ingestion
-    2. Heading Detection
-    3. Context Intelligence
-    4. Phrase Extraction (L2R)
-    5. Single Word Extraction (L2R)
-    6-11. New Pipeline (Independent Scoring → Flashcards)
-    """
-    
+class CompletePipelineNew:  
     def __init__(
         self,
         n_topics: int = 5,
         model_path: str = "final_scorer_model.pkl"
     ):
-        """
-        Initialize complete pipeline
-        
-        Args:
-            n_topics: Number of topics for clustering
-            model_path: Path to final scorer model
-        """
         print("="*80)
         print("INITIALIZING COMPLETE PIPELINE (NEW VERSION)")
         print("="*80)
@@ -78,52 +57,15 @@ class CompletePipelineNew:
         bm25_weight: float = 0.2,
         generate_flashcards: bool = True
     ) -> Dict:
-        """
-        Process document through complete pipeline
-        
-        Args:
-            text: Document text
-            max_phrases: Maximum phrases to extract
-            max_words: Maximum words to extract
-            document_title: Document title
-            use_bm25: Enable BM25 filtering (deprecated, kept for compatibility)
-            bm25_weight: BM25 weight (deprecated, kept for compatibility)
-            generate_flashcards: Generate flashcards (always True in new pipeline)
-        
-        Returns:
-            {
-                'vocabulary': List[Dict],
-                'topics': List[Dict],
-                'flashcards': List[Dict],
-                'statistics': Dict,
-                'metadata': Dict
-            }
-        """
         print(f"\n{'='*80}")
         print(f"PROCESSING DOCUMENT: {document_title}")
         print(f"{'='*80}\n")
-        
-        # ====================================================================
-        # STAGE 1: Document Ingestion & Normalization
-        # ====================================================================
         print(f"[STAGE 1] Document Ingestion...")
-        
         normalized_text = self._normalize_text(text)
-        
         print(f"  ✓ Text normalized: {len(normalized_text)} characters")
-        
-        # ====================================================================
-        # STAGE 2: Heading Detection
-        # ====================================================================
         print(f"\n[STAGE 2] Heading Detection...")
-        
         headings = self.heading_detector.detect_headings(normalized_text)
-        
         print(f"  ✓ Detected {len(headings)} headings")
-        
-        # ====================================================================
-        # STAGE 3: Context Intelligence
-        # ====================================================================
         print(f"\n[STAGE 3] Context Intelligence...")
         
         # Build sentences
@@ -135,24 +77,14 @@ class CompletePipelineNew:
             'sections': [],
             'headings': headings
         }
-        
         print(f"  ✓ Built context map with {len(sentences)} sentences")
-        
-        # ====================================================================
-        # STAGE 4: Phrase Extraction (with L2R)
-        # ====================================================================
-        print(f"\n[STAGE 4] Phrase Extraction (Learning-to-Rank)...")
-        
+        print(f"\n[STAGE 4] Phrase Extraction (Learning-to-Rank)...") 
         phrases = self.phrase_extractor.extract_vocabulary(
             text=normalized_text,
             max_phrases=max_phrases
         )
         
         print(f"  ✓ Extracted {len(phrases)} phrases")
-        
-        # ====================================================================
-        # STAGE 5: Single Word Extraction (with L2R)
-        # ====================================================================
         print(f"\n[STAGE 5] Single Word Extraction (Learning-to-Rank)...")
         
         words = self.word_extractor.extract_single_words(
@@ -163,21 +95,12 @@ class CompletePipelineNew:
         )
         
         print(f"  ✓ Extracted {len(words)} words")
-        
-        # ====================================================================
-        # STAGES 6-11: New Pipeline (Learned Scoring)
-        # ====================================================================
-        print(f"\n[STAGES 6-11] New Pipeline (Learned Scoring)...")
-        
+        print(f"\n[STAGES 6-11] New Pipeline (Learned Scoring)...")     
         pipeline_result = self.new_pipeline.process(
             phrases=phrases,
             words=words,
             document_text=normalized_text
         )
-        
-        # ====================================================================
-        # POST-PROCESSING: Add POS Tags (IPA REMOVED)
-        # ====================================================================
         print(f"\n[POST-PROCESSING] Adding POS tags...")
         vocabulary = pipeline_result['vocabulary']
         pos_success_count = 0
@@ -233,12 +156,8 @@ class CompletePipelineNew:
                 elif item.get('context_sentence') and not item.get('supporting_sentence'):
                     item['supporting_sentence'] = item['context_sentence']
         
-        print(f"  ✓ Added POS to {pos_success_count}/{len(vocabulary)} items {'✅' if pos_success_count == len(vocabulary) else '⚠️'}")
+        print(f"  ✓ Added POS to {pos_success_count}/{len(vocabulary)} items {'' if pos_success_count == len(vocabulary) else '⚠️'}")
         print(f"  ✓ Added context to {context_added_count}/{len(vocabulary)} items")
-        
-        # ====================================================================
-        # Add Metadata
-        # ====================================================================
         result = {
             'vocabulary': pipeline_result['vocabulary'],
             'topics': pipeline_result['topics'],
@@ -424,11 +343,6 @@ class CompletePipelineNew:
             return 'conjunction'
         else:
             return 'other'
-
-
-# ============================================================================
-# TESTING
-# ============================================================================
 
 if __name__ == "__main__":
     print("=" * 80)

@@ -2,10 +2,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import User from "@/app/models/User";
-
-// ===============================
-// 1. Password helpers
-// ===============================
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(password, salt);
@@ -17,10 +13,6 @@ export async function comparePassword(
 ): Promise<boolean> {
   return bcrypt.compare(password, hashed);
 }
-
-// ===============================
-// 2. JWT helpers
-// ===============================
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
 
 export interface JwtPayload {
@@ -30,7 +22,7 @@ export interface JwtPayload {
 
 export function signToken(userId: string, role: string) {
   if (!process.env.JWT_SECRET) {
-    throw new Error("❌ Missing JWT_SECRET in environment");
+    throw new Error(" Missing JWT_SECRET in environment");
   }
 
   return jwt.sign(

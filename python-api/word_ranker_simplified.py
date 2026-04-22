@@ -1,35 +1,10 @@
-"""
-Single Word Extraction - Simplified Version (4 Features)
-Removes complex features, keeps only essential ones
-
-Author: Kiro AI
-Date: 2026-03-27
-Version: 3.0.0 (Simplified)
-"""
-
 import re
 import math
 from typing import List, Dict, Optional
 from collections import Counter
 import numpy as np
-
-
 class SimplifiedWordRanker:
-    """
-    Simplified word ranker with 4 features only:
-    1. TF-IDF Score
-    2. Word Length
-    3. Morphological Score
-    4. Coverage Penalty
-    
-    Removed:
-    - Semantic Score (complex, needs SBERT)
-    - Learning Value (complex, many sub-components)
-    - Rarity Penalty (redundant with IDF)
-    """
-    
     def __init__(self):
-        """Initialize simplified word ranker"""
         # Stopwords
         self.stopwords = self._build_stopwords()
         
@@ -39,37 +14,21 @@ class SimplifiedWordRanker:
         self.w3 = 0.3   # Morphological (medium)
         self.w4 = -0.5  # Coverage Penalty (negative)
         
-        print("✅ SimplifiedWordRanker initialized (4 features)")
+        print(" SimplifiedWordRanker initialized (4 features)")
         print(f"   Weights: TF-IDF={self.w1}, Length={self.w2}, Morph={self.w3}, Coverage={self.w4}")
-    
-    # ========================================================================
-    # STEP 1: TEXT PREPROCESSING
-    # ========================================================================
-    
     def preprocess_text(self, text: str) -> List[Dict]:
-        """
-        STEP 1: Text preprocessing
-        - Tokenization
-        - POS tagging
-        - Lemmatization
-        """
         from nltk import word_tokenize, pos_tag, sent_tokenize
         from nltk.stem import WordNetLemmatizer
-        
         lemmatizer = WordNetLemmatizer()
-        
         tokens = []
         word_freq = Counter()
         word_sentences = {}
-        
         # Split into sentences
         sentences = sent_tokenize(text)
-        
         for sent_text in sentences:
             # Tokenize and POS tag
             sent_tokens = word_tokenize(sent_text)
             pos_tags = pos_tag(sent_tokens)
-            
             for word, pos in pos_tags:
                 word_lower = word.lower()
                 
@@ -105,13 +64,7 @@ class SimplifiedWordRanker:
             word = token['word']
             token['frequency'] = word_freq[word]
             token['sentences'] = word_sentences[word][:3]
-        
         return tokens
-    
-    # ========================================================================
-    # STEP 2: CANDIDATE FILTERING
-    # ========================================================================
-    
     def filter_candidates(self, tokens: List[Dict]) -> List[Dict]:
         """
         STEP 2: Candidate filtering
@@ -140,49 +93,29 @@ class SimplifiedWordRanker:
             # Add to candidates
             candidates.append(token)
             seen.add(word)
-        
         return candidates
-    
-    # ========================================================================
-    # STEP 3: FEATURE ENGINEERING (4 FEATURES)
-    # ========================================================================
-    
     def extract_features(
         self,
         candidates: List[Dict],
         text: str,
         phrases: List[Dict] = None
     ) -> List[Dict]:
-        """
-        STEP 3: Extract 4 features for each candidate
-        
-        1. TF-IDF Score
-        2. Word Length
-        3. Morphological Score
-        4. Coverage Penalty
-        """
         print(f"[FEATURE] Extracting 4 features for {len(candidates)} candidates...")
-        
         for candidate in candidates:
             word = candidate['word']
-            
             # Feature 1: TF-IDF
             candidate['tfidf_score'] = self._compute_tfidf(
                 word, text, candidates
             )
-            
             # Feature 2: Word Length
             candidate['word_length'] = self._compute_word_length(word)
-            
             # Feature 3: Morphological Score
             candidate['morphological_score'] = self._compute_morphological_score(word)
-            
             # Feature 4: Coverage Penalty
             candidate['coverage_penalty'] = self._compute_coverage_penalty(
                 word, phrases
             )
-        
-        print(f"  ✓ Extracted 4 features per candidate")
+        print(f"  Extracted 4 features per candidate")
         
         return candidates
     
@@ -192,13 +125,6 @@ class SimplifiedWordRanker:
         text: str,
         candidates: List[Dict]
     ) -> float:
-        """
-        Feature 1: TF-IDF Score
-        
-        TF = word_count / total_words
-        IDF = log(N / df)
-        TF-IDF = TF × IDF
-        """
         from nltk import sent_tokenize, word_tokenize
         
         # Compute TF
@@ -223,19 +149,9 @@ class SimplifiedWordRanker:
         return tfidf
     
     def _compute_word_length(self, word: str) -> float:
-        """
-        Feature 2: Word Length
-        
-        Normalized to [0, 1]
-        """
         return min(len(word) / 15.0, 1.0)
     
     def _compute_morphological_score(self, word: str) -> float:
-        """
-        Feature 3: Morphological Score
-        
-        Based on suffixes and syllables
-        """
         # Count syllables
         syllables = len(re.findall(r'[aeiou]+', word.lower()))
         
@@ -262,11 +178,6 @@ class SimplifiedWordRanker:
         word: str,
         phrases: List[Dict] = None
     ) -> float:
-        """
-        Feature 4: Coverage Penalty
-        
-        If word appears in high-scoring phrases → penalty
-        """
         if not phrases:
             return 0.0
         
@@ -278,22 +189,11 @@ class SimplifiedWordRanker:
                 return 0.5  # Penalty
         
         return 0.0
-    
-    # ========================================================================
-    # STEP 4: RANKING
-    # ========================================================================
-    
     def rank(
         self,
         candidates: List[Dict],
         top_k: Optional[int] = None
     ) -> List[Dict]:
-        """
-        STEP 4: Rank candidates by final score
-        
-        Formula:
-        final_score = w1×tfidf + w2×length + w3×morph + w4×coverage
-        """
         print(f"[RANK] Ranking {len(candidates)} candidates...")
         
         for candidate in candidates:
@@ -304,11 +204,9 @@ class SimplifiedWordRanker:
                 self.w3 * candidate.get('morphological_score', 0.0) +
                 self.w4 * candidate.get('coverage_penalty', 0.0)
             )
-            
             # Clamp to [0, 1]
             candidate['final_score'] = max(0.0, min(1.0, final_score))
             candidate['importance_score'] = candidate['final_score']  # Compatibility
-        
         # Sort by score
         candidates.sort(key=lambda x: x['final_score'], reverse=True)
         
@@ -319,11 +217,6 @@ class SimplifiedWordRanker:
         print(f"  ✓ Ranked {len(candidates)} words")
         
         return candidates
-    
-    # ========================================================================
-    # HELPER METHODS
-    # ========================================================================
-    
     def _build_stopwords(self) -> set:
         """Build comprehensive stopword list"""
         return {
@@ -353,52 +246,36 @@ class SimplifiedWordRanker:
             'make', 'take', 'give', 'get', 'put', 'set', 'go', 'come',
             'thing', 'way', 'lot', 'many', 'much', 'very', 'really'
         }
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-
 def example_usage():
-    """Example usage of SimplifiedWordRanker"""
-    
-    # Sample text
     text = """
     Climate change mitigation requires urgent action. Renewable energy sources
     like solar and wind power are essential. Deforestation contributes to
     carbon emissions. Biodiversity loss threatens ecosystems. Sustainable
     development is crucial for future generations.
     """
-    
     # Sample phrases (from phrase extraction)
     phrases = [
         {'phrase': 'climate change', 'importance_score': 0.9},
         {'phrase': 'renewable energy', 'importance_score': 0.85},
         {'phrase': 'solar power', 'importance_score': 0.8}
     ]
-    
     # Initialize ranker
     ranker = SimplifiedWordRanker()
-    
     # Step 1: Preprocess
     print("\n[STEP 1] Preprocessing...")
     tokens = ranker.preprocess_text(text)
-    print(f"  ✓ Extracted {len(tokens)} tokens")
-    
+    print(f"   Extracted {len(tokens)} tokens")
     # Step 2: Filter candidates
     print("\n[STEP 2] Filtering candidates...")
     candidates = ranker.filter_candidates(tokens)
-    print(f"  ✓ Filtered to {len(candidates)} candidates")
-    
+    print(f"   Filtered to {len(candidates)} candidates")
     # Step 3: Extract features
     print("\n[STEP 3] Extracting 4 features...")
     candidates = ranker.extract_features(candidates, text, phrases)
-    print(f"  ✓ Extracted features for {len(candidates)} candidates")
-    
+    print(f"   Extracted features for {len(candidates)} candidates")
     # Step 4: Rank
     print("\n[STEP 4] Ranking...")
     ranked = ranker.rank(candidates, top_k=10)
-    
     # Output
     print("\n" + "="*80)
     print("TOP 10 WORDS")

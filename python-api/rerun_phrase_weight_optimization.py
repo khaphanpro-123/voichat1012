@@ -1,14 +1,3 @@
-"""
-Re-run Phrase Weight Optimization with Better Evaluation
-Giải quyết vấn đề: Quá nhiều F1-score = 0.40
-
-Cải tiến:
-1. Sử dụng nhiều documents (3-5 documents)
-2. Đánh giá ở nhiều cutoff (P@5, P@10, P@15, P@20)
-3. Tính average F1-score across documents
-4. Phân tích ranking changes
-"""
-
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -19,11 +8,6 @@ import pandas as pd
 # Load embedding model
 print("Loading SBERT model...")
 embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-
-# ============================================================================
-# DATASET: 3 Documents với Ground Truth
-# ============================================================================
-
 DOCUMENTS = {
     "doc1_climate": {
         "text": """
@@ -73,11 +57,6 @@ DOCUMENTS = {
         ]
     }
 }
-
-# ============================================================================
-# PHRASE EXTRACTION (Simple N-gram based)
-# ============================================================================
-
 def extract_candidate_phrases(text: str, n_range=(2, 4)) -> List[str]:
     """Extract candidate phrases using n-grams"""
     words = text.lower().split()
@@ -91,10 +70,6 @@ def extract_candidate_phrases(text: str, n_range=(2, 4)) -> List[str]:
                 phrases.append(phrase)
     
     return list(set(phrases))
-
-# ============================================================================
-# FEATURE COMPUTATION
-# ============================================================================
 
 def compute_tfidf_scores(phrases: List[str], document: str) -> Dict[str, float]:
     """Compute TF-IDF scores for phrases"""
@@ -138,10 +113,6 @@ def compute_cohesion_scores(phrases: List[str], embedding_model) -> Dict[str, fl
     
     return scores
 
-# ============================================================================
-# SCORING AND RANKING
-# ============================================================================
-
 def score_and_rank_phrases(
     phrases: List[str],
     tfidf_scores: Dict[str, float],
@@ -172,10 +143,6 @@ def score_and_rank_phrases(
     scored_phrases.sort(key=lambda x: x[1], reverse=True)
     return scored_phrases
 
-# ============================================================================
-# EVALUATION
-# ============================================================================
-
 def evaluate_at_k(
     ranked_phrases: List[Tuple[str, float]],
     ground_truth: List[str],
@@ -194,11 +161,6 @@ def evaluate_at_k(
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     
     return precision, recall, f1
-
-# ============================================================================
-# MAIN EXPERIMENT
-# ============================================================================
-
 def run_weight_optimization():
     """Run weight optimization experiment"""
     
@@ -289,7 +251,7 @@ def run_weight_optimization():
     
     # Save to CSV
     df.to_csv("python-api/phrase_weight_optimization_results_v2.csv", index=False)
-    print("\n✅ Results saved to: python-api/phrase_weight_optimization_results_v2.csv")
+    print("\n Results saved to: python-api/phrase_weight_optimization_results_v2.csv")
     
     # Find best configuration
     best_row = df.iloc[0]

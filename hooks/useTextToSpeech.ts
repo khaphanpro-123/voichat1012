@@ -20,9 +20,9 @@ export function useTextToSpeech() {
 
       if (viVoice) {
         setVietnameseVoice(viVoice);
-        console.log("✅ Vietnamese voice found:", viVoice.name);
+        console.log(" Vietnamese voice found:", viVoice.name);
       } else {
-        console.warn("⚠️ No Vietnamese voice found. Using default voice.");
+        console.warn(" No Vietnamese voice found. Using default voice.");
         // Use any available voice as fallback
         setVietnameseVoice(availableVoices[0] || null);
       }

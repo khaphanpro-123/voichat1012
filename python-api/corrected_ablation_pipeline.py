@@ -1,14 +1,3 @@
-"""
-CORRECTED ABLATION PIPELINE FOR 11-STEP SYSTEM
-
-Fixes the issue where cases produce identical results by implementing
-proper stage differentiation according to thesis specifications.
-
-Author: Kiro AI
-Date: 2026-03-18
-Version: 2.0.0 - Corrected
-"""
-
 import numpy as np
 from typing import List, Dict, Optional
 import time
@@ -22,27 +11,11 @@ from new_pipeline_learned_scoring import NewPipelineLearnedScoring
 
 
 class CorrectedAblationPipeline:
-    """
-    Corrected pipeline with proper stage differentiation for ablation study
-    
-    Based on thesis specifications:
-    - TH1: Extraction Module (Steps 1-5)
-    - TH2: + Structural Context (Steps 2-3)  
-    - TH3: + Semantic Scoring (Steps 6-8)
-    - TH4: Full System (Steps 9-11)
-    """
-    
     def __init__(self, case_id: int):
-        """
-        Initialize pipeline for specific case
-        
-        Args:
-            case_id: Case number (1-4) corresponding to TH1-TH4
-        """
         self.case_id = case_id
         self.case_config = CORRECTED_ABLATION_CASES[case_id]
         
-        print(f"🔧 Initializing Corrected Ablation Pipeline")
+        print(f" Initializing Corrected Ablation Pipeline")
         print(f"   Case: {self.case_config['name']}")
         print(f"   Description: {self.case_config['description']}")
         print(f"   Enabled stages: {self.case_config['stages']}")
@@ -60,18 +33,6 @@ class CorrectedAblationPipeline:
         max_phrases: int = 30,
         max_words: int = 20
     ) -> Dict:
-        """
-        Process document through case-specific pipeline stages
-        
-        Args:
-            text: Document text
-            document_title: Document title
-            max_phrases: Maximum phrases to extract
-            max_words: Maximum words to extract
-        
-        Returns:
-            Result dictionary with vocabulary and metadata
-        """
         print(f"\n{'='*80}")
         print(f"CORRECTED ABLATION PIPELINE - {self.case_config['name']}")
         print(f"Document: {document_title}")
@@ -117,10 +78,6 @@ class CorrectedAblationPipeline:
         return result
     
     def _run_th1_extraction_module(self, text: str, title: str, max_phrases: int, max_words: int) -> Dict:
-        """
-        TH1: Extraction Module (Steps 1-5)
-        Basic extraction without advanced features
-        """
         print(f"[TH1] Running Extraction Module (Steps 1-5)")
         
         # Step 1: Document normalization
@@ -133,7 +90,7 @@ class CorrectedAblationPipeline:
             print(f"  ✓ Step 3: Structure analysis ({len(sentences)} sentences)")
         except:
             sentences = []
-            print(f"  ⚠️  Step 3: Structure analysis skipped (fallback)")
+            print(f"   Step 3: Structure analysis skipped (fallback)")
         
         # Step 4: Phrase extraction (basic)
         try:
@@ -143,7 +100,7 @@ class CorrectedAblationPipeline:
             )
             print(f"  ✓ Step 4: Phrase extraction ({len(phrases)} phrases)")
         except Exception as e:
-            print(f"  ⚠️  Step 4: Phrase extraction failed: {e}")
+            print(f"    Step 4: Phrase extraction failed: {e}")
             phrases = self._create_dummy_phrases(normalized_text, max_phrases)
         
         # Step 5: Single word extraction (basic)
@@ -156,7 +113,7 @@ class CorrectedAblationPipeline:
             )
             print(f"  ✓ Step 5: Word extraction ({len(words)} words)")
         except Exception as e:
-            print(f"  ⚠️  Step 5: Word extraction failed: {e}")
+            print(f"    Step 5: Word extraction failed: {e}")
             words = self._create_dummy_words(normalized_text, max_words)
         
         # Simple merge without advanced scoring
@@ -201,7 +158,7 @@ class CorrectedAblationPipeline:
             headings = self.heading_detector.detect_headings(normalized_text)
             print(f"  ✓ Step 2: Heading analysis ({len(headings)} headings)")
         except Exception as e:
-            print(f"  ⚠️  Step 2: Heading analysis failed: {e}")
+            print(f"    Step 2: Heading analysis failed: {e}")
             headings = []
         
         # Step 3: Enhanced structural context mapping (ENHANCED in TH2)
@@ -210,7 +167,7 @@ class CorrectedAblationPipeline:
             context_map = self._build_enhanced_context_map(sentences, headings)
             print(f"  ✓ Step 3: Enhanced context mapping ({len(sentences)} sentences)")
         except Exception as e:
-            print(f"  ⚠️  Step 3: Context mapping failed: {e}")
+            print(f"    Step 3: Context mapping failed: {e}")
             sentences = []
             context_map = {}
         
@@ -224,7 +181,7 @@ class CorrectedAblationPipeline:
             phrases = self._enhance_with_heading_context(phrases, headings, context_map)
             print(f"  ✓ Step 4: Context-aware phrase extraction ({len(phrases)} phrases)")
         except Exception as e:
-            print(f"  ⚠️  Step 4: Phrase extraction failed: {e}")
+            print(f"    Step 4: Phrase extraction failed: {e}")
             phrases = self._create_dummy_phrases(normalized_text, max_phrases)
         
         # Step 5: Single word extraction with heading context
@@ -237,7 +194,7 @@ class CorrectedAblationPipeline:
             )
             print(f"  ✓ Step 5: Context-aware word extraction ({len(words)} words)")
         except Exception as e:
-            print(f"  ⚠️  Step 5: Word extraction failed: {e}")
+            print(f"    Step 5: Word extraction failed: {e}")
             words = self._create_dummy_words(normalized_text, max_words)
         
         # Merge with context awareness
@@ -305,7 +262,7 @@ class CorrectedAblationPipeline:
             print(f"  ✓ Step 8: Learned final scoring applied")
             
         except Exception as e:
-            print(f"  ⚠️  Steps 6-8: Semantic scoring failed: {e}")
+            print(f"    Steps 6-8: Semantic scoring failed: {e}")
             # Fallback: Apply simple semantic boost
             for item in vocabulary:
                 base_score = item.get('importance_score', 0.5)
@@ -367,7 +324,7 @@ class CorrectedAblationPipeline:
             print(f"  ✓ Step 11: Flashcard generation ({len(flashcards)} cards)")
             
         except Exception as e:
-            print(f"  ⚠️  Steps 9-11: Topic modeling failed: {e}")
+            print(f"    Steps 9-11: Topic modeling failed: {e}")
             # Fallback: Simple topic assignment and flashcard generation
             final_vocabulary = vocabulary
             topics = []
@@ -478,12 +435,6 @@ class CorrectedAblationPipeline:
                 })
         
         return word_list
-
-
-# ============================================================================
-# CORRECTED CASE CONFIGURATIONS
-# ============================================================================
-
 CORRECTED_ABLATION_CASES = {
     1: {
         'name': 'TH1: Extraction Module',
@@ -514,8 +465,6 @@ CORRECTED_ABLATION_CASES = {
         'details': 'Hệ thống đầy đủ với Topic Modeling, Within-topic Ranking, Flashcard Generation'
     }
 }
-
-
 def create_corrected_pipeline_for_case(case_id: int) -> CorrectedAblationPipeline:
     """
     Create corrected pipeline for specific ablation case

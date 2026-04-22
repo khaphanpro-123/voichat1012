@@ -1,43 +1,38 @@
-#!/usr/bin/env python3
-"""
-Debug Topic Modeling Issue
-Kiểm tra từng bước để tìm ra vấn đề
-"""
 
 def test_embeddings():
     """Test xem embeddings có hoạt động không"""
-    print("🔍 TESTING EMBEDDINGS")
+    print(" TESTING EMBEDDINGS")
     print("-" * 40)
     
     try:
         from embedding_utils import SentenceTransformer
-        print("✅ embedding_utils import successful")
+        print(" embedding_utils import successful")
         
         model = SentenceTransformer('all-MiniLM-L6-v2')
-        print("✅ SentenceTransformer model loaded")
+        print("SentenceTransformer model loaded")
         
         # Test encoding
         test_texts = ["machine learning", "climate change", "renewable energy"]
         embeddings = model.encode(test_texts)
-        print(f"✅ Encoded {len(test_texts)} texts")
+        print(f" Encoded {len(test_texts)} texts")
         print(f"   Embedding shape: {embeddings.shape}")
         
         return True, model
         
     except Exception as e:
-        print(f"❌ Embedding test failed: {e}")
+        print(f"Embedding test failed: {e}")
         return False, None
 
 def test_new_pipeline():
     """Test NewPipelineLearnedScoring"""
-    print("\n🔍 TESTING NEW PIPELINE")
+    print("\nTESTING NEW PIPELINE")
     print("-" * 40)
     
     try:
         from new_pipeline_learned_scoring import NewPipelineLearnedScoring
         
         pipeline = NewPipelineLearnedScoring(n_topics=3)
-        print("✅ NewPipelineLearnedScoring initialized")
+        print("NewPipelineLearnedScoring initialized")
         print(f"   n_topics: {pipeline.n_topics}")
         print(f"   embedding_model: {pipeline.embedding_model is not None}")
         
@@ -63,14 +58,14 @@ def test_new_pipeline():
             document_text="Machine learning and climate change are important topics."
         )
         
-        print(f"✅ Pipeline processing successful")
+        print(f"   Pipeline processing successful")
         print(f"   Vocabulary: {len(result['vocabulary'])} items")
         print(f"   Topics: {len(result['topics'])} topics")
         print(f"   Flashcards: {len(result['flashcards'])} flashcards")
         
         # Check topics detail
         if result['topics']:
-            print(f"\n📊 TOPICS DETAIL:")
+            print(f"\n TOPICS DETAIL:")
             for i, topic in enumerate(result['topics']):
                 print(f"   Topic {i+1}: {topic.get('topic_name', 'Unknown')}")
                 print(f"     Items: {len(topic.get('items', []))}")
@@ -78,26 +73,26 @@ def test_new_pipeline():
                     items_text = [item.get('word', item.get('phrase', 'unknown')) for item in topic['items'][:3]]
                     print(f"     Sample: {items_text}")
         else:
-            print(f"❌ No topics found!")
+            print(f"No topics found!")
         
         return True, result
         
     except Exception as e:
-        print(f"❌ New pipeline test failed: {e}")
+        print(f"New pipeline test failed: {e}")
         import traceback
         traceback.print_exc()
         return False, None
 
 def test_complete_pipeline():
     """Test CompletePipelineNew"""
-    print("\n🔍 TESTING COMPLETE PIPELINE")
+    print("\nTESTING COMPLETE PIPELINE")
     print("-" * 40)
     
     try:
         from complete_pipeline import CompletePipelineNew
         
         pipeline = CompletePipelineNew(n_topics=3)
-        print("✅ CompletePipelineNew initialized")
+        print("CompletePipelineNew initialized")
         
         sample_text = """
         Machine learning is a powerful technology for solving complex problems. 
@@ -118,14 +113,14 @@ def test_complete_pipeline():
             generate_flashcards=False
         )
         
-        print(f"✅ Complete pipeline processing successful")
+        print(f"   Complete pipeline processing successful")
         print(f"   Vocabulary: {len(result['vocabulary'])} items")
         print(f"   Topics: {len(result['topics'])} topics")
         print(f"   Flashcards: {len(result['flashcards'])} flashcards")
         
         # Check topics detail
         if result['topics']:
-            print(f"\n📊 TOPICS DETAIL:")
+            print(f"\n TOPICS DETAIL:")
             for i, topic in enumerate(result['topics']):
                 print(f"   Topic {i+1}: {topic.get('topic_name', 'Unknown')}")
                 print(f"     Items: {len(topic.get('items', []))}")
@@ -133,14 +128,14 @@ def test_complete_pipeline():
                     items_text = [item.get('word', item.get('phrase', item.get('term', 'unknown'))) for item in topic['items'][:3]]
                     print(f"     Sample: {items_text}")
         else:
-            print(f"❌ No topics found in complete pipeline!")
+            print(f" No topics found in complete pipeline!")
             
             # Debug: check vocabulary
             vocab = result.get('vocabulary', [])
             if vocab:
-                print(f"\n🔍 DEBUG - Vocabulary items:")
+                print(f"\n DEBUG - Vocabulary items:")
                 for i, item in enumerate(vocab[:5]):
-                    print(f"   {i+1}. {item.get('word', item.get('phrase', item.get('term', 'unknown'))}")
+                    print(f"   {i+1}. {item.get('word', item.get('phrase', item.get('term', 'unknown')))}")
                     print(f"      Type: {item.get('type', 'unknown')}")
                     print(f"      Has embedding: {'embedding' in item}")
                     if 'cluster_id' in item:
@@ -149,14 +144,14 @@ def test_complete_pipeline():
         return True, result
         
     except Exception as e:
-        print(f"❌ Complete pipeline test failed: {e}")
+        print(f"Complete pipeline test failed: {e}")
         import traceback
         traceback.print_exc()
         return False, None
 
 def main():
     """Main debug function"""
-    print("🧪 TOPIC MODELING DEBUG")
+    print("TOPIC MODELING DEBUG")
     print("=" * 50)
     
     # Test 1: Embeddings
@@ -166,7 +161,7 @@ def main():
     if embeddings_ok:
         new_pipeline_ok, new_result = test_new_pipeline()
     else:
-        print("\n⚠️  Skipping new pipeline test (embeddings failed)")
+        print("\n Skipping new pipeline test (embeddings failed)")
         new_pipeline_ok = False
         new_result = None
     
@@ -174,32 +169,32 @@ def main():
     if embeddings_ok:
         complete_pipeline_ok, complete_result = test_complete_pipeline()
     else:
-        print("\n⚠️  Skipping complete pipeline test (embeddings failed)")
+        print("\n  Skipping complete pipeline test (embeddings failed)")
         complete_pipeline_ok = False
         complete_result = None
     
     # Summary
     print("\n" + "=" * 50)
-    print("🎯 DEBUG SUMMARY")
+    print(" DEBUG SUMMARY")
     print("=" * 50)
     
-    print(f"Embeddings: {'✅' if embeddings_ok else '❌'}")
-    print(f"New Pipeline: {'✅' if new_pipeline_ok else '❌'}")
-    print(f"Complete Pipeline: {'✅' if complete_pipeline_ok else '❌'}")
+    print(f"Embeddings: {'' if embeddings_ok else ''}")
+    print(f"New Pipeline: {'' if new_pipeline_ok else ''}")
+    print(f"Complete Pipeline: {'' if complete_pipeline_ok else ''}")
     
     if not embeddings_ok:
-        print(f"\n❌ ROOT CAUSE: Embeddings not working")
+        print(f"\n ROOT CAUSE: Embeddings not working")
         print(f"   Solution: Install sentence-transformers")
         print(f"   Command: pip install sentence-transformers")
     elif new_pipeline_ok and complete_pipeline_ok:
-        print(f"\n✅ Topic Modeling is working!")
+        print(f"\n Topic Modeling is working!")
         
         # Check if topics are actually created
         new_topics = new_result.get('topics', []) if new_result else []
         complete_topics = complete_result.get('topics', []) if complete_result else []
         
         if len(new_topics) == 0 and len(complete_topics) == 0:
-            print(f"⚠️  But no topics are being created")
+            print(f"  But no topics are being created")
             print(f"   Possible causes:")
             print(f"   1. Not enough vocabulary items")
             print(f"   2. All items have same embedding")
@@ -208,7 +203,7 @@ def main():
             print(f"   New Pipeline topics: {len(new_topics)}")
             print(f"   Complete Pipeline topics: {len(complete_topics)}")
     else:
-        print(f"\n❌ Pipeline issues detected")
+        print(f"\n Pipeline issues detected")
 
 if __name__ == "__main__":
     main()

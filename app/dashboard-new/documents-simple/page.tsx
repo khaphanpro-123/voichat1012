@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import DashboardLayout from "@/components/DashboardLayout"
 import CameraCapture from "@/components/CameraCapture"
 import { processFile, validateFile, detectFileType } from "@/lib/file-processing-pipeline"
+import { detectNoiseWords, filterNoiseFromVocabulary } from "@/lib/noise-detection"
 
 function VocabularyCard({ card, speakText }: { card: any; speakText: (text: string) => void }) {
   if (!card || (!card.word && !card.phrase)) return null
@@ -261,7 +262,26 @@ export default function DocumentsPage() {
       if (!data || typeof data !== "object") throw new Error("Invalid response format")
       if (!data.flashcards && !data.vocabulary) throw new Error("Response missing vocabulary data")
 
-      setResult(data)
+      // ✨ PHÁT HIỆN NOISE
+      const vocabulary = data.vocabulary || data.flashcards || []
+      const allText = vocabulary.map((v: any) => v.word || v.phrase).join(' ')
+      const noiseWords = detectNoiseWords(allText)
+      
+      // Lọc vocabulary
+      const { clean, noise } = filterNoiseFromVocabulary(vocabulary, noiseWords)
+
+      // Cập nhật result
+      setResult({
+        ...data,
+        vocabulary: clean,
+        noiseVocabulary: noise,
+        noiseDetection: {
+          totalNoise: noise.length,
+          noiseWords: noiseWords,
+          cleanCount: clean.length
+        }
+      })
+
       if (data.topics && data.topics.length > 0) {
         try { localStorage.setItem("recent_topics", JSON.stringify(data.topics)) } catch {}
       }
@@ -274,14 +294,14 @@ export default function DocumentsPage() {
           body: JSON.stringify({
             filename: displayName,
             fileSize: fileToUpload.size,
-            vocabularyCount: data.vocabulary_count || data.vocabulary?.length || 0,
+            vocabularyCount: clean.length || data.vocabulary_count || 0,
             topicsCount: data.topics?.length || 0,
           })
         })
         await loadDocuments()
       } catch {}
       
-      await handleSaveToDatabase(data)
+      await handleSaveToDatabase(clean)
     } catch (err: any) {
       throw err
     }
@@ -465,6 +485,64 @@ export default function DocumentsPage() {
         {/* Results */}
         {result && (
           <div className="space-y-5">
+
+            {/* Noise Vocabulary Section */}
+            {result.noiseVocabulary && result.noiseVocabulary.length > 0 && (
+              <div className="bg-white rounded-xl border border-red-200 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h2 className="text-lg font-semibold text-red-700">
+                    Từ Vựng Lỗi Do Nhiễu OCR ({result.noiseVocabulary.length})
+                  </h2>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-4">
+                  Những từ này có thể là lỗi từ quá trình OCR hoặc xử lý. Bạn có thể xóa hoặc chỉnh sửa chúng.
+                </p>
+                
+                {result.noiseDetection?.noiseWords && result.noiseDetection.noiseWords.length > 0 && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                    <p className="text-sm font-medium text-yellow-800 mb-2">Lý do phát hiện:</p>
+                    <div className="space-y-1">
+                      {result.noiseDetection.noiseWords.slice(0, 5).map((nw: any, i: number) => (
+                        <p key={i} className="text-xs text-yellow-700">
+                          • <span className="font-mono">{nw.word}</span>: {nw.reason} (độ tin cậy: {(nw.confidence * 100).toFixed(0)}%)
+                        </p>
+                      ))}
+                      {result.noiseDetection.noiseWords.length > 5 && (
+                        <p className="text-xs text-yellow-600">
+                          ... và {result.noiseDetection.noiseWords.length - 5} từ khác
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {result.noiseVocabulary.map((card: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-red-900 break-words">{card.word || card.phrase}</p>
+                        <p className="text-xs text-red-600">Score: {(card.final_score || card.importance_score || 0).toFixed(2)}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setResult((prev: any) => ({
+                            ...prev,
+                            noiseVocabulary: prev.noiseVocabulary.filter((_: any, i: number) => i !== idx)
+                          }))
+                        }}
+                        className="ml-2 px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 flex-shrink-0"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Stats */}
             {result.vocabulary_by_difficulty && (

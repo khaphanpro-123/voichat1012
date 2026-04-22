@@ -1,27 +1,9 @@
-"""
-Phrase Scorer với 2 features: TF-IDF + Semantic Cohesion
-
-Author: Kiro AI
-Date: 2026-03-28
-Version: 2.0.0 (Simplified)
-"""
-
 import numpy as np
 from typing import List, Dict, Optional
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from nltk import word_tokenize, sent_tokenize
-
-
 class PhraseScorer2Features:
-    """
-    Phrase scorer với 2 features:
-    1. TF-IDF Score
-    2. Semantic Cohesion
-    
-    Formula:
-        importance_score = w1 × S_tfidf + w2 × S_cohesion
-    """
     
     def __init__(
         self,
@@ -29,29 +11,15 @@ class PhraseScorer2Features:
         w2: float = 0.4,
         embedding_model=None
     ):
-        """
-        Initialize scorer with optimal weights from experiments
-        
-        Optimal weights determined from 20 experiments:
-        - w1=0.6 (TF-IDF): Measures term frequency and rarity
-        - w2=0.4 (Cohesion): Measures semantic coherence
-        
-        Results: F1-Score=0.40, Precision=0.40, Recall=0.40
-        
-        Args:
-            w1: Weight for TF-IDF (default: 0.6, optimal)
-            w2: Weight for Semantic Cohesion (default: 0.4, optimal)
-            embedding_model: SBERT model (optional)
-        """
         self.w1 = w1
         self.w2 = w2
         self.embedding_model = embedding_model
         
         # Validate weights
         if abs(w1 + w2 - 1.0) > 0.01:
-            print(f"⚠️  Warning: w1 + w2 = {w1 + w2} != 1.0")
+            print(f"  Warning: w1 + w2 = {w1 + w2} != 1.0")
         
-        print(f"✅ PhraseScorer2Features initialized")
+        print(f"   PhraseScorer2Features initialized")
         print(f"   Weights: TF-IDF={w1}, Cohesion={w2}")
     
     def compute_scores(
@@ -59,16 +27,6 @@ class PhraseScorer2Features:
         phrases: List[Dict],
         document_text: str
     ) -> List[Dict]:
-        """
-        Compute scores for all phrases
-        
-        Args:
-            phrases: List of phrase dicts
-            document_text: Full document text
-        
-        Returns:
-            Phrases with scores added
-        """
         print(f"[SCORER] Computing 2 features for {len(phrases)} phrases...")
         
         # Load embedding model if needed
@@ -78,7 +36,7 @@ class PhraseScorer2Features:
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
                 print("  ✓ Loaded SBERT model")
             except Exception as e:
-                print(f"  ⚠️  Failed to load SBERT: {e}")
+                print(f"  Failed to load SBERT: {e}")
         
         # Feature 1: TF-IDF
         phrases = self._compute_tfidf_scores(phrases, document_text)
@@ -98,11 +56,6 @@ class PhraseScorer2Features:
         phrases: List[Dict],
         document_text: str
     ) -> List[Dict]:
-        """
-        Feature 1: TF-IDF Score
-        
-        Tính average TF-IDF của các từ trong cụm từ
-        """
         # Tokenize document into sentences
         sentences = sent_tokenize(document_text)
         
@@ -145,7 +98,7 @@ class PhraseScorer2Features:
                 phrase_dict['tfidf_score'] = float(avg_tfidf)
         
         except Exception as e:
-            print(f"  ⚠️  TF-IDF computation failed: {e}")
+            print(f"  TF-IDF computation failed: {e}")
             # Fallback: assign default score
             for phrase_dict in phrases:
                 phrase_dict['tfidf_score'] = 0.5
@@ -164,11 +117,6 @@ class PhraseScorer2Features:
         return phrases
     
     def _compute_cohesion_scores(self, phrases: List[Dict]) -> List[Dict]:
-        """
-        Feature 2: Semantic Cohesion
-        
-        Tính average cosine similarity giữa các từ trong cụm từ
-        """
         if self.embedding_model is None:
             # Fallback: assign default score
             for phrase_dict in phrases:
@@ -205,15 +153,12 @@ class PhraseScorer2Features:
                     avg_similarity = sum(similarities) / len(similarities)
                 else:
                     avg_similarity = 0.0
-                
-                # Normalize to [0, 1]
-                # Cosine similarity is in [-1, 1], shift to [0, 1]
                 cohesion_score = (avg_similarity + 1.0) / 2.0
                 
                 phrase_dict['cohesion_score'] = float(cohesion_score)
         
         except Exception as e:
-            print(f"  ⚠️  Cohesion computation failed: {e}")
+            print(f"    Cohesion computation failed: {e}")
             # Fallback: assign default score
             for phrase_dict in phrases:
                 phrase_dict['cohesion_score'] = 0.5
@@ -221,12 +166,6 @@ class PhraseScorer2Features:
         return phrases
     
     def _compute_importance_scores(self, phrases: List[Dict]) -> List[Dict]:
-        """
-        Compute final importance_score
-        
-        Formula:
-            importance_score = w1 × S_tfidf + w2 × S_cohesion
-        """
         for phrase_dict in phrases:
             tfidf = phrase_dict.get('tfidf_score_normalized', 0.5)
             cohesion = phrase_dict.get('cohesion_score', 0.5)
@@ -246,16 +185,6 @@ class PhraseScorer2Features:
         phrases: List[Dict],
         top_k: Optional[int] = None
     ) -> List[Dict]:
-        """
-        Rank phrases by importance_score
-        
-        Args:
-            phrases: Phrases with scores
-            top_k: Number of top phrases to keep
-        
-        Returns:
-            Ranked phrases
-        """
         # Sort by importance_score
         phrases.sort(key=lambda x: x.get('importance_score', 0.0), reverse=True)
         
@@ -264,14 +193,7 @@ class PhraseScorer2Features:
             phrases = phrases[:top_k]
         
         return phrases
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-
 def example_usage():
-    """Example usage of PhraseScorer2Features"""
     
     # Sample document
     document_text = """

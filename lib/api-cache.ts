@@ -1,12 +1,8 @@
-// Simple in-memory cache for API responses
-// Reduces redundant DB queries for same data within a short window
-
 interface CacheEntry<T> {
   data: T
   expiresAt: number
   lastAccessed: number
 }
-
 class ApiCache {
   private store = new Map<string, CacheEntry<any>>()
   private maxSize = 500 // Increased for concurrent users

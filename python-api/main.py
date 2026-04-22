@@ -1,10 +1,3 @@
-"""
-Visual Language Tutor - Backend API
-Complete 11-Step Pipeline + Phrase-Centric Extraction + Ablation Study
-Version: 2.0 (New Pipeline)
-Last Updated: 2026-03-24 - Migrated to new 11-step pipeline with learned scoring
-"""
-
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -16,19 +9,17 @@ from datetime import datetime
 import shutil
 from pathlib import Path
 
-# Download NLTK data on startup
 import nltk
 try:
-    print("📥 Downloading NLTK data...")
+    print(" Downloading NLTK data...")
     nltk.download('wordnet', quiet=True)
     nltk.download('omw-1.4', quiet=True)
     nltk.download('punkt', quiet=True)
     nltk.download('averaged_perceptron_tagger', quiet=True)
     nltk.download('stopwords', quiet=True)
-    print("✅ NLTK data downloaded successfully")
+    print(" NLTK data downloaded successfully")
 except Exception as e:
-    print(f"⚠️  NLTK download warning: {e}")
-
+    print(f" NLTK download warning: {e}")
 # Document processing
 try:
     import PyPDF2
@@ -36,7 +27,7 @@ try:
     PDF_SUPPORT = True
 except ImportError:
     PDF_SUPPORT = False
-    print("⚠️  Warning: PyPDF2 or python-docx not installed. PDF/DOCX support disabled.")
+    print("  Warning: PyPDF2 or python-docx not installed. PDF/DOCX support disabled.")
 
 # Import extractors
 from phrase_centric_extractor import PhraseCentricExtractor
@@ -44,19 +35,11 @@ from complete_pipeline import CompletePipelineNew
 
 # Import ablation study router
 from ablation_api_endpoint import router as ablation_router
-
-# Import RAG systems (DISABLED - commented out by user)
-# from knowledge_graph import KnowledgeGraph
-# from rag_system import RAGSystem
-
-# ==================== CONFIGURATION ====================
-
 app = FastAPI(
     title="Visual Language Tutor API",
     version="2.0",
     description="Complete 11-Step Pipeline + Phrase-Centric Extraction"
 )
-
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -65,7 +48,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Include ablation study router
 app.include_router(ablation_router, prefix="/api", tags=["ablation"])
 
@@ -74,53 +56,26 @@ os.makedirs("uploads", exist_ok=True)
 # os.makedirs("knowledge_graph_data", exist_ok=True)  # DISABLED
 
 # Initialize systems
-print("🔄 Initializing systems...")
+print(" Initializing systems...")
 
 # Phrase-Centric Extractor
 phrase_extractor = PhraseCentricExtractor()
-print("✅ Phrase-Centric Extractor initialized")
-
-# Knowledge Graph (DISABLED)
-# knowledge_graph = KnowledgeGraph(storage_path="knowledge_graph_data")
-# print("✅ Knowledge Graph initialized")
+print(" Phrase-Centric Extractor initialized")
 knowledge_graph = None
-print("⚠️  Knowledge Graph DISABLED")
-
-# RAG System (DISABLED)
-# rag_system = RAGSystem(
-#     knowledge_graph=knowledge_graph,
-#     llm_api_key=os.getenv("OPENAI_API_KEY"),
-#     llm_model="gpt-4"
-# )
-# print("✅ RAG System initialized")
+print("  Knowledge Graph DISABLED")
 rag_system = None
-print("⚠️  RAG System DISABLED")
-
-print("✅ All systems ready!")
-
-
-# ==================== DATA MODELS ====================
-
+print("  RAG System DISABLED")
+print(" All systems ready!")
 class FlashcardRequest(BaseModel):
     """Request for flashcard generation"""
     document_id: str
     max_cards: int = 30
-
-
 class RAGQueryRequest(BaseModel):
     """Request for RAG query"""
     document_id: str
     query: str
     max_results: int = 5
-
-
-# ==================== HELPER FUNCTIONS ====================
-
 def convert_numpy_types(obj):
-    """
-    Recursively convert numpy types to Python native types for JSON serialization
-    Also handles inf and NaN values
-    """
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, np.integer):
@@ -173,10 +128,6 @@ def extract_text_from_file(file_path: str) -> str:
     
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error extracting text: {str(e)}")
-
-
-# ==================== HEALTH CHECK ====================
-
 @app.get("/")
 async def root():
     """Health check endpoint"""
@@ -196,8 +147,6 @@ async def root():
             "stats": "/api/knowledge-graph/stats (DISABLED)"
         }
     }
-
-
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
@@ -210,10 +159,6 @@ async def health_check():
             "rag_system": rag_system is not None
         }
     }
-
-
-# ==================== MAIN UPLOAD ENDPOINTS ====================
-
 @app.post("/api/upload-document-complete")
 async def upload_document_complete(
     file: UploadFile = File(...),
@@ -223,46 +168,6 @@ async def upload_document_complete(
     bm25_weight: float = Form(0.2),
     generate_flashcards: bool = Form(True)
 ):
-    """
-    Upload document and extract vocabulary using COMPLETE 11-STEP PIPELINE
-    
-    ✅ RECOMMENDED ENDPOINT - Phrases + Single Words
-    
-    Supports: .txt, .pdf, .docx (ENGLISH ONLY)
-    
-    Complete Pipeline (11 Steps):
-    1. Document Ingestion & OCR
-    2. Heading Analysis
-    3. Structural Heading Context
-    4. Phrase Extraction
-    5. Single-Word Extraction
-    6. Independent Scoring
-    7. Merge Phrase & Word
-    8. Learned Final Scoring
-    9. Topic Modeling
-    10. Within-topic Ranking
-    11. Flashcard Generation
-    
-    Parameters:
-    - file: Document file (.txt, .pdf, .docx) - MUST BE ENGLISH
-    - max_phrases: Maximum phrases to extract (default: 40, range: 10-100)
-    - max_words: Maximum single words to extract (default: 10, range: 5-30)
-    - use_bm25: Enable BM25 filtering (default: False, recommended: False)
-    - bm25_weight: BM25 weight, max 0.2 (default: 0.2)
-    - generate_flashcards: Generate flashcards via RAG (default: True)
-    
-    Returns:
-    - vocabulary: Phrases (70-80%) + Single Words (20-30%)
-    - flashcards: Generated from vocabulary
-    - knowledge_graph_stats: Entities and relations
-    - stages: Detailed output from key stages
-    
-    Example:
-    curl -X POST http://localhost:8000/api/upload-document-complete \\
-      -F "file=@document.pdf" \\
-      -F "max_phrases=40" \\
-      -F "max_words=10"
-    """
     try:
         # Validate file
         if not file.filename:
@@ -308,7 +213,7 @@ async def upload_document_complete(
             if non_ascii_ratio > 0.3:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"⚠️ Text appears to be non-English (detected {non_ascii_ratio*100:.1f}% non-ASCII characters). "
+                    detail=f" Text appears to be non-English (detected {non_ascii_ratio*100:.1f}% non-ASCII characters). "
                            f"This system currently supports English text only. "
                            f"Please upload an English document."
                 )
@@ -419,33 +324,6 @@ async def upload_document(
     min_phrase_length: int = Form(2),
     max_phrase_length: int = Form(5)
 ):
-    """
-    Upload document and extract vocabulary (PHRASES ONLY)
-    
-    ⚠️ LEGACY ENDPOINT - Use /api/upload-document-complete for phrases + words
-    
-    Supports: .txt, .pdf, .docx (ENGLISH ONLY)
-    
-    Pipeline:
-    1. Extract text from file
-    2. Extract phrases (phrase-centric) - NO SINGLE WORDS
-    3. Build knowledge graph
-    4. Generate flashcards
-    
-    Parameters:
-    - file: Document file (.txt, .pdf, .docx)
-    - max_phrases: Maximum phrases to extract (default: 50)
-    - min_phrase_length: Minimum words per phrase (default: 2)
-    - max_phrase_length: Maximum words per phrase (default: 5)
-    
-    Returns:
-    - vocabulary: Phrases only (100% multi-word)
-    - flashcards: Generated from phrases
-    - knowledge_graph_stats: Entities and relations
-    
-    Note: This endpoint extracts PHRASES ONLY. 
-    For phrases + single words, use /api/upload-document-complete
-    """
     try:
         # Validate file
         if not file.filename:
@@ -491,7 +369,7 @@ async def upload_document(
             if non_ascii_ratio > 0.3:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"⚠️ Text appears to be non-English (detected {non_ascii_ratio*100:.1f}% non-ASCII characters). "
+                    detail=f" Text appears to be non-English (detected {non_ascii_ratio*100:.1f}% non-ASCII characters). "
                            f"This system currently supports English text only. "
                            f"Please upload an English document."
                 )
@@ -524,27 +402,9 @@ async def upload_document(
                     'contrastive_score': phrase_dict.get('contrastive_score', 0.0)
                 }
             })
-        
-        # Build Knowledge Graph (DISABLED)
-        # kg_stats = knowledge_graph.build_from_vocabulary_contexts(
-        #     vocabulary_contexts=vocabulary_contexts,
-        #     document_id=document_id,
-        #     document_title=file.filename,
-        #     document_content=text[:1000]
-        # )
-        # knowledge_graph.save_graph()
-        # print(f"[Upload] Knowledge Graph built: {kg_stats}")
+       
         kg_stats = {'entities_created': 0, 'relations_created': 0, 'vocabulary_terms': len(vocabulary_contexts)}
         print(f"[Upload] Knowledge Graph SKIPPED (disabled)")
-        
-        # Generate Flashcards (DISABLED - using simple generation instead)
-        # flashcards_result = rag_system.generate_flashcards(
-        #     document_id=document_id,
-        #     max_cards=min(30, len(vocabulary_contexts))
-        # )
-        # flashcards = flashcards_result.get('flashcards', [])
-        
-        # Simple flashcard generation without RAG
         flashcards = []
         for vc in vocabulary_contexts[:min(30, len(vocabulary_contexts))]:
             flashcards.append({
@@ -583,11 +443,6 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/knowledge-graph/vocabulary/{document_id}")
 async def get_vocabulary_by_document(document_id: str):
-    """
-    Get all vocabulary terms for a document
-    
-    ⚠️  UPDATED: Now uses pipeline cache instead of KG object
-    """
     try:
         # Get pipeline result from cache
         result = get_pipeline_result(document_id)
@@ -629,51 +484,22 @@ async def get_vocabulary_by_document(document_id: str):
 
 @app.get("/api/knowledge-graph/stats")
 async def get_knowledge_graph_stats():
-    """
-    Get Knowledge Graph statistics (DISABLED)
-    
-    This endpoint has been disabled because Knowledge Graph is disabled.
-    Use per-document endpoints instead:
-    - GET /api/knowledge-graph/{document_id}
-    - GET /api/flashcards/{document_id}
-    """
     raise HTTPException(
         status_code=501,
         detail="Knowledge Graph stats endpoint disabled. Use per-document endpoints instead."
     )
-
-
 @app.post("/api/rag/generate-flashcards")
 async def generate_flashcards(request: FlashcardRequest):
-    """
-    Generate flashcards using RAG system (DISABLED)
-    
-    This endpoint has been disabled. Use /api/upload-document or 
-    /api/upload-document-complete instead, which generate flashcards 
-    automatically without RAG.
-    """
     raise HTTPException(
         status_code=501,
         detail="RAG system disabled. Use /api/upload-document-complete instead."
     )
-
-
 @app.post("/api/rag/query")
 async def rag_query(request: RAGQueryRequest):
-    """
-    Query RAG system for information (DISABLED)
-    
-    This endpoint has been disabled.
-    """
     raise HTTPException(
         status_code=501,
         detail="RAG system disabled."
     )
-
-
-# ==================== GLOBAL CACHE ====================
-
-# Cache for storing pipeline results
 pipeline_results_cache = {}
 
 def store_pipeline_result(document_id: str, result: dict):
@@ -682,28 +508,15 @@ def store_pipeline_result(document_id: str, result: dict):
         "result": result,
         "timestamp": datetime.now().isoformat()
     }
-    print(f"✅ Stored result for document: {document_id}")
+    print(f" Stored result for document: {document_id}")
 
 def get_pipeline_result(document_id: str) -> Optional[dict]:
     """Get pipeline result from cache"""
     if document_id in pipeline_results_cache:
         return pipeline_results_cache[document_id]["result"]
     return None
-
-
-# ==================== STAGE 11: KNOWLEDGE GRAPH API ====================
-
 @app.get("/api/knowledge-graph/{document_id}")
 async def get_knowledge_graph(document_id: str):
-    """
-    Get knowledge graph data for visualization
-    
-    Returns:
-    - nodes: List of entities (clusters + phrases)
-    - edges: List of relations (contains + similar_to)
-    - clusters: Cluster information
-    - mindmap: Markdown mindmap
-    """
     try:
         # Get pipeline result from cache
         result = get_pipeline_result(document_id)
@@ -713,7 +526,6 @@ async def get_knowledge_graph(document_id: str):
                 status_code=404,
                 detail=f"Document {document_id} not found. Please upload document first."
             )
-        
         # Extract STAGE 11 data
         stage11 = result.get('stages', {}).get('stage11', {})
         
@@ -749,27 +561,11 @@ async def get_knowledge_graph(document_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# ==================== STAGE 12: FLASHCARDS API ====================
-
 @app.get("/api/flashcards/{document_id}")
 async def get_flashcards(
     document_id: str,
     group_by_cluster: bool = True
 ):
-    """
-    Get flashcards grouped by cluster
-    
-    Parameters:
-    - document_id: Document ID
-    - group_by_cluster: Group flashcards by cluster (default: True)
-    
-    Returns:
-    - clusters: List of clusters with flashcards
-    - total_flashcards: Total number of flashcards
-    - total_clusters: Total number of clusters
-    """
     try:
         # Get pipeline result from cache
         result = get_pipeline_result(document_id)
@@ -831,10 +627,6 @@ async def get_flashcards(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# ==================== RUN SERVER ====================
-
 if __name__ == "__main__":
     import uvicorn
     

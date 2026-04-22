@@ -1,27 +1,14 @@
-/**
- * Sentence boundary detection
- */
-
-// Simple but effective sentence splitter
-// Handles common abbreviations and edge cases
 const ABBREVIATIONS = new Set([
   "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "vs", "etc", "inc", "ltd",
   "co", "corp", "st", "ave", "blvd", "rd", "dept", "univ", "assn", "bros",
   "ph.d", "m.d", "b.a", "m.a", "d.d.s", "e.g", "i.e", "cf", "al", "ed",
   "vol", "rev", "est", "approx", "govt", "no", "nos", "fig", "figs",
 ]);
-
 export function splitSentences(text: string): string[] {
   const sentences: string[] = [];
-  
-  // Pre-process: protect abbreviations
   let processed = text;
-  
-  // Split on sentence-ending punctuation followed by space and capital letter
-  // or end of string
   const sentencePattern = /[^.!?]*[.!?]+(?:\s+|$)/g;
   const matches = processed.match(sentencePattern);
-  
   if (!matches) {
     // No sentence-ending punctuation found, return whole text as one sentence
     const trimmed = text.trim();

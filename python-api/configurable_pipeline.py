@@ -1,13 +1,3 @@
-"""
-CONFIGURABLE PIPELINE FOR ABLATION STUDY
-
-Allows enabling/disabling specific stages to test their individual contributions.
-
-Author: Kiro AI
-Date: 2026-03-13
-Version: 1.0.0
-"""
-
 import numpy as np
 from typing import List, Dict, Optional
 import time
@@ -102,17 +92,9 @@ class ConfigurablePipeline:
                 'pipeline_type': 'configurable_ablation'
             }
         }
-        
-        # ================================================================
-        # STAGE 1: Document Ingestion & Normalization (Always enabled)
-        # ================================================================
         print(f"[STAGE 1] Document Ingestion...")
         normalized_text = self._normalize_text(text)
         print(f"  ✓ Text normalized: {len(normalized_text)} characters")
-        
-        # ================================================================
-        # STAGE 2: Heading Detection
-        # ================================================================
         headings = []
         if 2 in self.enabled_stages and self.heading_detector:
             print(f"[STAGE 2] Heading Detection...")
@@ -120,10 +102,6 @@ class ConfigurablePipeline:
             print(f"  ✓ Detected {len(headings)} headings")
         else:
             print(f"[STAGE 2] SKIPPED")
-        
-        # ================================================================
-        # STAGE 3: Context Intelligence
-        # ================================================================
         sentences = []
         context_map = {}
         if 3 in self.enabled_stages:
@@ -137,10 +115,6 @@ class ConfigurablePipeline:
             print(f"  ✓ Built context map with {len(sentences)} sentences")
         else:
             print(f"[STAGE 3] SKIPPED")
-        
-        # ================================================================
-        # STAGE 4: Phrase Extraction
-        # ================================================================
         phrases = []
         if 4 in self.enabled_stages and self.phrase_extractor:
             print(f"[STAGE 4] Phrase Extraction...")
@@ -151,10 +125,6 @@ class ConfigurablePipeline:
             print(f"  ✓ Extracted {len(phrases)} phrases")
         else:
             print(f"[STAGE 4] SKIPPED")
-        
-        # ================================================================
-        # STAGE 5: Single Word Extraction
-        # ================================================================
         words = []
         if 5 in self.enabled_stages and self.word_extractor:
             print(f"[STAGE 5] Single Word Extraction...")
@@ -167,10 +137,6 @@ class ConfigurablePipeline:
             print(f"  ✓ Extracted {len(words)} words")
         else:
             print(f"[STAGE 5] SKIPPED")
-        
-        # ================================================================
-        # STAGES 6-11: Advanced Processing
-        # ================================================================
         if any(stage in self.enabled_stages for stage in [6, 7, 8, 9, 10, 11]):
             print(f"[STAGES 6-11] Advanced Processing...")
             
@@ -192,7 +158,7 @@ class ConfigurablePipeline:
                 
                 print(f"  ✓ Advanced processing complete")
             else:
-                print(f"  ⚠️  New pipeline not initialized")
+                print(f"   New pipeline not initialized")
         else:
             print(f"[STAGES 6-11] ALL SKIPPED")
             
@@ -203,10 +169,6 @@ class ConfigurablePipeline:
             else:
                 result['vocabulary'] = phrases  # Only phrases if no merge
                 print(f"  ✓ Phrases only: {len(result['vocabulary'])} items")
-        
-        # ================================================================
-        # STAGE 12: Flashcard Generation
-        # ================================================================
         if 12 in self.enabled_stages:
             print(f"[STAGE 12] Flashcard Generation...")
             result['flashcards'] = self._generate_simple_flashcards(
@@ -215,10 +177,6 @@ class ConfigurablePipeline:
             print(f"  ✓ Generated {len(result['flashcards'])} flashcards")
         else:
             print(f"[STAGE 12] SKIPPED")
-        
-        # ================================================================
-        # Add metadata
-        # ================================================================
         result['statistics'].update({
             'document_title': document_title,
             'document_length': len(normalized_text),
@@ -264,12 +222,6 @@ class ConfigurablePipeline:
                 flashcards.append(flashcard)
         
         return flashcards
-
-
-# ============================================================================
-# CASE CONFIGURATIONS - UPDATED FOR 11-STEP PIPELINE
-# ============================================================================
-
 ABLATION_CASES = {
     1: {
         'name': 'TH1: Extraction Module',
@@ -300,18 +252,7 @@ ABLATION_CASES = {
         'details': 'Hệ thống đầy đủ với Topic Modeling, Within-topic Ranking, Flashcard Generation'
     }
 }
-
-
 def create_pipeline_for_case(case_id: int) -> ConfigurablePipeline:
-    """
-    Create pipeline for specific ablation case
-    
-    Args:
-        case_id: Case number (1-4)
-    
-    Returns:
-        Configured pipeline for the case
-    """
     if case_id not in ABLATION_CASES:
         raise ValueError(f"Invalid case_id: {case_id}. Must be 1-4.")
     

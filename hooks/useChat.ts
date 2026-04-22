@@ -51,7 +51,7 @@ const initialMessages: Message[] = [
     timestamp: new Date(),
     slaMetadata: {
       recastUsed: false,
-      encouragement: "Chào mừng bạn! 🎉",
+      encouragement: "Chào mừng bạn! ",
       learnerLevel: "A2",
       feedbackStyle: "implicit",
       iPlusOneEnabled: true

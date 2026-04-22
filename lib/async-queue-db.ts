@@ -40,7 +40,7 @@ export class AsyncQueueDB {
     await errorsCollection.createIndex({ jobId: 1, timestamp: -1 });
     await errorsCollection.createIndex({ timestamp: -1 });
 
-    console.log('✅ Async queue indexes created successfully');
+    console.log(' Async queue indexes created successfully');
   }
 
   /**

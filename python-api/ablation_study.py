@@ -1,12 +1,3 @@
-"""
-ABLATION STUDY SCRIPT
-
-Đánh giá hiệu quả của từng thành phần trong pipeline thông qua Ablation Studies.
-
-Usage:
-    python ablation_study.py --document test.txt --ground-truth ground_truth.json
-"""
-
 import json
 import time
 import argparse
@@ -284,7 +275,7 @@ class AblationStudy:
         """Lưu kết quả ra CSV"""
         df = pd.DataFrame(self.results)
         df.to_csv('ablation_results.csv', index=False)
-        print("\n✅ Đã lưu kết quả vào ablation_results.csv")
+        print("\n Đã lưu kết quả vào ablation_results.csv")
     
     def generate_report(self):
         """Tạo báo cáo markdown"""
@@ -312,7 +303,7 @@ class AblationStudy:
         with open('ablation_report.md', 'w', encoding='utf-8') as f:
             f.write(report)
         
-        print("✅ Đã tạo báo cáo ablation_report.md")
+        print(" Đã tạo báo cáo ablation_report.md")
     
     def plot_results(self):
         """Vẽ biểu đồ so sánh"""
@@ -329,7 +320,7 @@ class AblationStudy:
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
         plt.savefig('ablation_f1_comparison.png', dpi=300)
-        print("✅ Đã tạo biểu đồ ablation_f1_comparison.png")
+        print(" Đã tạo biểu đồ ablation_f1_comparison.png")
         
         # Plot 2: All metrics radar chart
         categories = ['Precision', 'Recall', 'F1-Score', 'Diversity']
@@ -358,7 +349,7 @@ class AblationStudy:
         
         plt.tight_layout()
         plt.savefig('ablation_radar_chart.png', dpi=300, bbox_inches='tight')
-        print("✅ Đã tạo biểu đồ ablation_radar_chart.png")
+        print(" Đã tạo biểu đồ ablation_radar_chart.png")
 
 
 def main():
@@ -378,7 +369,7 @@ def main():
     study.run_all_cases()
     
     print("\n" + "="*80)
-    print("✅ HOÀN THÀNH!")
+    print(" HOÀN THÀNH!")
     print("="*80)
     print("Các file đã tạo:")
     print("  - ablation_results.csv")

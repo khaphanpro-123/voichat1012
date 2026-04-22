@@ -1,10 +1,4 @@
-/**
- * AI Provider - Unified interface for OpenAI, Groq, and Cohere with automatic fallback
- * Groq is prioritized first (fastest, free)
- * If one provider fails, automatically tries the next
- */
 
-// OpenAI models (priority order)
 const OPENAI_MODELS = [
   "gpt-4o-mini",
   "gpt-4o",

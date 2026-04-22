@@ -1,8 +1,3 @@
-"""
-Embedding utilities with fallback support
-Railway-optimized: NO torch, NO transformers, uses TF-IDF fallback
-"""
-
 import numpy as np
 from typing import List, Union
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -11,21 +6,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 try:
     from sentence_transformers import SentenceTransformer as ST
     HAS_SENTENCE_TRANSFORMERS = True
-    print("✅ Using sentence-transformers (full support)")
+    print(" Using sentence-transformers (full support)")
 except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
-    print("⚠️  sentence-transformers not available, using TF-IDF fallback")
+    print("  sentence-transformers not available, using TF-IDF fallback")
 
 
-class EmbeddingModel:
-    """
-    Unified embedding model with TF-IDF fallback
-    
-    Priority:
-    1. sentence-transformers (best quality, heavy) - LOCAL ONLY
-    2. TF-IDF (good quality, lightweight) - RAILWAY
-    """
-    
+class EmbeddingModel: 
     def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
         self.model_name = model_name
         self.model = None
@@ -44,14 +31,14 @@ class EmbeddingModel:
         try:
             self.model = ST(self.model_name)
             self.embedding_dim = self.model.get_sentence_embedding_dimension()
-            print(f"✅ Loaded sentence-transformers: {self.model_name}")
+            print(f" Loaded sentence-transformers: {self.model_name}")
         except Exception as e:
-            print(f"❌ Failed to load sentence-transformers: {e}")
+            print(f" Failed to load sentence-transformers: {e}")
             self._init_tfidf()
     
     def _init_tfidf(self):
         """Initialize TF-IDF fallback (Railway-compatible)"""
-        print("✅ Using TF-IDF embeddings (Railway-compatible)")
+        print(" Using TF-IDF embeddings (Railway-compatible)")
         self.use_tfidf = True
         self.embedding_dim = 300  # TF-IDF dimension
         self.tfidf_vectorizer = TfidfVectorizer(
@@ -66,17 +53,6 @@ class EmbeddingModel:
         show_progress_bar: bool = False,
         batch_size: int = 32
     ) -> np.ndarray:
-        """
-        Encode sentences to embeddings
-        
-        Args:
-            sentences: Single sentence or list of sentences
-            show_progress_bar: Show progress (ignored in TF-IDF mode)
-            batch_size: Batch size for encoding
-        
-        Returns:
-            Embeddings as numpy array
-        """
         # Handle single sentence
         if isinstance(sentences, str):
             sentences = [sentences]
@@ -95,7 +71,7 @@ class EmbeddingModel:
         
         # Fallback: random embeddings (should never happen)
         else:
-            print("⚠️  WARNING: Using random embeddings (no model available)")
+            print("  WARNING: Using random embeddings (no model available)")
             return np.random.randn(len(sentences), self.embedding_dim).astype(np.float32)
     
     def _encode_with_tfidf(self, sentences: List[str]) -> np.ndarray:
@@ -126,15 +102,6 @@ class EmbeddingModel:
 _global_model = None
 
 def get_embedding_model(model_name: str = 'all-MiniLM-L6-v2') -> EmbeddingModel:
-    """
-    Get global embedding model instance (singleton)
-    
-    Args:
-        model_name: Model name
-    
-    Returns:
-        EmbeddingModel instance
-    """
     global _global_model
     
     if _global_model is None:
@@ -145,11 +112,6 @@ def get_embedding_model(model_name: str = 'all-MiniLM-L6-v2') -> EmbeddingModel:
 
 # Compatibility layer for sentence-transformers
 class SentenceTransformer:
-    """
-    Drop-in replacement for sentence_transformers.SentenceTransformer
-    Uses TF-IDF on Railway, sentence-transformers locally
-    """
-    
     def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
         self.model = EmbeddingModel(model_name)
     
@@ -158,8 +120,6 @@ class SentenceTransformer:
     
     def get_sentence_embedding_dimension(self):
         return self.model.get_sentence_embedding_dimension()
-
-
 if __name__ == "__main__":
     # Test
     print("\n" + "="*80)
@@ -176,9 +136,9 @@ if __name__ == "__main__":
     
     embeddings = model.encode(test_sentences)
     
-    print(f"✅ Encoded {len(test_sentences)} sentences")
+    print(f" Encoded {len(test_sentences)} sentences")
     print(f"   Embedding shape: {embeddings.shape}")
     print(f"   Embedding dim: {model.get_sentence_embedding_dimension()}")
     print(f"   Sample embedding (first 5 dims): {embeddings[0][:5]}")
     
-    print("\n✅ Test completed!")
+    print("\n Test completed!")

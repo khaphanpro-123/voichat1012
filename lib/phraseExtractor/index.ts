@@ -1,15 +1,4 @@
-/**
- * Phrase Extractor - Main Export
- * 
- * Production-ready phrase extraction for English learning
- * Extracts multi-word vocabulary from DOCX/PDF files:
- * - Prepositional phrases
- * - Phrasal verbs
- * - Collocations
- * - Noun phrases
- */
 
-// Core extraction
 export {
   extractPhrases,
   type ExtractedPhrase,

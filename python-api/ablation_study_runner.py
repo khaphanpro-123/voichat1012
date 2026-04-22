@@ -1,14 +1,3 @@
-"""
-ABLATION STUDY RUNNER - THESIS COMPLIANT VERSION
-
-Scientific evaluation framework for systematic ablation studies.
-Ensures TH1-TH4 produce different results according to thesis specifications.
-
-Author: Kiro AI
-Date: 2026-03-18
-Version: 3.0.0 - Thesis Compliant
-"""
-
 import time
 import numpy as np
 from typing import List, Dict, Any, Optional
@@ -86,7 +75,7 @@ class AblationStudyRunner:
             ground_truth_vocabulary=ground_truth_vocabulary
         )
         self.documents.append(document)
-        print(f"📄 Added document: {document_id} ({len(text)} chars, {len(ground_truth_vocabulary)} ground truth terms)")
+        print(f" Added document: {document_id} ({len(text)} chars, {len(ground_truth_vocabulary)} ground truth terms)")
     
     def run_complete_ablation_study(self, max_phrases: int = 30, max_words: int = 20) -> Dict[str, Any]:
         """Run complete ablation study across all TH1-TH4 configurations"""
@@ -103,7 +92,7 @@ class AblationStudyRunner:
         try:
             from modular_semantic_pipeline import ABLATION_CONFIGURATIONS, create_pipeline_for_configuration
         except ImportError:
-            print("⚠️ Warning: modular_semantic_pipeline not available, using fallback")
+            print(" Warning: modular_semantic_pipeline not available, using fallback")
             return self._run_fallback_ablation_study(max_phrases, max_words)
         
         # Define thesis-compliant configurations
@@ -117,7 +106,7 @@ class AblationStudyRunner:
         results = {}
         
         for th_name, config_name in thesis_configurations.items():
-            print(f"\n🔬 RUNNING {th_name}")
+            print(f"\n RUNNING {th_name}")
             
             config_results = []
             
@@ -157,11 +146,11 @@ class AblationStudyRunner:
                         'enabled_modules': result.enabled_modules
                     })
                     
-                    print(f"   📄 {document.document_id}: F1={metrics['f1_score']:.3f}, "
+                    print(f"    {document.document_id}: F1={metrics['f1_score']:.3f}, "
                           f"Vocab={len(vocabulary)}, Latency={latency:.1f}s")
                     
                 except Exception as e:
-                    print(f"   ❌ {document.document_id}: Failed - {str(e)}")
+                    print(f"  {document.document_id}: Failed - {str(e)}")
                     continue
             
             # Aggregate results for this configuration
@@ -175,7 +164,7 @@ class AblationStudyRunner:
                     'individual_results': config_results
                 }
                 
-                print(f"   📊 AVERAGE: F1={aggregated_metrics['f1_score']:.3f}")
+                print(f"  AVERAGE: F1={aggregated_metrics['f1_score']:.3f}")
         
         # Generate summary
         summary = self._generate_summary(results)
@@ -196,7 +185,7 @@ class AblationStudyRunner:
     
     def _run_fallback_ablation_study(self, max_phrases: int, max_words: int) -> Dict[str, Any]:
         """Fallback ablation study when modular pipeline is not available"""
-        print("🔄 Running fallback ablation study...")
+        print(" Running fallback ablation study...")
         
         # Simulate different results for TH1-TH4
         results = {}
@@ -243,7 +232,7 @@ class AblationStudyRunner:
                     'enabled_modules': list(range(1, i + 2))  # Progressive modules
                 })
                 
-                print(f"   📄 {document.document_id}: F1={metrics['f1_score']:.3f}, "
+                print(f"    {document.document_id}: F1={metrics['f1_score']:.3f}, "
                       f"Vocab={len(vocabulary)}, Simulated")
             
             # Aggregate results
@@ -256,7 +245,7 @@ class AblationStudyRunner:
                 'individual_results': config_results
             }
             
-            print(f"   📊 AVERAGE: F1={aggregated_metrics['f1_score']:.3f} (Simulated)")
+            print(f"   AVERAGE: F1={aggregated_metrics['f1_score']:.3f} (Simulated)")
         
         # Generate summary
         summary = self._generate_summary(results)

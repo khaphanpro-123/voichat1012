@@ -11,11 +11,11 @@ try:
     HAS_EMBEDDINGS = True
 except:
     HAS_EMBEDDINGS = False
-    print("⚠️  sentence-transformers not available. Semantic filtering disabled.")
+    print("  sentence-transformers not available. Semantic filtering disabled.")
 
 # spaCy DISABLED for Railway
 nlp = None
-print("⚠️  spaCy disabled for Railway, using NLTK fallback")
+print("  spaCy disabled for Railway, using NLTK fallback")
 
 
 class SingleWordExtractor:
@@ -85,100 +85,44 @@ class SingleWordExtractor:
         phrases: List[Dict],
         headings: List[Dict],
         max_words: int = 20,
-        idf_threshold: float = 1.5,  # ✅ LOWERED from 2.0 to 1.5
-        semantic_threshold: float = 0.2  # ✅ LOWERED from 0.3 to 0.2
+        idf_threshold: float = 1.5,  
+        semantic_threshold: float = 0.2  
     ) -> List[Dict]:
         print(f"\n{'='*80}")
         print(f"SINGLE-WORD EXTRACTION (SOFT FILTERING APPROACH)")
         print(f"{'='*80}\n")
-        
-        # ====================================================================
-        # STEP 7.1: POS Constraint (NOUN, VERB, ADJ only)
-        # ====================================================================
         print("[STEP 7.1] POS Constraint...")
         
         candidate_words = self._extract_by_pos(text)
         
-        print(f"  ✓ Extracted {len(candidate_words)} candidates (NOUN, VERB, ADJ)")
-        
-        # ====================================================================
-        # STEP 7.2: Stopword & Function-word Removal (HARD FILTER)
-        # ====================================================================
+        print(f"   Extracted {len(candidate_words)} candidates (NOUN, VERB, ADJ)")
         print("[STEP 7.2] Stopword & Function-word Removal...")
-        
         filtered_words = self._remove_stopwords(candidate_words)
-        
-        print(f"  ✓ After stopword removal: {len(filtered_words)} words")
-        
-        # ====================================================================
-        # STEP 7.3: Calculate Rarity Penalty (SOFT)
-        # ====================================================================
+        print(f"   After stopword removal: {len(filtered_words)} words")
         print("[STEP 7.3] Calculate Rarity Penalty (SOFT)...")
-        
         words_with_rarity = self._calculate_rarity_penalty(filtered_words, text)
-        
-        print(f"  ✓ Calculated rarity penalties")
-        
-        # ====================================================================
-        # STEP 7.4: Calculate Learning Value Score (CORE LOGIC)
-        # ====================================================================
+        print(f"  Calculated rarity penalties")
         print("[STEP 7.4] Calculate Learning Value Score (CORE)...")
-        
         words_with_learning_value = self._calculate_learning_value(
             words_with_rarity,
             text,
             headings
         )
-        
-        print(f"  ✓ Calculated learning values")
-        
-        # ====================================================================
-        # STEP 7.5: Calculate Phrase Coverage Penalty (SOFT)
-        # ====================================================================
-        print("[STEP 7.5] Calculate Phrase Coverage Penalty (SOFT)...")
-        
+        print(f"   Calculated learning values")
+        print("[STEP 7.5] Calculate Phrase Coverage Penalty (SOFT)...") 
         words_with_coverage = self._calculate_phrase_coverage_penalty(
             words_with_learning_value,
             phrases
         )
-        
-        print(f"  ✓ Calculated phrase coverage penalties")
-        
-        # ====================================================================
-        # STEP 7.6: Heading-aware Semantic Filter (DISABLED)
-        # ====================================================================
+        print(f"   Calculated phrase coverage penalties")
         print("[STEP 7.6] Heading-aware Semantic Filter - DISABLED")
-        
-        # DISABLED: This filter is too aggressive (removes 80-90% of words)
-        # main_heading = self._get_main_heading(headings)
-        # if main_heading and HAS_EMBEDDINGS:
-        #     semantic_words = self._semantic_filter(
-        #         words_with_coverage,
-        #         main_heading,
-        #         threshold=semantic_threshold
-        #     )
-        # else:
         semantic_words = words_with_coverage  # Keep all words
-        print(f"  ⚠️  Semantic filter DISABLED - keeping all {len(semantic_words)} words")
-        
-        # print(f"  ✓ After semantic filtering: {len(semantic_words)} words")
-        
-        # ====================================================================
-        # STEP 7.7: Lexical Specificity Check (HARD FILTER)
-        # ====================================================================
+        print(f"   Semantic filter DISABLED - keeping all {len(semantic_words)} words")
         print("[STEP 7.7] Lexical Specificity Check...")
-        
         specific_words = self._lexical_specificity_check(semantic_words)
-        
         print(f"  ✓ After specificity check: {len(specific_words)} words")
-        
-        # ====================================================================
-        # STEP 7.8: Final Scoring & Ranking (NEW)
-        # ====================================================================
         print("[STEP 7.8] Final Scoring & Ranking...")
-        
         scored_words = self._final_scoring(specific_words)
-        
         # Limit to max_words
         final_words = scored_words[:max_words]
         
@@ -189,7 +133,7 @@ class SingleWordExtractor:
             else:
                 word_dict['supporting_sentence'] = ""
         
-        print(f"  ✓ Final output: {len(final_words)} single words")
+        print(f"   Final output: {len(final_words)} single words")
         
         print(f"\n{'='*80}")
         print(f"SINGLE-WORD EXTRACTION COMPLETE")
@@ -201,15 +145,9 @@ class SingleWordExtractor:
         return final_words
     
     def _extract_by_pos(self, text: str) -> List[Dict]:
-        """
-        7.1 Extract words by POS tags (NOUN, VERB, ADJ only)
-        NLTK-based implementation (NO spaCy)
-        """
         from nltk import word_tokenize, pos_tag, sent_tokenize
         from nltk.stem import WordNetLemmatizer
-        
         lemmatizer = WordNetLemmatizer()
-        
         candidates = []
         word_freq = Counter()
         word_sentences = {}
@@ -258,9 +196,6 @@ class SingleWordExtractor:
         return candidates
     
     def _remove_stopwords(self, words: List[Dict]) -> List[Dict]:
-        """
-        7.2 Remove stopwords and function words
-        """
         filtered = []
         
         for word_dict in words:
@@ -287,12 +222,6 @@ class SingleWordExtractor:
         words: List[Dict],
         text: str
     ) -> List[Dict]:
-        """
-        7.3 Calculate rarity penalty (SOFT - not hard DROP)
-        
-        High IDF (rare) → low penalty
-        Low IDF (common) → high penalty
-        """
         # Split into sentences using NLTK
         from nltk import sent_tokenize
         sentences = [sent.lower() for sent in sent_tokenize(text)]
@@ -350,23 +279,12 @@ class SingleWordExtractor:
         words: List[Dict],
         phrases: List[Dict]
     ) -> List[Dict]:
-        """
-        7.5 Calculate phrase coverage penalty (SOFT - not hard DROP)
-        
-        Word in phrase → penalty
-        But can still be kept if learning_value is high
-        
-        Example:
-        - Phrase: "environmental learning" (score: 0.85)
-        - Word: "learning" → penalty = 0.785 → likely DROP (low learning_value)
-        - Word: "mitigation" → penalty = 0 → KEEP (high learning_value)
-        """
         # Load embedding model if not loaded
         if self.embedding_model is None:
             try:
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
             except:
-                print("  ⚠️  Embedding model not available, using token-based fallback")
+                print("    Embedding model not available, using token-based fallback")
                 return self._phrase_coverage_penalty_token(words, phrases)
         
         # Build phrase token set and embeddings
@@ -419,10 +337,6 @@ class SingleWordExtractor:
         words: List[Dict],
         phrases: List[Dict]
     ) -> List[Dict]:
-        """
-        Fallback: Token-based phrase coverage penalty (old method)
-        Used when embedding model is not available
-        """
         # Extract all phrase tokens
         phrase_tokens = set()
         
@@ -454,16 +368,6 @@ class SingleWordExtractor:
         text: str,
         headings: List[Dict]
     ) -> List[Dict]:
-        """
-        7.4 Calculate learning value for each word (CORE LOGIC)
-        
-        Formula:
-        learning_value = concreteness + domain_specificity + morphological_richness - generality_penalty
-        
-        Example:
-        - "mitigation": 0.9 + 0.8 + 0.9 - 0.0 = 0.86 (HIGH)
-        - "important": 0.2 + 0.3 + 0.7 - 0.8 = 0.24 (LOW)
-        """
         for word_dict in words:
             word = word_dict['word']
             
@@ -490,15 +394,6 @@ class SingleWordExtractor:
         return words
     
     def _calculate_concreteness(self, word: str) -> float:
-        """
-        Calculate concreteness score
-        
-        Concrete words are easier to learn and more valuable
-        
-        HIGH: mitigation, algorithm, photosynthesis (0.8-1.0)
-        MEDIUM: learning, education, development (0.4-0.7)
-        LOW: impact, important, significant (0.1-0.3)
-        """
         # 1. Technical terms (in whitelist) → very concrete
         if word in self.technical_whitelist:
             return 1.0
@@ -522,15 +417,6 @@ class SingleWordExtractor:
         return length_score
     
     def _calculate_domain_specificity(self, word: str, headings: List[Dict]) -> float:
-        """
-        Calculate domain specificity
-        
-        Domain-specific words are valuable for learning
-        
-        HIGH: photosynthesis (in biology doc) (0.8-1.0)
-        MEDIUM: learning, education (0.4-0.7)
-        LOW: problem, issue, thing (0.1-0.3)
-        """
         # Check if word appears in headings
         heading_texts = ' '.join([h.get('text', '') for h in headings]).lower()
         
@@ -555,15 +441,6 @@ class SingleWordExtractor:
         return 0.5
     
     def _calculate_morphological_richness(self, word: str) -> float:
-        """
-        Calculate morphological richness
-        
-        Words with rich morphology are valuable for learning
-        
-        HIGH: mitigation (mitigate + -tion) (0.8-1.0)
-        MEDIUM: learning (learn + -ing) (0.4-0.7)
-        LOW: impact (simple) (0.1-0.3)
-        """
         # Count syllables (proxy for morphological complexity)
         syllables = len(re.findall(r'[aeiou]+', word.lower()))
         
@@ -586,15 +463,6 @@ class SingleWordExtractor:
             return 0.3
     
     def _calculate_generality_penalty(self, word: str) -> float:
-        """
-        Calculate generality penalty
-        
-        Generic words get penalty
-        
-        HIGH PENALTY: important, significant, good (0.7-0.9)
-        MEDIUM PENALTY: impact, effect, result (0.4-0.6)
-        LOW PENALTY: mitigation, algorithm (0.0-0.2)
-        """
         generic_words = {
             'important': 0.8,
             'significant': 0.8,
@@ -622,11 +490,6 @@ class SingleWordExtractor:
         main_heading: str,
         threshold: float = 0.1
     ) -> List[Dict]:
-        """
-        7.5 Heading-aware semantic filter
-        
-        Only keep words semantically aligned with heading
-        """
         # Load embedding model if not loaded
         if self.embedding_model is None:
             try:
@@ -641,7 +504,6 @@ class SingleWordExtractor:
         filtered = []
         
         for word_dict in words:
-            # ✅ FIX: Ensure word_dict is a dictionary
             if isinstance(word_dict, str):
                 # Skip if it's a string (shouldn't happen, but defensive)
                 continue
@@ -665,14 +527,6 @@ class SingleWordExtractor:
         return filtered
     
     def _lexical_specificity_check(self, words: List[Dict]) -> List[Dict]:
-        """
-        7.6 Lexical specificity check
-        
-        Remove words that are:
-        - Too generic (make, take, provide)
-        - Academic form words (important, necessary)
-        - Already filtered in 7.2, but double-check
-        """
         filtered = []
         
         for word_dict in words:
@@ -712,20 +566,6 @@ class SingleWordExtractor:
         return headings[0].get('text', '') if headings else ""
     
     def _final_scoring(self, words: List[Dict]) -> List[Dict]:
-        """
-        Calculate final score for each word
-        
-        final_score = learning_value - penalties
-        
-        Where:
-        - learning_value: core metric (concreteness + domain + morphology - generality)
-        - penalties: rarity_penalty * 0.2 + coverage_penalty * 0.5
-        
-        Example:
-        - "mitigation": 0.86 - (0.1*0.2 + 0*0.5) = 0.84 → KEEP
-        - "important": 0.24 - (0.6*0.2 + 0*0.5) = 0.12 → DROP
-        - "learning" (in phrase): 0.53 - (0.3*0.2 + 0.785*0.5) = 0.08 → DROP
-        """
         for word_dict in words:
             learning_value = word_dict.get('learning_value', 0.5)
             rarity_penalty = word_dict.get('rarity_penalty', 0.0)

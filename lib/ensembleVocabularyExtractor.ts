@@ -1,17 +1,3 @@
-/**
- * Ensemble Keyword Extraction with Scaling and Accuracy Boosts
- * Combines TF-IDF, RAKE, YAKE with weighted ensemble and normalization
- * 
- * Pipeline:
- * 1. Clean PDF metadata
- * 2. Preprocess text (lowercase, remove stopwords, lemmatization)
- * 3. Extract n-grams (bi/trigrams)
- * 4. Calculate 4 criteria scores: Frequency, TF-IDF, RAKE, YAKE
- * 5. Normalize features (Min-Max scaling)
- * 6. Weighted ensemble combination
- * 7. Rank and return top keywords
- */
-
 interface WordScore {
   word: string;
   score: number;

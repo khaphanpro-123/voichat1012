@@ -1,8 +1,3 @@
-/**
- * Core phrase extraction logic
- * Extracts noun phrases, collocations, phrasal verbs, and prepositional phrases
- */
-
 import {
   PREPOSITIONAL_PHRASES,
   PHRASAL_VERBS,

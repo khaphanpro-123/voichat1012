@@ -8,10 +8,8 @@ without loading heavy ML models.
 def test_quick_ablation():
     """Quick test with mock data"""
     
-    print("🧪 QUICK ABLATION TEST")
+    print(" QUICK ABLATION TEST")
     print("="*50)
-    
-    # Mock different results for each case
     mock_results = {
         1: {
             'vocab_count': 15,  # TH1: Basic extraction
@@ -35,7 +33,7 @@ def test_quick_ablation():
         }
     }
     
-    print("\n📊 MOCK RESULTS:")
+    print("\n MOCK RESULTS:")
     for case_id, result in mock_results.items():
         case_names = {
             1: 'TH1: Extraction Module',
@@ -44,7 +42,7 @@ def test_quick_ablation():
             4: 'TH4: Full System'
         }
         
-        print(f"\n🔬 {case_names[case_id]}")
+        print(f"\n {case_names[case_id]}")
         print(f"  Vocabulary: {result['vocab_count']} items")
         print(f"  Complexity: {result['complexity']}")
         print(f"  Features: {len(result['features'])} features")
@@ -54,7 +52,7 @@ def test_quick_ablation():
     complexities = [mock_results[i]['complexity'] for i in range(1, 5)]
     feature_counts = [len(mock_results[i]['features']) for i in range(1, 5)]
     
-    print(f"\n📈 ANALYSIS:")
+    print(f"\n ANALYSIS:")
     print(f"Vocabulary counts: {vocab_counts}")
     print(f"Complexities: {complexities}")
     print(f"Feature counts: {feature_counts}")
@@ -63,24 +61,24 @@ def test_quick_ablation():
     checks = []
     
     if len(set(vocab_counts)) == 4:
-        print("✅ GOOD: All cases have different vocabulary counts")
+        print(" GOOD: All cases have different vocabulary counts")
         checks.append(True)
     else:
-        print("❌ BAD: Some cases have same vocabulary counts")
+        print(" BAD: Some cases have same vocabulary counts")
         checks.append(False)
     
     if len(set(complexities)) == 4:
-        print("✅ GOOD: All cases have different complexities")
+        print(" GOOD: All cases have different complexities")
         checks.append(True)
     else:
-        print("❌ BAD: Some cases have same complexities")
+        print(" BAD: Some cases have same complexities")
         checks.append(False)
     
     if feature_counts == sorted(feature_counts):
-        print("✅ GOOD: Feature counts increase progressively")
+        print(" GOOD: Feature counts increase progressively")
         checks.append(True)
     else:
-        print("❌ BAD: Feature counts don't increase progressively")
+        print(" BAD: Feature counts don't increase progressively")
         checks.append(False)
     
     # Expected improvements
@@ -96,17 +94,17 @@ def test_quick_ablation():
     
     # Final assessment
     if all(checks):
-        print(f"\n🎉 SUCCESS: Corrected ablation architecture will produce different results!")
-        print(f"✅ Each TH1-TH4 case has distinct characteristics")
-        print(f"✅ Progressive improvement expected")
+        print(f"\n SUCCESS: Corrected ablation architecture will produce different results!")
+        print(f" Each TH1-TH4 case has distinct characteristics")
+        print(f" Progressive improvement expected")
         return True
     else:
-        print(f"\n❌ ISSUES FOUND: Need to review architecture")
+        print(f"\n ISSUES FOUND: Need to review architecture")
         return False
 
 if __name__ == "__main__":
     success = test_quick_ablation()
     if success:
-        print(f"\n🚀 READY FOR DEPLOYMENT!")
+        print(f"\n READY FOR DEPLOYMENT!")
     else:
-        print(f"\n⚠️  NEEDS MORE WORK!")
+        print(f"\n  NEEDS MORE WORK!")

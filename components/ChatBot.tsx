@@ -8,7 +8,7 @@ export default function ChatBot() {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Xin chào! Tôi là trợ lý ảo của cộng đồng. Tôi có thể giúp gì cho bạn?",
+      text: "Xin chào! Tôi là trợ lý ảo của cộng đồng học tiếng Anh. Tôi có thể giúp gì cho bạn?",
       isBot: true,
       timestamp: new Date()
     }

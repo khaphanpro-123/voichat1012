@@ -1,13 +1,5 @@
-"""
-Test Ablation API Endpoint
-
-Kiểm tra API ablation study hoạt động đúng
-"""
-
 import requests
 import json
-
-# Railway backend URL (thay bằng URL thực tế của bạn)
 BASE_URL = "http://localhost:8000"  # Hoặc Railway URL
 
 def test_example_endpoint():
@@ -23,15 +15,15 @@ def test_example_endpoint():
         
         if response.status_code == 200:
             data = response.json()
-            print("✅ Example endpoint works!")
+            print(" Example endpoint works!")
             print(f"\nExample request:")
             print(json.dumps(data['example_request'], indent=2))
         else:
-            print(f"❌ Failed with status code: {response.status_code}")
+            print(f" Failed with status code: {response.status_code}")
             print(response.text)
     
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
 
 
 def test_ablation_study():
@@ -88,7 +80,7 @@ def test_ablation_study():
         if response.status_code == 200:
             result = response.json()
             
-            print("\n✅ Ablation study completed!")
+            print("\n Ablation study completed!")
             print("\n" + "-"*80)
             print("SUMMARY")
             print("-"*80)
@@ -121,14 +113,14 @@ def test_ablation_study():
             with open('ablation_test_result.json', 'w', encoding='utf-8') as f:
                 json.dump(result, f, indent=2, ensure_ascii=False)
             
-            print("\n✅ Result saved to ablation_test_result.json")
+            print("\n Result saved to ablation_test_result.json")
         
         else:
-            print(f"❌ Failed with status code: {response.status_code}")
+            print(f" Failed with status code: {response.status_code}")
             print(response.text)
     
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         import traceback
         traceback.print_exc()
 
@@ -148,17 +140,17 @@ def test_root_endpoint():
             data = response.json()
             
             if 'endpoints' in data and 'ablation_study' in data['endpoints']:
-                print("✅ Ablation endpoints are listed in root!")
+                print(" Ablation endpoints are listed in root!")
                 print(f"\nAblation Study: {data['endpoints']['ablation_study']}")
                 print(f"Ablation Example: {data['endpoints']['ablation_example']}")
             else:
-                print("⚠️  Ablation endpoints not found in root response")
+                print("  Ablation endpoints not found in root response")
                 print(json.dumps(data, indent=2))
         else:
-            print(f"❌ Failed with status code: {response.status_code}")
+            print(f" Failed with status code: {response.status_code}")
     
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
 
 
 if __name__ == "__main__":

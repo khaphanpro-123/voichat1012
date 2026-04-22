@@ -1,23 +1,7 @@
-"""
-STAGE 2 – Heading Detection & Document Structure Parser
-
-Mục tiêu:
-- Detect headings/subheadings từ document
-- Xây dựng hierarchy (H1 → H2 → H3)
-- Gán mỗi sentence vào heading tương ứng
-
-Thuật toán:
-- Heuristic-based (font size, formatting, capitalization)
-- Pattern matching (numbering, markdown)
-- Length-based (short lines)
-"""
-
 import re
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-
-
 class HeadingLevel(Enum):
     """Cấp độ heading"""
     H1 = 1
@@ -25,8 +9,6 @@ class HeadingLevel(Enum):
     H3 = 3
     H4 = 4
     PARAGRAPH = 0
-
-
 @dataclass
 class Heading:
     """Cấu trúc heading"""
@@ -36,27 +18,13 @@ class Heading:
     position: int
     parent_id: Optional[str] = None
     children_ids: List[str] = field(default_factory=list)
-
-
 @dataclass
 class DocumentStructure:
     """Cấu trúc document với headings"""
     headings: List[Heading]
     hierarchy: Dict[str, List[str]]  # parent_id -> [child_ids]
     sentence_to_heading: Dict[str, str]  # sentence_id -> heading_id
-
-
-class HeadingDetector:
-    """
-    Detect headings từ text sử dụng heuristics
-    
-    Methods:
-    1. Pattern-based (markdown, numbering)
-    2. Length-based (short lines)
-    3. Capitalization-based
-    4. Font-size based (if available from PDF metadata)
-    """
-    
+class HeadingDetector:  
     def __init__(self):
         # Patterns for heading detection
         self.markdown_pattern = re.compile(r'^#{1,4}\s+(.+)$')
@@ -72,15 +40,6 @@ class HeadingDetector:
         }
     
     def detect_headings(self, text: str) -> List[Heading]:
-        """
-        Detect all headings from text
-        
-        Args:
-            text: Raw document text
-        
-        Returns:
-            List of Heading objects
-        """
         lines = text.split('\n')
         headings = []
         position = 0
@@ -117,12 +76,6 @@ class HeadingDetector:
         line_idx: int,
         all_lines: List[str]
     ) -> Optional[Tuple[HeadingLevel, str]]:
-        """
-        Kiểm tra xem line có phải heading không
-        
-        Returns:
-            (HeadingLevel, heading_text) hoặc None
-        """
         # Method 1: Markdown heading
         markdown_match = self.markdown_pattern.match(line)
         if markdown_match:
@@ -193,12 +146,6 @@ class HeadingDetector:
         return None
     
     def build_hierarchy(self, headings: List[Heading]) -> Dict[str, List[str]]:
-        """
-        Xây dựng hierarchy tree từ headings
-        
-        Returns:
-            Dictionary: parent_id -> [child_ids]
-        """
         hierarchy = {}
         
         for i, heading in enumerate(headings):
@@ -229,17 +176,6 @@ class HeadingDetector:
         headings: List[Heading],
         text: str
     ) -> Dict[str, str]:
-        """
-        Gán mỗi sentence vào heading gần nhất
-        
-        Args:
-            sentences: List of sentence texts
-            headings: List of Heading objects
-            text: Original document text
-        
-        Returns:
-            Dictionary: sentence_id -> heading_id
-        """
         sentence_to_heading = {}
         
         if not headings:
@@ -291,16 +227,6 @@ class HeadingDetector:
         text: str,
         sentences: List[str]
     ) -> DocumentStructure:
-        """
-        Parse complete document structure
-        
-        Args:
-            text: Raw document text
-            sentences: List of sentence texts
-        
-        Returns:
-            DocumentStructure object
-        """
         print("[HeadingDetector] Parsing document structure...")
         
         # Step 1: Detect headings
@@ -326,12 +252,6 @@ class HeadingDetector:
               f"{len(sentence_to_heading)} sentences assigned")
         
         return structure
-
-
-# ============================================================================
-# UTILITY FUNCTIONS
-# ============================================================================
-
 def get_heading_for_sentence(
     sentence_id: str,
     structure: DocumentStructure
@@ -345,31 +265,20 @@ def get_heading_for_sentence(
     for heading in structure.headings:
         if heading.heading_id == heading_id:
             return heading
-    
     return None
-
-
 def get_heading_path(
     heading_id: str,
     structure: DocumentStructure
 ) -> List[str]:
-    """
-    Get full path from root to heading
-    
-    Example: ["Introduction", "Background", "Related Work"]
-    """
     path = []
-    
     # Find heading
     current_heading = None
     for h in structure.headings:
         if h.heading_id == heading_id:
             current_heading = h
             break
-    
     if not current_heading:
         return path
-    
     # Build path
     path.append(current_heading.text)
     

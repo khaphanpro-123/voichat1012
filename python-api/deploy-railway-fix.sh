@@ -8,12 +8,12 @@ echo ""
 echo "Step 1: Setting environment variables..."
 railway variables set LOG_LEVEL=INFO
 railway variables set DEBUG_MODE=false
-echo "✅ Environment variables set"
+echo " Environment variables set"
 echo ""
 
 echo "Step 2: Redeploying service..."
 railway up
-echo "✅ Deployment triggered"
+echo " Deployment triggered"
 echo ""
 
 echo "Step 3: Waiting for deployment (30 seconds)..."
@@ -21,7 +21,7 @@ sleep 30
 echo ""
 
 echo "Step 4: Checking logs for rate limit errors..."
-railway logs --tail 50 | grep -i "rate limit" || echo "✅ No rate limit errors found!"
+railway logs --tail 50 | grep -i "rate limit" || echo " No rate limit errors found!"
 echo ""
 
 echo "=========================================="

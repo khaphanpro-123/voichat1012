@@ -1,5 +1,3 @@
-// lib/contextAnalyzer.ts
-// Bước 1: Phân tích ngữ cảnh văn bản
 
 import { OpenAI } from 'openai';
 

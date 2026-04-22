@@ -1,14 +1,3 @@
-/**
- * English SLA System Prompt for Vietnamese Learners
- * Based on Krashen's Theory - Teaching English to Vietnamese speakers
- * 
- * Key Features:
- * 1. i+1 Comprehensible Input in English
- * 2. Recasting for natural error correction
- * 3. Vietnamese support when needed
- * 4. Cultural context awareness
- */
-
 export interface EnglishLearnerProfile {
   level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   vietnameseLevel: 'native' | 'fluent';
@@ -134,22 +123,22 @@ const ENGLISH_RECASTING_TEMPLATES = {
 // Encouragement in English with Vietnamese translation
 const ENGLISH_ENCOURAGEMENT = {
   success: [
-    { en: "Excellent! 🎉", vi: "Tuyệt vời!" },
-    { en: "Perfect! 👏", vi: "Hoàn hảo!" },
-    { en: "Great job! ⭐", vi: "Làm tốt lắm!" },
-    { en: "Well done! 💪", vi: "Giỏi lắm!" },
-    { en: "You're doing amazing! 🌟", vi: "Bạn làm tuyệt vời!" },
+    { en: "Excellent! ", vi: "Tuyệt vời!" },
+    { en: "Perfect! ", vi: "Hoàn hảo!" },
+    { en: "Great job! ", vi: "Làm tốt lắm!" },
+    { en: "Well done! ", vi: "Giỏi lắm!" },
+    { en: "You're doing amazing! ", vi: "Bạn làm tuyệt vời!" },
   ],
   effort: [
-    { en: "Good try! 💪", vi: "Cố gắng tốt!" },
-    { en: "You're improving! 📈", vi: "Bạn đang tiến bộ!" },
-    { en: "Keep going! 🚀", vi: "Tiếp tục nhé!" },
-    { en: "Almost there! 👍", vi: "Gần đúng rồi!" },
+    { en: "Good try! ", vi: "Cố gắng tốt!" },
+    { en: "You're improving! ", vi: "Bạn đang tiến bộ!" },
+    { en: "Keep going! ", vi: "Tiếp tục nhé!" },
+    { en: "Almost there! ", vi: "Gần đúng rồi!" },
   ],
   mistake: [
-    { en: "No worries, let's try again! 😊", vi: "Không sao, thử lại nhé!" },
-    { en: "That's how we learn! 📚", vi: "Đó là cách học!" },
-    { en: "Good attempt! 🤗", vi: "Cố gắng tốt!" },
+    { en: "No worries, let's try again! ", vi: "Không sao, thử lại nhé!" },
+    { en: "That's how we learn! ", vi: "Đó là cách học!" },
+    { en: "Good attempt! ", vi: "Cố gắng tốt!" },
   ]
 };
 
@@ -168,14 +157,14 @@ export function generateEnglishSLAPrompt(
 
 You are a friendly, patient English tutor helping Vietnamese speakers learn English naturally through conversation.
 
-### 🎯 LEARNER PROFILE
+###  LEARNER PROFILE
 - **English Level**: ${learnerProfile.level} (${levelGuide.description})
 - **Native Language**: Vietnamese
 - **Learning Goals**: ${learnerProfile.learningGoals.join(', ')}
 - **Common Mistakes**: ${learnerProfile.commonMistakes.join(', ')}
 - **Interests**: ${learnerProfile.interests.join(', ')}
 
-### 📚 LEVEL GUIDELINES
+###  LEVEL GUIDELINES
 - **Vocabulary Focus**: ${levelGuide.vocabulary}
 - **Grammar Focus**: ${levelGuide.grammar}
 - **Topics**: ${levelGuide.topics.join(', ')}
@@ -185,7 +174,7 @@ You are a friendly, patient English tutor helping Vietnamese speakers learn Engl
 
 ---
 
-## 🧠 CORE SLA PRINCIPLES
+##  CORE SLA PRINCIPLES
 
 ### 1. COMPREHENSIBLE INPUT (i+1)
 ${config.enableIPlusOne ? `
@@ -207,14 +196,14 @@ ${config.enableRecasting ? `
 **ACTIVE**: Correct errors naturally without explicit correction.
 
 NEVER SAY:
-❌ "That's wrong"
-❌ "You made a mistake"
-❌ "The correct form is..."
+ "That's wrong"
+ "You made a mistake"
+ "The correct form is..."
 
 ALWAYS USE RECASTING:
-✅ "Oh, you mean [correct form]? Yes!"
-✅ "Ah, [correct form] - exactly!"
-✅ "Right, [correct form] - I understand!"
+ "Oh, you mean [correct form]? Yes!"
+ "Ah, [correct form] - exactly!"
+ "Right, [correct form] - I understand!"
 
 COMMON VIETNAMESE MISTAKES TO WATCH:
 ${VIETNAMESE_ENGLISH_MISTAKES.grammar.map(m => `- ${m.mistake} → ${m.correct}`).join('\n')}
@@ -280,10 +269,10 @@ ${config.speakingSpeed === 'slow' ? '- Speak slowly and clearly\n- Pause between
 
 ---
 
-## 🎯 TOPICS TO EXPLORE (${learnerProfile.level})
+##  TOPICS TO EXPLORE (${learnerProfile.level})
 ${levelGuide.topics.map(t => `- ${t}`).join('\n')}
 
-## 🚫 NEVER DO:
+##  NEVER DO:
 1. Speak too fast for learner's level
 2. Use vocabulary way above their level
 3. Correct every single mistake
@@ -291,7 +280,7 @@ ${levelGuide.topics.map(t => `- ${t}`).join('\n')}
 5. Give long grammar lectures
 6. Ignore learner's interests
 
-## ✅ ALWAYS DO:
+##  ALWAYS DO:
 1. Match speaking speed to level
 2. Use i+1 vocabulary introduction
 3. Recast errors naturally

@@ -955,6 +955,16 @@ export default function VocabularyPage() {
                               Dịch sang Tiếng Việt
                             </button>
                           )}
+                          {getExampleVi(word) && vietnameseTranslations[word._id] && (
+                            <button
+                              onClick={async () => {
+                                await fetchVietnameseTranslation(word, expandData[word._id]);
+                              }}
+                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium ml-2"
+                            >
+                              Dịch lại
+                            </button>
+                          )}
                         </div>
                       )}
                       <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
@@ -1138,15 +1148,17 @@ export default function VocabularyPage() {
                               </div>
 
                               {/* Translate Knowledge Graph Button */}
-                              {!vietnameseTranslations[word._id] && (
-                                <button
-                                  onClick={() => fetchVietnameseTranslation(word, expandData[word._id])}
-                                  className="mt-3 w-full px-3 py-2 bg-teal-100 text-teal-700 hover:bg-teal-200 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
-                                >
-                                  <Languages className="w-3.5 h-3.5" />
-                                  Dịch toàn bộ đồ thị tri thức sang Tiếng Việt
-                                </button>
-                              )}
+                              <button
+                                onClick={() => fetchVietnameseTranslation(word, expandData[word._id])}
+                                className={`mt-3 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                                  vietnameseTranslations[word._id]
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-teal-100 text-teal-700 hover:bg-teal-200"
+                                }`}
+                              >
+                                <Languages className="w-3.5 h-3.5" />
+                                {vietnameseTranslations[word._id] ? "✓ Đã dịch" : "Dịch toàn bộ đồ thị tri thức sang Tiếng Việt"}
+                              </button>
                             </div>
                           ) : null}
                         </motion.div>

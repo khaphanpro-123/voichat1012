@@ -1,30 +1,3 @@
-"""
-NEW PIPELINE - LEARNED SCORING VERSION
-
-Pipeline Flow:
-1. Text → Sentence
-2. Sentence → Heading
-3. Heading → Context mapping
-4. Context → Phrase extraction
-5. Context → Single word extraction
-6. Independent scoring (multi-factor)
-7. Merge (phrase + word)
-8. Learned final scoring (regression model)
-9. Topic modeling (KMeans/BERTopic)
-10. Within-topic ranking
-11. Flashcard generation
-
-Key Differences from Old Pipeline:
-- NO hard filtering (stages 9-11 removed)
-- Independent scoring for each item
-- Learned weights via regression
-- Topic-based organization
-- Within-topic structuring
-
-Author: Kiro AI
-Date: 2026-02-28
-"""
-
 import numpy as np
 from typing import List, Dict, Optional, Tuple
 from collections import defaultdict
@@ -39,42 +12,20 @@ try:
     HAS_EMBEDDINGS = True
 except:
     HAS_EMBEDDINGS = False
-    print("⚠️  sentence-transformers not available")
+    print("  sentence-transformers not available")
 
 try:
     import spacy
     HAS_SPACY = True
 except:
     HAS_SPACY = False
-    print("⚠️  spaCy not available")
-
-
-class NewPipelineLearnedScoring:
-    """
-    New pipeline with learned scoring and topic modeling
-    
-    Stages:
-    1-5: Same as before (text → phrases + words)
-    6: Independent scoring
-    7: Merge
-    8: Learned final scoring
-    9: Topic modeling
-    10: Within-topic ranking
-    11: Flashcard generation
-    """
-    
+    print("  spaCy not available")
+class NewPipelineLearnedScoring: 
     def __init__(
         self,
         n_topics: int = 5,
         model_path: str = "final_scorer_model.pkl"
     ):
-        """
-        Initialize pipeline
-        
-        Args:
-            n_topics: Number of topics for clustering
-            model_path: Path to save/load trained model
-        """
         self.n_topics = n_topics
         self.model_path = model_path
         self.regression_model = None
@@ -89,9 +40,9 @@ class NewPipelineLearnedScoring:
             try:
                 from embedding_utils import SentenceTransformer
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-                print("✅ Loaded embedding model")
+                print(" Loaded embedding model")
             except Exception as e:
-                print(f"⚠️  Could not load embedding model: {e}")
+                print(f"  Could not load embedding model: {e}")
     
     def process(
         self,
@@ -100,22 +51,6 @@ class NewPipelineLearnedScoring:
         document_text: str = "",
         enabled_stages: List[int] = None
     ) -> Dict:
-        """
-        Process phrases and words through new pipeline with configurable stages
-        
-        Args:
-            phrases: List of phrase dicts from phrase extraction
-            words: List of word dicts from word extraction
-            document_text: Original document text (for centroid)
-            enabled_stages: List of stage numbers to enable (6-11)
-        
-        Returns:
-            {
-                'vocabulary': List[Dict],
-                'topics': List[Dict],
-                'flashcards': List[Dict]
-            }
-        """
         if enabled_stages is None:
             enabled_stages = [6, 7, 8, 9, 10, 11]  # Default: all stages
         
@@ -134,10 +69,6 @@ class NewPipelineLearnedScoring:
         merged = []
         topics = []
         flashcards = []
-        
-        # ====================================================================
-        # STAGE 6: Independent Scoring
-        # ====================================================================
         if 6 in enabled_stages:
             print(f"\n[STAGE 6] Independent Scoring...")
             
@@ -148,10 +79,6 @@ class NewPipelineLearnedScoring:
             print(f"  ✓ Scored {len(words_scored)} words")
         else:
             print(f"\n[STAGE 6] SKIPPED")
-        
-        # ====================================================================
-        # STAGE 7: Merge
-        # ====================================================================
         if 7 in enabled_stages:
             print(f"\n[STAGE 7] Merge...")
             
@@ -162,10 +89,6 @@ class NewPipelineLearnedScoring:
             print(f"\n[STAGE 7] SKIPPED")
             # Simple concatenation if no merge
             merged = phrases_scored + words_scored
-        
-        # ====================================================================
-        # STAGE 8: Learned Final Scoring
-        # ====================================================================
         if 8 in enabled_stages:
             print(f"\n[STAGE 8] Learned Final Scoring...")
             
@@ -174,10 +97,6 @@ class NewPipelineLearnedScoring:
             print(f"  ✓ Applied final scoring")
         else:
             print(f"\n[STAGE 8] SKIPPED")
-        
-        # ====================================================================
-        # STAGE 9: Topic Modeling
-        # ====================================================================
         if 9 in enabled_stages:
             print(f"\n[STAGE 9] Topic Modeling...")
             
@@ -193,10 +112,6 @@ class NewPipelineLearnedScoring:
                 'items': merged,
                 'size': len(merged)
             }]
-        
-        # ====================================================================
-        # STAGE 10: Within-Topic Ranking
-        # ====================================================================
         if 10 in enabled_stages:
             print(f"\n[STAGE 10] Within-Topic Ranking...")
             
@@ -205,10 +120,6 @@ class NewPipelineLearnedScoring:
             print(f"  ✓ Ranked items within topics")
         else:
             print(f"\n[STAGE 10] SKIPPED")
-        
-        # ====================================================================
-        # STAGE 11: Flashcard Generation
-        # ====================================================================
         if 11 in enabled_stages:
             print(f"\n[STAGE 11] Flashcard Generation...")
             
@@ -217,10 +128,6 @@ class NewPipelineLearnedScoring:
             print(f"  ✓ Generated {len(flashcards)} flashcards")
         else:
             print(f"\n[STAGE 11] SKIPPED")
-        
-        # ====================================================================
-        # Result
-        # ====================================================================
         result = {
             'vocabulary': merged,
             'topics': topics,
@@ -234,7 +141,6 @@ class NewPipelineLearnedScoring:
                 'enabled_stages': enabled_stages
             }
         }
-        
         print(f"\n{'='*80}")
         print(f"PIPELINE COMPLETE")
         print(f"  Total vocabulary: {len(merged)}")
@@ -251,15 +157,6 @@ class NewPipelineLearnedScoring:
         document_text: str,
         item_type: str
     ) -> List[Dict]:
-        """
-        STAGE 6: Independent Scoring
-        
-        Compute 4 signals for each item:
-        1. semantic_score: Cosine similarity with document
-        2. learning_value: Academic potential
-        3. freq_score: Log-scaled frequency
-        4. rarity_score: IDF-based rarity
-        """
         if not items:
             return items
         
@@ -340,25 +237,10 @@ class NewPipelineLearnedScoring:
         phrases: List[Dict],
         words: List[Dict]
     ) -> List[Dict]:
-        """
-        STAGE 7: Merge
-        
-        Simple union of phrases and words
-        No filtering, no deduplication
-        """
         merged = phrases + words
         return merged
     
     def _learned_final_scoring(self, items: List[Dict]) -> List[Dict]:
-        """
-        STAGE 8: Learned Final Scoring
-        
-        Use regression model to predict final_score from:
-        - semantic_score
-        - learning_value
-        - freq_score
-        - rarity_score
-        """
         if not items:
             return items
         
@@ -379,7 +261,7 @@ class NewPipelineLearnedScoring:
         
         # Additional NaN check
         if np.any(np.isnan(X)):
-            print("  ⚠️  Found NaN values in features, replacing with 0.5")
+            print("    Found NaN values in features, replacing with 0.5")
             X = np.nan_to_num(X, nan=0.5)
         
         # Normalize features
@@ -394,7 +276,7 @@ class NewPipelineLearnedScoring:
             scores = self.regression_model.predict(X_normalized)
         else:
             # Fallback: weighted average
-            print("  ⚠️  No trained model, using default weights")
+            print("    No trained model, using default weights")
             weights = np.array([0.3, 0.4, 0.1, 0.2])  # Default weights
             scores = np.dot(X_normalized, weights)
         
@@ -405,11 +287,6 @@ class NewPipelineLearnedScoring:
         return items
     
     def _topic_modeling(self, items: List[Dict]) -> List[Dict]:
-        """
-        STAGE 9: Topic Modeling
-        
-        Use KMeans to cluster items into topics
-        """
         if not items or not self.embedding_model:
             # Fallback: single topic
             return [{
@@ -469,15 +346,6 @@ class NewPipelineLearnedScoring:
         return topics
     
     def _within_topic_ranking(self, topics: List[Dict]) -> List[Dict]:
-        """
-        STAGE 10: Within-Topic Ranking
-        
-        For each topic:
-        1. Compute centrality (distance to centroid)
-        2. Assign semantic roles: core / supporting / peripheral
-        3. Group synonyms together (similarity > 0.75)
-        4. Sort by final_score, keeping synonyms adjacent
-        """
         from sklearn.metrics.pairwise import cosine_similarity
         
         for topic in topics:
@@ -525,22 +393,6 @@ class NewPipelineLearnedScoring:
         return topics
     
     def _group_synonyms_in_topic(self, items: List[Dict], threshold: float = 0.75) -> List[Dict]:
-        """
-        Group synonyms together within a topic
-        
-        Strategy:
-        1. Keep items sorted by final_score
-        2. For each item, find similar items (similarity > threshold)
-        3. Move similar items to be adjacent
-        4. Mark synonym groups with 'synonym_group_id'
-        
-        Args:
-            items: List of vocabulary items (already sorted by final_score)
-            threshold: Similarity threshold for grouping (default: 0.75)
-        
-        Returns:
-            Reordered list with synonyms adjacent
-        """
         from sklearn.metrics.pairwise import cosine_similarity
         
         if len(items) < 2:
@@ -560,7 +412,7 @@ class NewPipelineLearnedScoring:
         try:
             similarity_matrix = cosine_similarity(embeddings)
         except Exception as e:
-            print(f"  ⚠️  Failed to compute similarity: {e}")
+            print(f"    Failed to compute similarity: {e}")
             return items
         
         # Group synonyms
@@ -608,15 +460,6 @@ class NewPipelineLearnedScoring:
         return result
     
     def _flashcard_generation(self, topics: List[Dict]) -> List[Dict]:
-        """
-        STAGE 11: Flashcard Generation
-        
-        Generate flashcards from topics
-        Each topic creates flashcards for:
-        - Core term
-        - Supporting terms
-        - Peripheral terms (optional)
-        """
         flashcards = []
         
         for topic in topics:
@@ -687,9 +530,6 @@ class NewPipelineLearnedScoring:
         return flashcard
     
     def _generate_topic_name(self, items: List[Dict]) -> str:
-        """
-        Generate topic name from top items
-        """
         if not items:
             return "General"
         
@@ -718,21 +558,6 @@ class NewPipelineLearnedScoring:
         self,
         training_data: List[Dict]
     ):
-        """
-        Train regression model from labeled data
-        
-        Args:
-            training_data: List of dicts with features + human_importance
-                [
-                    {
-                        'semantic_score': 0.8,
-                        'learning_value': 0.9,
-                        'freq_score': 0.5,
-                        'rarity_score': 0.7,
-                        'human_importance': 0.85  # Label
-                    }
-                ]
-        """
         print(f"\n[TRAINING] Training regression model...")
         
         # Prepare data
@@ -776,7 +601,7 @@ class NewPipelineLearnedScoring:
                 }, f)
             print(f"  ✓ Model saved to {self.model_path}")
         except Exception as e:
-            print(f"  ⚠️  Could not save model: {e}")
+            print(f"    Could not save model: {e}")
     
     def _load_model(self):
         """Load trained model"""
@@ -788,13 +613,7 @@ class NewPipelineLearnedScoring:
                     self.scaler = data['scaler']
                 print(f"  ✓ Model loaded from {self.model_path}")
             except Exception as e:
-                print(f"  ⚠️  Could not load model: {e}")
-
-
-# ============================================================================
-# TESTING
-# ============================================================================
-
+                print(f"    Could not load model: {e}")
 if __name__ == "__main__":
     print("=" * 80)
     print("TESTING NEW PIPELINE - LEARNED SCORING")
@@ -843,13 +662,13 @@ if __name__ == "__main__":
         document_text=document_text
     )
     
-    print("\n📊 RESULTS:")
+    print("\n RESULTS:")
     print("-" * 80)
     print(f"Total vocabulary: {result['statistics']['total_items']}")
     print(f"Topics: {result['statistics']['num_topics']}")
     print(f"Flashcards: {result['statistics']['num_flashcards']}")
     
-    print("\n📊 TOPICS:")
+    print("\n TOPICS:")
     for topic in result['topics']:
         print(f"\nTopic {topic['topic_id']}: {topic['topic_name']}")
         print(f"  Items: {len(topic['items'])}")
@@ -861,4 +680,4 @@ if __name__ == "__main__":
             role = item.get('semantic_role', 'unknown')
             print(f"    - {text} (score: {score:.3f}, role: {role})")
     
-    print("\n✅ Test completed!")
+    print("\n Test completed!")

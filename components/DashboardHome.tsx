@@ -525,8 +525,8 @@ export default function DashboardHome() {
       >
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-md border-2 border-dashed border-teal-200 text-center hover:border-teal-400 transition-colors">
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Upload documents để học words vựng</h3>
-          <p className="text-gray-500 mb-4">Hỗ trợ PDF, Word, hình ảnh. Trích xuất words vựng tự động với OCR.</p>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Upload documents để học từ vựng</h3>
+          <p className="text-gray-500 mb-4">Hỗ trợ PDF, Word, hình ảnh. Trích xuất từ vựng tự động với OCR.</p>
           <Link href="/dashboard-new/documents-simple">
             <button className="px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition">
               Bắt đầu upload

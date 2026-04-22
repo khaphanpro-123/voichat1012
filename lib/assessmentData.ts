@@ -1,11 +1,8 @@
-// lib/assessmentData.ts
-
 export interface Question {
   id: number;
   category: "motivation" | "experience" | "style" | "goals" | "time" | "challenges";
   text: string;
 }
-
 export const surveyQuestions: Question[] = [
   // --- MOTIVATION ---
   { id: 1, category: "motivation", text: "I want to learn Vietnamese for travel purposes." },

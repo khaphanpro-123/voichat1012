@@ -1,12 +1,3 @@
-"""
-Phrase Scoring Module - Learning-Driven Approach
-Replaces rigid filtering with hybrid scoring system
-
-Author: Kiro AI
-Date: 2026-02-26
-Version: 1.0.0
-"""
-
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 from sklearn.linear_model import LinearRegression
@@ -14,34 +5,13 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 import os
-
-
 class PhraseScorer:
-    """
-    Hybrid scoring system for phrase extraction
-    
-    Features:
-    - Semantic relevance scoring (SBERT)
-    - Frequency scoring (fuzzy)
-    - Length scoring
-    - Supervised learning for weight optimization
-    - Semantic clustering for flashcards
-    """
-    
     def __init__(
         self,
         embedding_model=None,
         weights: Optional[Dict[str, float]] = None,
         model_path: str = "phrase_scorer_model.pkl"
     ):
-        """
-        Initialize phrase scorer
-        
-        Args:
-            embedding_model: Pre-loaded embedding model (optional)
-            weights: Manual weights for scoring (optional)
-            model_path: Path to save/load trained model
-        """
         self.embedding_model = embedding_model
         self.model_path = model_path
         self.regression_model = None
@@ -62,17 +32,6 @@ class PhraseScorer:
         document_text: str,
         document_embedding: Optional[np.ndarray] = None
     ) -> List[Dict]:
-        """
-        STEP 1-3: Compute all scores for phrases
-        
-        Args:
-            phrases: List of candidate phrases
-            document_text: Full document text
-            document_embedding: Pre-computed document embedding (optional)
-        
-        Returns:
-            Phrases with scores added
-        """
         print(f"[SCORER] Computing scores for {len(phrases)} phrases...")
         
         # Step 1: Semantic scoring
@@ -86,7 +45,7 @@ class PhraseScorer:
         # Step 3: Length scoring
         phrases = self._compute_length_scores(phrases)
         
-        print(f"  ✓ Computed semantic, frequency, and length scores")
+        print(f" Computed semantic, frequency, and length scores")
         
         return phrases
     
@@ -96,11 +55,6 @@ class PhraseScorer:
         document_text: str,
         document_embedding: Optional[np.ndarray] = None
     ) -> List[Dict]:
-        """
-        STEP 1: Semantic relevance scoring using SBERT
-        
-        semantic_score = cosine_similarity(phrase_embedding, doc_embedding)
-        """
         try:
             # Load embedding model if not provided
             if self.embedding_model is None:
@@ -129,7 +83,7 @@ class PhraseScorer:
                 phrase['embedding'] = phrase_embeddings[i].tolist()
             
         except Exception as e:
-            print(f"  ⚠️  Semantic scoring failed: {e}")
+            print(f"   Semantic scoring failed: {e}")
             # Fallback: assign default score
             for phrase in phrases:
                 phrase['semantic_score'] = 0.5
@@ -141,11 +95,6 @@ class PhraseScorer:
         phrases: List[Dict],
         document_text: str
     ) -> List[Dict]:
-        """
-        STEP 2: Frequency scoring (fuzzy)
-        
-        Option A: freq_score = log(1 + freq) / log(1 + max_freq)
-        """
         # Normalize document text
         doc_lower = document_text.lower()
         
@@ -172,11 +121,6 @@ class PhraseScorer:
         return phrases
     
     def _compute_length_scores(self, phrases: List[Dict]) -> List[Dict]:
-        """
-        STEP 3: Length scoring
-        
-        length_score = min(len(words)/5, 1.0)
-        """
         for phrase in phrases:
             words = phrase['phrase'].split()
             length_score = min(len(words) / 5.0, 1.0)
@@ -189,16 +133,6 @@ class PhraseScorer:
         phrases: List[Dict],
         labels: List[float]
     ) -> Dict[str, float]:
-        """
-        STEP 4: Train weights using supervised learning
-        
-        Args:
-            phrases: Phrases with computed scores
-            labels: Human-labeled importance scores (0-1)
-        
-        Returns:
-            Trained weights
-        """
         print(f"[SCORER] Training weights with {len(phrases)} labeled examples...")
         
         # Prepare features with NaN handling
@@ -218,11 +152,11 @@ class PhraseScorer:
         
         # Additional NaN check
         if np.any(np.isnan(X)):
-            print("  ⚠️  Found NaN values in features, replacing with 0.5")
+            print("   Found NaN values in features, replacing with 0.5")
             X = np.nan_to_num(X, nan=0.5)
         
         if np.any(np.isnan(y)):
-            print("  ⚠️  Found NaN values in labels, replacing with 0.5")
+            print("   Found NaN values in labels, replacing with 0.5")
             y = np.nan_to_num(y, nan=0.5)
         
         # Train linear regression
@@ -237,7 +171,7 @@ class PhraseScorer:
             'length': float(coefficients[2])
         }
         
-        print(f"  ✓ Trained weights: {self.weights}")
+        print(f"  Trained weights: {self.weights}")
         
         # Save model
         self._save_model()
@@ -249,16 +183,6 @@ class PhraseScorer:
         phrases: List[Dict],
         top_k: Optional[int] = None
     ) -> List[Dict]:
-        """
-        STEP 5: Rank phrases by final score
-        
-        Args:
-            phrases: Phrases with computed scores
-            top_k: Number of top phrases to keep (optional)
-        
-        Returns:
-            Ranked phrases
-        """
         print(f"[SCORER] Ranking {len(phrases)} phrases...")
         
         # Compute final scores
@@ -306,7 +230,7 @@ class PhraseScorer:
         if top_k is not None:
             phrases = phrases[:top_k]
         
-        print(f"  ✓ Ranked phrases (kept top {len(phrases)})")
+        print(f" Ranked phrases (kept top {len(phrases)})")
         
         return phrases
     
@@ -316,17 +240,6 @@ class PhraseScorer:
         threshold: float = 0.4,
         linkage: str = 'average'
     ) -> Tuple[List[Dict], List[Dict]]:
-        """
-        STEP 6: Semantic grouping for flashcards
-        
-        Args:
-            phrases: Phrases with embeddings
-            threshold: Distance threshold for clustering
-            linkage: Linkage method ('average', 'complete', 'single')
-        
-        Returns:
-            (phrases_with_clusters, cluster_info)
-        """
         print(f"[SCORER] Clustering {len(phrases)} phrases...")
         
         if len(phrases) < 2:
@@ -392,7 +305,7 @@ class PhraseScorer:
             return phrases, cluster_info
             
         except Exception as e:
-            print(f"  ⚠️  Clustering failed: {e}")
+            print(f"  Clustering failed: {e}")
             # Fallback: single cluster
             for phrase in phrases:
                 phrase['cluster_id'] = 0
@@ -404,15 +317,6 @@ class PhraseScorer:
             }]
     
     def _infer_theme(self, cluster_phrases: List[Dict]) -> str:
-        """
-        Infer semantic theme from cluster phrases
-        
-        Args:
-            cluster_phrases: Phrases in cluster
-        
-        Returns:
-            Theme name (e.g., "Climate Science")
-        """
         # Simple heuristic: use top 2 words from top phrase
         if not cluster_phrases:
             return "Unknown"
@@ -432,9 +336,9 @@ class PhraseScorer:
                         'model': self.regression_model,
                         'weights': self.weights
                     }, f)
-                print(f"  ✓ Saved model to {self.model_path}")
+                print(f"   Saved model to {self.model_path}")
             except Exception as e:
-                print(f"  ⚠️  Failed to save model: {e}")
+                print(f"    Failed to save model: {e}")
     
     def _load_model(self):
         """Load pre-trained regression model"""
@@ -444,18 +348,10 @@ class PhraseScorer:
                     data = pickle.load(f)
                     self.regression_model = data['model']
                     self.weights = data['weights']
-                print(f"  ✓ Loaded model from {self.model_path}")
+                print(f"   Loaded model from {self.model_path}")
             except Exception as e:
-                print(f"  ⚠️  Failed to load model: {e}")
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-
+                print(f"   Failed to load model: {e}")
 def example_usage():
-    """Example usage of PhraseScorer"""
-    
     # Sample data
     phrases = [
         {'phrase': 'climate change', 'position': 0, 'sentence_id': 0},

@@ -1,14 +1,7 @@
-/**
- * Text normalization utilities
- */
-
-// Fix hyphenation across line breaks: "infor-\nmation" => "information"
 export function fixHyphenation(text: string): string {
   // Match word-hyphen-newline-word pattern
   return text.replace(/(\w+)-\s*\n\s*(\w+)/g, "$1$2");
 }
-
-// Normalize ligatures
 export function normalizeLigatures(text: string): string {
   const ligatureMap: Record<string, string> = {
     "\uFB01": "fi", // ﬁ

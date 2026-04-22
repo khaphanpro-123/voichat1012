@@ -1,8 +1,4 @@
-/**
- * Curated lists for phrase extraction
- */
 
-// Prepositional phrases (multi-word prepositions)
 export const PREPOSITIONAL_PHRASES = [
   "in terms of",
   "as a result of",

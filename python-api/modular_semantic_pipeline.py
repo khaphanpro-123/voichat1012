@@ -1,14 +1,3 @@
-"""
-MODULAR SEMANTIC PIPELINE FOR ABLATION STUDIES
-
-Implements the redesigned 5-module architecture for systematic ablation testing.
-Each module can be independently enabled/disabled for scientific evaluation.
-
-Author: NLP Research Engineer
-Date: March 16, 2026
-Version: 2.0.0
-"""
-
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -42,17 +31,7 @@ class DocumentPreprocessingModule:
     
     def __init__(self):
         self.heading_detector = HeadingDetector()
-        
     def process(self, document_text: str) -> Dict[str, Any]:
-        """
-        Process document through preprocessing stages
-        
-        Args:
-            document_text: Raw document text
-            
-        Returns:
-            Structured document with sentences, headings, context
-        """
         print(f"[MODULE 1] Document Preprocessing...")
         
         # Step 1: Document Normalization
@@ -121,17 +100,6 @@ class VocabularyExtractionModule:
         self.word_extractor = SingleWordExtractorV2()
         
     def process(self, structured_document: Dict, max_phrases: int = 30, max_words: int = 20) -> Dict:
-        """
-        Extract vocabulary candidates using Learning-to-Rank
-        
-        Args:
-            structured_document: Output from preprocessing module
-            max_phrases: Maximum phrases to extract
-            max_words: Maximum words to extract
-            
-        Returns:
-            Candidate vocabulary with phrases and words
-        """
         print(f"[MODULE 2] Vocabulary Extraction...")
         
         text = structured_document['normalized_text']
@@ -171,16 +139,6 @@ class SemanticScoringModule:
         self.new_pipeline = NewPipelineLearnedScoring()
         
     def process(self, candidate_vocabulary: Dict, structured_document: Dict) -> Dict:
-        """
-        Apply semantic scoring and merging
-        
-        Args:
-            candidate_vocabulary: Output from extraction module
-            structured_document: Document structure for context
-            
-        Returns:
-            Scored and merged vocabulary
-        """
         print(f"[MODULE 3] Semantic Scoring...")
         
         phrases = candidate_vocabulary['phrases']
@@ -218,19 +176,10 @@ class SemanticOrganizationModule:
         self.n_topics = n_topics
         
     def process(self, vocabulary_items: List[Dict]) -> Dict:
-        """
-        Organize vocabulary into semantic clusters
-        
-        Args:
-            vocabulary_items: List of vocabulary items
-            
-        Returns:
-            Organized vocabulary with topic assignments
-        """
         print(f"[MODULE 4] Semantic Organization...")
         
         if len(vocabulary_items) < 3:
-            print(f"  ⚠️  Too few items for clustering: {len(vocabulary_items)}")
+            print(f"    Too few items for clustering: {len(vocabulary_items)}")
             return {
                 'topics': [],
                 'vocabulary_with_topics': vocabulary_items,
@@ -279,7 +228,7 @@ class SemanticOrganizationModule:
                         continue
             
             if len(embeddings) < 3:
-                print(f"  ⚠️  Not enough embeddings for clustering: {len(embeddings)}")
+                print(f"    Not enough embeddings for clustering: {len(embeddings)}")
                 return [], None
             
             # Determine optimal number of clusters (min 2, max n_topics)
@@ -312,7 +261,7 @@ class SemanticOrganizationModule:
             return topics, kmeans
             
         except Exception as e:
-            print(f"  ⚠️  Topic modeling failed: {e}")
+            print(f"    Topic modeling failed: {e}")
             # Return empty topics but don't fail completely
             return [], None
     
@@ -488,15 +437,7 @@ class LearningOutputModule:
 
 
 class ModularSemanticPipeline:
-    """Main pipeline orchestrator for ablation studies"""
-    
     def __init__(self, enabled_modules: List[int] = [1, 2, 3, 4, 5]):
-        """
-        Initialize pipeline with specific modules enabled
-        
-        Args:
-            enabled_modules: List of module IDs to enable (1-5)
-        """
         self.enabled_modules = enabled_modules
         
         # Initialize modules
@@ -512,7 +453,7 @@ class ModularSemanticPipeline:
         if 5 in enabled_modules:
             self.modules[5] = LearningOutputModule()
         
-        print(f"🔧 Initialized Modular Pipeline with modules: {enabled_modules}")
+        print(f" Initialized Modular Pipeline with modules: {enabled_modules}")
     
     def process_document(
         self,
@@ -521,18 +462,6 @@ class ModularSemanticPipeline:
         max_phrases: int = 30,
         max_words: int = 20
     ) -> PipelineResult:
-        """
-        Process document through enabled modules
-        
-        Args:
-            document_text: Raw document text
-            document_title: Document title
-            max_phrases: Maximum phrases to extract
-            max_words: Maximum words to extract
-            
-        Returns:
-            Pipeline result with vocabulary and metadata
-        """
         start_time = time.time()
         result = PipelineResult(enabled_modules=self.enabled_modules)
         
@@ -563,13 +492,13 @@ class ModularSemanticPipeline:
         if self.enabled_modules == [1, 2]:
             extraction_params['max_phrases'] = max(10, max_phrases // 2)  # Reduce phrases
             extraction_params['max_words'] = max(8, max_words // 2)      # Reduce words
-            print(f"   🔧 TH1 Mode: Reduced extraction ({extraction_params['max_phrases']} phrases, {extraction_params['max_words']} words)")
+            print(f" TH1 Mode: Reduced extraction ({extraction_params['max_phrases']} phrases, {extraction_params['max_words']} words)")
         
         # For TH2 (V2_Context): Enhanced extraction with context
         elif self.enabled_modules == [1, 2, 5]:
             extraction_params['max_phrases'] = int(max_phrases * 0.8)    # Moderate increase
             extraction_params['max_words'] = int(max_words * 0.9)        # Moderate increase
-            print(f"   🏗️ TH2 Mode: Context-enhanced extraction ({extraction_params['max_phrases']} phrases, {extraction_params['max_words']} words)")
+            print(f" TH2 Mode: Context-enhanced extraction ({extraction_params['max_phrases']} phrases, {extraction_params['max_words']} words)")
         
         candidate_vocabulary = self.modules[2].process(
             structured_document, 
@@ -585,7 +514,7 @@ class ModularSemanticPipeline:
         if self.enabled_modules == [1, 2]:
             # TH1: Basic filtering - keep only high-frequency items
             vocabulary_items = [item for item in vocabulary_items if item.get('frequency', 1) >= 2][:15]
-            print(f"   🔧 TH1: Applied basic filtering → {len(vocabulary_items)} items")
+            print(f"   TH1: Applied basic filtering → {len(vocabulary_items)} items")
             
         elif self.enabled_modules == [1, 2, 5]:
             # TH2: Context enhancement - boost items with heading similarity
@@ -594,21 +523,21 @@ class ModularSemanticPipeline:
                     item['heading_similarity'] = 0.1  # Default boost for TH2
                 item['importance_score'] = item.get('importance_score', 0.5) + item['heading_similarity'] * 0.2
             vocabulary_items = vocabulary_items[:18]  # Limit for TH2
-            print(f"   🏗️ TH2: Applied context enhancement → {len(vocabulary_items)} items")
+            print(f"   TH2: Applied context enhancement → {len(vocabulary_items)} items")
         
         # Module 3: Semantic Scoring (optional)
         if 3 in self.modules:
             scored_vocabulary = self.modules[3].process(candidate_vocabulary, structured_document)
             vocabulary_items = scored_vocabulary['vocabulary'][:22]  # Limit for TH3
             result.add_stage_result('scoring', scored_vocabulary)
-            print(f"   🧠 TH3: Applied semantic scoring → {len(vocabulary_items)} items")
+            print(f"    TH3: Applied semantic scoring → {len(vocabulary_items)} items")
         
         # Module 4: Semantic Organization (optional)
         if 4 in self.modules:
             organized_vocabulary = self.modules[4].process(vocabulary_items)
             vocabulary_items = organized_vocabulary['vocabulary_with_topics'][:25]  # Limit for TH4
             result.add_stage_result('organization', organized_vocabulary)
-            print(f"   🎯 TH4: Applied topic modeling → {len(vocabulary_items)} items")
+            print(f"   TH4: Applied topic modeling → {len(vocabulary_items)} items")
         
         # Module 5: Learning Output (optional)
         if 5 in self.modules:
@@ -688,15 +617,6 @@ ABLATION_CONFIGURATIONS = {
 
 
 def create_pipeline_for_configuration(config_name: str) -> ModularSemanticPipeline:
-    """
-    Create pipeline for specific ablation configuration
-    
-    Args:
-        config_name: Configuration name (V1_Baseline, V2_Context, etc.)
-        
-    Returns:
-        Configured pipeline instance
-    """
     if config_name not in ABLATION_CONFIGURATIONS:
         raise ValueError(f"Unknown configuration: {config_name}")
     

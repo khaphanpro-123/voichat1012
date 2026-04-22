@@ -108,17 +108,11 @@ class PhraseCentricExtractor:
         print(f"{'='*80}")
         print(f"PHRASE-CENTRIC EXTRACTION")
         print(f"{'='*80}")
-        # ====================================================================
-        # LANGUAGE CHECK: English only
-        # ====================================================================
         if not self._is_english_text(text):
-            print("⚠️  WARNING: Text appears to be non-English")
-            print("⚠️  This extractor is optimized for English text only")
-            print("⚠️  Results may be poor or empty for other languages")
+            print("  WARNING: Text appears to be non-English")
+            print("  This extractor is optimized for English text only")
+            print("  Results may be poor or empty for other languages")
             print("")
-        # ====================================================================
-        # STEP 1: Sentence-Level Analysis (NO TOKENIZATION YET)
-        # ====================================================================
         print("[STEP 1] Sentence-Level Analysis...")
         
         sentences = self._split_sentences(text)
@@ -129,12 +123,8 @@ class PhraseCentricExtractor:
                 'headings': len(headings)
             })
         else:
-            print(f"  ✓ Extracted {len(sentences)} sentences")
-            print(f"  ✓ Detected {len(headings)} headings")
-        
-        # ====================================================================
-        # STEP 2: Candidate Phrase Extraction (CRITICAL)
-        # ====================================================================
+            print(f"   Extracted {len(sentences)} sentences")
+            print(f"   Detected {len(headings)} headings")
         if USE_LOGGER:
             logger.info("[STEP 2] Candidate Phrase Extraction...")
         else:
@@ -154,10 +144,6 @@ class PhraseCentricExtractor:
             log_debug(logger, "All candidate phrases", candidate_phrases)
         else:
             print(f"  ✓ Extracted {len(candidate_phrases)} candidate phrases")
-        
-        # ====================================================================
-        # STEP 3: HARD FILTERING RULES (NON-NEGOTIABLE)
-        # ====================================================================
         if USE_LOGGER:
             logger.info("[STEP 3] Hard Filtering Rules...")
         else:
@@ -167,8 +153,6 @@ class PhraseCentricExtractor:
             candidate_phrases,
             min_words=min_phrase_length
         )
-        
-        # ✅ LOG SUMMARY ONLY
         removed = len(candidate_phrases) - len(filtered_phrases)
         if USE_LOGGER:
             log_summary(logger, "HARD_FILTER", {
@@ -181,10 +165,7 @@ class PhraseCentricExtractor:
         else:
             print(f"✓ After hard filtering: {len(filtered_phrases)} phrases")
             if removed > 0:
-                print(f"  ❌ Removed {removed} phrases (discourse/template/single-word)")
-        # ====================================================================
-        # STEP 3.2: Phrase Lexical Specificity Filter (NEW)
-        # ====================================================================
+                print(f"  Removed {removed} phrases (discourse/template/single-word)")
         if USE_LOGGER:
             logger.info("[STEP 3.2] Phrase Lexical Specificity Filter...")
         else:
@@ -192,8 +173,6 @@ class PhraseCentricExtractor:
         before_spec = len(filtered_phrases)
         
         filtered_phrases = self._phrase_lexical_specificity_filter(filtered_phrases)
-        
-        # ✅ LOG SUMMARY ONLY
         removed = before_spec - len(filtered_phrases)
         if USE_LOGGER:
             log_summary(logger, "SPECIFICITY_FILTER", {
@@ -206,13 +185,9 @@ class PhraseCentricExtractor:
         else:
             print(f"  ✓ After specificity filter: {len(filtered_phrases)} phrases")
             if removed > 0:
-                print(f"  ❌ Removed {removed} phrases (generic head nouns/templates)")
-    
-        # ====================================================================
-        # STEP 3B: Scoring-Based Learning System (REFACTORED)
-        # ====================================================================
+                print(f"   Removed {removed} phrases (generic head nouns/templates)")
         print(f"[STEP 3B] Scoring-Based Learning System...")
-        print(f"  ℹ️  Input: {len(filtered_phrases)} phrases from linguistic filtering")
+        print(f"    Input: {len(filtered_phrases)} phrases from linguistic filtering")
         
         # Import PhraseScorer
         from phrase_scorer import PhraseScorer
@@ -226,7 +201,7 @@ class PhraseCentricExtractor:
             phrases=filtered_phrases,
             document_text=text
         )
-        print(f"  ✓ Computed scores for {len(filtered_phrases)} phrases")
+        print(f"   Computed scores for {len(filtered_phrases)} phrases")
         
         # 3B.2: Rank phrases by final score
         print(f"[3B.2] Ranking phrases by final score...")
@@ -234,7 +209,7 @@ class PhraseCentricExtractor:
             phrases=filtered_phrases,
             top_k=None  # Keep all for now, will limit later
         )
-        print(f"  ✓ Ranked {len(filtered_phrases)} phrases")
+        print(f"   Ranked {len(filtered_phrases)} phrases")
         
         # 3B.3: Semantic clustering for flashcards
         print(f"[3B.3] Semantic clustering for flashcard grouping...")
@@ -251,11 +226,11 @@ class PhraseCentricExtractor:
                 cid = p.get('cluster_id', 0)
                 cluster_check[cid] = cluster_check.get(cid, 0) + 1
             
-            print(f"\n  🔍 VALIDATION - Cluster distribution:")
+            print(f"\n   VALIDATION - Cluster distribution:")
             for cid in sorted(cluster_check.keys()):
                 print(f"     Cluster {cid}: {cluster_check[cid]} phrases")
             
-            print(f"  ✅ Created {len(cluster_info)} semantic clusters")
+            print(f"  Created {len(cluster_info)} semantic clusters")
             
             # Store cluster info for later use
             for phrase in filtered_phrases:
@@ -269,7 +244,7 @@ class PhraseCentricExtractor:
                     phrase['semantic_theme'] = 'General'
                     phrase['is_cluster_representative'] = False
         else:
-            print(f"  ⚠️  Too few phrases ({len(filtered_phrases)}) for clustering, skipping")
+            print(f"  Too few phrases ({len(filtered_phrases)}) for clustering, skipping")
             # Assign default cluster
             for phrase in filtered_phrases:
                 phrase['cluster_id'] = 0
@@ -282,7 +257,7 @@ class PhraseCentricExtractor:
         score_threshold = 0.3  # Keep phrases with final_score >= 0.3
         filtered_phrases = [p for p in filtered_phrases if p.get('final_score', 0) >= score_threshold]
         removed_filter = before_filter - len(filtered_phrases)
-        print(f"  ✓ Kept {len(filtered_phrases)} phrases (removed {removed_filter} with score < {score_threshold})")
+        print(f"   Kept {len(filtered_phrases)} phrases (removed {removed_filter} with score < {score_threshold})")
         
         # 3B.5: Final cleaning (remove meaningless phrases)
         print(f"[3B.5] Final cleaning - removing meaningless phrases...")
@@ -292,22 +267,11 @@ class PhraseCentricExtractor:
         print(f"  ✓ Kept {len(filtered_phrases)} phrases (removed {removed_final} meaningless)")
         
         print(f"STEP 3B complete: {len(filtered_phrases)} phrases after scoring-based refinement")
-        
-        # STEP 3.3: Phrase Rarity Filter - DISABLED
-        # ====================================================================
         print(f"[STEP 3.3] Phrase Rarity Filter - SKIPPED (disabled by user)")
-        print(f"  ℹ️  Keeping all {len(filtered_phrases)} phrases without IDF filtering")
-        
-        # ====================================================================
-        # RETURN FINAL PHRASES
-        # ====================================================================
+        print(f"    Keeping all {len(filtered_phrases)} phrases without IDF filtering")
         return filtered_phrases
     
     def _split_sentences(self, text: str) -> List[Dict]:
-        """
-        Split text into sentences using NLTK (replaces spaCy)
-        Preserve sentence integrity
-        """
         from nltk.tokenize import sent_tokenize
         
         # Split into sentences using NLTK
@@ -331,10 +295,6 @@ class PhraseCentricExtractor:
         return sentences
     
     def _detect_headings(self, text: str) -> List[Dict]:
-        """
-        Detect headings in text
-        Simple rule-based approach
-        """
         headings = []
         lines = text.split('\n')
         
@@ -519,9 +479,6 @@ class PhraseCentricExtractor:
 
     
     def _pattern_matches(self, pos_pattern: List[str], valid_patterns: List[List[str]]) -> bool:
-        """
-        Check if POS pattern matches any valid pattern
-        """
         for valid in valid_patterns:
             if len(pos_pattern) == len(valid):
                 if all(p == v or v == 'NOUN' and p == 'PROPN' for p, v in zip(pos_pattern, valid)):
@@ -642,16 +599,11 @@ class PhraseCentricExtractor:
         self,
         phrases: List[Dict],
         main_heading: str,
-        threshold: float = 0.15  # ✅ LOWERED from 0.3 to 0.15
+        threshold: float = 0.15  
     ) -> List[Dict]:
-        """
-        Filter phrases by semantic alignment with heading
-        
-        ⚠️ IMPORTANT: Threshold lowered to 0.15 to avoid over-filtering
-        """
         if not main_heading:
             # No heading → keep all phrases
-            print("  ⚠️  No heading found, keeping all phrases")
+            print("   No heading found, keeping all phrases")
             return phrases
         
         # Load embedding model if not loaded
@@ -659,7 +611,7 @@ class PhraseCentricExtractor:
             try:
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
             except:
-                print("  ⚠️  Embedding model not available, skipping semantic filtering")
+                print("    Embedding model not available, skipping semantic filtering")
                 return phrases
         
         # Encode heading
@@ -681,11 +633,9 @@ class PhraseCentricExtractor:
             # Keep if above threshold
             if similarity >= threshold:
                 filtered.append(phrase_dict)
-        
-        # ✅ SAFETY CHECK: If too few phrases remain, lower threshold
         if len(filtered) < 10 and len(phrases) > 20:
-            print(f"  ⚠️  Only {len(filtered)} phrases passed semantic filter")
-            print(f"  ⚠️  Lowering threshold to 0.10 to keep more phrases")
+            print(f"    Only {len(filtered)} phrases passed semantic filter")
+            print(f"    Lowering threshold to 0.10 to keep more phrases")
             
             filtered = []
             for phrase_dict in phrases:
@@ -714,12 +664,6 @@ class PhraseCentricExtractor:
         sentences: List[Dict],
         headings: List[Dict]
     ) -> List[Dict]:
-        """
-        Add contrastive learning signal
-        
-        Positive: phrases in sentences aligned with heading
-        Negative: phrases in generic/template sentences
-        """
         # Identify template sentences
         template_keywords = [
             'in my opinion', 'i think', 'i believe', 'many people',
@@ -772,16 +716,6 @@ class PhraseCentricExtractor:
         return phrases
     
     def _final_ranking(self, phrases: List[Dict]) -> List[Dict]:
-        """
-        Final ranking using weighted combination
-        
-        Priorities:
-        1. Semantic alignment with heading (35%)
-        2. Phrase completeness (25%)
-        3. Contrastive score (20%)
-        4. Frequency (10%)
-        5. Coverage (10%)
-        """
         for phrase_dict in phrases:
             # Get scores
             heading_sim = phrase_dict.get('heading_similarity', 0.5)
@@ -816,16 +750,6 @@ class PhraseCentricExtractor:
         return ranked
     
     def _validate_output(self, phrases: List[Dict]) -> Dict:
-        """
-        Validate output before returning
-        
-        Checks:
-        1. At least 80% multi-word phrases
-        2. No single words (except technical)
-        3. Every phrase appears in document
-        4. Every phrase relevant to heading
-        5. Every phrase usable in academic writing
-        """
         if not phrases:
             return {
                 'valid': False,
@@ -855,18 +779,6 @@ class PhraseCentricExtractor:
             'multi_word_percentage': multi_word_percentage,
             'avg_phrase_length': avg_length
         }
-
-
-
-    # ========================================================================
-    # STEP 3B: OLD METHODS (DEPRECATED - Kept for reference only)
-    # ========================================================================
-    # These methods were used in the old rule-based Step 3B implementation.
-    # They have been replaced by the PhraseScorer module (phrase_scorer.py)
-    # which uses a hybrid scoring system with supervised learning.
-    # 
-    # DO NOT USE THESE METHODS - They are kept only for reference.
-    # ========================================================================
     
     def _compute_tfidf_scores(self, phrases: List[Dict], text: str) -> List[Dict]:
         """
@@ -915,7 +827,7 @@ class PhraseCentricExtractor:
             try:
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
             except:
-                print("  ⚠️  SBERT model not available, using fallback")
+                print("    SBERT model not available, using fallback")
                 # Return dummy embeddings
                 dummy_embeddings = np.random.rand(len(phrases), 384)
                 return phrases, dummy_embeddings
@@ -939,19 +851,11 @@ class PhraseCentricExtractor:
         min_k: int = 3,
         max_k: int = 10
     ) -> Tuple[int, List[Dict]]:
-        """
-        Use Elbow method to find optimal K and cluster phrases
-        Returns: (optimal_k, phrases_with_cluster_ids)
-        """
-        # DEBUG logging disabled to reduce Railway rate limit
-        # print(f"  🔍 DEBUG - Clustering input:")
-        # print(f"     Phrases: {len(phrases)}")
-        # print(f"     Embeddings shape: {embeddings.shape}")
         print(f"     K range: {min_k} to {max_k}")
         
         if len(phrases) < min_k:
             # Too few phrases, assign all to cluster 0
-            print(f"  ⚠️  Too few phrases for clustering, assigning all to cluster 0")
+            print(f"    Too few phrases for clustering, assigning all to cluster 0")
             for phrase_dict in phrases:
                 phrase_dict['cluster_id'] = 0
                 phrase_dict['cluster'] = 0
@@ -964,7 +868,7 @@ class PhraseCentricExtractor:
         inertias = []
         k_range = range(min_k, max_k + 1)
         
-        print(f"  🔍 Computing inertias for K={min_k} to {max_k}...")
+        print(f"   Computing inertias for K={min_k} to {max_k}...")
         for k in k_range:
             kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
             kmeans.fit(embeddings)
@@ -992,21 +896,21 @@ class PhraseCentricExtractor:
                         break
                 
                 optimal_k = list(k_range)[optimal_idx]
-                print(f"  🔍 Elbow detected at K={optimal_k} (rate threshold: {threshold:.4f})")
+                print(f"   Elbow detected at K={optimal_k} (rate threshold: {threshold:.4f})")
             else:
                 optimal_k = min_k
-                print(f"  ⚠️  No clear elbow, using min_k={min_k}")
+                print(f"    No clear elbow, using min_k={min_k}")
         else:
             optimal_k = min_k
-            print(f"  ⚠️  Not enough data points, using min_k={min_k}")
+            print(f"    Not enough data points, using min_k={min_k}")
         
         # Cluster with optimal K
-        print(f"  🔍 Final clustering with K={optimal_k}...")
+        print(f"   Final clustering with K={optimal_k}...")
         kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
         cluster_labels = kmeans.fit_predict(embeddings)
         
-        print(f"  🔍 Cluster labels: {set(cluster_labels)}")
-        print(f"  🔍 Cluster counts: {np.bincount(cluster_labels)}")
+        print(f"   Cluster labels: {set(cluster_labels)}")
+        print(f"   Cluster counts: {np.bincount(cluster_labels)}")
         
         # Assign cluster IDs to phrases
         for i, phrase_dict in enumerate(phrases):
@@ -1017,7 +921,7 @@ class PhraseCentricExtractor:
         # DEBUG: Print cluster distribution
         from collections import Counter
         cluster_counts = Counter(cluster_labels)
-        print(f"\n  📊 CLUSTER DISTRIBUTION:")
+        print(f"\n   CLUSTER DISTRIBUTION:")
         for cluster_id in sorted(cluster_counts.keys()):
             count = cluster_counts[cluster_id]
             print(f"     Cluster {cluster_id}: {count} phrases")
@@ -1094,10 +998,6 @@ class PhraseCentricExtractor:
         embeddings: np.ndarray,
         similarity_threshold: float = 0.90
     ) -> List[Dict]:
-        """
-        Remove redundant phrases within each cluster
-        Keep only diverse phrases (cosine similarity < threshold)
-        """
         # Group by cluster
         clusters = defaultdict(list)
         for i, phrase_dict in enumerate(phrases):
@@ -1137,12 +1037,6 @@ class PhraseCentricExtractor:
         return kept_phrases
     
     def _final_phrase_cleaning(self, phrases: List[Dict]) -> List[Dict]:
-        """
-        Final cleaning step to remove:
-        1. Single words (unless domain-specific)
-        2. Meaningless phrases (e.g., "many people", "modern life")
-        3. Grammar errors
-        """
         cleaned = []
         
         # Meaningless phrase patterns

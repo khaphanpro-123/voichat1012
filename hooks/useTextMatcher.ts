@@ -50,15 +50,15 @@ export function useTextMatcher(): UseTextMatcherReturn {
         );
         
         setExtractor(model);
-        console.log('✅ Text matcher loaded successfully');
+        console.log(' Text matcher loaded successfully');
       } catch (importError) {
-        console.warn('⚠️ Transformers.js error, using fallback:', importError);
+        console.warn(' Transformers.js error, using fallback:', importError);
         // Set a simple fallback
         setExtractor({ fallback: true });
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load text matcher';
-      console.error('❌ Text matcher load error:', err);
+      console.error(' Text matcher load error:', err);
       
       // Set a simple fallback
       setExtractor({ fallback: true });

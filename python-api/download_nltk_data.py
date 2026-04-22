@@ -1,9 +1,6 @@
 
-
 import nltk
-
 print("Downloading NLTK data...")
-
 # Download required packages
 packages = [
     'punkt',

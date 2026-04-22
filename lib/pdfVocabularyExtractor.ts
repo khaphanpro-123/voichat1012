@@ -1,15 +1,4 @@
-/**
- * PDF Vocabulary Extractor - Cải tiến trích lọc từ vựng từ PDF
- * 
- * Pipeline:
- * 1. Kiểm tra nội dung PDF (text thật vs scan)
- * 2. Lọc metadata kỹ thuật (XMP, RDF, UUID, etc.)
- * 3. NLP chunking (sentences, noun phrases, phrasal verbs)
- * 4. AI sinh nghĩa + ví dụ
- * 5. Log kết quả trung gian để debug
- */
 
-// ============ METADATA PATTERNS TO REMOVE ============
 const METADATA_PATTERNS = [
   // XMP/RDF/XML metadata
   /<\?xpacket[^>]*\?>[\s\S]*?<\?xpacket[^>]*\?>/gi,
@@ -169,12 +158,6 @@ export function removeMetadata(text: string): { cleaned: string; removedCount: n
 
   return { cleaned, removedCount };
 }
-
-
-/**
- * Step 3: NLP-like text chunking (sentences, phrases)
- * Since we can't use spaCy in browser, we use regex-based extraction
- */
 export function chunkText(text: string): {
   sentences: string[];
   nounPhrases: string[];
@@ -231,8 +214,6 @@ export function chunkText(text: string): {
       }
     }
   });
-
-  // Extract important single words (verbs, adjectives, nouns)
   const importantWords: string[] = [];
   const wordPattern = /\b[a-zA-Z]{4,}\b/g;
   
@@ -259,10 +240,6 @@ export function chunkText(text: string): {
     importantWords: [...new Set(importantWords)].slice(0, 30),
   };
 }
-
-/**
- * Step 4: Combine and deduplicate vocabulary items
- */
 export function combineVocabulary(chunks: ReturnType<typeof chunkText>): VocabularyItem[] {
   const vocabulary: VocabularyItem[] = [];
   const seen = new Set<string>();

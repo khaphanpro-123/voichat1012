@@ -1,20 +1,8 @@
-"""
-REDESIGNED ABLATION STUDY API ENDPOINT
-
-Uses the new modular semantic pipeline architecture for scientific ablation studies.
-Provides comprehensive evaluation with statistical analysis.
-
-Author: NLP Research Engineer
-Date: March 16, 2026
-Version: 2.0.0
-"""
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Any
 import time
 import traceback
-
 from modular_semantic_pipeline import (
     ABLATION_CONFIGURATIONS,
     create_pipeline_for_configuration
@@ -61,41 +49,7 @@ class RedesignedAblationResponse(BaseModel):
 
 
 @router.post("/redesigned-ablation-study", response_model=RedesignedAblationResponse)
-async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
-    """
-    Run redesigned ablation study with modular architecture
-    
-    Features:
-    - 5-module architecture (Document Preprocessing, Vocabulary Extraction, 
-      Semantic Scoring, Semantic Organization, Learning Output)
-    - Scientific evaluation with statistical significance testing
-    - Comprehensive metrics (Precision, Recall, F1, Diversity, Latency)
-    - Configurable pipeline modules for systematic ablation
-    
-    Request Body:
-    {
-        "document_text": "Machine learning is a subset of artificial intelligence...",
-        "ground_truth_vocabulary": ["machine learning", "artificial intelligence", ...],
-        "document_title": "ML Fundamentals",
-        "max_phrases": 30,
-        "max_words": 20,
-        "configurations": ["V1_Baseline", "V3_Scoring", "V5_Full"]  // Optional
-    }
-    
-    Response:
-    {
-        "success": true,
-        "summary": {
-            "best_configuration": "V5_Full",
-            "best_f1_score": 0.87,
-            "baseline_f1_score": 0.65,
-            "total_configurations": 5
-        },
-        "configurations": [...],
-        "statistical_tests": {...},
-        "execution_metadata": {...}
-    }
-    """
+async def run_redesigned_ablation_study(request: RedesignedAblationRequest): 
     try:
         start_time = time.time()
         
@@ -132,7 +86,7 @@ async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
         for config_name in configs_to_test:
             config_info = ABLATION_CONFIGURATIONS[config_name]
             
-            print(f"\n🔬 RUNNING: {config_info['name']}")
+            print(f"\n RUNNING: {config_info['name']}")
             print(f"   Modules: {config_info['modules']}")
             print(f"   Description: {config_info['description']}")
             
@@ -178,13 +132,13 @@ async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
                 
                 configuration_results.append(config_result)
                 
-                print(f"   ✅ F1: {metrics['f1_score']:.3f}, "
+                print(f"   F1: {metrics['f1_score']:.3f}, "
                       f"P: {metrics['precision']:.3f}, "
                       f"R: {metrics['recall']:.3f}, "
                       f"Latency: {config_latency:.1f}s")
                 
             except Exception as e:
-                print(f"   ❌ Configuration failed: {str(e)}")
+                print(f"    Configuration failed: {str(e)}")
                 # Continue with other configurations
                 continue
         
@@ -204,7 +158,7 @@ async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
                 config_result.improvement_over_baseline = round(improvement, 2)
         
         # Perform statistical significance testing
-        print(f"\n📈 PERFORMING STATISTICAL ANALYSIS...")
+        print(f"\n PERFORMING STATISTICAL ANALYSIS...")
         statistical_tests = {}
         
         if len(configuration_results) >= 2:
@@ -229,12 +183,12 @@ async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
                         statistical_tests[test_name] = test_result
                         
                         if test_result.get('significant', False):
-                            print(f"   ✅ {test_name}: Significant difference (p={test_result['p_value']:.4f})")
+                            print(f"   {test_name}: Significant difference (p={test_result['p_value']:.4f})")
                         else:
-                            print(f"   ⚪ {test_name}: No significant difference (p={test_result['p_value']:.4f})")
+                            print(f"   {test_name}: No significant difference (p={test_result['p_value']:.4f})")
                             
             except Exception as e:
-                print(f"   ⚠️  Statistical analysis failed: {e}")
+                print(f"     Statistical analysis failed: {e}")
                 statistical_tests = {"error": str(e)}
         
         # Generate summary
@@ -288,7 +242,7 @@ async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        print(f"❌ Redesigned ablation study failed: {str(e)}")
+        print(f" Redesigned ablation study failed: {str(e)}")
         traceback.print_exc()
         
         return RedesignedAblationResponse(
@@ -303,12 +257,6 @@ async def run_redesigned_ablation_study(request: RedesignedAblationRequest):
 
 @router.get("/redesigned-ablation-study/configurations")
 async def get_available_configurations():
-    """
-    Get available ablation study configurations
-    
-    Returns:
-        Dictionary of available configurations with descriptions
-    """
     return {
         "configurations": {
             config_name: {
@@ -337,12 +285,6 @@ async def get_available_configurations():
 
 @router.post("/redesigned-ablation-study/example")
 async def get_example_request():
-    """
-    Get example request for redesigned ablation study
-    
-    Returns:
-        Example request body with sample data
-    """
     return {
         "example_request": {
             "document_text": """
@@ -377,8 +319,6 @@ async def get_example_request():
             "configurations_available": list(ABLATION_CONFIGURATIONS.keys())
         }
     }
-
-
 # Health check endpoint
 @router.get("/redesigned-ablation-study/health")
 async def health_check():

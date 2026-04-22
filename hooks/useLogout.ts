@@ -21,7 +21,7 @@ export function useLogout() {
       // Điều hướng về login
       router.push("auth/login")
     } catch (error) {
-      console.error("❌ Logout error:", error)
+      console.error(" Logout error:", error)
     }
   }
 

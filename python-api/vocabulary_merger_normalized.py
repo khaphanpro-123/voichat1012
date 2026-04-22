@@ -1,49 +1,14 @@
-"""
-Vocabulary Merger với Score Normalization
-Thay thế Bước 6 (Independent Scoring) và Bước 8 (Learned Final Scoring)
-
-Author: Kiro AI
-Date: 2026-03-28
-Version: 2.0.0 (Simplified)
-"""
-
 from typing import List, Dict, Optional
 import numpy as np
-
-
 class VocabularyMergerNormalized:
-    """
-    Merge phrases và words, sau đó chuẩn hóa điểm về [0, 1]
-    
-    Bước 6 mới: Score Normalization & Ranking
-    - Merge phrases + words
-    - Shift (loại bỏ giá trị âm)
-    - Normalize về [0, 1]
-    - Sort (cao → thấp)
-    - Rank
-    """
-    
     def __init__(self):
-        """Initialize merger"""
         pass
-    
     def merge_and_normalize(
         self,
         phrases: List[Dict],
         words: List[Dict],
         top_k: Optional[int] = None
     ) -> List[Dict]:
-        """
-        Merge phrases và words, chuẩn hóa điểm, và sắp xếp
-        
-        Args:
-            phrases: List of phrase dicts với final_score
-            words: List of word dicts với final_score
-            top_k: Số lượng vocabulary cần giữ (optional)
-        
-        Returns:
-            Vocabulary đã chuẩn hóa và sắp xếp
-        """
         print(f"\n{'='*80}")
         print(f"BƯỚC 6: SCORE NORMALIZATION & RANKING")
         print(f"{'='*80}\n")
@@ -53,63 +18,25 @@ class VocabularyMergerNormalized:
         print(f"  Words: {len(words)}")
         if top_k:
             print(f"  Top-K: {top_k}")
-        
-        # ====================================================================
-        # Bước 6.1: Merge (Gộp)
-        # ====================================================================
         print(f"\n[6.1] Merging phrases and words...")
-        
         vocabulary = self._merge(phrases, words)
-        
-        print(f"  ✓ Merged: {len(vocabulary)} items")
-        
-        # ====================================================================
-        # Bước 6.2: Shift (Dịch Chuyển)
-        # ====================================================================
+        print(f"   Merged: {len(vocabulary)} items")
         print(f"\n[6.2] Shifting scores...")
-        
         vocabulary = self._shift_scores(vocabulary)
-        
-        print(f"  ✓ Shifted scores")
-        
-        # ====================================================================
-        # Bước 6.3: Normalize (Chuẩn Hóa)
-        # ====================================================================
+        print(f"   Shifted scores")
         print(f"\n[6.3] Normalizing scores...")
-        
         vocabulary = self._normalize_scores(vocabulary)
-        
-        print(f"  ✓ Normalized scores to [0, 1]")
-        
-        # ====================================================================
-        # Bước 6.4: Sort (Sắp Xếp)
-        # ====================================================================
+        print(f"   Normalized scores to [0, 1]")
         print(f"\n[6.4] Sorting by normalized score...")
-        
         vocabulary = self._sort_vocabulary(vocabulary)
-        
-        print(f"  ✓ Sorted (high → low)")
-        
-        # ====================================================================
-        # Bước 6.5: Rank (Gán Thứ Hạng)
-        # ====================================================================
+        print(f"   Sorted (high → low)")
         print(f"\n[6.5] Assigning ranks...")
-        
         vocabulary = self._assign_ranks(vocabulary)
-        
-        print(f"  ✓ Assigned ranks")
-        
-        # ====================================================================
-        # Keep top_k if specified
-        # ====================================================================
+        print(f"   Assigned ranks")
         if top_k is not None and len(vocabulary) > top_k:
             print(f"\n[6.6] Keeping top {top_k} items...")
             vocabulary = vocabulary[:top_k]
-            print(f"  ✓ Kept top {top_k}")
-        
-        # ====================================================================
-        # Summary
-        # ====================================================================
+            print(f"  Kept top {top_k}")
         print(f"\n{'='*80}")
         print(f"BƯỚC 6 COMPLETE")
         print(f"  Total vocabulary: {len(vocabulary)}")
@@ -117,21 +44,8 @@ class VocabularyMergerNormalized:
             print(f"  Top item: {vocabulary[0]['term']} (score: {vocabulary[0]['final_score_normalized']:.3f})")
             print(f"  Bottom item: {vocabulary[-1]['term']} (score: {vocabulary[-1]['final_score_normalized']:.3f})")
         print(f"{'='*80}\n")
-        
         return vocabulary
-    
     def _merge(self, phrases: List[Dict], words: List[Dict]) -> List[Dict]:
-        """
-        Bước 6.1: Merge phrases và words
-        
-        Gộp phrases và words thành một list chung
-        Mỗi item có:
-        - term: text của phrase/word
-        - type: 'phrase' hoặc 'word'
-        - final_score: điểm gốc
-        - features: dict chứa các features
-        - metadata: dict chứa thông tin gốc
-        """
         vocabulary = []
         
         # Add phrases
@@ -165,19 +79,6 @@ class VocabularyMergerNormalized:
         return vocabulary
     
     def _shift_scores(self, vocabulary: List[Dict]) -> List[Dict]:
-        """
-        Bước 6.2: Shift scores
-        
-        Dịch chuyển tất cả điểm để không có giá trị âm
-        
-        Formula:
-            s'_i = s_i - s_min
-        
-        Trong đó:
-            s_i: final_score gốc
-            s_min: điểm thấp nhất
-            s'_i: điểm sau shift
-        """
         if not vocabulary:
             return vocabulary
         
@@ -198,31 +99,14 @@ class VocabularyMergerNormalized:
         return vocabulary
     
     def _normalize_scores(self, vocabulary: List[Dict]) -> List[Dict]:
-        """
-        Bước 6.3: Normalize scores
-        
-        Chuẩn hóa tất cả điểm về [0, 1]
-        
-        Formula:
-            s_norm_i = (s'_i - s'_min) / (s'_max - s'_min)
-        
-        Trong đó:
-            s'_i: điểm sau shift
-            s'_min: điểm thấp nhất sau shift
-            s'_max: điểm cao nhất sau shift
-            s_norm_i: điểm chuẩn hóa
-        """
         if not vocabulary:
             return vocabulary
-        
         # Tìm min và max sau shift
         shifted_scores = [v['final_score_shifted'] for v in vocabulary]
         s_prime_min = min(shifted_scores)
         s_prime_max = max(shifted_scores)
-        
         print(f"  Shifted min: {s_prime_min:.4f}")
         print(f"  Shifted max: {s_prime_max:.4f}")
-        
         # Normalize
         if s_prime_max > s_prime_min:
             for v in vocabulary:
@@ -232,50 +116,25 @@ class VocabularyMergerNormalized:
                 )
         else:
             # Tất cả điểm bằng nhau
-            print(f"  ⚠️  All scores are equal, setting to 0.5")
+            print(f"    All scores are equal, setting to 0.5")
             for v in vocabulary:
                 v['final_score_normalized'] = 0.5
-        
         # Log normalized range
         normalized_scores = [v['final_score_normalized'] for v in vocabulary]
         print(f"  Normalized range: [{min(normalized_scores):.4f}, {max(normalized_scores):.4f}]")
-        
         return vocabulary
-    
     def _sort_vocabulary(self, vocabulary: List[Dict]) -> List[Dict]:
-        """
-        Bước 6.4: Sort vocabulary
-        
-        Sắp xếp theo final_score_normalized (giảm dần)
-        Điểm cao → thấp
-        """
         vocabulary.sort(
             key=lambda x: x['final_score_normalized'],
             reverse=True
         )
-        
         return vocabulary
-    
     def _assign_ranks(self, vocabulary: List[Dict]) -> List[Dict]:
-        """
-        Bước 6.5: Assign ranks
-        
-        Gán rank cho mỗi item (1, 2, 3, ...)
-        Rank 1 = điểm cao nhất
-        """
         for i, v in enumerate(vocabulary, start=1):
             v['rank'] = i
         
         return vocabulary
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-
 def example_usage():
-    """Example usage of VocabularyMergerNormalized"""
-    
     # Sample phrases (2 features)
     phrases = [
         {

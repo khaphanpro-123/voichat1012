@@ -1,5 +1,3 @@
-// lib/phraseExtractorAI.ts
-// Bước 2: Trích lọc cụm từ/từ vựng theo ngữ cảnh
 
 import { OpenAI } from 'openai';
 import { ContextAnalysis, shouldExcludeTerm } from './contextAnalyzer';

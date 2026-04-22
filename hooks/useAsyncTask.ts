@@ -1,18 +1,10 @@
-/**
- * useAsyncTask - Hook for handling async tasks with polling
- * Supports optimistic UI updates
- */
-
 import { useState, useCallback, useRef, useEffect } from "react";
-
 export type TaskStatus = "idle" | "pending" | "processing" | "completed" | "failed";
-
 interface TaskResult<T> {
   status: TaskStatus;
   result?: T;
   error?: string;
 }
-
 interface UseAsyncTaskOptions<T> {
   onSuccess?: (result: T) => void;
   onError?: (error: string) => void;
@@ -153,10 +145,6 @@ export function useAsyncTask<T = any>(options: UseAsyncTaskOptions<T> = {}) {
     reset,
   };
 }
-
-/**
- * Fire-and-forget helper - doesn't wait for response
- */
 export function fireAndForget(url: string, data: any): void {
   fetch(url, {
     method: "POST",
@@ -164,10 +152,6 @@ export function fireAndForget(url: string, data: any): void {
     body: JSON.stringify(data),
   }).catch(console.error);
 }
-
-/**
- * Track progress helper - fire-and-forget
- */
 export function trackProgress(userId: string, activity: string, mistake?: any): void {
   if (!userId || userId === "anonymous") return;
   

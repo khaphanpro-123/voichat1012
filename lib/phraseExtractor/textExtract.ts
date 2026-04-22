@@ -1,18 +1,9 @@
-/**
- * Text extraction from PDF and DOCX files
- */
-
 import mammoth from "mammoth";
-
 export interface TextExtractionResult {
   text: string;
   pageCount?: number;
   error?: string;
 }
-
-/**
- * Extract text from DOCX file
- */
 export async function extractFromDocx(buffer: Buffer): Promise<TextExtractionResult> {
   try {
     const result = await mammoth.extractRawText({ buffer });

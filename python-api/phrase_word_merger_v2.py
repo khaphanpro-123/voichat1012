@@ -1,60 +1,20 @@
-"""
-STAGE: WORD-PHRASE MERGER (ADVANCED VERSION)
-
-Mục tiêu:
-- Merge word + phrase với semantic-aware scoring
-- SOFT FILTERING (không drop nhiều)
-- Frequency-based scoring (3-tier)
-- Semantic similarity để điều chỉnh, không hard remove
-- Topic modeling sau merge
-- Semantic layering trong mỗi topic
-
-Nguyên tắc:
-1. Phrase là semantic center
-2. Word là support
-3. Soft scoring thay vì hard drop
-4. Topic-based organization
-5. Core / Supporting / Peripheral layers
-
-Author: Kiro AI
-Date: 2026-02-28
-"""
-
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
-
 try:
     from embedding_utils import SentenceTransformer
     HAS_EMBEDDINGS = True
 except:
     HAS_EMBEDDINGS = False
-    print("⚠️  sentence-transformers not available. Using fallback mode.")
-
-
-class PhraseWordMergerV2:
-    """
-    Advanced Word-Phrase Merger with:
-    - Soft filtering (no hard drops except extreme overlap)
-    - Frequency-based scoring (3-tier)
-    - Topic modeling
-    - Semantic layering
-    """
-    
+    print("  sentence-transformers not available. Using fallback mode.")
+class PhraseWordMergerV2:  
     def __init__(
         self,
         hard_drop_threshold: float = 0.9,
         n_topics: int = 5
     ):
-        """
-        Initialize merger
-        
-        Args:
-            hard_drop_threshold: Only drop if similarity >= this (default 0.9)
-            n_topics: Number of topics for clustering
-        """
         self.hard_drop_threshold = hard_drop_threshold
         self.n_topics = n_topics
         self.embedding_model = None
@@ -65,19 +25,6 @@ class PhraseWordMergerV2:
         phrases: List[Dict],
         words: List[Dict]
     ) -> Dict:
-        """
-        Merge phrases and words with advanced scoring
-        
-        Args:
-            phrases: List of phrase dicts with 'text', 'embedding', 'frequency', 'learning_value'
-            words: List of word dicts with same structure
-        
-        Returns:
-            {
-                'merged_vocabulary': List[Dict],
-                'topics': List[Dict]
-            }
-        """
         print(f"\n{'='*80}")
         print(f"WORD-PHRASE MERGER (ADVANCED VERSION)")
         print(f"{'='*80}\n")
@@ -87,34 +34,22 @@ class PhraseWordMergerV2:
         print(f"  Words: {len(words)}")
         print(f"  Hard drop threshold: {self.hard_drop_threshold}")
         print(f"  Number of topics: {self.n_topics}")
-        
-        # Load embedding model
         global HAS_EMBEDDINGS
         if HAS_EMBEDDINGS and self.embedding_model is None:
             try:
                 from embedding_utils import SentenceTransformer
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-                print(f"  ✓ Loaded embedding model")
+                print(f"   Loaded embedding model")
             except Exception as e:
-                print(f"  ⚠️  Could not load embedding model: {e}")
+                print(f"    Could not load embedding model: {e}")
                 HAS_EMBEDDINGS = False
-        
-        # ====================================================================
-        # STEP 1: Semantic Similarity Calculation
-        # ====================================================================
         print(f"\n[STEP 1] Computing semantic similarities...")
         
         word_similarities = self._compute_similarities(phrases, words)
-        print(f"  ✓ Computed similarities for {len(words)} words")
-        
-        # ====================================================================
-        # STEP 2: Semantic Filtering (SOFT - minimal drops)
-        # ====================================================================
+        print(f" Computed similarities for {len(words)} words")
         print(f"\n[STEP 2] Semantic Filtering (SOFT)...")
-        
         filtered_words = []
         hard_dropped = 0
-        
         for i, word in enumerate(words):
             max_sim = word_similarities[i]
             
@@ -134,29 +69,15 @@ class PhraseWordMergerV2:
             word['semantic_penalty'] = semantic_penalty
             word['max_phrase_similarity'] = float(max_sim)
             filtered_words.append(word)
-        
         print(f"  ✓ Hard dropped: {hard_dropped} words (similarity >= {self.hard_drop_threshold})")
         print(f"  ✓ Kept: {len(filtered_words)} words with penalties")
-        
-        # ====================================================================
-        # STEP 3: Frequency Tiering
-        # ====================================================================
         print(f"\n[STEP 3] Frequency Tiering (3-tier)...")
-        
         filtered_words = self._apply_frequency_tiers(filtered_words)
         print(f"  ✓ Applied frequency penalties")
-        
-        # ====================================================================
-        # STEP 4: Coverage Penalty
-        # ====================================================================
         print(f"\n[STEP 4] Coverage Penalty...")
         
         filtered_words = self._apply_coverage_penalty(phrases, filtered_words)
         print(f"  ✓ Applied coverage penalties")
-        
-        # ====================================================================
-        # STEP 5: Final Scoring (SOFT MODEL)
-        # ====================================================================
         print(f"\n[STEP 5] Final Scoring...")
         
         # Score phrases
@@ -180,50 +101,24 @@ class PhraseWordMergerV2:
             
             word['final_score'] = max(0.0, final_score)  # Clamp to [0, 1]
             word['type'] = 'single_word'
-        
-        print(f"  ✓ Scored {len(phrases)} phrases")
-        print(f"  ✓ Scored {len(filtered_words)} words")
-        
-        # ====================================================================
-        # STEP 6: Merge Words + Phrases
-        # ====================================================================
+        print(f"   Scored {len(phrases)} phrases")
+        print(f"   Scored {len(filtered_words)} words")
         print(f"\n[STEP 6] Merging vocabulary...")
-        
         merged_vocabulary = phrases + filtered_words
         merged_vocabulary.sort(key=lambda x: x['final_score'], reverse=True)
-        
-        print(f"  ✓ Merged: {len(merged_vocabulary)} items")
-        
-        # ====================================================================
-        # STEP 7: Topic Modeling
-        # ====================================================================
+        print(f"   Merged: {len(merged_vocabulary)} items")
         print(f"\n[STEP 7] Topic Modeling...")
         
         topics = self._create_topics(merged_vocabulary)
         
-        print(f"  ✓ Created {len(topics)} topics")
-        
-        # ====================================================================
-        # STEP 8: Assign Words to Topics
-        # ====================================================================
+        print(f"   Created {len(topics)} topics")
         print(f"\n[STEP 8] Assigning words to topics...")
         
         topics = self._assign_words_to_topics(topics, merged_vocabulary)
-        
-        print(f"  ✓ Assigned all items to topics")
-        
-        # ====================================================================
-        # STEP 9: Build Topic Structure with Semantic Layers
-        # ====================================================================
+        print(f"   Assigned all items to topics")
         print(f"\n[STEP 9] Building topic structure...")
-        
         topics = self._build_topic_structure(topics)
-        
-        print(f"  ✓ Built semantic layers for each topic")
-        
-        # ====================================================================
-        # Result
-        # ====================================================================
+        print(f"   Built semantic layers for each topic")
         result = {
             'merged_vocabulary': merged_vocabulary,
             'topics': topics,
@@ -252,12 +147,6 @@ class PhraseWordMergerV2:
         phrases: List[Dict],
         words: List[Dict]
     ) -> List[float]:
-        """
-        STEP 1: Compute semantic similarity between each word and all phrases
-        
-        Returns:
-            List of max similarities (one per word)
-        """
         global HAS_EMBEDDINGS
         if not HAS_EMBEDDINGS or not phrases:
             return [0.0] * len(words)
@@ -299,13 +188,6 @@ class PhraseWordMergerV2:
         return max_similarities
     
     def _apply_frequency_tiers(self, words: List[Dict]) -> List[Dict]:
-        """
-        STEP 3: Apply frequency-based penalties (3-tier)
-        
-        HIGH (>75th percentile) → penalty 0.4
-        MEDIUM (25th-75th) → penalty 0.2
-        LOW (<25th percentile) → penalty 0.0
-        """
         if not words:
             return words
         
@@ -337,12 +219,6 @@ class PhraseWordMergerV2:
         phrases: List[Dict],
         words: List[Dict]
     ) -> List[Dict]:
-        """
-        STEP 4: Apply coverage penalty
-        
-        Token overlap: if word in phrase → 0.5
-        Semantic overlap: if similarity >= 0.7 → 0.3 * similarity
-        """
         # Build phrase token set
         phrase_tokens = set()
         for phrase in phrases:
@@ -367,9 +243,6 @@ class PhraseWordMergerV2:
         return words
     
     def _create_topics(self, vocabulary: List[Dict]) -> List[Dict]:
-        """
-        STEP 7: Create topics using KMeans clustering
-        """
         global HAS_EMBEDDINGS
         if not vocabulary or not HAS_EMBEDDINGS:
             # Fallback: single topic
@@ -429,24 +302,10 @@ class PhraseWordMergerV2:
         topics: List[Dict],
         vocabulary: List[Dict]
     ) -> List[Dict]:
-        """
-        STEP 8: Ensure all words are assigned to topics
-        (Already done in _create_topics via clustering)
-        """
         # Already assigned in _create_topics
         return topics
     
     def _build_topic_structure(self, topics: List[Dict]) -> List[Dict]:
-        """
-        STEP 9: Build topic structure with semantic layers
-        
-        For each topic:
-        1. Select core phrase (highest score, closest to centroid)
-        2. Group items into layers:
-           - Core: phrases with highest scores
-           - Supporting: 0.6 <= similarity < 0.85
-           - Peripheral: similarity < 0.6
-        """
         global HAS_EMBEDDINGS
         structured_topics = []
         
@@ -523,12 +382,6 @@ class PhraseWordMergerV2:
             })
         
         return structured_topics
-
-
-# ============================================================================
-# TESTING
-# ============================================================================
-
 if __name__ == "__main__":
     print("=" * 80)
     print("TESTING WORD-PHRASE MERGER V2 (ADVANCED)")
@@ -595,7 +448,7 @@ if __name__ == "__main__":
         words=test_words
     )
     
-    print("\n📊 RESULTS:")
+    print("\n RESULTS:")
     print("-" * 80)
     print(f"Total vocabulary: {result['statistics']['total_items']}")
     print(f"Phrases: {result['statistics']['phrases']}")
@@ -603,7 +456,7 @@ if __name__ == "__main__":
     print(f"Hard dropped: {result['statistics']['hard_dropped']}")
     print(f"Topics: {result['statistics']['num_topics']}")
     
-    print("\n📊 TOPICS:")
+    print("\n TOPICS:")
     print("-" * 80)
     for topic in result['topics']:
         print(f"\nTopic {topic['topic_id']}:")
@@ -613,4 +466,4 @@ if __name__ == "__main__":
         print(f"  Peripheral words: {len(topic['peripheral_words'])}")
         print(f"  Total items: {topic['total_items']}")
     
-    print("\n✅ Test completed!")
+    print("\n Test completed!")

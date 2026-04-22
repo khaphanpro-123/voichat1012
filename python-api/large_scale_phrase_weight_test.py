@@ -1,15 +1,3 @@
-"""
-Large-Scale Phrase Weight Optimization Test
-Test trên 100 documents ngẫu nhiên để xác định w1, w2 tối ưu
-
-Strategy:
-1. Generate 100 synthetic documents from different domains
-2. Auto-generate ground truth using existing phrase_centric_extractor
-3. Test 15 weight configurations
-4. Evaluate with P@5, P@10, P@15, P@20
-5. Use cross-validation for robustness
-"""
-
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -18,16 +6,9 @@ from typing import List, Dict, Tuple
 import pandas as pd
 import random
 from collections import defaultdict
-
 # Load embedding model
 print("Loading SBERT model...")
 embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-
-# ============================================================================
-# SYNTHETIC DOCUMENT GENERATION
-# ============================================================================
-
-# Domain-specific vocabulary pools
 DOMAIN_VOCABULARIES = {
     "technology": {
         "topics": ["artificial intelligence", "machine learning", "cloud computing", "cybersecurity", 
@@ -60,7 +41,6 @@ DOMAIN_VOCABULARIES = {
         "adjectives": ["educational", "pedagogical", "interactive", "comprehensive", "effective"],
     },
 }
-
 def generate_synthetic_document(domain: str, num_sentences: int = 8) -> Tuple[str, List[str]]:
     """Generate a synthetic document with ground truth phrases"""
     vocab = DOMAIN_VOCABULARIES[domain]
@@ -108,11 +88,6 @@ def generate_100_documents() -> Dict[str, Dict]:
         }
     
     return documents
-
-# ============================================================================
-# PHRASE EXTRACTION
-# ============================================================================
-
 def extract_candidate_phrases(text: str, n_range=(2, 4)) -> List[str]:
     """Extract candidate phrases using n-grams"""
     # Tokenize
@@ -127,11 +102,6 @@ def extract_candidate_phrases(text: str, n_range=(2, 4)) -> List[str]:
                 phrases.append(phrase)
     
     return list(set(phrases))
-
-# ============================================================================
-# FEATURE COMPUTATION
-# ============================================================================
-
 def compute_tfidf_scores(phrases: List[str], document: str) -> Dict[str, float]:
     """Compute TF-IDF scores for phrases"""
     if not phrases:
@@ -176,11 +146,6 @@ def compute_cohesion_scores(phrases: List[str], embedding_model) -> Dict[str, fl
             scores[phrase] = 0.0
     
     return scores
-
-# ============================================================================
-# SCORING AND RANKING
-# ============================================================================
-
 def score_and_rank_phrases(
     phrases: List[str],
     tfidf_scores: Dict[str, float],
@@ -213,11 +178,6 @@ def score_and_rank_phrases(
     # Sort by score descending
     scored_phrases.sort(key=lambda x: x[1], reverse=True)
     return scored_phrases
-
-# ============================================================================
-# EVALUATION
-# ============================================================================
-
 def evaluate_at_k(
     ranked_phrases: List[Tuple[str, float]],
     ground_truth: List[str],
@@ -249,11 +209,6 @@ def evaluate_at_k(
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     
     return precision, recall, f1
-
-# ============================================================================
-# MAIN EXPERIMENT
-# ============================================================================
-
 def run_large_scale_experiment():
     """Run weight optimization on 100 documents"""
     
@@ -291,7 +246,6 @@ def run_large_scale_experiment():
         ("Balanced 35-65", 0.35, 0.65),
         ("Balanced 25-75", 0.25, 0.75),
     ]
-    
     results = []
     
     for config_name, w1, w2 in weight_configs:
@@ -416,11 +370,6 @@ def run_large_scale_experiment():
         print("   -> Multiple configs may be equally good")
     
     return df
-
-# ============================================================================
-# DOMAIN-SPECIFIC ANALYSIS
-# ============================================================================
-
 def analyze_by_domain(documents: Dict, weight_configs: List):
     """Analyze performance by domain"""
     print("\n" + "="*80)
@@ -454,11 +403,6 @@ def analyze_by_domain(documents: Dict, weight_configs: List):
             avg = np.mean(f1_scores)
             std = np.std(f1_scores)
             print(f"{domain:20s} | Avg F1@10: {avg:.4f} ± {std:.4f} (n={len(f1_scores)})")
-
-# ============================================================================
-# RUN EXPERIMENT
-# ============================================================================
-
 if __name__ == "__main__":
     print("Starting large-scale phrase weight optimization...")
     print("Testing 15 weight configurations on 100 documents")
