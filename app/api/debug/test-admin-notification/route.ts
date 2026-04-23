@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       role: (session?.user as any)?.role,
     });
 
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json({
         success: false,
         step: "session",
@@ -24,13 +24,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Step 2: Check database connection
+    // Step 2: Check email exists
+    if (!session.user.email) {
+      return NextResponse.json({
+        success: false,
+        step: "session_email",
+        message: "Session email is missing",
+      });
+    }
+
+    // Step 3: Check database connection
     try {
       const { db } = await connectToDatabase();
       console.log("[Debug] Database connected");
 
-      // Step 3: Find user in database
-      const user = await db.collection("users").findOne({ email: session.user.email });
+      // Step 4: Find user in database
+      const normalizedEmail = session.user.email.trim().toLowerCase();
+      const user = await db.collection("users").findOne({ email: normalizedEmail });
       console.log("[Debug] User from database:", {
         found: !!user,
         email: user?.email,
@@ -46,7 +56,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Step 4: Check admin auth
+      // Step 5: Check admin auth
       const authCheck = await checkAdminAuth();
       console.log("[Debug] Admin auth check:", {
         isAdmin: authCheck.isAdmin,
@@ -69,7 +79,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Step 5: All checks passed
+      // Step 6: All checks passed
       return NextResponse.json({
         success: true,
         message: "All checks passed - admin can send notifications",

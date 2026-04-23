@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       sessionRole: (session?.user as any)?.role,
     });
 
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json({
         success: false,
         step: "session",
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ⚠️ Fix 1: Check if email exists
-    if (!session.user?.email) {
+    if (!session.user.email) {
       console.log("[Debug] Session email is missing");
       return NextResponse.json({
         success: false,
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
         message: "Session email is missing",
         session: {
           hasUser: !!session.user,
-          email: session.user?.email,
+          email: session.user.email,
         },
       });
     }
