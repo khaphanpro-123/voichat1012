@@ -70,7 +70,28 @@ export function RegisterForm() {
         password: formData.password, 
         redirect: false 
       });
-      router.push(login?.ok ? "/dashboard-new" : "/auth/login");
+      
+      if (login?.ok) {
+        // Get session to check role
+        const { getSession } = await import("next-auth/react");
+        const session = await getSession();
+        
+        if (session?.user) {
+          const userRole = (session.user as any).role;
+          
+          // Redirect based on role
+          if (userRole === "admin") {
+            router.replace("/admin");
+          } else {
+            router.replace("/dashboard-new");
+          }
+        } else {
+          // Fallback to user dashboard
+          router.replace("/dashboard-new");
+        }
+      } else {
+        router.push("/auth/login");
+      }
     } catch { 
       setError("Lỗi đăng ký, vui lòng thử lại"); 
     } finally { 
