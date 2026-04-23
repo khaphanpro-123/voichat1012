@@ -83,9 +83,7 @@ export default function AdminUsersPage() {
         setFilteredUsers(data.users);
       } else {
         console.error("API error:", data.message);
-        if (res.status === 403) {
-          router.push("/dashboard-new");
-        }
+        // Don't redirect on 403 - let middleware handle it
       }
     } catch (error) {
       console.error("Error fetching users:", error);

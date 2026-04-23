@@ -66,9 +66,8 @@ export default function UserDetailPage() {
         setVocabulary(data.vocabulary);
         setSessionsByDate(data.sessionsByDate);
       } else {
-        if (res.status === 403) {
-          router.push("/dashboard-new");
-        }
+        // Don't redirect on 403 - let middleware handle it
+        console.error("Error:", data.message);
       }
     } catch (error) {
       console.error("Error fetching user detail:", error);
