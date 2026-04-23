@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: "Login test passed",
       user: {
-        id: user._id.toString(),
+        id: (user._id as any).toString(),
         email: user.email,
         role: user.role,
         fullName: user.fullName,

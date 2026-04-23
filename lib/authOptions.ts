@@ -74,9 +74,12 @@ export const authOptions: NextAuthOptions = {
           token.id = user.id;
           token.dbId = user.id;
           token.role = (user as any).role;
+          console.log("[JWT] Initial login - role set to:", (user as any).role);
         }
-        // ⚠️ Fix: Normalize email in JWT callback safely
-        if (token.email && !token.dbId) {
+        
+        // ⚠️ Fix: Always refresh role from database on token refresh
+        // This ensures role is always up-to-date
+        if (token.email) {
           try {
             await connectDB();
             const normalizedEmail = token.email.trim().toLowerCase();
@@ -86,12 +89,16 @@ export const authOptions: NextAuthOptions = {
             if (dbUser) {
               token.dbId = dbUser._id.toString();
               token.role = dbUser.role;
-              console.log("[JWT] Token updated with role:", dbUser.role);
+              console.log("[JWT] Token refreshed with role:", dbUser.role);
             } else {
               console.log("[JWT] User not found in database:", normalizedEmail);
+              // Keep existing role if user not found
+              token.role = token.role || "user";
             }
           } catch (dbError) {
-            console.error("[JWT] Database error:", dbError);
+            console.error("[JWT] Database error during refresh:", dbError);
+            // Keep existing role on error
+            token.role = token.role || "user";
           }
         }
       } catch (error) {
@@ -103,11 +110,12 @@ export const authOptions: NextAuthOptions = {
       try {
         if (session.user) {
           (session.user as any).id = token.dbId || token.id || token.sub;
-          // ⚠️ Fix: Ensure role is always set in session
+          // ⚠️ Fix: Ensure role is always set in session from token
           (session.user as any).role = token.role || "user";
           console.log("[Session] Session updated:", {
             email: session.user.email,
             role: (session.user as any).role,
+            hasRole: !!token.role,
           });
         }
       } catch (error) {
