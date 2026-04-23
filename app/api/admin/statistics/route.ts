@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import User from "@/app/models/User";
-import UserProgress from "@/app/models/UserProgress";
-import LearningSession from "@/app/models/LearningSession";
-import Vocabulary from "@/app/models/Vocabulary";
+import { connectToDatabase } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   try {
+    console.log("[Statistics API] GET - Starting...");
+    
     const authCheck = await checkAdminAuth();
+    console.log("[Statistics API] Auth check result:", authCheck);
+    
     if (!authCheck.isAdmin) {
       return NextResponse.json(
         { success: false, message: authCheck.error },
@@ -16,37 +16,40 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    const { db } = await connectToDatabase();
+    console.log("[Statistics API] Database connected");
 
-    // Get overall statistics
-    const totalUsers = await User.countDocuments({ role: "user" });
-    const totalSessions = await LearningSession.countDocuments();
-    const totalVocabulary = await Vocabulary.countDocuments();
+    // Get overall statistics using MongoDB native
+    const totalUsers = await db.collection("users").countDocuments({ role: "user" });
+    const totalSessions = await db.collection("learning_sessions").countDocuments({});
+    const totalVocabulary = await db.collection("vocabulary").countDocuments({});
+
+    console.log("[Statistics API] ✅ Stats:", { totalUsers, totalSessions, totalVocabulary });
 
     // Get level distribution
-    const levelDistribution = await UserProgress.aggregate([
+    const levelDistribution = await db.collection("user_progress").aggregate([
       {
         $group: {
           _id: "$level",
           count: { $sum: 1 },
         },
       },
-    ]);
+    ]).toArray();
 
     // Get recent activity (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const recentSessions = await LearningSession.countDocuments({
+    const recentSessions = await db.collection("learning_sessions").countDocuments({
       createdAt: { $gte: sevenDaysAgo },
     });
 
-    const recentUsers = await User.countDocuments({
+    const recentUsers = await db.collection("users").countDocuments({
       createdAt: { $gte: sevenDaysAgo },
     });
 
     // Get most active users
-    const activeUsers = await LearningSession.aggregate([
+    const activeUsers = await db.collection("learning_sessions").aggregate([
       {
         $group: {
           _id: "$userId",
@@ -73,7 +76,7 @@ export async function GET(req: NextRequest) {
           email: "$user.email",
         },
       },
-    ]);
+    ]).toArray();
 
     return NextResponse.json({
       success: true,
@@ -88,9 +91,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Get statistics error:", error);
+    console.error("[Statistics API] ❌ Error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: "Server error: " + error.message },
       { status: 500 }
     );
   }

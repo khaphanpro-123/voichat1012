@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import Notification from "@/app/models/Notification";
-import User from "@/app/models/User";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { checkAdminAuth } from "@/lib/adminAuth";
 
 // POST - Send notification
 export async function POST(req: NextRequest) {
   try {
+    console.log("[Notifications API] POST - Starting...");
+    
     const authCheck = await checkAdminAuth();
+    console.log("[Notifications API] Auth check result:", authCheck);
+    
     if (!authCheck.isAdmin) {
       return NextResponse.json(
         { success: false, message: authCheck.error },
@@ -24,30 +27,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    const { db } = await connectToDatabase();
+    console.log("[Notifications API] Database connected");
 
-    // Create notification
-    const notification = await Notification.create({
+    // Create notification using MongoDB native
+    const notification = {
       title,
       content,
       type: type || "text",
-      mediaUrl,
-      documentUrl,
-      linkUrl,
+      mediaUrl: mediaUrl || null,
+      documentUrl: documentUrl || null,
+      linkUrl: linkUrl || null,
       targetUsers: targetUsers || "all",
-      createdBy: authCheck.userId,
+      createdBy: new ObjectId(authCheck.userId),
       readBy: [],
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await db.collection("notifications").insertOne(notification);
+    console.log("[Notifications API] ✅ Notification created:", result.insertedId);
 
     return NextResponse.json({
       success: true,
       message: "Gửi thông báo thành công",
-      notification,
+      notification: { ...notification, _id: result.insertedId },
     });
   } catch (error: any) {
-    console.error("Send notification error:", error);
+    console.error("[Notifications API] ❌ Error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: "Server error: " + error.message },
       { status: 500 }
     );
   }
@@ -55,7 +64,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    console.log("[Notifications API] GET - Starting...");
+    
     const authCheck = await checkAdminAuth();
+    console.log("[Notifications API] Auth check result:", authCheck);
+    
     if (!authCheck.isAdmin) {
       return NextResponse.json(
         { success: false, message: authCheck.error },
@@ -63,20 +76,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    const { db } = await connectToDatabase();
+    console.log("[Notifications API] Database connected");
 
-    const notifications = await Notification.find()
-      .populate("createdBy", "username fullName email")
-      .sort({ createdAt: -1 });
+    const notifications = await db
+      .collection("notifications")
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    console.log("[Notifications API] ✅ Found", notifications.length, "notifications");
 
     return NextResponse.json({
       success: true,
       notifications,
     });
   } catch (error: any) {
-    console.error("Get notifications error:", error);
+    console.error("[Notifications API] ❌ Error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: "Server error: " + error.message },
       { status: 500 }
     );
   }
