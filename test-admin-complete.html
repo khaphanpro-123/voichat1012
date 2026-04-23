@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Complete Flow</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: white;
+            margin-bottom: 24px;
+            font-size: 32px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover { background: #5568d3; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .result {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+        .success { border-left: 4px solid #10b981; background: #f0fdf4; }
+        .error { border-left: 4px solid #ef4444; background: #fef2f2; }
+        .warning { border-left: 4px solid #f59e0b; background: #fffbeb; }
+        .info { border-left: 4px solid #3b82f6; background: #eff6ff; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 4px;
+        }
+        .pass { background: #10b981; color: white; }
+        .fail { background: #ef4444; color: white; }
+        .pending { background: #f59e0b; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        .test-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Admin Complete Flow</h1>
+
+        <div class="card">
+            <h2>1️⃣ Test Admin Flow Debug</h2>
+            <p style="margin-bottom: 12px; color: #666;">Kiểm tra toàn bộ flow: Session → JWT Token → Middleware → API</p>
+            <button onclick="testAdminFlow()">🧪 Test Admin Flow</button>
+            <div id="flow-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+            <h2>2️⃣ Test Full Auth Flow</h2>
+            <p style="margin-bottom: 12px; color: #666;">Kiểm tra session, MongoDB, Mongoose</p>
+            <button onclick="testFullAuth()">🔐 Test Full Auth</button>
+            <div id="auth-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+            <h2>3️⃣ Test Admin APIs</h2>
+            <p style="margin-bottom: 12px; color: #666;">Test các API endpoints</p>
+            <div class="grid">
+                <button onclick="testAPI('/api/admin/users')">👥 Users API</button>
+                <button onclick="testAPI('/api/admin/statistics')">📊 Statistics API</button>
+                <button onclick="testAPI('/api/admin/notifications')">🔔 Notifications API</button>
+            </div>
+            <div id="api-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+            <h2>4️⃣ Test Admin Auth</h2>
+            <p style="margin-bottom: 12px; color: #666;">Kiểm tra admin authentication</p>
+            <button onclick="testAdminAuth()">🔑 Test Admin Auth</button>
+            <div id="admin-auth-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Test Summary</h2>
+            <div id="summary" class="result info">
+                Chưa có test nào được chạy. Click các button trên để bắt đầu.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        async function testAdminFlow() {
+            const resultDiv = document.getElementById('flow-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<div class="loading"></div> Testing...';
+
+            try {
+                const response = await fetch('/api/debug/test-admin-flow');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                
+                let html = '<strong>🔍 Admin Flow Debug Result:</strong>\n\n';
+                html += JSON.stringify(data, null, 2);
+                
+                if (data.diagnosis) {
+                    html += '\n\n<strong>🎯 Diagnosis:</strong>\n';
+                    html += `Session has role: ${data.diagnosis.sessionHasRole ? '✅' : '❌'}\n`;
+                    html += `Token has role: ${data.diagnosis.tokenHasRole ? '✅' : '❌'}\n`;
+                    html += `Roles match: ${data.diagnosis.rolesMatch ? '✅' : '❌'}\n`;
+                    html += `Middleware will block: ${data.diagnosis.middlewareWillBlock ? '❌ YES' : '✅ NO'}\n`;
+                    html += `\nIssue: ${data.diagnosis.issue}`;
+                }
+                
+                resultDiv.innerHTML = html;
+                
+                testResults.push({
+                    name: 'Admin Flow Debug',
+                    status: success ? 'PASS' : 'FAIL',
+                    data: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Admin Flow Debug',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testFullAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<div class="loading"></div> Testing...';
+
+            try {
+                const response = await fetch('/api/debug/full-auth-flow');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Full Auth Flow',
+                    status: success ? 'PASS' : 'FAIL',
+                    data: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Full Auth Flow',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testAPI(endpoint) {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<div class="loading"></div> Testing ' + endpoint + '...';
+
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                
+                let html = `<strong>📡 ${endpoint}</strong>\n`;
+                html += `Status: ${response.status}\n`;
+                html += `Success: ${data.success ? '✅' : '❌'}\n\n`;
+                html += JSON.stringify(data, null, 2);
+                
+                resultDiv.innerHTML = html;
+                
+                testResults.push({
+                    name: endpoint,
+                    status: success ? 'PASS' : 'FAIL',
+                    data: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: endpoint,
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testAdminAuth() {
+            const resultDiv = document.getElementById('admin-auth-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<div class="loading"></div> Testing...';
+
+            try {
+                const response = await fetch('/api/debug/admin-auth-detailed');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Admin Auth Detailed',
+                    status: success ? 'PASS' : 'FAIL',
+                    data: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Admin Auth Detailed',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const passed = testResults.filter(t => t.status === 'PASS').length;
+            const failed = testResults.filter(t => t.status === 'FAIL').length;
+            
+            let html = `<strong>📊 Test Results: ${passed} passed, ${failed} failed</strong>\n\n`;
+            
+            testResults.forEach(test => {
+                const statusClass = test.status === 'PASS' ? 'pass' : 'fail';
+                html += `<div class="test-item">`;
+                html += `<span class="status-badge ${statusClass}">${test.status}</span> `;
+                html += `<strong>${test.name}</strong>`;
+                if (test.error) {
+                    html += `\n  ❌ Error: ${test.error}`;
+                } else if (test.data?.message) {
+                    html += `\n  📝 ${test.data.message}`;
+                }
+                html += `</div>`;
+            });
+            
+            summaryDiv.innerHTML = html;
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            console.log('🚀 Test page loaded. Click buttons to start testing.');
+        });
+    </script>
+</body>
+</html>

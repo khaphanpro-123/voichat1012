@@ -68,41 +68,37 @@ export const authOptions: NextAuthOptions = {
   },
   debug: process.env.NODE_ENV === "development",
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       try {
+        // CRITICAL: Always set role on every callback
         if (user) {
+          // Initial sign in
           token.id = user.id;
           token.dbId = user.id;
           token.role = (user as any).role;
           console.log("[JWT] Initial login - role set to:", (user as any).role);
-        }
-        
-        // ⚠️ Fix: Always refresh role from database on token refresh
-        // This ensures role is always up-to-date
-        if (token.email) {
+        } else if (token.email) {
+          // Token refresh - ALWAYS query database for latest role
           try {
             await connectDB();
             const normalizedEmail = token.email.trim().toLowerCase();
-            console.log("[JWT] Refreshing token for email:", normalizedEmail);
             
             const dbUser = (await User.findOne({ email: normalizedEmail })) as any;
             if (dbUser) {
               token.dbId = dbUser._id.toString();
-              token.role = dbUser.role;
-              console.log("[JWT] Token refreshed with role:", dbUser.role);
+              token.role = dbUser.role; // CRITICAL: Always update role
+              console.log("[JWT] Token refreshed - role:", dbUser.role);
             } else {
-              console.log("[JWT] User not found in database:", normalizedEmail);
-              // Keep existing role if user not found
-              token.role = token.role || "user";
+              console.log("[JWT] ⚠️ User not found:", normalizedEmail);
+              token.role = token.role || "user"; // Keep existing or default
             }
           } catch (dbError) {
-            console.error("[JWT] Database error during refresh:", dbError);
-            // Keep existing role on error
-            token.role = token.role || "user";
+            console.error("[JWT] ❌ Database error:", dbError);
+            token.role = token.role || "user"; // Keep existing or default
           }
         }
       } catch (error) {
-        console.error("[JWT] Callback error:", error);
+        console.error("[JWT] ❌ Callback error:", error);
       }
       return token;
     },
@@ -110,16 +106,11 @@ export const authOptions: NextAuthOptions = {
       try {
         if (session.user) {
           (session.user as any).id = token.dbId || token.id || token.sub;
-          // ⚠️ Fix: Ensure role is always set in session from token
-          (session.user as any).role = token.role || "user";
-          console.log("[Session] Session updated:", {
-            email: session.user.email,
-            role: (session.user as any).role,
-            hasRole: !!token.role,
-          });
+          (session.user as any).role = token.role || "user"; // CRITICAL: Always set role
+          console.log("[Session] Role set to:", (session.user as any).role);
         }
       } catch (error) {
-        console.error("[Session] Callback error:", error);
+        console.error("[Session] ❌ Callback error:", error);
       }
       return session;
     },

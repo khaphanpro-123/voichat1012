@@ -21,20 +21,14 @@ export async function middleware(request: NextRequest) {
   // Protect routes - redirect to login if not authenticated
   if (isProtectedRoute) {
     if (!token) {
-      console.log("❌ No token found, redirecting to login")
+      console.log(" No token found, redirecting to login")
       return NextResponse.redirect(new URL("/auth/login", request.url))
     }
 
     // Check if admin route and user is not admin
     if ((pathname.startsWith("/admin") || pathname.startsWith("/admin-simple")) && token.role !== "admin") {
-      console.log("❌ User is not admin, redirecting to user dashboard")
+      console.log(" User is not admin, redirecting to user dashboard")
       return NextResponse.redirect(new URL("/dashboard-new", request.url))
-    }
-
-    // Check if user is admin but trying to access user dashboard
-    if (pathname.startsWith("/dashboard-new") && token.role === "admin") {
-      console.log("✅ Admin user accessing user dashboard, redirecting to admin panel")
-      return NextResponse.redirect(new URL("/admin", request.url))
     }
   }
 
