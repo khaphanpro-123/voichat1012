@@ -84,6 +84,7 @@ export default function VocabularyPage() {
   const [expandLoading, setExpandLoading] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>("vocabulary")
   const [vietnameseTranslations, setVietnameseTranslations] = useState<Record<string, any>>({});
+  const [translationLoading, setTranslationLoading] = useState<string | null>(null);
 
   // New word form state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -124,9 +125,10 @@ export default function VocabularyPage() {
     return "";
   };
 
-  const fetchVietnameseTranslation = async (word: VocabularyWord, expandData?: any) => {
-    if (vietnameseTranslations[word._id]) return; // Already fetched
+  const fetchVietnameseTranslation = async (word: VocabularyWord, expandData?: any, force: boolean = false) => {
+    if (!force && vietnameseTranslations[word._id]) return; // Already fetched
     
+    setTranslationLoading(word._id);
     try {
       const res = await fetch("/api/translate-vocabulary-full", {
         method: "POST",
@@ -147,14 +149,23 @@ export default function VocabularyPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
+          console.log("[Translation] Success for word:", word.word, data.data);
           setVietnameseTranslations(prev => ({
             ...prev,
             [word._id]: data.data
           }));
+        } else {
+          console.error("[Translation] API returned success: false", data);
         }
+      } else {
+        console.error("[Translation] API error:", res.status, res.statusText);
+        const errorData = await res.json().catch(() => ({}));
+        console.error("[Translation] Error details:", errorData);
       }
     } catch (err) {
-      console.error("Translation fetch error:", err);
+      console.error("[Translation] Fetch error:", err);
+    } finally {
+      setTranslationLoading(null);
     }
   };
   
@@ -337,7 +348,7 @@ export default function VocabularyPage() {
       if (data.success) {
         setExpandData(prev => ({ ...prev, [id]: data.data }))
         // Fetch Vietnamese translations for all expanded elements
-        await fetchVietnameseTranslation(word, data.data)
+        await fetchVietnameseTranslation(word, data.data, true)
       }
     } catch {}
     finally { setExpandLoading(null) }
@@ -947,22 +958,24 @@ export default function VocabularyPage() {
                                   await expandWord(word);
                                 } else {
                                   // If already expanded, just fetch translation
-                                  await fetchVietnameseTranslation(word, expandData[word._id]);
+                                  await fetchVietnameseTranslation(word, expandData[word._id], true);
                                 }
                               }}
-                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium"
+                              disabled={translationLoading === word._id}
+                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium disabled:opacity-50"
                             >
-                              Dịch sang Tiếng Việt
+                              {translationLoading === word._id ? "Đang dịch..." : "Dịch sang Tiếng Việt"}
                             </button>
                           )}
                           {getExampleVi(word) && vietnameseTranslations[word._id] && (
                             <button
                               onClick={async () => {
-                                await fetchVietnameseTranslation(word, expandData[word._id]);
+                                await fetchVietnameseTranslation(word, expandData[word._id], true);
                               }}
-                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium ml-2"
+                              disabled={translationLoading === word._id}
+                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 font-medium ml-2 disabled:opacity-50"
                             >
-                              Dịch lại
+                              {translationLoading === word._id ? "Đang dịch..." : "Dịch lại"}
                             </button>
                           )}
                         </div>
