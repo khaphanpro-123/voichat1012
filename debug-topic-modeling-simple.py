@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-"""
-Debug script to test Topic Modeling functionality
-"""
 
 import sys
 import os
@@ -10,7 +6,7 @@ sys.path.append('python-api')
 def test_topic_modeling():
     """Test if topic modeling is working"""
     
-    print("🔍 Testing Topic Modeling...")
+    print(" Testing Topic Modeling...")
     print("=" * 50)
     
     # Test 1: Check dependencies
@@ -18,17 +14,17 @@ def test_topic_modeling():
     
     try:
         import sklearn
-        print(f"✅ scikit-learn: {sklearn.__version__}")
+        print(f" scikit-learn: {sklearn.__version__}")
     except ImportError:
-        print("❌ scikit-learn not installed")
+        print("  scikit-learn not installed")
         return False
     
     try:
         import sentence_transformers
-        print(f"✅ sentence-transformers: {sentence_transformers.__version__}")
+        print(f" sentence-transformers: {sentence_transformers.__version__}")
     except ImportError:
-        print("❌ sentence-transformers not installed")
-        print("💡 Install with: pip install sentence-transformers")
+        print(" sentence-transformers not installed")
+        print(" Install with: pip install sentence-transformers")
         return False
     
     # Test 2: Check embedding model
@@ -48,10 +44,10 @@ def test_topic_modeling():
         ]
         
         embeddings = model.encode(test_texts)
-        print(f"✅ Embedding model working: {embeddings.shape}")
+        print(f" Embedding model working: {embeddings.shape}")
         
     except Exception as e:
-        print(f"❌ Embedding model error: {e}")
+        print(f" Embedding model error: {e}")
         return False
     
     # Test 3: Test pipeline initialization
@@ -63,12 +59,12 @@ def test_topic_modeling():
         print(f"HAS_EMBEDDINGS: {HAS_EMBEDDINGS}")
         
         pipeline = NewPipelineLearnedScoring(n_topics=3)
-        print(f"✅ Pipeline initialized")
+        print(f" Pipeline initialized")
         print(f"   - embedding_model: {pipeline.embedding_model is not None}")
         print(f"   - n_topics: {pipeline.n_topics}")
         
     except Exception as e:
-        print(f"❌ Pipeline initialization error: {e}")
+        print(f" Pipeline initialization error: {e}")
         return False
     
     # Test 4: Test topic modeling with sample data
@@ -118,7 +114,7 @@ def test_topic_modeling():
         # Test topic modeling
         topics = pipeline._topic_modeling(sample_items)
         
-        print(f"✅ Topic modeling successful!")
+        print(f" Topic modeling successful!")
         print(f"   - Number of topics: {len(topics)}")
         
         for i, topic in enumerate(topics):
@@ -129,7 +125,7 @@ def test_topic_modeling():
         return True
         
     except Exception as e:
-        print(f"❌ Topic modeling error: {e}")
+        print(f" Topic modeling error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -138,7 +134,7 @@ def test_complete_pipeline():
     """Test complete pipeline with sample text"""
     
     print("\n" + "=" * 50)
-    print("🚀 Testing Complete Pipeline...")
+    print(" Testing Complete Pipeline...")
     print("=" * 50)
     
     try:
@@ -169,12 +165,12 @@ def test_complete_pipeline():
             generate_flashcards=False
         )
         
-        print(f"✅ Complete pipeline successful!")
+        print(f" Complete pipeline successful!")
         print(f"   - Vocabulary: {len(result['vocabulary'])} items")
         print(f"   - Topics: {len(result.get('topics', []))} topics")
         
         if result.get('topics'):
-            print("\n📊 Topics found:")
+            print("\n Topics found:")
             for i, topic in enumerate(result['topics']):
                 print(f"   Topic {i+1}: {topic.get('topic_name', 'Unnamed')}")
                 print(f"   - Items: {len(topic.get('items', []))}")
@@ -182,19 +178,19 @@ def test_complete_pipeline():
                     sample_items = [item.get('word', item.get('phrase', '')) for item in topic['items'][:3]]
                     print(f"   - Sample: {', '.join(sample_items)}")
         else:
-            print("⚠️  No topics in result")
+            print("  No topics in result")
             print("   This suggests topic modeling is not working")
         
         return True
         
     except Exception as e:
-        print(f"❌ Complete pipeline error: {e}")
+        print(f" Complete pipeline error: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 if __name__ == "__main__":
-    print("🔍 Topic Modeling Debug Script")
+    print(" Topic Modeling Debug Script")
     print("=" * 50)
     
     # Test basic topic modeling
@@ -204,21 +200,21 @@ if __name__ == "__main__":
     success2 = test_complete_pipeline()
     
     print("\n" + "=" * 50)
-    print("📋 SUMMARY")
+    print(" SUMMARY")
     print("=" * 50)
     
     if success1 and success2:
-        print("✅ All tests passed!")
+        print(" All tests passed!")
         print("   Topic Modeling is working correctly.")
         print("   If you don't see topics in UI, the issue is in the frontend.")
     elif success1:
-        print("⚠️  Basic topic modeling works, but complete pipeline has issues")
+        print("  Basic topic modeling works, but complete pipeline has issues")
     else:
-        print("❌ Topic modeling is not working")
+        print(" Topic modeling is not working")
         print("   Most likely cause: sentence-transformers not installed")
         print("   Solution: pip install sentence-transformers")
     
-    print("\n💡 Next steps:")
+    print("\n Next steps:")
     print("1. If tests pass: Check frontend UI rendering")
     print("2. If tests fail: Install missing dependencies")
     print("3. Test with real document upload")

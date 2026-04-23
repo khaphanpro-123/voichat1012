@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Simple</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 { color: #333; margin-top: 0; }
+        h2 { color: #666; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #10b981; background: #f0fdf4; }
+        .error { border-left: 4px solid #ef4444; background: #fef2f2; }
+        .info { border-left: 4px solid #3b82f6; background: #eff6ff; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .status.pass { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .test-item { padding: 10px; margin: 10px 0; border-radius: 6px; background: #f9fafb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Admin Simple</h1>
+        <p>Test các API endpoints của admin panel mới</p>
+    </div>
+
+    <div class="container">
+        <h2>1. Test Stats API</h2>
+        <button onclick="testStats()">GET /api/admin-simple/stats</button>
+        <div id="stats-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>2. Test Users API</h2>
+        <button onclick="testUsers()">GET /api/admin-simple/users</button>
+        <div id="users-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>3. Test Notifications API</h2>
+        <button onclick="testGetNotifications()">GET /api/admin-simple/notifications</button>
+        <button onclick="testSendNotification()">POST /api/admin-simple/notifications</button>
+        <div id="notifications-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>4. Test Full Auth Flow</h2>
+        <button onclick="testFullAuthFlow()">GET /api/debug/full-auth-flow</button>
+        <div id="auth-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Test Summary</h2>
+        <div id="summary" class="result info">
+            Click các button trên để test. Kết quả sẽ hiển thị ở đây.
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        async function testStats() {
+            const resultDiv = document.getElementById('stats-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '⏳ Testing...';
+
+            try {
+                const response = await fetch('/api/admin-simple/stats');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Stats API',
+                    status: success ? 'PASS' : 'FAIL',
+                    response: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Stats API',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testUsers() {
+            const resultDiv = document.getElementById('users-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '⏳ Testing...';
+
+            try {
+                const response = await fetch('/api/admin-simple/users');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Users API',
+                    status: success ? 'PASS' : 'FAIL',
+                    response: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Users API',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testGetNotifications() {
+            const resultDiv = document.getElementById('notifications-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '⏳ Testing...';
+
+            try {
+                const response = await fetch('/api/admin-simple/notifications');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Get Notifications API',
+                    status: success ? 'PASS' : 'FAIL',
+                    response: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Get Notifications API',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testSendNotification() {
+            const resultDiv = document.getElementById('notifications-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '⏳ Testing...';
+
+            try {
+                const response = await fetch('/api/admin-simple/notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: 'Test Notification',
+                        content: 'This is a test notification from admin-simple',
+                        type: 'text'
+                    })
+                });
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Send Notification API',
+                    status: success ? 'PASS' : 'FAIL',
+                    response: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Send Notification API',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        async function testFullAuthFlow() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '⏳ Testing...';
+
+            try {
+                const response = await fetch('/api/debug/full-auth-flow');
+                const data = await response.json();
+                
+                const success = response.ok && data.success;
+                resultDiv.className = success ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                testResults.push({
+                    name: 'Full Auth Flow',
+                    status: success ? 'PASS' : 'FAIL',
+                    response: data
+                });
+                updateSummary();
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Error: ' + error.message;
+                testResults.push({
+                    name: 'Full Auth Flow',
+                    status: 'FAIL',
+                    error: error.message
+                });
+                updateSummary();
+            }
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const passed = testResults.filter(t => t.status === 'PASS').length;
+            const failed = testResults.filter(t => t.status === 'FAIL').length;
+            
+            let html = `<strong>Test Results: ${passed} passed, ${failed} failed</strong>\n\n`;
+            
+            testResults.forEach(test => {
+                const statusClass = test.status === 'PASS' ? 'pass' : 'fail';
+                html += `<div class="test-item">`;
+                html += `<span class="status ${statusClass}">${test.status}</span> `;
+                html += `<strong>${test.name}</strong>`;
+                if (test.error) {
+                    html += `\n  Error: ${test.error}`;
+                }
+                html += `</div>`;
+            });
+            
+            summaryDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

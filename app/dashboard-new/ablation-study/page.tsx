@@ -335,7 +335,7 @@ reinforcement learning`);
               size="lg"
               className="flex items-center justify-center gap-2 text-sm sm:text-base lg:text-lg px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto"
             >
-              ← Trang chủ
+              ← Quay về Trang chủ
             </Button>
             <div className="hidden sm:block h-8 w-px bg-gray-300"></div>
             <div className="text-center sm:text-left">

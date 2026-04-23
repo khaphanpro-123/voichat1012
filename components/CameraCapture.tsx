@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
+import { enhanceImageQuality, assessImageQuality } from "@/lib/image-enhancement"
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void
@@ -27,8 +28,8 @@ export default function CameraCapture({ onCapture, onError, onClose }: CameraCap
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: "environment",
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
+              width: { ideal: 2600 },
+              height: { ideal: 1800 }
             }
           })
           console.log("[CameraCapture] Environment camera granted")
@@ -37,8 +38,8 @@ export default function CameraCapture({ onCapture, onError, onClose }: CameraCap
           console.log("[CameraCapture] Trying any camera...")
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
+              width: { ideal: 2600 },
+              height: { ideal: 1800 }
             }
           })
           console.log("[CameraCapture] Any camera granted")
@@ -133,10 +134,28 @@ export default function CameraCapture({ onCapture, onError, onClose }: CameraCap
       canvas.height = video.videoHeight
       ctx.drawImage(video, 0, 0)
 
-      canvas.toBlob((blob) => {
+      canvas.toBlob(async (blob) => {
         if (blob) {
-          const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" })
-          onCapture(file)
+          const originalFile = new File([blob], "camera-photo.jpg", { type: "image/jpeg" })
+
+          // Kiểm tra chất lượng ảnh
+          const quality = assessImageQuality(originalFile)
+          console.log("[CameraCapture] Image quality:", quality)
+
+          // Nếu chất lượng kém, cải thiện ảnh
+          let fileToUse = originalFile
+          if (quality.quality === "poor" || quality.quality === "fair") {
+            console.log("[CameraCapture] Enhancing image quality...")
+            try {
+              const enhancedBlob = await enhanceImageQuality(originalFile)
+              fileToUse = new File([enhancedBlob], "camera-photo-enhanced.jpg", { type: "image/jpeg" })
+              console.log("[CameraCapture] Image enhanced successfully")
+            } catch (err) {
+              console.warn("[CameraCapture] Enhancement failed, using original")
+            }
+          }
+
+          onCapture(fileToUse)
         } else {
           onError("Lỗi: Không thể chuyển đổi ảnh")
         }

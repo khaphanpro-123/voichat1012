@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET 
   })
 
-  const protectedRoutes = ["/dashboard-new", "/dashboard", "/assessment", "/profile", "/admin"]
+  const protectedRoutes = ["/dashboard-new", "/dashboard", "/assessment", "/profile", "/admin", "/admin-simple"]
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   )
@@ -26,15 +26,21 @@ export async function middleware(request: NextRequest) {
     }
 
     // Check if admin route and user is not admin
-    if (pathname.startsWith("/admin") && token.role !== "admin") {
+    if ((pathname.startsWith("/admin") || pathname.startsWith("/admin-simple")) && token.role !== "admin") {
       console.log("❌ User is not admin, redirecting to user dashboard")
       return NextResponse.redirect(new URL("/dashboard-new", request.url))
+    }
+
+    // Check if user is admin but trying to access user dashboard
+    if (pathname.startsWith("/dashboard-new") && token.role === "admin") {
+      console.log("✅ Admin user accessing user dashboard, redirecting to admin panel")
+      return NextResponse.redirect(new URL("/admin", request.url))
     }
   }
 
   // Redirect authenticated users away from auth pages
   if (isAuthRoute && token) {
-    console.log("✅ User already authenticated, redirecting to dashboard")
+    console.log(" User already authenticated, redirecting to dashboard")
     // Redirect based on role
     if (token.role === "admin") {
       return NextResponse.redirect(new URL("/admin", request.url))
@@ -53,6 +59,7 @@ export const config = {
     "/assessment/:path*",
     "/profile/:path*",
     "/admin/:path*",
+    "/admin-simple/:path*",
     "/auth/login",
     "/auth/register",
   ],
