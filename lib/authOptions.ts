@@ -16,11 +16,26 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         await connectDB();
-        const user = (await User.findOne({ email: credentials?.email })) as any;
-        if (!user) return null;
+        // ⚠️ Fix: Normalize email (trim + lowercase)
+        const normalizedEmail = credentials?.email?.trim().toLowerCase();
+        console.log("[Auth] Authorize - normalized email:", normalizedEmail);
+        
+        const user = (await User.findOne({ email: normalizedEmail })) as any;
+        if (!user) {
+          console.log("[Auth] User not found:", normalizedEmail);
+          return null;
+        }
 
         const ok = await comparePassword(credentials!.password, user.password);
-        if (!ok) return null;
+        if (!ok) {
+          console.log("[Auth] Password mismatch for:", normalizedEmail);
+          return null;
+        }
+
+        console.log("[Auth] User authorized:", {
+          email: user.email,
+          role: user.role,
+        });
 
         return {
           id: user._id.toString(),
@@ -47,16 +62,23 @@ export const authOptions: NextAuthOptions = {
         token.dbId = user.id;
         token.role = (user as any).role;
       }
+      // ⚠️ Fix: Normalize email in JWT callback
       if (token.email && !token.dbId) {
         try {
           await connectDB();
-          const dbUser = (await User.findOne({ email: token.email })) as any;
+          const normalizedEmail = token.email.trim().toLowerCase();
+          console.log("[JWT] Refreshing token for email:", normalizedEmail);
+          
+          const dbUser = (await User.findOne({ email: normalizedEmail })) as any;
           if (dbUser) {
             token.dbId = dbUser._id.toString();
             token.role = dbUser.role;
+            console.log("[JWT] Token updated with role:", dbUser.role);
+          } else {
+            console.log("[JWT] User not found in database:", normalizedEmail);
           }
         } catch (error) {
-          console.error("JWT callback error:", error);
+          console.error("[JWT] Callback error:", error);
         }
       }
       return token;
@@ -64,7 +86,12 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.dbId || token.id || token.sub;
-        (session.user as any).role = token.role;
+        // ⚠️ Fix: Ensure role is always set in session
+        (session.user as any).role = token.role || "user";
+        console.log("[Session] Session updated:", {
+          email: session.user.email,
+          role: (session.user as any).role,
+        });
       }
       return session;
     },
