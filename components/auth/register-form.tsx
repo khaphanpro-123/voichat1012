@@ -72,23 +72,9 @@ export function RegisterForm() {
       });
       
       if (login?.ok) {
-        // Get session to check role
-        const { getSession } = await import("next-auth/react");
-        const session = await getSession();
-        
-        if (session?.user) {
-          const userRole = (session.user as any).role;
-          
-          // Redirect based on role
-          if (userRole === "admin") {
-            router.replace("/admin");
-          } else {
-            router.replace("/dashboard-new");
-          }
-        } else {
-          // Fallback to user dashboard
-          router.replace("/dashboard-new");
-        }
+        // Redirect to dashboard-new and let middleware handle the redirect
+        // Middleware will check the token role and redirect to /admin if needed
+        router.replace("/dashboard-new");
       } else {
         router.push("/auth/login");
       }
