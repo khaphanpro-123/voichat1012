@@ -30,11 +30,9 @@ export default function AdminDashboard() {
         const data = await res.json();
         if (data.success) {
           setTotalUsers(data.statistics.totalUsers);
-        } else {
-          if (res.status === 403) {
-            router.push("/dashboard-new");
-          }
         }
+        // Don't redirect on 403 - let middleware handle it
+        // If user is not admin, middleware will redirect them
       } catch (error) {
         console.error("Error fetching statistics:", error);
       } finally {
