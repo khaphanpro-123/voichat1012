@@ -1,0 +1,119 @@
+{
+  "byAlgorithm": [
+    {
+      "algorithm": "DART",
+      "participantCount": 33,
+      "meanScore": 0.5945519449006907,
+      "standardDeviation": 0.10246858727448614,
+      "standardError": 0.00630650559308119,
+      "confidenceInterval": [
+        0.5821911939382516,
+        0.6069126958631299
+      ],
+      "median": 0.5922761666332839,
+      "interquartileRange": [
+        0.512116200229751,
+        0.6715381762980243
+      ],
+      "minScore": 0.36367708975445856,
+      "maxScore": 0.8183048927906486
+    },
+    {
+      "algorithm": "CARTS",
+      "participantCount": 33,
+      "meanScore": 0.6187573880443527,
+      "standardDeviation": 0.09977802626344856,
+      "standardError": 0.006140913009871451,
+      "confidenceInterval": [
+        0.6067211985450046,
+        0.6307935775437007
+      ],
+      "median": 0.6153518115210801,
+      "interquartileRange": [
+        0.5461644904262443,
+        0.6905874220385642
+      ],
+      "minScore": 0.3882669093920912,
+      "maxScore": 0.8694385604753786
+    },
+    {
+      "algorithm": "SM-2",
+      "participantCount": 34,
+      "meanScore": 0.5387240305797543,
+      "standardDeviation": 0.10038596894240395,
+      "standardError": 0.006086793430580963,
+      "confidenceInterval": [
+        0.5267939154558156,
+        0.550654145703693
+      ],
+      "median": 0.536529691350943,
+      "interquartileRange": [
+        0.4687379496736144,
+        0.6112765663750039
+      ],
+      "minScore": 0.3049289638646785,
+      "maxScore": 0.7828106053133123
+    },
+    {
+      "algorithm": "HLR",
+      "participantCount": 34,
+      "meanScore": 0.5566968477055619,
+      "standardDeviation": 0.09969394136995861,
+      "standardError": 0.006044833095624612,
+      "confidenceInterval": [
+        0.5448489748381377,
+        0.5685447205729862
+      ],
+      "median": 0.5506234561078318,
+      "interquartileRange": [
+        0.48347522616938615,
+        0.6240733424639725
+      ],
+      "minScore": 0.3365816868771758,
+      "maxScore": 0.7861107038579483
+    },
+    {
+      "algorithm": "KARL",
+      "participantCount": 33,
+      "meanScore": 0.5676341639578402,
+      "standardDeviation": 0.0992940522623321,
+      "standardError": 0.006111126469175121,
+      "confidenceInterval": [
+        0.5556563560782569,
+        0.5796119718374234
+      ],
+      "median": 0.563678260912504,
+      "interquartileRange": [
+        0.4915427321796134,
+        0.6476640309545544
+      ],
+      "minScore": 0.33550505662048913,
+      "maxScore": 0.8133423338468896
+    },
+    {
+      "algorithm": "LECTOR",
+      "participantCount": 33,
+      "meanScore": 0.57810661736226,
+      "standardDeviation": 0.10076423090006882,
+      "standardError": 0.0062016097094376105,
+      "confidenceInterval": [
+        0.5659514623317623,
+        0.5902617723927577
+      ],
+      "median": 0.5742148587746186,
+      "interquartileRange": [
+        0.5073795881479948,
+        0.651435039514361
+      ],
+      "minScore": 0.3689301660842308,
+      "maxScore": 0.8097539722306919
+    }
+  ],
+  "overall": {
+    "totalParticipants": 200,
+    "totalSessions": 8000,
+    "studyDuration": 8,
+    "completionRate": 1,
+    "overallMeanScore": 0.5754648181622527
+  }
+}
