@@ -1,0 +1,66 @@
+{
+  "reportId": "pilot_1779978217444",
+  "startDate": "2026-05-28T14:23:37.444Z",
+  "participantCount": 20,
+  "endDate": "2026-05-28T14:23:56.701Z",
+  "completionRate": 0.9073548245215544,
+  "dataQuality": 82.34188453602465,
+  "technicalIssues": [
+    {
+      "issueId": "issue_1779978236694_0",
+      "type": "api",
+      "severity": "medium",
+      "description": "Mock technical issue 1",
+      "occurredAt": "2026-05-17T17:11:30.575Z",
+      "resolved": false,
+      "impact": "Minor performance degradation"
+    },
+    {
+      "issueId": "issue_1779978236694_1",
+      "type": "frontend",
+      "severity": "low",
+      "description": "Mock technical issue 2",
+      "occurredAt": "2026-05-19T22:14:35.296Z",
+      "resolved": true,
+      "impact": "Minor performance degradation"
+    },
+    {
+      "issueId": "issue_1779978236694_2",
+      "type": "llm_service",
+      "severity": "medium",
+      "description": "Mock technical issue 3",
+      "occurredAt": "2026-05-25T23:29:25.646Z",
+      "resolved": false,
+      "impact": "Minor performance degradation"
+    }
+  ],
+  "performanceMetrics": {
+    "averageResponseTime": 488.56305923698545,
+    "p95ResponseTime": 1171.898287004698,
+    "errorRate": 1.407632927827651,
+    "throughput": 58.71052732051037,
+    "uptime": 99.71364540326418,
+    "databasePerformance": {
+      "averageQueryTime": 27.34231090667642,
+      "slowQueries": 0
+    }
+  },
+  "contextTransferValidation": {
+    "totalAssessments": 40,
+    "llmServiceUptime": 99.65532849918995,
+    "averageProcessingTime": 2686.351882416409,
+    "scoringConsistency": 0.8737672895276872,
+    "humanValidationSample": {
+      "sampleSize": 50,
+      "agreement": 0.8338506796963661,
+      "kappa": 0.8597630370493433
+    }
+  },
+  "recommendations": [
+    "All pilot criteria met - proceed with full study deployment",
+    "Monitor performance closely during initial weeks",
+    "Maintain current quality monitoring procedures"
+  ],
+  "goNoGoDecision": "GO",
+  "reasoning": "All pilot success criteria met. System ready for full study deployment."
+}

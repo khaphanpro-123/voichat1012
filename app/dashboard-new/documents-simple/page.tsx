@@ -281,6 +281,14 @@ export default function DocumentsPage() {
         await loadDocuments()
       } catch {}
       
+      console.log("[Upload] About to save vocabulary to database. Data structure:", {
+        hasVocabulary: !!data.vocabulary,
+        hasFlashcards: !!data.flashcards,
+        vocabularyLength: data.vocabulary?.length || 0,
+        flashcardsLength: data.flashcards?.length || 0,
+        sampleVocabulary: data.vocabulary?.[0] || data.flashcards?.[0] || null
+      })
+      
       await handleSaveToDatabase(data)
     } catch (err: any) {
       throw err
@@ -288,12 +296,29 @@ export default function DocumentsPage() {
   }
 
   const handleSaveToDatabase = async (data: any) => {
+    console.log("[DEBUG handleSaveToDatabase] Function called with data:", data)
+    
     try {
       const vocabularyToSave = data.vocabulary || data.flashcards || []
-      if (vocabularyToSave.length === 0) return { savedCount: 0, failedCount: 0 }
+      console.log("[DEBUG handleSaveToDatabase] Vocabulary to save:", vocabularyToSave.length, "items")
+      
+      if (vocabularyToSave.length === 0) {
+        console.log("[DEBUG handleSaveToDatabase] No vocabulary to save, returning early")
+        return { savedCount: 0, failedCount: 0 }
+      }
+      
       let savedCount = 0, failedCount = 0
-      const savePromises = vocabularyToSave.map(async (item: any) => {
-        if (!item || (!item.word && !item.phrase)) return
+      
+      console.log("[Save] Attempting to save", vocabularyToSave.length, "words to database...")
+      
+      const savePromises = vocabularyToSave.map(async (item: any, index: number) => {
+        console.log(`[Save] Processing item ${index + 1}/${vocabularyToSave.length}:`, item)
+        
+        if (!item || (!item.word && !item.phrase)) {
+          console.log(`[Save] Item ${index + 1} skipped - no word or phrase`)
+          return
+        }
+        
         const payload = {
           word: item.word || item.phrase,
           meaning: item.definition || "",
@@ -306,15 +331,47 @@ export default function DocumentsPage() {
           source: "document",
           synonyms: item.synonyms || [],
         }
-        if (!payload.word?.trim()) { failedCount++; return }
+        
+        console.log(`[Save] Payload for "${payload.word}":`, payload)
+        
+        if (!payload.word?.trim()) {
+          console.log(`[Save] Item ${index + 1} failed - empty word after trim`)
+          failedCount++
+          return
+        }
+        
         try {
-          const res = await fetch("/api/vocabulary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-          if (res.ok) savedCount++; else failedCount++
-        } catch { failedCount++ }
+          console.log(`[Save] Sending POST request for "${payload.word}"...`)
+          const res = await fetch("/api/vocabulary", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify(payload) 
+          })
+          
+          console.log(`[Save] Response status for "${payload.word}":`, res.status, res.statusText)
+          
+          if (res.ok) {
+            const responseData = await res.json()
+            console.log(`[Save] Success response for "${payload.word}":`, responseData)
+            savedCount++
+          } else {
+            const errorData = await res.json().catch(() => ({ error: "Unknown error" }))
+            console.log(`[Save] Failed to save "${payload.word}":`, res.status, errorData)
+            failedCount++
+          }
+        } catch (error) {
+          console.error(`[Save] Exception saving "${payload.word}":`, error)
+          failedCount++
+        }
       })
+      
+      console.log("[Save] Waiting for all save promises to complete...")
       await Promise.all(savePromises)
+      
+      console.log("[Save] Final results - Saved:", savedCount, "Failed:", failedCount)
       return { savedCount, failedCount }
-    } catch {
+    } catch (error) {
+      console.error("[DEBUG handleSaveToDatabase] Caught error:", error)
       return { savedCount: 0, failedCount: 0 }
     }
   }

@@ -1,0 +1,726 @@
+ Volume in drive D is New Volume
+ Volume Serial Number is 5E96-DABB
+
+ Directory of D:\CODE\voichat1012\app
+
+04/06/2026  09:55 AM             1,750 layout.tsx
+02/11/2026  12:56 PM             1,170 page.tsx
+04/06/2026  09:55 AM               497 providers.tsx
+               3 File(s)          3,417 bytes
+
+ Directory of D:\CODE\voichat1012\app\admin
+
+04/23/2026  07:00 PM             5,041 page.tsx
+               1 File(s)          5,041 bytes
+
+ Directory of D:\CODE\voichat1012\app\admin\notifications
+
+04/21/2026  12:20 AM            19,853 page.tsx
+               1 File(s)         19,853 bytes
+
+ Directory of D:\CODE\voichat1012\app\admin\users
+
+04/23/2026  07:00 PM            16,966 page.tsx
+               1 File(s)         16,966 bytes
+
+ Directory of D:\CODE\voichat1012\app\admin\users\[userId]
+
+04/23/2026  07:00 PM            10,345 page.tsx
+               1 File(s)         10,345 bytes
+
+ Directory of D:\CODE\voichat1012\app\assessment
+
+02/11/2026  12:56 PM               137 page.tsx
+               1 File(s)            137 bytes
+
+ Directory of D:\CODE\voichat1012\app\auth
+
+02/11/2026  12:56 PM            12,790 page.tsx
+02/11/2026  12:56 PM               631 providers.tsx
+               2 File(s)         13,421 bytes
+
+ Directory of D:\CODE\voichat1012\app\auth\login
+
+02/11/2026  12:56 PM             1,862 page.tsx
+               1 File(s)          1,862 bytes
+
+ Directory of D:\CODE\voichat1012\app\auth\register
+
+02/11/2026  12:56 PM             4,545 page.tsx
+               1 File(s)          4,545 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new
+
+04/20/2026  09:12 AM             1,283 page.tsx
+               1 File(s)          1,283 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\ablation-study
+
+04/23/2026  07:00 PM            47,333 page.tsx
+               1 File(s)         47,333 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\ai-chat
+
+04/20/2026  09:12 AM            23,550 page.tsx
+               1 File(s)         23,550 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\ai-chat-simple
+
+04/05/2026  03:05 PM               761 page.tsx
+               1 File(s)            761 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\ai-chat-test
+
+04/05/2026  03:00 PM               301 page.tsx
+               1 File(s)            301 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\chat
+
+02/11/2026  12:56 PM             1,061 page.tsx
+               1 File(s)          1,061 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\community
+
+02/11/2026  12:56 PM             1,399 page.tsx
+               1 File(s)          1,399 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\debate
+
+02/11/2026  12:56 PM               143 page.tsx
+               1 File(s)            143 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\debate-webgpu
+
+02/11/2026  12:56 PM               146 page.tsx
+               1 File(s)            146 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\documents
+
+04/20/2026  09:12 AM            18,705 page.tsx
+               1 File(s)         18,705 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\documents-simple
+
+04/23/2026  09:41 PM            29,035 page.tsx
+               1 File(s)         29,035 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\documents-test
+
+04/20/2026  09:12 AM               551 page.tsx
+               1 File(s)            551 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\english-live
+
+02/11/2026  12:56 PM               142 page.tsx
+               1 File(s)            142 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\guide
+
+04/23/2026  07:00 PM            18,406 page.tsx
+               1 File(s)         18,406 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\image-learning
+
+02/11/2026  12:56 PM               268 page.tsx
+               1 File(s)            268 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\image-vocab-game
+
+02/11/2026  12:56 PM               729 page.tsx
+               1 File(s)            729 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\learning-history
+
+04/20/2026  09:12 AM             1,683 page.tsx
+               1 File(s)          1,683 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\listening
+
+04/20/2026  11:34 PM            25,057 page.tsx
+               1 File(s)         25,057 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\media-learning
+
+02/11/2026  12:56 PM               136 page.tsx
+               1 File(s)            136 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\profile-history
+
+02/11/2026  12:56 PM               358 page.tsx
+               1 File(s)            358 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\pronunciation
+
+04/21/2026  12:20 AM            17,537 page.tsx
+               1 File(s)         17,537 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\resources
+
+02/11/2026  12:56 PM               270 page.tsx
+               1 File(s)            270 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\survey
+
+04/20/2026  09:12 AM             1,108 page.tsx
+               1 File(s)          1,108 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\topic-modeling-demo
+
+04/20/2026  09:12 AM            19,838 page.tsx
+               1 File(s)         19,838 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\upload
+
+04/20/2026  09:12 AM            14,043 page.tsx
+               1 File(s)         14,043 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\verify-database
+
+04/20/2026  09:12 AM             7,290 page.tsx
+               1 File(s)          7,290 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\vocabulary
+
+04/23/2026  09:41 PM            67,892 page.tsx
+               1 File(s)         67,892 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\vocabulary-analysis
+
+02/11/2026  12:56 PM             1,225 page.tsx
+               1 File(s)          1,225 bytes
+
+ Directory of D:\CODE\voichat1012\app\dashboard-new\writing-practice
+
+04/21/2026  01:24 PM            15,265 page.tsx
+               1 File(s)         15,265 bytes
+
+ Directory of D:\CODE\voichat1012\app\debug
+
+02/11/2026  12:56 PM               204 page.tsx
+               1 File(s)            204 bytes
+
+ Directory of D:\CODE\voichat1012\app\flashcard-study
+
+02/11/2026  12:56 PM               140 page.tsx
+               1 File(s)            140 bytes
+
+ Directory of D:\CODE\voichat1012\app\kiro-test
+
+04/20/2026  09:12 AM            15,309 page.tsx
+               1 File(s)         15,309 bytes
+
+ Directory of D:\CODE\voichat1012\app\learn
+
+04/20/2026  09:12 AM            10,485 page.tsx
+               1 File(s)         10,485 bytes
+
+ Directory of D:\CODE\voichat1012\app\notifications\add
+
+02/11/2026  12:56 PM             9,175 page.tsx
+               1 File(s)          9,175 bytes
+
+ Directory of D:\CODE\voichat1012\app\onboarding
+
+02/11/2026  12:56 PM               137 page.tsx
+               1 File(s)            137 bytes
+
+ Directory of D:\CODE\voichat1012\app\profile\[id]
+
+04/20/2026  09:12 AM             3,133 page.tsx
+               1 File(s)          3,133 bytes
+
+ Directory of D:\CODE\voichat1012\app\settings
+
+04/20/2026  09:12 AM            24,454 page.tsx
+               1 File(s)         24,454 bytes
+
+ Directory of D:\CODE\voichat1012\app\survey
+
+02/11/2026  12:56 PM               698 page.tsx
+               1 File(s)            698 bytes
+
+ Directory of D:\CODE\voichat1012\app\test-debate
+
+02/11/2026  12:56 PM             1,681 page.tsx
+               1 File(s)          1,681 bytes
+
+ Directory of D:\CODE\voichat1012\app\test-images
+
+04/20/2026  09:12 AM            11,620 page.tsx
+               1 File(s)         11,620 bytes
+
+ Directory of D:\CODE\voichat1012\app\test-media
+
+02/11/2026  12:56 PM             1,693 page.tsx
+               1 File(s)          1,693 bytes
+
+ Directory of D:\CODE\voichat1012\app\test-voice
+
+04/20/2026  09:12 AM            19,640 page.tsx
+               1 File(s)         19,640 bytes
+
+ Directory of D:\CODE\voichat1012\app\update_profile
+
+02/11/2026  12:56 PM               143 page.tsx
+               1 File(s)            143 bytes
+
+ Directory of D:\CODE\voichat1012\app\vocabulary-demo
+
+02/11/2026  12:56 PM               140 page.tsx
+               1 File(s)            140 bytes
+
+ Directory of D:\CODE\voichat1012\app\vocabulary-learning
+
+02/11/2026  12:56 PM               156 page.tsx
+               1 File(s)            156 bytes
+
+ Directory of D:\CODE\voichat1012\components
+
+04/20/2026  09:12 AM             7,808 AdminLayout.tsx
+04/20/2026  09:12 AM            15,365 ApiKeySettings.tsx
+02/11/2026  12:56 PM             2,088 AssessmentApp.tsx
+02/25/2026  07:21 AM             6,378 AssessmentFlow.tsx
+04/23/2026  07:00 PM             5,942 CameraCapture.tsx
+04/23/2026  09:41 PM             4,250 ChatBot.tsx
+04/20/2026  09:12 AM            26,745 ChatScreen.tsx
+02/11/2026  12:56 PM             2,355 CommentList.tsx
+04/23/2026  09:41 PM            21,066 DashboardHome.tsx
+04/21/2026  09:13 AM            15,571 DashboardLayout.tsx
+04/20/2026  09:12 AM            32,126 DebateMode.tsx
+02/11/2026  12:56 PM                 0 DebateModeFixed.tsx
+04/20/2026  09:12 AM            14,310 DebateModeWebGPU.tsx
+04/20/2026  09:12 AM            15,451 DebugDashboard.tsx
+04/20/2026  09:12 AM            18,838 DocumentManager.tsx
+04/20/2026  09:12 AM            11,715 DocumentVocabulary.tsx
+04/20/2026  09:12 AM            25,422 EnglishLearnerSurvey.tsx
+04/20/2026  09:12 AM            31,675 EnglishLiveChat.tsx
+04/20/2026  09:12 AM            14,232 EnhancedFlashCard.tsx
+02/11/2026  12:56 PM             5,782 features-section.tsx
+04/20/2026  09:12 AM            27,811 FileUploadOCR.tsx
+02/17/2026  09:39 PM               726 flashcard-viewer-wrapper.tsx
+02/17/2026  08:23 PM            10,371 flashcard-viewer.tsx
+04/20/2026  09:12 AM            12,645 FlashcardClusterView.tsx
+04/20/2026  09:12 AM            12,901 FlashCardStudy.tsx
+04/21/2026  09:13 AM            10,377 FloatingAiChat.tsx
+04/20/2026  09:12 AM             4,424 footer.tsx
+04/03/2026  05:41 PM             1,992 GlobalErrorBoundary.tsx
+04/03/2026  07:29 PM             2,918 GlobalErrorHandler.tsx
+04/21/2026  12:20 AM             7,656 hero-section.tsx
+02/11/2026  12:56 PM             3,368 how-it-works-section.tsx
+04/20/2026  09:12 AM            20,147 ImageDescribe.tsx
+04/20/2026  09:12 AM            13,815 ImageLearnEnglish.tsx
+02/11/2026  12:56 PM            19,798 ImageVocabularyGame.tsx
+04/20/2026  09:12 AM            65,205 ImageVocabularyLearning.tsx
+02/11/2026  12:56 PM             5,337 ImageWithFallback.tsx
+02/11/2026  12:56 PM             1,026 InfiniteFeed.tsx
+02/11/2026  12:56 PM             4,091 IntroScreen.tsx
+02/11/2026  12:56 PM            11,214 KnowledgeGraphViewer.tsx
+04/20/2026  09:12 AM            21,447 LearningHistory.tsx
+02/11/2026  12:56 PM               210 LeftNav.tsx
+02/11/2026  12:56 PM               627 LogoutButton.tsx
+04/20/2026  09:12 AM            85,791 MediaLearning.tsx
+02/11/2026  12:56 PM               365 MediaLearningEnhanced.tsx
+04/10/2026  02:40 PM             7,106 MiniVideoPlayer.tsx
+04/06/2026  09:54 AM             4,910 MiniVoicePlayer.tsx
+04/20/2026  09:12 AM             4,746 navbar.tsx
+02/11/2026  12:56 PM            13,930 NotificationPanel.tsx
+04/20/2026  09:12 AM            17,101 OnboardingTutorial.tsx
+04/20/2026  09:12 AM             3,554 PostCard.tsx
+02/11/2026  12:56 PM             2,798 PostComposer.tsx
+04/20/2026  09:12 AM             5,755 profile.tsx
+02/11/2026  12:56 PM             2,453 ProfileHistory.tsx
+02/11/2026  12:56 PM             8,488 PronunciationPractice.tsx
+02/11/2026  12:56 PM             2,432 ResultChart.tsx
+04/20/2026  09:12 AM             8,670 ResultScreen.tsx
+02/11/2026  12:56 PM               210 RightSidebar.tsx
+04/23/2026  09:41 PM             9,044 ScoringCriteria.tsx
+02/11/2026  12:56 PM            14,791 SettingsPage.tsx
+04/20/2026  09:12 AM            11,919 SmartDocumentExtractor.tsx
+02/11/2026  12:56 PM               397 StoryBar.tsx
+02/11/2026  12:56 PM             4,642 StoryViewer.tsx
+02/11/2026  12:56 PM             4,658 testimonials-section.tsx
+02/11/2026  12:56 PM               303 theme-provider.tsx
+02/11/2026  12:56 PM               622 theme-toggle.tsx
+02/11/2026  12:56 PM            14,932 VietnameseAssessment.tsx
+04/20/2026  09:12 AM            17,722 VietnameseLearnerSurvey.tsx
+02/11/2026  12:56 PM             7,739 VocabularyCard.tsx
+04/20/2026  09:12 AM             3,339 VocabularyDemo.tsx
+02/11/2026  12:56 PM             4,306 VocabularyExtractionLoader.tsx
+02/11/2026  12:56 PM            12,470 VocabularyGrid.tsx
+02/11/2026  12:56 PM            18,013 VocabularyGridEnhanced.tsx
+04/20/2026  09:12 AM            17,729 VocabularyLearning.tsx
+04/20/2026  09:12 AM            10,791 VocabularyQuiz.tsx
+04/20/2026  11:38 PM            31,729 VoiceChatEnhanced.tsx
+04/20/2026  09:12 AM            44,725 VoiceChatLive.tsx
+              76 File(s)        933,405 bytes
+
+ Directory of D:\CODE\voichat1012\components\auth
+
+03/30/2026  09:35 AM             3,503 login-form.tsx
+04/23/2026  07:00 PM             8,972 register-form.tsx
+               2 File(s)         12,475 bytes
+
+ Directory of D:\CODE\voichat1012\components\dashboard
+
+04/20/2026  09:12 AM             4,761 assessment-complete.tsx
+02/11/2026  12:56 PM             8,047 assessment-form.tsx
+02/11/2026  12:56 PM             5,536 child-setup-form.tsx
+02/11/2026  12:56 PM             1,358 daily-log-chart.tsx
+04/20/2026  09:12 AM             6,137 daily-log-form.tsx
+02/11/2026  12:56 PM             5,451 dashboard-layout.tsx
+02/11/2026  12:56 PM             7,880 dashboard-overview.tsx
+02/11/2026  12:56 PM            12,466 dashboardpage.tsx
+04/20/2026  09:12 AM             7,527 resources.tsx
+02/11/2026  12:56 PM            10,858 results-analysis.tsx
+02/11/2026  12:56 PM             3,976 SummaryCharts.tsx
+02/11/2026  12:56 PM               621 welcome-toast.tsx
+              12 File(s)         74,618 bytes
+
+ Directory of D:\CODE\voichat1012\components\ui
+
+02/11/2026  12:56 PM             2,119 accordion.tsx
+02/11/2026  12:56 PM             4,021 alert-dialog.tsx
+03/12/2026  06:11 PM             1,027 alert.tsx
+02/11/2026  12:56 PM               291 aspect-ratio.tsx
+02/11/2026  12:56 PM             1,150 avatar.tsx
+02/11/2026  12:56 PM             1,677 badge.tsx
+02/11/2026  12:56 PM             2,466 breadcrumb.tsx
+03/12/2026  06:10 PM             1,404 button.tsx
+02/11/2026  12:56 PM             7,873 calendar.tsx
+03/12/2026  06:10 PM             1,599 card.tsx
+02/11/2026  12:56 PM             5,797 carousel.tsx
+02/11/2026  12:56 PM            10,134 chart.tsx
+02/11/2026  12:56 PM             1,258 checkbox.tsx
+02/11/2026  12:56 PM               833 collapsible.tsx
+02/11/2026  12:56 PM             5,002 command.tsx
+02/11/2026  12:56 PM             8,474 context-menu.tsx
+02/11/2026  12:56 PM             4,125 dialog.tsx
+02/11/2026  12:56 PM             4,390 drawer.tsx
+02/11/2026  12:56 PM             8,541 dropdown-menu.tsx
+02/11/2026  12:56 PM             3,926 form.tsx
+02/11/2026  12:56 PM             1,576 hover-card.tsx
+02/11/2026  12:56 PM             2,331 input-otp.tsx
+03/12/2026  06:11 PM               784 input.tsx
+02/11/2026  12:56 PM               635 label.tsx
+02/11/2026  12:56 PM             8,670 menubar.tsx
+02/11/2026  12:56 PM             6,832 navigation-menu.tsx
+04/20/2026  09:12 AM             7,793 OptimisticLoader.tsx
+02/11/2026  12:56 PM             2,839 pagination.tsx
+02/11/2026  12:56 PM             1,683 popover.tsx
+02/11/2026  12:56 PM               771 progress.tsx
+02/11/2026  12:56 PM             1,511 radio-group.tsx
+02/11/2026  12:56 PM             2,084 resizable.tsx
+02/11/2026  12:56 PM             1,703 scroll-area.tsx
+02/11/2026  12:56 PM             6,438 select.tsx
+02/11/2026  12:56 PM               727 separator.tsx
+02/11/2026  12:56 PM             4,229 sheet.tsx
+02/11/2026  12:56 PM            22,359 sidebar.tsx
+02/11/2026  12:56 PM               289 skeleton.tsx
+02/11/2026  12:56 PM             2,064 slider.tsx
+02/11/2026  12:56 PM               589 sonner.tsx
+02/11/2026  12:56 PM             1,208 switch.tsx
+02/11/2026  12:56 PM             2,564 table.tsx
+02/11/2026  12:56 PM             2,035 tabs.tsx
+03/12/2026  06:10 PM               731 textarea.tsx
+02/11/2026  12:56 PM             4,988 toast.tsx
+02/11/2026  12:56 PM               821 toaster.tsx
+02/11/2026  12:56 PM             1,998 toggle-group.tsx
+02/11/2026  12:56 PM             1,617 toggle.tsx
+02/11/2026  12:56 PM             1,952 tooltip.tsx
+02/11/2026  12:56 PM               584 use-mobile.tsx
+              50 File(s)        170,512 bytes
+
+ Directory of D:\CODE\voichat1012\contexts
+
+04/09/2026  10:54 AM               974 VideoPlayerContext.tsx
+04/06/2026  09:54 AM             1,195 VoiceChatContext.tsx
+               2 File(s)          2,169 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\ajv\src\__tests__
+
+04/01/2026  10:01 AM             2,935 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,850 Form.tsx
+               2 File(s)          4,785 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\arktype\src\__tests__
+
+04/01/2026  10:01 AM             2,497 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,576 Form.tsx
+               2 File(s)          4,073 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\class-validator\src\__tests__
+
+04/01/2026  10:01 AM             2,493 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,483 Form.tsx
+               2 File(s)          3,976 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\computed-types\src\__tests__
+
+04/01/2026  10:01 AM             2,733 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,984 Form.tsx
+               2 File(s)          4,717 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\effect-ts\src\__tests__
+
+04/01/2026  10:01 AM             2,800 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,768 Form.tsx
+               2 File(s)          4,568 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\fluentvalidation-ts\src\__tests__
+
+04/01/2026  10:01 AM             2,874 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,813 Form.tsx
+               2 File(s)          4,687 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\io-ts\src\__tests__
+
+04/01/2026  10:01 AM             2,751 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,683 Form.tsx
+               2 File(s)          4,434 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\joi\src\__tests__
+
+04/01/2026  10:01 AM             2,547 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,579 Form.tsx
+               2 File(s)          4,126 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\nope\src\__tests__
+
+04/01/2026  10:01 AM             2,727 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,501 Form.tsx
+               2 File(s)          4,228 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\superstruct\src\__tests__
+
+04/01/2026  10:01 AM             2,636 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,697 Form.tsx
+               2 File(s)          4,333 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\typanion\src\__tests__
+
+04/01/2026  10:01 AM             2,658 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,606 Form.tsx
+               2 File(s)          4,264 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\typebox\src\__tests__
+
+04/01/2026  10:01 AM             1,666 Form-compiler.tsx
+04/01/2026  10:01 AM             2,712 Form-native-validation-compiler.tsx
+04/01/2026  10:01 AM             2,585 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,539 Form.tsx
+               4 File(s)          8,502 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\typeschema\src\__tests__
+
+04/01/2026  10:01 AM             2,736 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,680 Form.tsx
+               2 File(s)          4,416 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\valibot\src\__tests__
+
+04/01/2026  10:01 AM             2,525 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,825 Form.tsx
+               2 File(s)          4,350 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\vest\src\__tests__
+
+04/01/2026  10:01 AM             2,829 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,741 Form.tsx
+               2 File(s)          4,570 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\vine\src\__tests__
+
+04/01/2026  10:01 AM             2,670 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,703 Form.tsx
+               2 File(s)          4,373 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\yup\src\__tests__
+
+04/01/2026  10:01 AM             2,663 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,530 Form.tsx
+               2 File(s)          4,193 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@hookform\resolvers\zod\src\__tests__
+
+04/01/2026  10:01 AM             2,674 Form-native-validation.tsx
+04/01/2026  10:01 AM             1,618 Form.tsx
+               2 File(s)          4,292 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@radix-ui\react-alert-dialog\src
+
+04/01/2026  10:01 AM            13,337 AlertDialog.stories.tsx
+04/01/2026  10:01 AM             1,967 AlertDialog.test.tsx
+04/01/2026  10:01 AM            12,883 AlertDialog.tsx
+               3 File(s)         28,187 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@reduxjs\toolkit\src\dynamicMiddleware\tests
+
+04/01/2026  10:01 AM             3,220 react.test.tsx
+               1 File(s)          3,220 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@reduxjs\toolkit\src\query\react
+
+04/01/2026  10:01 AM             2,119 ApiProvider.tsx
+               1 File(s)          2,119 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@reduxjs\toolkit\src\query\tests
+
+04/01/2026  10:01 AM             4,938 apiProvider.test.tsx
+04/01/2026  10:01 AM             4,656 buildCreateApi.test.tsx
+04/01/2026  10:01 AM             9,753 buildHooks.test-d.tsx
+04/01/2026  10:01 AM           116,951 buildHooks.test.tsx
+04/01/2026  10:01 AM             5,226 buildInitiate.test.tsx
+04/01/2026  10:01 AM             4,258 buildMiddleware.test.tsx
+04/01/2026  10:01 AM             7,081 buildThunks.test.tsx
+04/01/2026  10:01 AM             5,038 cleanup.test.tsx
+04/01/2026  10:01 AM            17,400 devWarnings.test.tsx
+04/01/2026  10:01 AM             1,550 errorHandling.test-d.tsx
+04/01/2026  10:01 AM            18,264 errorHandling.test.tsx
+04/01/2026  10:01 AM             4,338 fakeBaseQuery.test.tsx
+04/01/2026  10:01 AM            34,293 fetchBaseQuery.test.tsx
+04/01/2026  10:01 AM             3,497 injectEndpoints.test.tsx
+04/01/2026  10:01 AM             4,179 invalidation.test.tsx
+04/01/2026  10:01 AM             2,227 matchers.test-d.tsx
+04/01/2026  10:01 AM             7,561 matchers.test.tsx
+04/01/2026  10:01 AM            12,824 optimisticUpdates.test.tsx
+04/01/2026  10:01 AM            18,802 optimisticUpserts.test.tsx
+04/01/2026  10:01 AM             6,313 polling.test.tsx
+04/01/2026  10:01 AM            14,355 queryFn.test.tsx
+04/01/2026  10:01 AM            10,758 queryLifecycle.test-d.tsx
+04/01/2026  10:01 AM            15,063 queryLifecycle.test.tsx
+04/01/2026  10:01 AM            13,102 refetchingBehaviors.test.tsx
+04/01/2026  10:01 AM            12,971 useMutation-fixedCacheKey.test.tsx
+              25 File(s)        355,398 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@reduxjs\toolkit\src\tests
+
+04/01/2026  10:01 AM             9,552 createAction.test-d.tsx
+               1 File(s)          9,552 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\@reduxjs\toolkit\src\tests\utils
+
+04/01/2026  10:01 AM             4,939 helpers.tsx
+               1 File(s)          4,939 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\next-auth\src\core\pages
+
+04/01/2026  10:01 AM             2,588 error.tsx
+04/01/2026  10:01 AM             9,446 signin.tsx
+04/01/2026  10:01 AM             1,172 signout.tsx
+04/01/2026  10:01 AM               875 verify-request.tsx
+               4 File(s)         14,081 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\next-auth\src\react
+
+04/01/2026  10:01 AM            15,200 index.tsx
+               1 File(s)         15,200 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-day-picker\src
+
+04/01/2026  10:02 AM             7,051 DayPicker.test.tsx
+04/01/2026  10:02 AM            27,685 DayPicker.tsx
+04/01/2026  10:02 AM                97 jalali.tsx
+04/01/2026  10:02 AM             2,776 persian.tsx
+04/01/2026  10:02 AM             7,443 useAnimation.test.tsx
+04/01/2026  10:02 AM             4,160 useDayPicker.test.tsx
+04/01/2026  10:02 AM               518 utc.tsx
+               7 File(s)         49,730 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-day-picker\src\components
+
+04/01/2026  10:02 AM               370 Button.tsx
+04/01/2026  10:02 AM               354 CaptionLabel.tsx
+04/01/2026  10:02 AM             1,258 Chevron.tsx
+04/01/2026  10:02 AM               822 custom-components.tsx
+04/01/2026  10:02 AM               799 Day.tsx
+04/01/2026  10:02 AM               843 DayButton.tsx
+04/01/2026  10:02 AM             2,102 Dropdown.tsx
+04/01/2026  10:02 AM               360 DropdownNav.tsx
+04/01/2026  10:02 AM               330 Footer.tsx
+04/01/2026  10:02 AM               695 Month.tsx
+04/01/2026  10:02 AM               656 MonthCaption.tsx
+04/01/2026  10:02 AM               364 MonthGrid.tsx
+04/01/2026  10:02 AM               340 Months.tsx
+04/01/2026  10:02 AM               423 MonthsDropdown.tsx
+04/01/2026  10:02 AM             2,549 Nav.tsx
+04/01/2026  10:02 AM               513 NextMonthButton.tsx
+04/01/2026  10:02 AM               341 Option.tsx
+04/01/2026  10:02 AM               533 PreviousMonthButton.tsx
+04/01/2026  10:02 AM               506 Root.tsx
+04/01/2026  10:02 AM               340 Select.tsx
+04/01/2026  10:02 AM               514 Week.tsx
+04/01/2026  10:02 AM               381 Weekday.tsx
+04/01/2026  10:02 AM               405 Weekdays.tsx
+04/01/2026  10:02 AM               537 WeekNumber.tsx
+04/01/2026  10:02 AM               390 WeekNumberHeader.tsx
+04/01/2026  10:02 AM               357 Weeks.tsx
+04/01/2026  10:02 AM               421 YearsDropdown.tsx
+              27 File(s)         17,503 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-day-picker\src\helpers
+
+04/01/2026  10:02 AM             1,093 getDataAttributes.test.tsx
+04/01/2026  10:02 AM             1,054 getDataAttributes.tsx
+04/01/2026  10:02 AM             2,213 getNextFocus.test.tsx
+04/01/2026  10:02 AM             2,375 getNextFocus.tsx
+               4 File(s)          6,735 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-day-picker\src\selection
+
+04/01/2026  10:02 AM             1,236 useMulti.test.tsx
+04/01/2026  10:02 AM             2,193 useMulti.tsx
+04/01/2026  10:02 AM             4,066 useRange.test.tsx
+04/01/2026  10:02 AM             2,171 useRange.tsx
+04/01/2026  10:02 AM             1,139 useSingle.test.tsx
+04/01/2026  10:02 AM             2,019 useSingle.tsx
+               6 File(s)         12,824 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-day-picker\src\types
+
+04/01/2026  10:02 AM             1,949 props.test.tsx
+               1 File(s)          1,949 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-redux\src\components
+
+04/01/2026  10:01 AM            30,843 connect.tsx
+04/01/2026  10:01 AM             3,414 Provider.tsx
+               2 File(s)         34,257 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-scroll-parallax\src\components\Parallax
+
+04/01/2026  10:01 AM             8,676 index.test.tsx
+04/01/2026  10:01 AM               509 Parallax.tsx
+               2 File(s)          9,185 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-scroll-parallax\src\components\ParallaxBanner
+
+04/01/2026  10:01 AM            10,528 index.test.tsx
+04/01/2026  10:01 AM             1,992 ParallaxBanner.tsx
+               2 File(s)         12,520 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-scroll-parallax\src\components\ParallaxBanner\components
+
+04/01/2026  10:01 AM             1,268 ParallaxBannerLayer.tsx
+               1 File(s)          1,268 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-scroll-parallax\src\components\ParallaxProvider
+
+04/01/2026  10:01 AM             4,958 index.test.tsx
+04/01/2026  10:01 AM             1,517 ParallaxProvider.tsx
+               2 File(s)          6,475 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-scroll-parallax\src\hooks
+
+04/01/2026  10:01 AM             4,080 useParallax.test.tsx
+04/01/2026  10:01 AM             1,769 useParallaxController.test.tsx
+               2 File(s)          5,849 bytes
+
+ Directory of D:\CODE\voichat1012\node_modules\react-scroll-parallax\src\testUtils
+
+04/01/2026  10:01 AM             1,167 expectRenderError.tsx
+04/01/2026  10:01 AM               870 MockProvider.tsx
+               2 File(s)          2,037 bytes
+
+     Total Files Listed:
+             332 File(s)      2,359,004 bytes
+               0 Dir(s)  196,983,283,712 bytes free
