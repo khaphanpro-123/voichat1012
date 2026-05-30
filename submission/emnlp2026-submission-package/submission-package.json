@@ -1,0 +1,36 @@
+{
+  "mainPaper": "submission\\emnlp2026-submission-package\\paper.pdf",
+  "supplementary": "submission\\emnlp2026-submission-package\\supplementary.pdf",
+  "codePackage": "submission\\emnlp2026-submission-package\\code.zip",
+  "checklist": {
+    "paperLength": {
+      "mainPaper": 10.014000000000001,
+      "references": 2,
+      "withinLimit": false
+    },
+    "anonymization": {
+      "authorInfoRemoved": true,
+      "affiliationRemoved": true,
+      "acknowledgmentsRemoved": true,
+      "selfCitationsAnonymized": true
+    },
+    "formatting": {
+      "aclAnthologyCompliant": true,
+      "bibliographyFormatCorrect": true,
+      "figuresProperlyFormatted": true,
+      "tablesProperlyFormatted": true
+    },
+    "supplementary": {
+      "codePackageIncluded": false,
+      "dataAvailable": true,
+      "reproducibilityInstructions": true
+    },
+    "metadata": {
+      "titleCompliant": true,
+      "abstractWithinLimit": false,
+      "keywordsProvided": true
+    }
+  },
+  "submissionDate": "2026-05-30T01:37:54.877Z",
+  "trackingId": "EMNLP2026_MPROLMF1_T3EVJ5"
+}

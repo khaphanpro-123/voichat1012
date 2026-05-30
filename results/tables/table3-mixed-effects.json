@@ -1,0 +1,123 @@
+{
+  "title": "Mixed-Effects Model Results",
+  "effects": [
+    {
+      "effect": "CARTS vs SM-2",
+      "coefficient": 0.08,
+      "se": 0.0086,
+      "tValue": 9.256,
+      "pValue": 0.001,
+      "ci_lower": 0.0631,
+      "ci_upper": 0.097,
+      "significance": "**"
+    },
+    {
+      "effect": "SM-2 vs SM-2",
+      "coefficient": 0,
+      "se": 0.0086,
+      "tValue": 0,
+      "pValue": 0.2,
+      "ci_lower": -0.0169,
+      "ci_upper": 0.0169,
+      "significance": ""
+    },
+    {
+      "effect": "HLR vs SM-2",
+      "coefficient": 0.018,
+      "se": 0.0086,
+      "tValue": 2.095,
+      "pValue": 0.05,
+      "ci_lower": 0.0012,
+      "ci_upper": 0.0348,
+      "significance": ""
+    },
+    {
+      "effect": "KARL vs SM-2",
+      "coefficient": 0.0289,
+      "se": 0.0086,
+      "tValue": 3.352,
+      "pValue": 0.001,
+      "ci_lower": 0.012,
+      "ci_upper": 0.0458,
+      "significance": "**"
+    },
+    {
+      "effect": "LECTOR vs SM-2",
+      "coefficient": 0.0394,
+      "se": 0.0087,
+      "tValue": 4.532,
+      "pValue": 0.001,
+      "ci_lower": 0.0224,
+      "ci_upper": 0.0564,
+      "significance": "**"
+    },
+    {
+      "effect": "A2 vs A1",
+      "coefficient": 0.0497,
+      "se": 0.0048,
+      "tValue": 10.285,
+      "pValue": 0.001,
+      "ci_lower": 0.0403,
+      "ci_upper": 0.0592,
+      "significance": "**"
+    },
+    {
+      "effect": "B1 vs A1",
+      "coefficient": 0.1003,
+      "se": 0.0048,
+      "tValue": 20.785,
+      "pValue": 0.001,
+      "ci_lower": 0.0909,
+      "ci_upper": 0.1098,
+      "significance": "**"
+    },
+    {
+      "effect": "B2 vs A1",
+      "coefficient": 0.1474,
+      "se": 0.005,
+      "tValue": 29.739,
+      "pValue": 0.001,
+      "ci_lower": 0.1377,
+      "ci_upper": 0.1572,
+      "significance": "**"
+    },
+    {
+      "effect": "C1 vs A1",
+      "coefficient": 0.2011,
+      "se": 0.005,
+      "tValue": 40.025,
+      "pValue": 0.001,
+      "ci_lower": 0.1912,
+      "ci_upper": 0.2109,
+      "significance": "**"
+    },
+    {
+      "effect": "C2 vs A1",
+      "coefficient": 0.2532,
+      "se": 0.0052,
+      "tValue": 48.368,
+      "pValue": 0.001,
+      "ci_lower": 0.2429,
+      "ci_upper": 0.2635,
+      "significance": "**"
+    },
+    {
+      "effect": "Week Number (Linear Trend)",
+      "coefficient": 0.0191,
+      "se": 0.001,
+      "tValue": 18.605,
+      "pValue": 0.001,
+      "ci_lower": 0.0171,
+      "ci_upper": 0.0211,
+      "significance": "**"
+    }
+  ],
+  "modelFit": {
+    "logLikelihood": 47.39,
+    "aic": -74.79,
+    "bic": -21.01,
+    "marginalR2": 0.25,
+    "conditionalR2": 0.45
+  },
+  "caption": "Fixed effects from mixed-effects model: Score ~ Algorithm + Proficiency + Week + (1|Participant) + (1|Word). Reference categories: SM-2 algorithm, A1 proficiency level. Significance: *** p < 0.001, ** p < 0.01, * p < 0.05."
+}

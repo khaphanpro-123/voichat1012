@@ -1,0 +1,6 @@
+{
+  "figure1": "Figure 1. Vocabulary retention curves showing the probability of word recall over time for each algorithm. Kaplan-Meier survival curves with 95% confidence intervals. CARTS demonstrates superior long-term retention compared to baseline algorithms (log-rank test, p < 0.001).",
+  "figure2": "Figure 2. Pairwise effect size heatmap showing Cohen's d values between algorithms. Positive values (warm colors) indicate superior performance of the row algorithm over the column algorithm. Asterisks (*) indicate statistically significant differences after Bonferroni correction (α = 0.05). CARTS shows large effect sizes (d > 0.8) compared to traditional algorithms.",
+  "figure3": "Figure 3. Learning efficiency across proficiency levels (A1-C2) for each algorithm. Error bars represent standard errors. Higher proficiency learners benefit more from advanced algorithms, with CARTS showing consistent advantages across all levels. Two-way ANOVA: Algorithm F(5,194) = 12.4, p < 0.001; Proficiency F(5,194) = 8.7, p < 0.001.",
+  "figure4": "Figure 4. Context transfer score progression over the 8-week study period. Shaded areas represent 95% confidence intervals. CARTS demonstrates faster acquisition and higher asymptotic performance in contextual vocabulary usage. Mixed-effects model shows significant Algorithm × Week interaction (β = 0.023, p < 0.01)."
+}

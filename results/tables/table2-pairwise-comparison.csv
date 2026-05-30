@@ -1,0 +1,7 @@
+Algorithm,DART,CARTS,SuperMemo-2,Half-Life Regression,KARL,LECTOR
+DART,—,-0.239ns,0.550*,0.375*,0.267*,0.162ns
+CARTS,0.239ns,—,0.800*,0.622*,0.514*,0.405*
+SuperMemo-2,-0.550*,-0.800*,—,-0.180ns,-0.290*,-0.392*
+Half-Life Regression,-0.375*,-0.622*,0.180ns,—,-0.110ns,-0.214ns
+KARL,-0.267*,-0.514*,0.290*,0.110ns,—,-0.105ns
+LECTOR,-0.162ns,-0.405*,0.392*,0.214ns,0.105ns,—

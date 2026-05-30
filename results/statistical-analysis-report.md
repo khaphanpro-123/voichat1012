@@ -1,7 +1,7 @@
 
 # CARTS Research Project - Statistical Analysis Report
 
-**Analysis Date:** 2026-05-29T11:00:16.842Z
+**Analysis Date:** 2026-05-29T11:16:50.946Z
 **Dataset Size:** 200 participants
 **Study Duration:** 8 weeks
 **Analysis Version:** 1.0.0

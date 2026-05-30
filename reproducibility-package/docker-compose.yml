@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  carts-research:
+    build: .
+    container_name: carts-research-demo
+    ports:
+      - "8888:8888"  # Jupyter notebook
+      - "3000:3000"  # Web interface (if applicable)
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - DEMO_MODE=true
+      - LOG_LEVEL=info
+    command: ["npm", "run", "demo"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  jupyter:
+    build: .
+    container_name: carts-jupyter
+    ports:
+      - "8889:8888"
+    volumes:
+      - ./demo:/app/demo
+      - ./data:/app/data
+      - ./results:/app/results
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=carts-demo-token
+    command: ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+    restart: unless-stopped
+
+volumes:
+  data:
+    driver: local
+  results:
+    driver: local
+  logs:
+    driver: local
+
+networks:
+  default:
+    name: carts-research-network

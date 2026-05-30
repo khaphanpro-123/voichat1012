@@ -1,0 +1,54 @@
+{
+  "title": "Bayesian Model Comparison",
+  "models": [
+    {
+      "algorithm": "Half-Life Regression",
+      "rank": 1,
+      "bic": -465.74,
+      "bayesFactor": 0,
+      "posteriorProb": 0.865,
+      "evidence": "inconclusive"
+    },
+    {
+      "algorithm": "SuperMemo-2",
+      "rank": 2,
+      "bic": -461.98,
+      "bayesFactor": 0,
+      "posteriorProb": 0.132,
+      "evidence": "inconclusive"
+    },
+    {
+      "algorithm": "KARL",
+      "rank": 3,
+      "bic": -453.82,
+      "bayesFactor": 0.28,
+      "posteriorProb": 0.002,
+      "evidence": "inconclusive"
+    },
+    {
+      "algorithm": "CARTS",
+      "rank": 4,
+      "bic": -451.26,
+      "bayesFactor": 1,
+      "posteriorProb": 0.001,
+      "evidence": "reference"
+    },
+    {
+      "algorithm": "LECTOR",
+      "rank": 5,
+      "bic": -446.06,
+      "bayesFactor": 13.42,
+      "posteriorProb": 0,
+      "evidence": "strong"
+    },
+    {
+      "algorithm": "DART",
+      "rank": 6,
+      "bic": -437.21,
+      "bayesFactor": 1123.94,
+      "posteriorProb": 0,
+      "evidence": "decisive"
+    }
+  ],
+  "caption": "Bayesian model comparison results. BIC = Bayesian Information Criterion (lower is better). Bayes Factor compares each algorithm to CARTS. Evidence interpretation: decisive (BF > 100), very strong (30-100), strong (10-30), moderate (3-10), weak (1-3)."
+}

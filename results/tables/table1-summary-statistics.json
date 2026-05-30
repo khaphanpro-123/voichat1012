@@ -1,0 +1,90 @@
+{
+  "title": "Descriptive Statistics by Algorithm",
+  "headers": [
+    "Algorithm",
+    "N",
+    "Mean",
+    "SD",
+    "SE",
+    "95% CI Lower",
+    "95% CI Upper",
+    "Median",
+    "IQR Lower",
+    "IQR Upper"
+  ],
+  "rows": [
+    {
+      "algorithm": "DART",
+      "n": 33,
+      "mean": 0.595,
+      "sd": 0.102,
+      "se": 0.006,
+      "ci_lower": 0.582,
+      "ci_upper": 0.607,
+      "median": 0.592,
+      "iqr_lower": 0.512,
+      "iqr_upper": 0.672
+    },
+    {
+      "algorithm": "CARTS",
+      "n": 33,
+      "mean": 0.619,
+      "sd": 0.1,
+      "se": 0.006,
+      "ci_lower": 0.607,
+      "ci_upper": 0.631,
+      "median": 0.615,
+      "iqr_lower": 0.546,
+      "iqr_upper": 0.691
+    },
+    {
+      "algorithm": "SuperMemo-2",
+      "n": 34,
+      "mean": 0.539,
+      "sd": 0.1,
+      "se": 0.006,
+      "ci_lower": 0.527,
+      "ci_upper": 0.551,
+      "median": 0.537,
+      "iqr_lower": 0.469,
+      "iqr_upper": 0.611
+    },
+    {
+      "algorithm": "Half-Life Regression",
+      "n": 34,
+      "mean": 0.557,
+      "sd": 0.1,
+      "se": 0.006,
+      "ci_lower": 0.545,
+      "ci_upper": 0.569,
+      "median": 0.551,
+      "iqr_lower": 0.483,
+      "iqr_upper": 0.624
+    },
+    {
+      "algorithm": "KARL",
+      "n": 33,
+      "mean": 0.568,
+      "sd": 0.099,
+      "se": 0.006,
+      "ci_lower": 0.556,
+      "ci_upper": 0.58,
+      "median": 0.564,
+      "iqr_lower": 0.492,
+      "iqr_upper": 0.648
+    },
+    {
+      "algorithm": "LECTOR",
+      "n": 33,
+      "mean": 0.578,
+      "sd": 0.101,
+      "se": 0.006,
+      "ci_lower": 0.566,
+      "ci_upper": 0.59,
+      "median": 0.574,
+      "iqr_lower": 0.507,
+      "iqr_upper": 0.651
+    }
+  ],
+  "caption": "Descriptive statistics for overall learning performance by algorithm. N = number of participants; CI = confidence interval; IQR = interquartile range. Higher scores indicate better learning outcomes."
+}
