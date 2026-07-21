@@ -15,20 +15,43 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        await connectDB();
-        const user = (await User.findOne({ email: credentials?.email })) as any;
-        if (!user) return null;
+        try {
+          await connectDB();
+          
+          if (!credentials?.email || !credentials?.password) {
+            console.log("[Auth] Missing email or password");
+            return null;
+          }
+          
+          // Normalize email to lowercase
+          const normalizedEmail = credentials.email.trim().toLowerCase();
+          console.log("[Auth] Looking for user:", normalizedEmail);
+          
+          const user = (await User.findOne({ email: normalizedEmail })) as any;
+          if (!user) {
+            console.log("[Auth] User not found");
+            return null;
+          }
 
-        const ok = await comparePassword(credentials!.password, user.password);
-        if (!ok) return null;
+          const ok = await comparePassword(credentials.password, user.password);
+          if (!ok) {
+            console.log("[Auth] Password mismatch");
+            return null;
+          }
 
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.fullName,
-          image: user.avatar,
-          role: user.role,
-        };
+          console.log("[Auth] Login success:", user.email, "role:", user.role);
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.fullName,
+            image: user.avatar,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error("[Auth] Authorize error:", error);
+          return null;
+        }
       },
     }),
   ],

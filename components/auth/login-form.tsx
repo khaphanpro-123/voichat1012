@@ -16,38 +16,59 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await signIn("credentials", {
+      // Add 15s timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout")), 15000)
+      );
+
+      const signInPromise = signIn("credentials", {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
+      const result = await Promise.race([signInPromise, timeoutPromise]) as any;
+
+      console.log("SignIn result:", result);
+
       if (result?.error) {
         setError("Email hoặc mật khẩu không đúng");
-        setIsLoading(false);
         return;
       }
 
-      // Get session immediately to check role (no delay needed)
+      if (!result?.ok) {
+        setError("Đăng nhập thất bại");
+        return;
+      }
+
+      // Get session
       const { getSession } = await import("next-auth/react");
       const session = await getSession();
       
+      console.log("Session:", session);
+      
       if (session?.user) {
         const userRole = (session.user as any).role;
+        console.log("Redirecting to dashboard, role:", userRole);
         
-        // Redirect based on role
+        // Use window.location for hard redirect
         if (userRole === "admin") {
-          router.replace("/admin");
+          window.location.href = "/admin";
         } else {
-          router.replace("/dashboard-new");
+          window.location.href = "/dashboard-new";
         }
       } else {
-        // Fallback to user dashboard
-        router.replace("/dashboard-new");
+        console.error("No session after login");
+        window.location.href = "/dashboard-new";
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
-      setError("Lỗi kết nối");
+      if (err.message === "Timeout") {
+        setError("Kết nối chậm. Vui lòng thử lại.");
+      } else {
+        setError("Lỗi kết nối");
+      }
+    } finally {
       setIsLoading(false);
     }
   }
