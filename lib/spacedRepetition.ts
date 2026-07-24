@@ -1,5 +1,16 @@
 // lib/spacedRepetition.ts
-// Spaced Repetition System (SRS) implementation
+// Spaced Repetition System (SRS) implementation.
+// - SM-2 remains as the default fallback (backward compatible).
+// - DART (Algorithm 2, x.pdf) is exposed via calculateNextReviewDart() and is used
+//   whenever a vocabulary item has scheduler='dart' or trained weights are available.
+
+import {
+  DartWeights,
+  DEFAULT_DART_WEIGHTS,
+  dartSchedule,
+  RetrievalType,
+  buildFeatureVector,
+} from "./dart";
 
 export interface SRSData {
   easeFactor: number;
@@ -64,6 +75,49 @@ export function getReviewPriority(vocab: any): number {
   
   // Higher priority for words that are due and have low success rate
   return daysSinceLastReview * (1 - successRate) * 100;
+}
+
+/**
+ * DART-based scheduler (Algorithm 2 in x.pdf).
+ * Drop-in replacement for calculateNextReview when scheduler='dart'.
+ * The 0-5 quality is mapped to recall r ∈ {0,1} (r=1 iff quality>=3).
+ */
+export function calculateNextReviewDart(
+  input: {
+    featureVector?: number[];
+    lastRetrievalType?: RetrievalType;
+    quality: number;
+  },
+  weights: DartWeights = DEFAULT_DART_WEIGHTS,
+  tau = 0.9
+): SRSData & {
+  halfLife: number;
+  nextRetrievalType: RetrievalType;
+  predictedRecall: number;
+} {
+  const x = input.featureVector && input.featureVector.length
+    ? input.featureVector
+    : buildFeatureVector({});
+  const dPrev = (input.lastRetrievalType ?? 0) as RetrievalType;
+
+  const sched = dartSchedule(weights, x, dPrev, tau);
+
+  // Punish failure: halve the interval so wrong answers come back sooner.
+  const recall = input.quality >= 3 ? 1 : 0;
+  const interval = recall ? sched.intervalDays : Math.max(1, sched.intervalDays * 0.3);
+
+  const nextReviewDate = new Date();
+  nextReviewDate.setDate(nextReviewDate.getDate() + Math.round(interval));
+
+  return {
+    easeFactor: 2.5, // legacy field kept for compatibility
+    interval: Math.round(interval),
+    repetitions: recall ? 1 : 0,
+    nextReviewDate,
+    halfLife: sched.halfLife,
+    nextRetrievalType: sched.nextRetrievalType,
+    predictedRecall: sched.predictedRecall,
+  };
 }
 
 export function shouldPromoteToLearned(vocab: any): boolean {
