@@ -71,7 +71,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ✅ |
 | 24 | 08-27 | Bộ đề posttest 3 phần | ✅ |
 | 25 | 08-28 | Rubric + tập huấn giám khảo | ✅ |
-| 26 | 08-29 | 🔴 Pre-registration | ⬜ |
+| 26 | 08-29 | 🔴 Pre-registration | ✅ |
 | 27 | 08-30 | Vận hành pilot | ⬜ |
 | 28 | 08-31 | Diễn tập toàn hệ thống | ⬜ |
 | 29 | 09-01 | Onboarding pilot | ⬜ |
@@ -114,6 +114,64 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 26 — Pre-registration + DESIGN_FREEZE — 2026-08-04 (batch 8)
+
+**Agent đã làm:**
+
+- **`research/DESIGN_FREEZE.md`** — thêm **Mục 5: Hằng số đã khoá trong code**:
+  - 15 hằng số với giá trị, file nguồn, mô tả: `PARAPHRASE_OVERLAP_MAX=0.70`, Levenshtein-1 (word ≥5 chars), `ε=0.10`, `TOKEN_TTL_SECS=6048000`, `FORM_VERSION="posttest_v1.0"`, ICC threshold ≥0.70, rubric max=8, recall/cloze/CT/delayed word sets, 60-word bank
+  - Hướng dẫn ghi nhận sửa đổi (amendment process → `AMENDMENTS.md`)
+  - Đổi số mục cũ "Mục 5 Điều kiện đạo đức" → Mục 6
+
+- **`research/PREREGISTRATION.md`** — OSF-format pre-registration đầy đủ (NEW):
+  - Tiêu đề, tác giả, thể chế (để trống cho người dùng điền trước submission)
+  - Rationale đầy đủ (desirable difficulties theory, Bjork 1994; Kornell & Bjork 2008; HLR baseline)
+  - 3 RQ với H₀/H₁ rõ ràng:
+    - RQ1: α > 0, kiểm định LRT boundary-corrected + DeLong; cả hai phải p < .05
+    - RQ2: μ_DART > max(μ_HLR, μ_SM2), mixed-effects ANCOVA + Holm–Bonferroni
+    - RQ3: CT score gate: ICC(2,1) ≥ 0.70 trước khi dùng LLM làm primary
+  - Thiết kế thực nghiệm, tiêu chí chọn/loại trừ, N=200
+  - Power analysis minh bạch: thừa nhận N=200 có thể thiếu power cho d < 0.55 (RQ2)
+  - Kế hoạch phân tích chi tiết: CV theo userId, ITT + PP sensitivity, missing data MI
+  - 13 pre-registered constants (bảng có source)
+  - Timeline + Disclosure of Deviations policy
+  - 7 tài liệu tham khảo
+
+- **`research/calibration_practice_items.json`** — 5 practice items expert-scored (NEW):
+  - Target word: *contribute*, scenario: scholarship letter
+  - calib_001: form=0 (typo destroys identity) → total 1/8
+  - calib_002: form=2 nhưng context fit=0, meaning=1 (vague) → total 4/8
+  - calib_003: perfect 8/8 — top anchor
+  - calib_004: use=1 (wrong preposition "in" thay vì "to") → total 6/8
+  - calib_005: meaning=1 (học viên nhờ câu xung quanh, không tự demonstrate) → total 5/8
+  - Mỗi item có `expertRationale` per dimension + ghi chú khó/dễ cho rater
+
+**Files thay đổi / tạo mới:**
+
+| File | Thay đổi |
+|---|---|
+| `research/DESIGN_FREEZE.md` | Thêm Mục 5 pre-registered constants, đánh số lại Mục 6 |
+| `research/PREREGISTRATION.md` | NEW — OSF pre-registration draft đầy đủ |
+| `research/calibration_practice_items.json` | NEW — 5 practice items với expert scores |
+
+**Kết quả:**
+
+| Chỉ số | Giá trị |
+|---|---|
+| H4 readiness | `PREREGISTRATION.md` sẵn sàng để copy vào OSF sau khi H1 (IRB) duyệt |
+| H6 readiness | `calibration_practice_items.json` sẵn sàng cho buổi calibration với rater |
+| DESIGN_FREEZE.md | Đầy đủ để ký (H2) — chỉ cần điền tên hướng dẫn + chữ ký |
+
+**Cần làm (CHỈ BẠN):**
+
+- **H1 IRB**: Nộp hồ sơ đạo đức nghiên cứu — đường găng dài nhất. Dùng `PREREGISTRATION.md` làm phụ lục.
+- **H2**: In `DESIGN_FREEZE.md`, điền tên hướng dẫn, ký. Sau H1.
+- **H4**: Sau IRB duyệt → đăng ký trên OSF/AsPredicted, paste nội dung `PREREGISTRATION.md`.
+
+**Ngày mai:** Ngày 27 — Pilot operation system (enrollment flow end-to-end, pilot word validation automation).
+
+---
 
 ### Ngày 25 — Rubric + judge calibration — 2026-08-04 (batch 7)
 

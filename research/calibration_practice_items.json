@@ -1,0 +1,109 @@
+{
+  "_meta": {
+    "description": "5 practice items for human rater calibration (DART-RCT Judge Calibration Guide).",
+    "targetWord": "contribute",
+    "scenario": "A student is writing to a scholarship committee explaining how they have given back to their community.",
+    "rubric": {
+      "form": "Correct spelling and morphological form (0–2)",
+      "meaning": "Correct semantic sense clearly demonstrated (0–2)",
+      "use": "Grammatically and collocationally natural (0–2)",
+      "contextFit": "Response specifically addresses the scenario (0–2)"
+    },
+    "maxScore": 8,
+    "version": "v1.0",
+    "frozenDate": "2026-08-04",
+    "note": "Expert scores are consensus scores agreed by PI. Do NOT reveal expert scores to raters before calibration session."
+  },
+  "items": [
+    {
+      "itemId": "calib_001",
+      "learnerResponse": "I contribt every week to the school.",
+      "expertScores": {
+        "form": 0,
+        "meaning": 1,
+        "use": 0,
+        "contextFit": 0
+      },
+      "expertTotal": 1,
+      "expertRationale": {
+        "form": "Score 0 — 'contribt' is misspelled past recognition; target word identity is lost.",
+        "meaning": "Score 1 — 'contribute to the school' implies the correct sense approximately, but too vague to confirm precise semantic understanding.",
+        "use": "Score 0 — 'contribt every week to the school' is ungrammatical (misspelling aside, no natural collocation here).",
+        "contextFit": "Score 0 — 'to the school' does not engage with the scholarship committee scenario at all."
+      },
+      "difficulty": "easy — clear 0 on form drives most dimensions"
+    },
+    {
+      "itemId": "calib_002",
+      "learnerResponse": "I contribute.",
+      "expertScores": {
+        "form": 2,
+        "meaning": 1,
+        "use": 1,
+        "contextFit": 0
+      },
+      "expertTotal": 4,
+      "expertRationale": {
+        "form": "Score 2 — correct spelling and base form.",
+        "meaning": "Score 1 — target word is present but used in isolation; cannot confirm the learner understands the 'giving to help a goal' sense.",
+        "use": "Score 1 — grammatically a complete sentence but severely elliptical; a native speaker would not stop here; borderline 0/1, scored 1 because technically grammatical.",
+        "contextFit": "Score 0 — completely generic; no mention of community, scholarship, or any scenario detail."
+      },
+      "difficulty": "medium — tricky because form is perfect but everything else suffers from vagueness"
+    },
+    {
+      "itemId": "calib_003",
+      "learnerResponse": "As a volunteer at my local library, I have contributed over 150 hours helping primary school children learn to read, which I believe directly reflects the community values the scholarship committee prioritises.",
+      "expertScores": {
+        "form": 2,
+        "meaning": 2,
+        "use": 2,
+        "contextFit": 2
+      },
+      "expertTotal": 8,
+      "expertRationale": {
+        "form": "Score 2 — 'contributed' is the correct past participle for the present perfect; correct morphological form.",
+        "meaning": "Score 2 — 'contributed over 150 hours helping children' clearly demonstrates the 'giving effort/time towards a goal' sense.",
+        "use": "Score 2 — 'contributed [time] [gerund complement]' is natural; collocation with 'over 150 hours' is native-like.",
+        "contextFit": "Score 2 — directly addresses scholarship committee, community involvement, and specific volunteer role."
+      },
+      "difficulty": "easy — near-perfect response; calibrates the top anchor"
+    },
+    {
+      "itemId": "calib_004",
+      "learnerResponse": "I have contributed in our school environment by helping with the clean-up events and donating supplies.",
+      "expertScores": {
+        "form": 2,
+        "meaning": 2,
+        "use": 1,
+        "contextFit": 1
+      },
+      "expertTotal": 6,
+      "expertRationale": {
+        "form": "Score 2 — 'contributed' is correct past participle.",
+        "meaning": "Score 2 — 'helping with clean-up events and donating supplies' clearly shows the 'giving to help' sense.",
+        "use": "Score 1 — 'contributed in our school environment' is non-standard; the expected preposition is 'to' (e.g., 'contributed to our school community'). Minor but clear collocation error.",
+        "contextFit": "Score 1 — mentions school contribution but does not address the scholarship committee; connection to scenario is superficial."
+      },
+      "difficulty": "hard — distinguishing use=1 (preposition error) from use=2 is where raters often disagree"
+    },
+    {
+      "itemId": "calib_005",
+      "learnerResponse": "Many people contribute to society in many ways. For example, some contribute money and some contribute time. I also want to contribute.",
+      "expertScores": {
+        "form": 2,
+        "meaning": 1,
+        "use": 2,
+        "contextFit": 0
+      },
+      "expertTotal": 5,
+      "expertRationale": {
+        "form": "Score 2 — 'contribute' and 'contributed' all correctly spelled and inflected throughout.",
+        "meaning": "Score 1 — the surrounding sentences define the word (money, time) but the learner's own use ('I also want to contribute') is vague; no demonstration of precise sense by the learner themselves.",
+        "use": "Score 2 — all three instances are grammatically and collocationally natural.",
+        "contextFit": "Score 0 — response is a generic essay introduction about society; zero engagement with the scholarship or community scenario."
+      },
+      "difficulty": "hard — raters must distinguish between the surrounding text (which is grammatical) and the learner's own demonstration of meaning. Common error: giving meaning=2 because the word appears in correct contexts copied from training sentences."
+    }
+  ]
+}
