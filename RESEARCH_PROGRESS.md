@@ -68,7 +68,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 20 | 08-23 | Dashboard nghiên cứu viên | ✅ |
 | 21 | 08-24 | Tổng kết tuần + tự dùng thử | ✅ |
 | 22 | 08-25 | Consent + pretest CEFR | ✅ |
-| 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ⬜ |
+| 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ✅ |
 | 24 | 08-27 | Bộ đề posttest 3 phần | ⬜ |
 | 25 | 08-28 | Rubric + tập huấn giám khảo | ⬜ |
 | 26 | 08-29 | 🔴 Pre-registration | ⬜ |
@@ -114,6 +114,46 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 23 — Target word list + context pool — 2026-08-04 (batch 5 tiếp)
+
+**Agent đã làm:**
+
+- **`lib/wordBank.ts`** — 60 từ mục tiêu đầy đủ metadata:
+  - 30 B1 + 30 B2 (từ Academic Word List / General Service List)
+  - Mỗi từ có: `id`, `word`, `cefrBand`, `partOfSpeech`, `definition` (đúng), `viDefinition` (tiếng Việt), `distractors[3]` (3 lựa chọn sai cho MCQ), `sentences[2+]` (câu cho Cloze + Paraphrase), `collocations[]` (gợi ý cho ConstrainedGen)
+  - Lemma field cho từ bất quy tắc (dùng cho ConstrainedGen lemma check)
+  - `pilotStatus` + `pilotRemovalReason` cho việc loại từ sau H5 pilot testing
+  - Helpers: `getWordById`, `getWordByString`, `getWordsByBand`, `getActiveWords`, `toPublicWordEntry`
+
+- **`app/api/research/words/route.ts`** — GET endpoint, auth Bearer token hoặc admin session:
+  - `?band=B1|B2` filter theo band
+  - `?ids=w_001,w_002,...` lấy danh sách cụ thể
+  - Trả `toPublicWordEntry[]` (không leak `pilotRemovalReason`)
+
+- **`app/api/research/words/[wordId]/route.ts`** — GET single word, auth-gated
+
+- **`research/validate_word_bank.py`** — 8 checks structural:
+  1. Tổng số đúng 60
+  2. ID unique
+  3. Word string unique
+  4. Đúng 3 distractors mỗi từ
+  5. Definition không trùng với distractor
+  6. Mỗi câu chứa từ mục tiêu (startswith 5 chars fallback)
+  7. ≥2 sentences mỗi từ
+  8. B1/B2 balance 30/30
+  - **Kết quả: 305 checks PASS, 0 issues** ✅
+
+**Bảng từ (tóm tắt):**
+
+| Band | Từ đại diện |
+|---|---|
+| B1 (30) | significant, apparent, sufficient, accurate, consequence, maintain, establish, identify, promote, achieve, indicate, analyze, evaluate, demonstrate, interpret, require, assume, consider, generate, impact, contribute, resolve, obtain, relevant, valid, complex, distribute, predict, compare, respond |
+| B2 (30) | ambiguous, scrutinize, alleviate, coherent, impede, prolific, meticulous, profound, deteriorate, facilitate, inevitable, inherent, integrate, perceive, perspective, subsequent, assess, constitute, derive, enhance, justify, modify, implicit, contend, reinforce, ambivalent, undermine, unprecedented, hypothesis, implication |
+
+**Ngày mai:** Ngày 24 — Bộ đề posttest 3 phần (recall, cloze, context transfer).
+
+---
 
 ### Ngày 22 — HMAC auth + consent + pretest CEFR — 2026-08-04 (batch 5)
 
