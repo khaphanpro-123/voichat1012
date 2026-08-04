@@ -60,11 +60,11 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 12 | 08-15 | Cache task + fallback provider | ⬜ |
 | 13 | 08-16 | Export + kiểm tra chất lượng dữ liệu | ✅ |
 | 14 | 08-17 | Đệm + tổng kết tuần | ⬜ |
-| 15 | 08-18 | Khung `RetrievalTask` + đo thời gian chuẩn | ⬜ |
-| 16 | 08-19 | d=0 MCQ, d=1 Cloze | ⬜ |
-| 17 | 08-20 | d=2 Constrained-gen, d=3 Paraphrase | ⬜ |
-| 18 | 08-21 | Bộ chạy phiên học | ⬜ |
-| 19 | 08-22 | 🔴 Làm mù điều kiện thí nghiệm | ⬜ |
+| 15 | 08-18 | Khung `RetrievalTask` + đo thời gian chuẩn | ✅ |
+| 16 | 08-19 | d=0 MCQ, d=1 Cloze | ✅ |
+| 17 | 08-20 | d=2 Constrained-gen, d=3 Paraphrase | ✅ |
+| 18 | 08-21 | Bộ chạy phiên học | ✅ |
+| 19 | 08-22 | 🔴 Làm mù điều kiện thí nghiệm | ✅ |
 | 20 | 08-23 | Dashboard nghiên cứu viên | ⬜ |
 | 21 | 08-24 | Tổng kết tuần + tự dùng thử | ⬜ |
 | 22 | 08-25 | Consent + pretest CEFR | ⬜ |
@@ -114,6 +114,65 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Fast-forward Ngày 15–19 — 2026-08-04 (batch 3, backend only)
+
+**Agent đã làm:**
+
+- **Ngày 15:** `lib/retrievalTasks/types.ts` (RetrievalType 0-3, task envelope, `PublicTask`/`toPublicTask` để không leak đáp án qua wire) + `lib/retrievalTasks/timing.ts` (định nghĩa `elapsedMs` chốt cho paper, MIN/MAX plausible bounds, `isPlausibleElapsed`, `clampElapsed`).
+- **Ngày 16:** `lib/retrievalTasks/mcq.ts` (deterministic seeded shuffle Fisher-Yates, phát hiện distractor trùng đáp án) + `lib/retrievalTasks/cloze.ts` (fuzzy scoring: case-insensitive, accepted variants, Levenshtein-1 typo tolerance chỉ cho word ≥ 5 ký tự — pre-register threshold này).
+- **Ngày 17:** `lib/retrievalTasks/constrainedGen.ts` (auto-check word count + lemma + echo detection, trả `needsJudge=true` cho LLM async) + `lib/retrievalTasks/paraphrase.ts` (Jaccard overlap ≤ 0.70 với source — chống copy-paste, minWords/maxWords, gate CEFR ≥ B1 ở session runner).
+- **Ngày 18:** `lib/retrievalTasks/session.ts` — `pickTaskType()` chính sách chung cho HLR/DART (không confound scheduler với task type), fail-closed nếu input malformed, `epsilonExplore` cho ε=0.10 uniform sampling (Ngày 38 fix identifiability).
+- **Ngày 19:** `lib/experimentBlinding.ts` — `toOpaque()` map `sm2/hlr/dart` → `A/B/C`, `sanitiseForClient()` strip 8 telltale keys recursively, `sanitiseJudgePrompt()` xoá arm name khỏi prompt LLM-Judge, `detectLeaks()` để test blinding. **Áp dụng ngay vào `/api/research/enrol`**: giờ trả `armLabel: "A"/"B"/"C"` thay vì `condition: "dart"`.
+
+**Kết quả:**
+
+| Chỉ số | Giá trị | Ghi chú |
+|---|---|---|
+| File TS mới | 8 (types, timing, mcq, cloze, constrainedGen, paraphrase, session, experimentBlinding) | ~700 LOC tổng |
+| Test unit | 0 | 🚨 chưa viết — Ngày 21 phải bù |
+| Integration test | 0 | Cần MongoDB + `.env.research` |
+| Blinding applied | 1/2 endpoint (enrol) | `/api/research/review` chưa strip — batch sau |
+
+**Phát hiện / cảnh báo:**
+
+- ⚠️ **Chưa có test unit** cho 8 file mới. Bug scoring âm thầm sai (VD Levenshtein) sẽ vào dữ liệu thật. Ngày 21 (đệm tuần) BẮT BUỘC viết Jest tests, ít nhất cho `scoreMCQ`, `scoreCloze`, `scoreParaphrase` (Jaccard).
+- ⚠️ **`/api/research/review` chưa sanitise output** — vẫn trả `weightsVersion` raw, chưa dùng `toOpaque`. Nếu tất cả participant thấy `default` cho tới lần train đầu tiên rồi đột nhiên thấy sha 12 hex, họ biết mình vừa được đổi weights. Fix ở batch sau.
+- Blinding threshold `PARAPHRASE_OVERLAP_MAX = 0.70` và Levenshtein=1 cho word ≥ 5 chars đều là **pre-registration items** — không được đổi sau khi thấy data.
+- Session policy `pickTaskType()` là **chính sách chung**, không phải phần scheduler được so sánh. Confound sẽ xảy ra nếu ai đó "cải tiến" nó riêng cho DART.
+
+**🔴 Việc BẠN phải làm (còn nguyên):**
+
+1. H1 IRB — vẫn ⬜.
+2. H2 ký DESIGN_FREEZE — vẫn ⬜.
+3. H3 `.env.research` — vẫn ⬜.
+4. Chạy `npx tsc --noEmit && npm run build` sau khi push để xác nhận 8 file mới không phá build.
+
+**Ngày mai:** Ngày 20 — bảng điều khiển nghiên cứu viên (`app/admin/research/page.tsx`), sau đó Ngày 21 đệm bằng cách viết Jest test bù cho 8 file này.
+
+---
+
+### Fix code-review — 2026-08-04 (batch 2b)
+
+Sub-agent review batch 2 tìm ra 3 bug + 3 risk. Fix ngay 3 bug + 2 risk:
+
+**Bugs (must-fix, đã sửa):**
+
+1. **`weightsVersion` stamped at write-time, không phải decision-time** (`review/route.ts`) — Scheduler quyết định tại `scheduledAt`, client submit sau vài giây/phút/giờ. Nếu retraining lands giữa hai điểm, row bị gắn nhầm weights → phá audit trail. **Fix:** thêm field bắt buộc `servedWeightsVersion` trong request body (client echo từ `/api/dart/schedule`). Server log cái đó làm truth, đồng thời trả `currentWeightsVersion` + `weightsDriftDetected` để phát hiện drift. Thêm validator `isValidWeightsVersion()` chống log injection.
+2. **UTC day bucket sai cho study VN** (`dq_check.py:141`) — `createdAt[:10]` slice UTC ISO, phiên sáng ICT (UTC+7) bị split qua 2 UTC dates → over-count `days_active` → over-report compliance. **Fix:** thêm `to_ict_date()`, convert UTC → Asia/Ho_Chi_Minh trước khi slice.
+3. **Enrol race-loser thiếu assignment** (`enrol/route.ts:109-113`) — E11000 handler trả `{success, deduplicated, raceCondition}` nhưng thiếu `condition`, client không render được nhánh. **Fix:** re-fetch winner qua `findOne` và trả lại `condition/stratum`. Trường hợp không findable (secondary replica lag), trả 409 retryable.
+
+**Risks (đã sửa 2/3):**
+
+- **Risk 5 (2 sha cache split-brain):** `researchVersion.ts` giờ gọi `dartWeights.getDartWeightsMeta()` để lấy file source+mtime rồi hash — single source of truth. Export thêm `invalidateResearchVersion()` reset cả 2 cache cùng lúc.
+- **Risk 6 (Δ bridge across regimes):** `prev` lookup trong `review/route.ts` thêm filter `condition` — nếu người có 2 condition (protocol violation) mỗi cái tính Δ riêng.
+- **Risk 4 (auth chỉ header `x-participant-code`):** CHƯA sửa. Cần bind participantCode vào signed session (NextAuth JWT hoặc HMAC). Để lại — sẽ làm ở Ngày 22 (consent + pretest flow) khi làm auth tổng thể.
+
+**Files sửa:** `lib/researchVersion.ts`, `app/api/research/review/route.ts`, `app/api/research/enrol/route.ts`, `research/dq_check.py`.
+
+**Ngày mai:** Ngày 15 — RetrievalTask framework + đo thời gian chuẩn, đồng thời làm auth cho `/api/research/*` để đóng risk 4.
+
+---
 
 ### Fast-forward Ngày 8, 9, 10, 13 — 2026-08-04 (batch 2)
 

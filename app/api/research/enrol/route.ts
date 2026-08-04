@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Participant from "@/app/models/Participant";
 import { assignCondition, LIVE_ARMS } from "@/lib/experimentAssignment";
+import { toOpaque } from "@/lib/experimentBlinding";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
         success: true,
         deduplicated: true,
         participantCode: body.participantCode,
-        condition: (existing as any).condition,
+        armLabel: toOpaque((existing as any).condition),  // blinded: "A"/"B"/"C"
         stratum: (existing as any).stratum,
       });
     }
@@ -102,14 +103,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       participantCode: doc.participantCode,
-      condition: doc.condition,
+      armLabel: toOpaque(doc.condition),   // blinded — never send real condition
       stratum: doc.stratum,
       enrolledAt: doc.enrolledAt,
     });
   } catch (err: any) {
-    // Race on unique participantCode
+    // Race on unique participantCode: re-fetch the winner's assignment so the
+    // race-loser client still gets its condition — otherwise the frontend can't
+    // render the arm and the participant is silently stuck.
     if (err?.code === 11000) {
-      return NextResponse.json({ success: true, deduplicated: true, raceCondition: true });
+      const winner = await Participant.findOne({ participantCode: body.participantCode }).lean();
+      if (winner) {
+        return NextResponse.json({
+          success: true,
+          deduplicated: true,
+          raceCondition: true,
+          participantCode: body.participantCode,
+          armLabel: toOpaque((winner as any).condition),
+          stratum: (winner as any).stratum,
+        });
+      }
+      // 11000 without a findable row means the race winner's write hasn't
+      // committed yet on this secondary; instruct client to retry.
+      return NextResponse.json(
+        { success: false, retryable: true, message: "Race in progress, retry" },
+        { status: 409 }
+      );
     }
     console.error("/api/research/enrol error:", err);
     return bad("Server error", 500);

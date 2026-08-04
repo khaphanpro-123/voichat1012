@@ -24,7 +24,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import ReviewLog from "@/app/models/ReviewLog";
 import Participant from "@/app/models/Participant";
-import { getVersionStamp, hashPrompt } from "@/lib/researchVersion";
+import { SCHEDULER_VERSION, hashPrompt, isValidWeightsVersion, getWeightsVersion } from "@/lib/researchVersion";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,13 @@ interface ReviewRequest {
   retrievalType: 0 | 1 | 2 | 3;  // d_i
   featureVector: number[];       // x_i (client sends what scheduler saw)
   taskPrompt?: string;           // full prompt shown to learner (hashed only)
+
+  // Provenance from the decision that produced this task.
+  // The client MUST echo the weightsVersion that /api/dart/schedule handed it,
+  // so the row is attributed to the exact weights that served it — not to
+  // whatever weights happen to be loaded at the moment the response arrives
+  // (which can differ if retraining lands between decision and submit).
+  servedWeightsVersion: string;
 
   // Timing (from client, we log but don't trust for Δ)
   scheduledAt: string;           // ISO
@@ -72,7 +79,8 @@ export async function POST(req: NextRequest) {
   // Required-field validation up-front — better a 400 now than a Mongo error later.
   const required = [
     "clientEventId", "sessionId", "vocabularyId", "word",
-    "retrievalType", "featureVector", "scheduledAt", "servedAt",
+    "retrievalType", "featureVector", "servedWeightsVersion",
+    "scheduledAt", "servedAt",
     "elapsedMs", "recall", "responseTimeMs",
   ] as const;
   for (const k of required) {
@@ -81,6 +89,9 @@ export async function POST(req: NextRequest) {
   if (![0, 1, 2, 3].includes(body.retrievalType)) return badRequest("retrievalType must be 0..3");
   if (![0, 1].includes(body.recall)) return badRequest("recall must be 0 or 1");
   if (!Array.isArray(body.featureVector)) return badRequest("featureVector must be array");
+  if (!isValidWeightsVersion(body.servedWeightsVersion)) {
+    return badRequest("servedWeightsVersion must be 'default' or 12 hex chars");
+  }
 
   try {
     await connectDB();
@@ -97,10 +108,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Compute serverDeltaDays from the previous ReviewLog for this
-    //    (participant, vocabulary). Do NOT trust the client's deltaDays.
+    //    (participant, vocabulary, condition). Do NOT trust client's deltaDays.
+    //    Filtering by condition prevents Δ from bridging across regimes if a
+    //    participant's condition ever changes (protocol violation but possible
+    //    during pilot); each condition maintains its own review history.
     const prev = await ReviewLog.findOne({
       userId: participantCode,
       vocabularyId: body.vocabularyId,
+      condition: (participant as any).condition,
     })
       .sort({ createdAt: -1 })
       .select({ createdAt: 1 })
@@ -110,8 +125,11 @@ export async function POST(req: NextRequest) {
       ? Math.max(0, (now.getTime() - new Date((prev as any).createdAt).getTime()) / (1000 * 60 * 60 * 24))
       : 0;
 
-    // 4. Version stamp — attach the exact weights snapshot that served this row.
-    const stamp = getVersionStamp();
+    // 4. Version stamp — the client echoes the weightsVersion that /api/dart/schedule
+    //    handed it at decision time; that is the truth for attribution. We also log
+    //    the CURRENT server weightsVersion so we can detect drift (rows where the
+    //    scheduler weights changed between decide and submit).
+    const currentWeightsVersion = getWeightsVersion();
     const taskPromptHash = body.taskPrompt ? hashPrompt(body.taskPrompt) : undefined;
 
     const doc = await ReviewLog.create({
@@ -130,8 +148,8 @@ export async function POST(req: NextRequest) {
       clientEventId: body.clientEventId,
       sessionId: body.sessionId,
       condition: (participant as any).condition,
-      schedulerVersion: stamp.schedulerVersion,
-      weightsVersion: stamp.weightsVersion,
+      schedulerVersion: SCHEDULER_VERSION,
+      weightsVersion: body.servedWeightsVersion,   // decision-time — trusted for audit
       scheduledAt: new Date(body.scheduledAt),
       servedAt: new Date(body.servedAt),
       elapsedMs: body.elapsedMs,
@@ -139,6 +157,8 @@ export async function POST(req: NextRequest) {
       taskPromptHash,
       isCatchUp: body.isCatchUp ?? false,
     });
+
+    const drift = body.servedWeightsVersion !== currentWeightsVersion;
 
     // 5. Update participant activity counters (fire-and-forget, best effort).
     Participant.updateOne(
@@ -153,7 +173,9 @@ export async function POST(req: NextRequest) {
       success: true,
       id: doc._id,
       serverDeltaDays,
-      weightsVersion: stamp.weightsVersion,
+      weightsVersion: body.servedWeightsVersion,
+      currentWeightsVersion,
+      weightsDriftDetected: drift,
     });
   } catch (err: any) {
     // Duplicate clientEventId races through the unique index — treat as idempotent success.

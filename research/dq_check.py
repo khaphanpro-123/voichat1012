@@ -29,6 +29,28 @@ import json
 import os
 import sys
 from collections import Counter, defaultdict
+from datetime import datetime, timedelta, timezone
+
+# Study runs in Vietnam. Bucketing "days_active" by UTC would split ICT-morning
+# sessions across two calendar days and over-count. Convert createdAt (which is
+# UTC ISO from Mongo) to ICT before slicing the date.
+ICT = timezone(timedelta(hours=7))
+
+
+def to_ict_date(iso_str: str) -> str:
+    """Return YYYY-MM-DD in Asia/Ho_Chi_Minh for a UTC ISO timestamp."""
+    if not iso_str:
+        return ""
+    # Handle both trailing 'Z' and offset formats
+    s = iso_str.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        # Best effort: slice first 10 chars if unparseable
+        return iso_str[:10]
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(ICT).date().isoformat()
 
 REQUIRED_REVIEW_FIELDS = [
     "participant", "condition", "retrievalType", "recall",
@@ -138,8 +160,9 @@ def main():
         days_by_p = defaultdict(set)
         for r in reviews:
             if r.get("createdAt"):
-                day = r["createdAt"][:10]  # YYYY-MM-DD
-                days_by_p[r["participant"]].add(day)
+                day = to_ict_date(r["createdAt"])  # ICT calendar day (VN study)
+                if day:
+                    days_by_p[r["participant"]].add(day)
         threshold = args.study_weeks * 7 * args.min_compliance
         compliant = sum(1 for days in days_by_p.values() if len(days) >= threshold)
         total_p = len(days_by_p)
