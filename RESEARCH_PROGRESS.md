@@ -65,8 +65,8 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 17 | 08-20 | d=2 Constrained-gen, d=3 Paraphrase | ✅ |
 | 18 | 08-21 | Bộ chạy phiên học | ✅ |
 | 19 | 08-22 | 🔴 Làm mù điều kiện thí nghiệm | ✅ |
-| 20 | 08-23 | Dashboard nghiên cứu viên | ⬜ |
-| 21 | 08-24 | Tổng kết tuần + tự dùng thử | ⬜ |
+| 20 | 08-23 | Dashboard nghiên cứu viên | ✅ |
+| 21 | 08-24 | Tổng kết tuần + tự dùng thử | ✅ |
 | 22 | 08-25 | Consent + pretest CEFR | ⬜ |
 | 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ⬜ |
 | 24 | 08-27 | Bộ đề posttest 3 phần | ⬜ |
@@ -114,6 +114,44 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Fast-forward Ngày 20–21 + fix blinding leak — 2026-08-04 (batch 4)
+
+**Agent đã làm:**
+
+- **Fix leak batch 3:** `/api/research/review` không còn trả `weightsVersion`/`currentWeightsVersion`/`weightsDriftDetected` cho client. Drift chỉ log `console.warn` server-side. Trước fix: participant thấy "default" nhiều tuần rồi đột nhiên sha 12 hex → biết được vừa promote sang trained weights → phá blinding.
+- **Ngày 20 dashboard:**
+  - `app/api/admin/research/overview/route.ts`: aggregate 5 mảng — per-arm enrolment/dropout/active7d, stalled (≥5 ngày im), retrievalType balance với warning `at_least_one_d_below_10pct`, weightsVersion coverage, per-arm reviews 7 ngày. Server-only, dùng thẳng condition thật (không blinding vì cho researcher xem).
+  - `app/admin/research/page.tsx`: server component, timezone `Asia/Ho_Chi_Minh`, cảnh báo đỏ nếu bất kỳ d nào <10%, highlight vàng nếu compliance <70%, list 50 người sắp bỏ cuộc để dễ nhắc. Bảo vệ bởi middleware admin gate có sẵn.
+- **Ngày 21 tests:**
+  - `__tests__/retrievalTasks.test.ts` — 29 test: MCQ (throw distractor sai, deterministic seed, toPublicTask strip đáp án), Cloze (case-insensitive/variant/Levenshtein-1 chỉ cho ≥5 chars, reject 2 edits, strip trailing punct), ConstrainedGen (maxWords, lemma check, echo detection, inflection), Paraphrase (min/max words, Jaccard >0.70 = copy), timing (clamp bounds).
+  - `__tests__/experimentBlinding.test.ts` — 11 test: opaque mapping A/B/C hai chiều, sanitiseForClient drop keys ở mọi depth + array, sanitiseJudgePrompt case-insensitive, detectLeaks phát hiện key + value.
+  - **Chạy trong sandbox: 40/40 PASS.**
+
+**Kết quả:**
+
+| Chỉ số | Giá trị | Ghi chú |
+|---|---|---|
+| Test suites mới | 2 (retrievalTasks, experimentBlinding) | 40/40 pass |
+| Coverage `lib/retrievalTasks/*` | ~branch scoring 100% | build có `collectCoverageFrom` cần thêm — bạn tự sửa jest.config nếu muốn track |
+| File TS mới | 2 (dashboard page + overview endpoint) | tsc pass trên overview endpoint, page.tsx cần Next.js context |
+
+**Phát hiện:**
+
+- ⚠️ `sanitiseForClient` chỉ redact khi **toàn bộ string** == telltale value. Nếu route handler nhét arm name vào chuỗi dài (VD `"you are on dart"`) sẽ KHÔNG bị bắt. Test file có case này rõ ràng. Type system không catch — code review là phòng tuyến duy nhất.
+- Chưa có test cho `session.ts` (pickTaskType policy) — thêm ở batch sau nếu có bug.
+- Dashboard chưa có LLM cost/day (plan yêu cầu) — cần track chi phí ở `lib/aiProvider.ts` trước.
+
+**🔴 Việc BẠN phải làm (còn nguyên):**
+
+1. H1 IRB — vẫn ⬜, đã trễ 20 ngày kế hoạch nếu chưa nộp.
+2. H2 ký DESIGN_FREEZE — vẫn ⬜.
+3. H3 `.env.research` — vẫn ⬜, đang chặn Ngày 6/11/12 và integration test.
+4. Chạy `npx tsc --noEmit && npm run build && npm test` sau khi push.
+
+**Ngày mai:** Ngày 22 — auth cho `/api/research/*` (risk 4 từ code review) + consent + pretest CEFR flow.
+
+---
 
 ### Fast-forward Ngày 15–19 — 2026-08-04 (batch 3, backend only)
 

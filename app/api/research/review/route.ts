@@ -169,13 +169,23 @@ export async function POST(req: NextRequest) {
       }
     ).catch((e) => console.warn("Participant counter update failed:", e));
 
+    // 6. Server-side observability: log drift for the researcher dashboard.
+    //    Do NOT return drift/weightsVersion to the client — a participant who
+    //    sees `default` for weeks then a 12-hex sha knows they were promoted
+    //    to trained weights, breaking blinding.
+    if (drift) {
+      console.warn(
+        `[research] weights drift: participant=${participantCode} ` +
+          `served=${body.servedWeightsVersion} current=${currentWeightsVersion}`
+      );
+    }
+
     return NextResponse.json({
       success: true,
       id: doc._id,
+      // serverDeltaDays is informational and does NOT leak the arm — it's
+      // computed from the participant's own history, identical across arms.
       serverDeltaDays,
-      weightsVersion: body.servedWeightsVersion,
-      currentWeightsVersion,
-      weightsDriftDetected: drift,
     });
   } catch (err: any) {
     // Duplicate clientEventId races through the unique index — treat as idempotent success.
