@@ -70,7 +70,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 22 | 08-25 | Consent + pretest CEFR | ✅ |
 | 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ✅ |
 | 24 | 08-27 | Bộ đề posttest 3 phần | ✅ |
-| 25 | 08-28 | Rubric + tập huấn giám khảo | ⬜ |
+| 25 | 08-28 | Rubric + tập huấn giám khảo | ✅ |
 | 26 | 08-29 | 🔴 Pre-registration | ⬜ |
 | 27 | 08-30 | Vận hành pilot | ⬜ |
 | 28 | 08-31 | Diễn tập toàn hệ thống | ⬜ |
@@ -114,6 +114,63 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 25 — Rubric + judge calibration — 2026-08-04 (batch 7)
+
+**Agent đã làm:**
+
+- **`lib/judgeRubric.ts`** — 4 chiều rubric (Nation 2001, Read 2000):
+  - `RUBRIC_CRITERIA`: tiêu chí đầy đủ 4 chiều mỗi level 0/1/2 kèm mô tả
+  - `isValidRubricScores()`: validate tất cả fields trong range 0-2
+  - `sumRubric()`, `maxRubricScore()` (6 không có contextFit / 8 có), `normalizeRubricScore()` → 0-100
+  - `parseLLMJudgeOutput(raw, expectContextFit)`: tìm JSON trong bất kỳ đâu trong output, coerce strings→numbers, cap rationale 1000 chars, return `{ valid, parseError }` thay vì throw
+
+- **`lib/llmJudge.ts`** — LLM judge system:
+  - `buildJudgePrompt()`: prompt structured 4-section (task, word+definition, response, rubric), blind via `sanitiseJudgePrompt()` trước khi gửi
+  - `runLLMJudge(input)`: gọi `callAI` với `temperature=0` (deterministic), prefer OpenAI → Groq fallback, record `judgeId = "llm:<model-slug>"` để audit LLM version
+  - Return `LLMJudgeResult { judgeId, parsed, rawOutput, durationMs, callSucceeded }`
+  - Fail-safe: mọi lỗi (network, parse) return `valid=false`, không throw
+
+- **`app/api/admin/research/judge/route.ts`** — admin endpoint (admin gate middleware):
+  - `GET`: list pending CT items chưa có LLM JudgeScore
+  - `POST { testResultId, itemId }`: grade 1 item, save JudgeScore, update TestResult.judgeScoreIds
+  - `POST { batch: true }`: grade tất cả pending items (gọi `runLLMJudge` tuần tự)
+
+- **`research/CALIBRATION_GUIDE.md`** — human rater guide đầy đủ:
+  - 4 dimensions với anchor examples (target word: *contribute*)
+  - Decision rules edge cases (form=1 vs form=0, generic vs specific contextFit)
+  - Calibration process: 5 practice items → calibration session → ICC check
+  - Common errors to avoid (holistic bias, L1 transfer penalty)
+  - ICC threshold: ≥0.70 required trước khi dùng LLM score làm primary
+
+- **`__tests__/judgeRubric.test.ts`** — **26/26 PASS**:
+  - isValidRubricScores: valid/invalid, out-of-range, non-integer, missing fields
+  - sumRubric + maxRubricScore: 3-dim và 4-dim
+  - normalizeRubricScore: perfect/zero/half/max=0
+  - parseLLMJudgeOutput valid: clean JSON, no-contextFit, embedded preamble, string coerce, rationale cap
+  - parseLLMJudgeOutput invalid: no JSON, malformed, out-of-range, negative, missing field
+  - Round-trip: all-2 → 100, all-0 → 0
+
+**Tests tổng: 117/117 PASS** (5 suites)
+
+**Kết quả:**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Test suites | 5, 117 tests |
+| Calibration guide | ✅ production-ready cho H6 (tuyển giáo viên chấm) |
+| LLM judge | Blind, deterministic (temp=0), fail-safe |
+| ICC threshold | ≥0.70 pre-registered trong guide |
+
+**Phát hiện:**
+
+- LLM judge dùng `temperature=0` nhưng OpenAI và Groq không guarantee 100% determinism khi cùng input. Điều này là chấp nhận được cho ICC đủ lớn; nếu muốn replicability tuyệt đối cần cache judge output per (testResultId, itemId, judgeId).
+- `CALIBRATION_GUIDE.md` tham chiếu `research/calibration_practice_items.json` chưa tồn tại — cần tạo 5 practice items (với expert scores) trước pilot H5.
+- Batch judge (`POST { batch: true }`) chạy tuần tự — slow nếu nhiều items. Ngày 11/12 (LLM queue + cache) sẽ fix.
+
+**Ngày mai:** Ngày 26 — Pre-registration document (OSF/AsPredicted) + DESIGN_FREEZE.
+
+---
 
 ### Ngày 24 — Posttest framework 3 phần — 2026-08-04 (batch 6)
 
