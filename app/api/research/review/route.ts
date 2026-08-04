@@ -16,15 +16,17 @@
 //   - No mutation of Vocabulary: the RCT doesn't want app-level SRS state
 //     drifting into research analysis. This endpoint writes ReviewLog only.
 //
-// Auth: expects x-participant-code header (set by the enrolled client). The
-// research app is a separate build gated behind consent; this header comes from
-// the participant's signed session, not from a public form.
+// Auth: expects "Authorization: Bearer <participantToken>" header.
+// The token is an HMAC-SHA256-signed blob issued at enrolment (lib/participantAuth.ts).
+// This closes Risk 4 from the batch-2 code review: x-participant-code was trivially
+// enumerable (P0001–P9999), allowing an attacker to inject reviews for any participant.
 
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import ReviewLog from "@/app/models/ReviewLog";
 import Participant from "@/app/models/Participant";
 import { SCHEDULER_VERSION, hashPrompt, isValidWeightsVersion, getWeightsVersion } from "@/lib/researchVersion";
+import { verifyRequest } from "@/lib/participantAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -66,8 +68,14 @@ function badRequest(msg: string, status = 400) {
 }
 
 export async function POST(req: NextRequest) {
-  const participantCode = req.headers.get("x-participant-code");
-  if (!participantCode) return badRequest("Missing x-participant-code header", 401);
+  const participantCode = verifyRequest(req.headers.get("authorization"));
+  if (!participantCode) {
+    return badRequest(
+      "Missing or invalid Authorization: Bearer token. " +
+        "Re-enrol to obtain a valid token.",
+      401
+    );
+  }
 
   let body: ReviewRequest;
   try {

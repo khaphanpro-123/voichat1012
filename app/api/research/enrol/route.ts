@@ -19,6 +19,7 @@ import { connectDB } from "@/lib/db";
 import Participant from "@/app/models/Participant";
 import { assignCondition, LIVE_ARMS } from "@/lib/experimentAssignment";
 import { toOpaque } from "@/lib/experimentBlinding";
+import { issueParticipantToken } from "@/lib/participantAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,8 @@ export async function POST(req: NextRequest) {
         participantCode: body.participantCode,
         armLabel: toOpaque((existing as any).condition),  // blinded: "A"/"B"/"C"
         stratum: (existing as any).stratum,
+        // Re-issue token so the client can recover after e.g. clearing localStorage.
+        participantToken: issueParticipantToken(body.participantCode),
       });
     }
 
@@ -106,6 +109,9 @@ export async function POST(req: NextRequest) {
       armLabel: toOpaque(doc.condition),   // blinded — never send real condition
       stratum: doc.stratum,
       enrolledAt: doc.enrolledAt,
+      // Signed token for subsequent research API calls.
+      // Client stores this and sends as "Authorization: Bearer <token>".
+      participantToken: issueParticipantToken(doc.participantCode),
     });
   } catch (err: any) {
     // Race on unique participantCode: re-fetch the winner's assignment so the
@@ -121,6 +127,7 @@ export async function POST(req: NextRequest) {
           participantCode: body.participantCode,
           armLabel: toOpaque((winner as any).condition),
           stratum: (winner as any).stratum,
+          participantToken: issueParticipantToken(body.participantCode),
         });
       }
       // 11000 without a findable row means the race winner's write hasn't

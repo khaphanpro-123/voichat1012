@@ -67,7 +67,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 19 | 08-22 | 🔴 Làm mù điều kiện thí nghiệm | ✅ |
 | 20 | 08-23 | Dashboard nghiên cứu viên | ✅ |
 | 21 | 08-24 | Tổng kết tuần + tự dùng thử | ✅ |
-| 22 | 08-25 | Consent + pretest CEFR | ⬜ |
+| 22 | 08-25 | Consent + pretest CEFR | ✅ |
 | 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ⬜ |
 | 24 | 08-27 | Bộ đề posttest 3 phần | ⬜ |
 | 25 | 08-28 | Rubric + tập huấn giám khảo | ⬜ |
@@ -114,6 +114,77 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 22 — HMAC auth + consent + pretest CEFR — 2026-08-04 (batch 5)
+
+**Agent đã làm:**
+
+- **`lib/participantAuth.ts`** — HMAC-SHA256 signed participant tokens, đóng Risk 4:
+  - `issueParticipantToken(code)` → `base64url(payload).hex(HMAC(RESEARCH_SALT, payload))` — TTL 70 ngày
+  - `verifyParticipantToken(token)` → constant-time comparison, kiểm tra TTL, parse safe
+  - `extractBearerToken(header)` + `verifyRequest(header)` — helper cho route handlers
+  - Secret: `RESEARCH_SALT` env var (≥32 chars) — cùng salt với userId hashing
+
+- **`app/api/research/enrol/route.ts`** — trả thêm `participantToken` trong mọi success response (kể cả deduplicated + race-loser paths). Client lưu vào `localStorage`, gửi mỗi request sau dưới dạng `Authorization: Bearer <token>`.
+
+- **`app/api/research/review/route.ts`** — đổi từ `x-participant-code` header (P0001–P9999 có thể brute-force) → `Authorization: Bearer <token>`. Attacker không có RESEARCH_SALT không forge được token hợp lệ.
+
+- **`lib/pretestItems.ts`** — 20 MCQ items CEFR A2/B1/B2 (server-only answer key):
+  - Band A2 (8 items): everyday vocabulary
+  - Band B1 (6 items): upper-intermediate
+  - Band B2 (6 items): advanced low-frequency
+  - `toPublicPretestItems()` strip correctIndex cho client
+  - `scorePretestAnswers()` → score 0-100, cefrLevel bằng B1/B2 band thresholds (≥4 B2 → B2, ≥4 B1 → B1, else A2)
+
+- **`app/api/research/pretest/items/route.ts`** — GET, public (pre-enrolment), trả items đã strip đáp án.
+
+- **`app/api/research/pretest/score/route.ts`** — POST, public, nhận `answers: Record<itemId, 0-3>`, validate từng item, trả `{ score, cefrLevel, correct, total }`. Đáp án không bao giờ rời server.
+
+- **`app/research/consent/page.tsx`** — consent form tối giản:
+  - Hiển thị CONSENT_TEXT (sha256 hash lưu vào Participant.consentDocHash)
+  - Ô nhập participantCode, checkbox đồng ý
+  - Lưu `pendingParticipantCode`/`pendingConsentHash`/`pendingConsentSignedAt` vào localStorage → redirect /research/pretest
+
+- **`app/research/pretest/page.tsx`** — placement test UI:
+  - Fetch items từ API, render MCQ với radio buttons
+  - Submit → POST /api/research/pretest/score → POST /api/research/enrol
+  - Lưu `participantToken` + `armLabel` vào localStorage, xoá pending keys
+  - Redirect /dashboard-new sau khi enrol xong
+
+- **`__tests__/participantAuth.test.ts`** — **23/23 PASS:**
+  - issuance: format, determinism, throw khi thiếu/ngắn RESEARCH_SALT
+  - verify valid: round-trip các code khác nhau
+  - verify invalid: empty, null/undefined, no-dot, tampered sig, tampered payload, expired, future-dated, missing salt, garbage base64
+  - extractBearerToken: case-insensitive, null/non-Bearer/empty
+  - verifyRequest: full round-trip, null, tampered
+
+**Tests tổng: 63/63 PASS** (3 suites: participantAuth + retrievalTasks + experimentBlinding)
+
+**Kết quả:**
+
+| Chỉ số | Giá trị | Ghi chú |
+|---|---|---|
+| Risk 4 đóng | ✅ | x-participant-code → HMAC Bearer token |
+| Test mới | 23 | participantAuth |
+| File mới | 7 | pretestItems, participantAuth, 2 API routes, 2 pages, 1 test |
+| File sửa | 2 | enrol + review routes |
+
+**Phát hiện:**
+
+- Consent page hash `CONSENT_TEXT` client-side bằng `crypto.subtle.digest`. Cần IRB duyệt text này trước — bất kỳ thay đổi nào sau khi bắt đầu tuyển là protocol deviation.
+- Pretest 20 items đủ cho placement nhưng chưa qua IRT calibration. Nếu muốn chính xác hơn, mở rộng bank + thêm adaptive selection ở Ngày 23–24.
+- `app/research/` cần layout.tsx nếu muốn có header/nav khác dashboard. Hiện tại dùng tailwind bare, đủ chức năng.
+
+**🔴 Việc BẠN phải làm:**
+
+1. H1 IRB — ⬜, CRITICAL.
+2. H2 DESIGN_FREEZE — ⬜.
+3. H3 `.env.research` với `RESEARCH_SALT=<openssl rand -hex 32>` — UNBLOCKS auth layer.
+4. Xem lại + ký CONSENT_TEXT trước khi tuyển participant.
+
+**Ngày mai:** Ngày 23 — soạn bộ từ mục tiêu (target word list) + context pool cho task generation.
+
+---
 
 ### Fast-forward Ngày 20–21 + fix blinding leak — 2026-08-04 (batch 4)
 
