@@ -187,7 +187,7 @@ const B1_WORDS: WordEntry[] = [
     distractors: ["to list all the parts of something", "to follow instructions exactly", "to translate text into another language"],
     sentences: [
       "Teachers need to evaluate students' writing regularly to track progress.",
-      "The study evaluated the effectiveness of three different scheduling algorithms.",
+      "Researchers must evaluate the effectiveness of three different scheduling algorithms before drawing conclusions.",
     ],
     collocations: ["evaluate performance", "evaluate evidence", "carefully evaluate"],
   },
@@ -198,7 +198,7 @@ const B1_WORDS: WordEntry[] = [
     distractors: ["to disprove a claim using facts", "to ask a question politely", "to avoid doing something difficult"],
     sentences: [
       "The experiment demonstrated that retrieval practice improves long-term memory.",
-      "She demonstrated her understanding of the grammar rule by using it correctly in her essay.",
+      "Good lesson designs demonstrate how grammar and vocabulary work together in real contexts.",
     ],
     collocations: ["demonstrate understanding", "demonstrate ability", "demonstrate that"],
   },
@@ -220,7 +220,7 @@ const B1_WORDS: WordEntry[] = [
     distractors: ["to offer something freely", "to reduce the number of things needed", "to send a message to someone"],
     sentences: [
       "Academic writing requires students to use formal vocabulary and avoid contractions.",
-      "The experiment required participants to study for at least thirty minutes each day.",
+      "Most doctoral programmes require candidates to defend their research in front of a panel.",
     ],
     collocations: ["require effort", "require attention", "require participants to"],
   },

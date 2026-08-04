@@ -69,7 +69,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 21 | 08-24 | Tổng kết tuần + tự dùng thử | ✅ |
 | 22 | 08-25 | Consent + pretest CEFR | ✅ |
 | 23 | 08-26 | 🔴 Soạn bộ từ mục tiêu + context pool | ✅ |
-| 24 | 08-27 | Bộ đề posttest 3 phần | ⬜ |
+| 24 | 08-27 | Bộ đề posttest 3 phần | ✅ |
 | 25 | 08-28 | Rubric + tập huấn giám khảo | ⬜ |
 | 26 | 08-29 | 🔴 Pre-registration | ⬜ |
 | 27 | 08-30 | Vận hành pilot | ⬜ |
@@ -114,6 +114,58 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 24 — Posttest framework 3 phần — 2026-08-04 (batch 6)
+
+**Agent đã làm:**
+
+- **`lib/posttestBuilder.ts`** — toàn bộ hệ thống xây dựng và chấm bài posttest:
+  - **Phân bổ từ** (pre-registered, fixed): 60 từ → 3 nhóm cố định
+    - Recall MCQ: w_001–010 + w_031–040 (10 B1 + 10 B2)
+    - Cloze Fill: w_011–020 + w_041–050 (sử dụng sentences[1] — khác với câu training)
+    - Context Transfer: w_021–025 + w_051–055 (10 prompt mới, domain khác training)
+    - Delayed posttest (tuần 10): w_026–030 + w_056–060
+  - **`buildRecallItems()`**: MCQ với seed `posttest_recall_<wordId>` — deterministic cho tất cả participant, shuffle vẫn nhất quán
+  - **`buildClozeItems()`**: Cloze từ sentences[1] (không phải sentences[0] dùng trong training) → test transfer, không test memory of exact sentence
+  - **`buildContextTransferItems()`**: 10 scenario mới hoàn toàn, domain khác (workplace, visa, product policy, software dev...)
+  - **`scorePosttest()`**: auto-score S1+S2 (MCQ exact + Cloze fuzzy), S3 tentative (có từ + length OK), `needsJudge=true` cho context transfer
+  - **`computeTotalScore()`**: 70% recall+cloze / 30% context transfer
+  - `toPublicRecallItem` / `toPublicClozeItem` strip đáp án cho client
+
+- **`app/api/research/posttest/items/route.ts`** — GET, Bearer auth:
+  - `?form=immediate` (default): 3 sections đầy đủ
+  - `?form=delayed`: delayed word set (10 từ tuần 10)
+  - Client không nhận correctIndex / correctAnswer
+
+- **`app/api/research/posttest/submit/route.ts`** — POST, Bearer auth:
+  - Idempotent: 409 nếu đã submit (unique index `{participantCode, testType}`)
+  - Auto-score S1+S2 server-side, S3 tentative
+  - Lưu `TestResult` với `isBlindGraded=true`
+  - Trả breakdown: recallCorrect/clozeCorrect, contextTransferPending, totalAuto
+  - Ghi chú "context transfer scored within 48h" để participant biết
+
+- **Fix wordBank.ts**: 3 từ có sentences[1] dùng dạng biến đổi (evaluated/demonstrated/required) → sửa sang base form để buildCloze không throw
+
+- **`__tests__/posttestBuilder.test.ts`** — **28/28 PASS**:
+  - Word ID partitioning: no overlap, all IDs in WORD_BANK
+  - buildRecallItems: count, 4 options, valid correctIndex, deterministic, toPublic strips
+  - buildClozeItems: count, has '______', correctAnswer non-empty, toPublic strips
+  - buildContextTransferItems: 10 items, prompt chứa word, minWords < maxWords
+  - scorePosttest: perfect/zero recall, perfect cloze, CT tentative scoring, needsJudge flags
+  - computeTotalScore: 100/0/boundary checks
+
+**Tests tổng: 91/91 PASS** (4 suites: posttestBuilder + participantAuth + retrievalTasks + experimentBlinding)
+Word bank validation: **305/305 PASS** (sau khi fix 3 câu)
+
+**Phát hiện:**
+
+- Posttest dùng sentences[1] cho Cloze — không hoàn toàn "unseen" vì sentences[1] đã xuất hiện trong training (dưới dạng Paraphrase source). Đây là compromise hợp lý: cloze task và paraphrase task đòi hỏi xử lý khác nhau, nhưng cần note rõ ở phần limitations khi viết paper.
+- Context Transfer 10 items chưa qua IRT calibration — cần pilot testing (H5) để loại item quá dễ/khó.
+- `totalScore` khi mới submit sẽ chỉ phản ánh auto-scored portion; `contextTransfer` sẽ `null` đến khi judge chạy. Frontend cần handle trạng thái "pending".
+
+**Ngày mai:** Ngày 25 — Rubric + tập huấn giám khảo (judge calibration guide + LLM judge prompt).
+
+---
 
 ### Ngày 23 — Target word list + context pool — 2026-08-04 (batch 5 tiếp)
 
