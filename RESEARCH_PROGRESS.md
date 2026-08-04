@@ -53,12 +53,12 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 5 | 08-08 | 3 collection mới: Participant / TestResult / JudgeScore | ✅ |
 | 6 | 08-09 | 🔴 Tách DB nghiên cứu + backup tự động | ⛔ |
 | 7 | 08-10 | Dọn nợ kỹ thuật, `tsc --noEmit`, tests | ✅ |
-| 8 | 08-11 | 🔴 Hợp nhất endpoint `/api/research/review` | ⬜ |
-| 9 | 08-12 | Version freeze + server timestamp | ⬜ |
-| 10 | 08-13 | Endpoint enrol + assign | ⬜ |
+| 8 | 08-11 | 🔴 Hợp nhất endpoint `/api/research/review` | ✅ |
+| 9 | 08-12 | Version freeze + server timestamp | ✅ |
+| 10 | 08-13 | Endpoint enrol + assign | ✅ |
 | 11 | 08-14 | LLM-Judge chuyển sang hàng đợi | ⬜ |
 | 12 | 08-15 | Cache task + fallback provider | ⬜ |
-| 13 | 08-16 | Export + kiểm tra chất lượng dữ liệu | ⬜ |
+| 13 | 08-16 | Export + kiểm tra chất lượng dữ liệu | ✅ |
 | 14 | 08-17 | Đệm + tổng kết tuần | ⬜ |
 | 15 | 08-18 | Khung `RetrievalTask` + đo thời gian chuẩn | ⬜ |
 | 16 | 08-19 | d=0 MCQ, d=1 Cloze | ⬜ |
@@ -114,6 +114,60 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Fast-forward Ngày 8, 9, 10, 13 — 2026-08-04 (batch 2)
+
+> Người dùng đã push batch 1 (Ngày 1–7) lên `main`. Batch này tiếp Ngày 8, 9, 10, 13 (những ngày agent tự làm được). Ngày 11 (LLM-Judge queue), Ngày 12 (cache task), Ngày 14 (đệm) tạm bỏ qua vì cần Redis config thật và không nằm trên đường găng.
+
+**Agent đã làm:**
+
+- **Ngày 8 — `/api/research/review` (mới):** `app/api/research/review/route.ts`. Tách hoàn toàn khỏi `/api/vocabulary-review`. Điểm mấu chốt:
+  - Idempotent: `clientEventId` unique — retry mạng không ghi trùng.
+  - `serverDeltaDays` tính **server-side** từ `ReviewLog` cũ nhất của cùng `(participantCode, vocabularyId)`, không tin `deltaDays` client gửi.
+  - Kiểm tra `participant.dropoutAt` — người rút không ghi được nữa.
+  - Version stamp mọi write bằng `schedulerVersion` + `weightsVersion`.
+  - **Không** đụng vào `Vocabulary` collection — tránh SRS state của app rò vào phân tích.
+  - Auth via header `x-participant-code` (client research build có consent gate riêng).
+- **Ngày 9 — version freeze:** `lib/researchVersion.ts` mới. Export:
+  - `SCHEDULER_VERSION = "dart@1.0.0"` — bump tay khi đổi thuật toán.
+  - `getWeightsVersion()`: sha256[:12] của `dart_weights.json` đang load, mtime-cached.
+  - `hashPrompt(s)`: sha256[:12] để hash prompt bộ đề cho audit trail.
+  - `getVersionStamp()`: trả `{schedulerVersion, weightsVersion}` — dùng ở mọi research write.
+- **Ngày 10 — `/api/research/enrol`:** `app/api/research/enrol/route.ts`. Idempotent per `participantCode` (`^P\d{4}$`). Không **bao giờ** re-randomise — nếu người đã enrol, trả assignment cũ. Dùng lại `assignCondition()` của app để deterministic. Sanity-check `EXPERIMENT_ARMS` env: nếu cấu hình lỡ đưa nhánh offline (KARL/LECTOR/CARTS) cho người thật, từ chối enrol để tránh vi phạm protocol.
+- **Ngày 13 — export + DQ check:**
+  - `research/export_logs.py`: **sửa** để khớp với 3 model mới (trước đó tham chiếu field không tồn tại: `cefrPretest`, `phase`, `recallScore`... — sẽ NaN silent khi chạy thật). Giờ đọc đúng `Participant.pretestScore`, `TestResult.sectionScores.{recall,cloze,contextTransfer}`, `TestResult.testType`, thêm export `judgescores.json` cho ICC.
+  - `research/dq_check.py`: **mới**. 8 kiểm tra tuần tự (missing field <1%, phân bố retrievalType ≥10%/mức, cân bằng nhánh ±30%, tuân thủ ≥70%, first-exposure count, weightsVersion coverage, server/client Δ drift, test coverage). Non-zero exit nếu bất kỳ 🚨 nào → dễ gắn vào CI. Chạy sau `export_logs.py`.
+
+**Kết quả chạy được:**
+
+| Chỉ số | Giá trị | Ghi chú |
+|---|---|---|
+| File TS mới | 3 (`researchVersion.ts`, `research/review/route.ts`, `research/enrol/route.ts`) | tsc trên `researchVersion.ts` PASS; 2 route file quá heavy để compile trong sandbox 45s — cần chạy `npx tsc --noEmit` toàn repo trên máy |
+| File Python mới/sửa | `dq_check.py` mới; `export_logs.py` rewrite | py_compile PASS |
+| Endpoint mới | `POST /api/research/review`, `POST /api/research/enrol` | Chưa test integration — cần MongoDB thật + `.env.research` (H3) |
+
+**Phát hiện / cảnh báo:**
+
+- 🚨 **`export_logs.py` cũ bị drift schema:** đọc field không tồn tại (`cefrPretest`, `phase`, `recallScore`, `droppedAt`). Nếu bạn từng chạy thử với data giả và không thấy lỗi, đó là vì pymongo silent trả `None` — khi có data thật sẽ ra file toàn cột rỗng. Đã fix.
+- ⚠️ Route file `.ts` bên trong `app/api/` mang cả gói type Next.js/React nên tsc từng file mất > 45s trong sandbox này. Không có nghĩa là code sai — chỉ là không verify được ở đây. Chạy `npx tsc --noEmit` local để chắc.
+- Cả 2 endpoint mới đều cần MongoDB. Không test được cho tới khi H3 (`.env.research`) có.
+
+**🔴 Việc BẠN phải làm hôm nay (còn nguyên + thêm):**
+
+1. Nộp IRB (H1) — vẫn ⬜, hạn hôm qua theo lịch, mỗi ngày trễ đội lên nghiên cứu.
+2. Ký `research/DESIGN_FREEZE.md` (H2) — cần trước IRB.
+3. Tạo `.env.research` (H3).
+4. **Sau khi push batch này, chạy `npx tsc --noEmit && npm run build` trên máy** để xác nhận 2 route mới compile trong context Next.js.
+5. Chạy full power/Type-I trên laptop (câu lệnh trong log Ngày 2–7).
+
+**Bị chặn:**
+
+- Ngày 6 (tách DB), Ngày 11 (LLM-Judge queue), Ngày 12 (cache task) — chờ H3 + Redis config.
+- Test integration cho 2 endpoint mới — chờ Mongo dev.
+
+**Ngày mai:** Ngày 15 — khung `RetrievalTask` + đo thời gian chuẩn (định nghĩa TS interface cho 4 loại task d=0..3, chuẩn hoá `performance.now()` phía client, unit test).
+
+---
 
 ### Fast-forward Ngày 2–7 — 2026-08-04 (chạy gộp theo yêu cầu người dùng)
 

@@ -1,10 +1,20 @@
 """
-export_logs.py — Pull ReviewLog / Participant / TestResult out of MongoDB,
-anonymise, and write analysis-ready JSONL + CSV.
+export_logs.py — Pull ReviewLog / Participant / TestResult / JudgeScore out of
+MongoDB, anonymise, and write analysis-ready JSONL + CSV.
 
 Ethics: real userIds never leave the database. Each is replaced by a salted
 SHA-256 hash truncated to 12 hex chars. Keep RESEARCH_SALT secret and out of
 git — without it the mapping cannot be reversed, which is the point.
+
+Field names here MUST stay in sync with:
+  - app/models/ReviewLog.ts
+  - app/models/Participant.ts
+  - app/models/TestResult.ts
+  - app/models/JudgeScore.ts
+
+Any renaming in the TS models means updating this file too, or the analysis
+scripts (fit_dart.py, power_analysis.py) will see NaN columns and silently
+drop rows.
 
 Usage
 -----
@@ -22,16 +32,20 @@ import json
 import os
 from datetime import datetime
 
-FIELDS = [
+REVIEW_FIELDS = [
     "participant", "word", "condition", "schedulerVersion", "weightsVersion",
     "sessionId", "deltaDays", "serverDeltaDays", "retrievalType", "recall",
     "responseTimeMs", "elapsedMs", "quality", "contextId", "isCatchUp",
-    "createdAt", "dayIndex",
+    "scheduledAt", "servedAt", "createdAt", "dayIndex",
 ]
 
 
 def anon(user_id: str, salt: str) -> str:
     return hashlib.sha256((salt + "|" + str(user_id)).encode()).hexdigest()[:12]
+
+
+def iso(v):
+    return v.isoformat() if hasattr(v, "isoformat") else (str(v) if v else None)
 
 
 def main():
@@ -57,12 +71,15 @@ def main():
     os.makedirs(args.out, exist_ok=True)
 
     # ---- reviews -----------------------------------------------------------
+    # ReviewLog.userId in the RCT context stores the participantCode (see
+    # /api/research/review). No cross-join with the Participant table needed
+    # to anonymise, since the participantCode is already the study identifier.
     n = 0
     first_day = {}
     rows = []
     for r in db.reviewlogs.find(q).sort("createdAt", 1):
-        uid = str(r.get("userId", ""))
-        pid = anon(uid, args.salt)
+        raw_uid = str(r.get("userId", ""))
+        pid = anon(raw_uid, args.salt)
         created = r.get("createdAt")
         if pid not in first_day and created:
             first_day[pid] = created
@@ -86,7 +103,9 @@ def main():
             "quality": r.get("quality"),
             "contextId": r.get("contextId"),
             "isCatchUp": r.get("isCatchUp"),
-            "createdAt": created.isoformat() if created else None,
+            "scheduledAt": iso(r.get("scheduledAt")),
+            "servedAt": iso(r.get("servedAt")),
+            "createdAt": iso(created),
             "dayIndex": day_index,
             "featureVector": r.get("featureVector") or [],
         })
@@ -97,22 +116,32 @@ def main():
             f.write(json.dumps(r, default=str) + "\n")
 
     with open(os.path.join(args.out, "reviews.csv"), "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+        w = csv.DictWriter(f, fieldnames=REVIEW_FIELDS, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
 
     # ---- participants ------------------------------------------------------
+    # participantCode is the study identifier and is already anonymous by
+    # design (P0001, P0002, ...). We keep it as-is for join with reviews only
+    # if you also export the raw code — normally you don't, and use the salted
+    # anon(participantCode) so exports match reviews.
     parts = []
     for p in db.participants.find({}):
+        pcode = str(p.get("participantCode", ""))
         parts.append({
-            "participant": anon(str(p.get("userId", "")), args.salt),
+            "participant": anon(pcode, args.salt),
+            "participantCode": pcode,   # ok to keep — already anonymous
             "condition": p.get("condition"),
-            "cefrPretest": p.get("cefrPretest"),
+            "cefrLevel": p.get("cefrLevel"),
             "stratum": p.get("stratum"),
-            "enrolledAt": str(p.get("enrolledAt")),
-            "droppedAt": str(p.get("droppedAt")) if p.get("droppedAt") else None,
-            "ageBand": p.get("ageBand"),
-            "educationLevel": p.get("educationLevel"),
+            "pretestScore": p.get("pretestScore"),
+            "enrolledAt": iso(p.get("enrolledAt")),
+            "dropoutAt": iso(p.get("dropoutAt")),
+            "dropoutReason": p.get("dropoutReason"),
+            "finishedAt": iso(p.get("finishedAt")),
+            "daysActive": p.get("daysActive"),
+            "totalReviews": p.get("totalReviews"),
+            "lastActiveAt": iso(p.get("lastActiveAt")),
         })
     with open(os.path.join(args.out, "participants.json"), "w", encoding="utf-8") as f:
         json.dump(parts, f, indent=2)
@@ -120,26 +149,50 @@ def main():
     # ---- tests -------------------------------------------------------------
     tests = []
     for t in db.testresults.find({}):
+        pcode = str(t.get("participantCode", ""))
+        sec = t.get("sectionScores") or {}
         tests.append({
-            "participant": anon(str(t.get("userId", "")), args.salt),
-            "phase": t.get("phase"),
-            "recallScore": t.get("recallScore"),
-            "transferScore": t.get("transferScore"),
-            "productiveScore": t.get("productiveScore"),
-            "takenAt": str(t.get("takenAt")),
+            "participant": anon(pcode, args.salt),
+            "participantCode": pcode,
+            "testType": t.get("testType"),
+            "totalScore": t.get("totalScore"),
+            "recallScore": sec.get("recall"),
+            "clozeScore": sec.get("cloze"),
+            "contextTransferScore": sec.get("contextTransfer"),
+            "formVersion": t.get("formVersion"),
+            "isBlindGraded": t.get("isBlindGraded"),
+            "administeredAt": iso(t.get("administeredAt")),
         })
     with open(os.path.join(args.out, "tests.json"), "w", encoding="utf-8") as f:
         json.dump(tests, f, indent=2)
 
-    print(f"reviews      : {n:,}")
-    print(f"participants : {len(parts)}")
-    print(f"test results : {len(tests)}")
-    print(f"written to   : {args.out}/")
-    print("\nCheck before analysing:")
-    print("  - any participant with 0 reviews?  (enrolled but never started)")
-    print("  - reviews with deltaDays == 0      (first exposures, excluded from RQ1)")
-    print("  - retrievalType distribution       (all four formats represented?)")
-    print("  - condition counts                 (allocation actually balanced?)")
+    # ---- judge scores (rubric) --------------------------------------------
+    # Needed for ICC (LLM vs human) validation on the calibration subset.
+    judges = []
+    for j in db.judgescores.find({}):
+        rub = j.get("rubric") or {}
+        judges.append({
+            "testResultId": str(j.get("testResultId")),
+            "itemId": j.get("itemId"),
+            "judgeType": j.get("judgeType"),
+            "judgeId": j.get("judgeId"),
+            "form": rub.get("form"),
+            "meaning": rub.get("meaning"),
+            "use": rub.get("use"),
+            "contextFit": rub.get("contextFit"),
+            "totalScore": j.get("totalScore"),
+            "isCalibrationItem": j.get("isCalibrationItem"),
+            "gradedAt": iso(j.get("gradedAt")),
+        })
+    with open(os.path.join(args.out, "judgescores.json"), "w", encoding="utf-8") as f:
+        json.dump(judges, f, indent=2)
+
+    print(f"reviews       : {n:,}")
+    print(f"participants  : {len(parts)}")
+    print(f"test results  : {len(tests)}")
+    print(f"judge scores  : {len(judges)}")
+    print(f"written to    : {args.out}/")
+    print("\nNext step: python dq_check.py --dir " + args.out)
 
 
 if __name__ == "__main__":
