@@ -3,7 +3,7 @@ import { karlNext } from "../lib/baselines/karl";
 import { lectorSchedule } from "../lib/baselines/lector";
 import { calculateNextReviewDart, calculateNextReview } from "../lib/spacedRepetition";
 import { buildFeatureVector } from "../lib/dart";
-import { assignCondition } from "../lib/experimentAssignment";
+import { assignCondition, allocationSummary, LIVE_ARMS } from "../lib/experimentAssignment";
 import { SCHEDULER_NAMES } from "../lib/baselines";
 
 describe("Baseline schedulers", () => {
@@ -67,5 +67,24 @@ describe("Experiment assignment", () => {
     // Not guaranteed different, but at least deterministic
     expect(typeof a.condition).toBe("string");
     expect(typeof b.condition).toBe("string");
+  });
+
+  test("live trial serves only the three pre-registered arms", () => {
+    for (let i = 0; i < 300; i++) {
+      expect(LIVE_ARMS).toContain(assignCondition(`p-${i}`).condition);
+    }
+  });
+
+  test("allocation is roughly balanced across arms", () => {
+    const learners = Array.from({ length: 180 }, (_, i) => ({ userId: `P${i}` }));
+    const counts = allocationSummary(learners);
+    const expected = 180 / LIVE_ARMS.length;
+    // Hash-based allocation balances only in expectation; allow +/-35%.
+    // If a real cohort drifts further than this, fall back to an explicit
+    // block-randomisation table rather than the hash.
+    for (const arm of LIVE_ARMS) {
+      expect(counts[arm]).toBeGreaterThan(expected * 0.65);
+      expect(counts[arm]).toBeLessThan(expected * 1.35);
+    }
   });
 });

@@ -23,6 +23,7 @@ import {
   Headphones,
   Mic2,
   PenLine,
+  Brain,
 } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
 import FloatingAiChat from "./FloatingAiChat";
@@ -44,6 +45,7 @@ const navItems = [
   { href: "/dashboard-new/vocabulary", label: "Vocabulary", icon: BookOpen },
   { href: "/dashboard-new/survey", label: "Learning Survey", icon: ClipboardList },
   { href: "/dashboard-new/ablation-study", label: "Ablation Study", icon: FlaskConical },
+  { href: "/dashboard-new/dart-lab", label: "DART/CARTS Lab", icon: Brain },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

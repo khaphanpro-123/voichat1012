@@ -430,6 +430,85 @@ app/api/carts/schedule/route.ts    (auto pool + task generator)
 
 ---
 
+## Task 22 — Frontend: DART/CARTS Lab page (`app/dashboard-new/dart-lab/page.tsx`)
+
+Single-page React tester so all the new endpoints have a visible surface. Nothing was reachable from the UI before this; that's why "chưa thấy sự thay đổi ntn ở giao diện frontend" was correct.
+
+What the page does, section by section:
+1. **DART Weights card** — hits `GET /api/dart/weights` on mount, shows α, θ, source path. A `Reload` button posts to the same route to invalidate the on-disk cache after `train_dart.py` writes a new file.
+2. **Half-life vs difficulty bar chart** — client-side computes h(d) for d∈{0..3} using the current weights (`h = 2^(θ⊤x)·exp(α·φ(d))`), draws a horizontal-bar visualisation. This is the paper's Sec 2.1 formula rendered live.
+3. **Try a schedule** — form with `vocabularyId`, `userId`, `quality`, `d_prev`. Two buttons:
+   - **Run DART** → `POST /api/dart/schedule`, prints `halfLife / interval / nextRetrievalType / predictedRecall`.
+   - **Run CARTS** → `POST /api/carts/schedule` with `contextPool: "auto"`, prints scheduler output plus the generated LLM task (prompt + options + expected answer).
+4. **LLM-as-a-Judge card** — free-text `word` + `learner sentence`, `POST /api/context-transfer/judge`, renders the four 0-10 scores as tiles and shows the composite + rationale.
+5. **Experiment assignment card** — hits `GET /api/experiment/assign` and shows the deterministic condition ∈ {sm2, hlr, karl, lector, dart, carts}.
+
+```tsx
+// app/dashboard-new/dart-lab/page.tsx (excerpts)
+async function runDartSchedule() {
+  const r = await fetchJson<ScheduleResp>("/api/dart/schedule", {
+    method: "POST",
+    body: JSON.stringify({ vocabularyId, userId, quality, lastRetrievalType: dPrev }),
+  });
+  setDartSched(r);
+}
+
+// half-life bars come from the DART formula itself
+const projection = useMemo(() => {
+  const { theta, alpha } = weights.weights;
+  const PHI = [0, 0.33, 0.66, 1.0];
+  const h0  = Math.pow(2, theta.reduce((s, t, i) => s + t * demoX[i], 0));
+  return PHI.map((phi, d) => ({ d, phi, h: h0 * Math.exp(alpha * phi) }));
+}, [weights]);
+```
+
+---
+
+## Task 23 — Sidebar nav (`components/DashboardLayout.tsx`)
+
+New entry with the `Brain` lucide icon, sitting right after "Ablation Study":
+
+```ts
+{ href: "/dashboard-new/dart-lab", label: "DART/CARTS Lab", icon: Brain },
+```
+
+That's the only path change to `DashboardLayout.tsx`; every existing route keeps working.
+
+---
+
+## Task 24 — Smoke-test scripts (`scripts/check-dart-carts.{sh,ps1}`)
+
+One-shot verification for both shells. Both scripts hit the same endpoints in order:
+`/api/dart/weights` (GET+POST) → `/api/experiment/assign` (GET+POST) → `/api/dart/schedule` → `/api/carts/schedule` → `/api/context-transfer/judge`.
+
+```bash
+# bash
+BASE=http://localhost:3000 VOCAB=65f... USER=alice bash scripts/check-dart-carts.sh
+```
+
+```powershell
+# PowerShell
+$env:BASE = "http://localhost:3000"; $env:VOCAB = "65f..."; $env:USER_ID = "alice"
+./scripts/check-dart-carts.ps1
+```
+
+Both scripts exit with code 1 if any endpoint returns `success != true`, so they slot straight into CI later. Schedule tests are auto-skipped when `VOCAB` is unset — the other endpoints still run.
+
+---
+
+## Where to click after `npm run dev`
+
+1. Log in → dashboard sidebar → **"DART/CARTS Lab"**.
+2. Paste a vocabulary `_id` from Mongo (any doc in the `vocabularies` collection).
+3. Hit **Run DART** — you should see a half-life and a `nextRetrievalType`.
+4. Hit **Run CARTS** — same interval, plus a generated MCQ / cloze / paraphrase from the LLM.
+5. Type any sentence in the Judge card, submit; the four rubric scores appear.
+6. Click **Assign** — the deterministic condition for the current `userId` is displayed.
+
+If any of these are blank, run `bash scripts/check-dart-carts.sh` to isolate which endpoint failed.
+
+---
+
 ## How to test locally
 
 ```bash
