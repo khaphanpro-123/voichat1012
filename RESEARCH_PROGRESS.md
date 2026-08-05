@@ -25,9 +25,9 @@ Cách tính ngày hiện tại: `ngày_kế_hoạch = (hôm_nay − 2026-08-04) 
 
 | # | Việc | Hạn | Trạng thái | Ghi chú |
 |---|---|---|---|---|
-| H1 | **Nộp hồ sơ IRB / đạo đức nghiên cứu** | Ngày 1 | ⬜ Chưa | **HÔM NAY LÀ HẠN.** Đường găng dài nhất (chờ 4–8 tuần). Trễ ngày nào mất ngày đó |
-| H2 | Chốt thiết kế bằng văn bản, ký duyệt với người hướng dẫn | Ngày 1 | ⬜ Chưa | **HÔM NAY LÀ HẠN.** 3 nhánh, N=200, 8 tuần |
-| H3 | Tạo `.env.research` với `MONGO_URI` + `RESEARCH_SALT` | Ngày 2 | ⬜ Chưa | Agent không có quyền tạo secret |
+| H1 | **Nộp hồ sơ IRB / đạo đức nghiên cứu** | Ngày 1 | ⬜ Chưa | **QUÁ HẠN 1 ngày.** Đường găng dài nhất (chờ 4–8 tuần). Trễ ngày nào mất ngày đó |
+| H2 | Chốt thiết kế bằng văn bản, ký duyệt với người hướng dẫn | Ngày 1 | ⬜ Chưa | **QUÁ HẠN 1 ngày.** 3 nhánh, N=200, 8 tuần |
+| H3 | Tạo `.env.research` với `MONGO_URI` + `RESEARCH_SALT` | Ngày 2 | ⬜ Chưa | **HÔM NAY LÀ HẠN.** Agent không có quyền tạo secret |
 | H4 | Pre-registration trên OSF / AsPredicted | Ngày 26 | ⬜ Chưa | Cần H1 duyệt trước |
 | H5 | Kiểm tra trước bộ từ với 20 người ngoài mẫu | Ngày 23 | ⬜ Chưa | Loại từ mà >70% đã biết |
 | H6 | Tuyển 2 giáo viên chấm rubric | Ngày 25 | ⬜ Chưa | Cần cho ICC |
@@ -72,7 +72,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 24 | 08-27 | Bộ đề posttest 3 phần | ✅ |
 | 25 | 08-28 | Rubric + tập huấn giám khảo | ✅ |
 | 26 | 08-29 | 🔴 Pre-registration | ✅ |
-| 27 | 08-30 | Vận hành pilot | ⬜ |
+| 27 | 08-30 | Vận hành pilot | ✅ |
 | 28 | 08-31 | Diễn tập toàn hệ thống | ⬜ |
 | 29 | 09-01 | Onboarding pilot | ⬜ |
 | 30–34 | 09-02→06 | Pilot chạy, theo dõi hằng ngày | ⬜ |
@@ -99,6 +99,8 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 | Số học viên đã enrol | — | 200 | — |
 | Phân bố `retrievalType` (d=0/1/2/3) | 55/43/2/0 % *(mô phỏng)* | mỗi mức ≥10% | 2026-08-04 |
 | `alpha_hat` | — | CI không chạm 0 | — |
+| Type-I ở H₀ (weeks=4, N=60, mô phỏng) | **0.183** [0.114, 0.253], 120 reps | ≤ 0.05 nominal | 2026-08-05 ⚠️ |
+| Type-I ở H₀ (weeks=8, N=60, mô phỏng) | 0.111 [0.019, 0.203], 45 reps | ≤ 0.05 nominal | 2026-08-05 (cần full run) |
 | `p (boundary-corrected)` | — | < .05 | — |
 | DeLong p (ngoài mẫu) | — | < .05 | — |
 | ECE | — | < .05 | — |
@@ -114,6 +116,75 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 27 — Pilot operation system — 2026-08-05 (batch 9)
+
+**Agent đã làm:**
+
+- **`app/models/FamiliarityResponse.ts`** — Mongoose model H5 screening (screenerId unique, responses Map, metadata)
+- **`app/api/research/familiarity-screen/route.ts`** — GET words + POST submit (no auth, idempotent 409)
+- **`app/api/research/familiarity-screen/results/route.ts`** — Admin aggregate: per-word rate, flag ≥70%
+- **`app/research/familiarity-screen/page.tsx`** — Screener UI: 60-word grid (B1/B2), toggle known/unknown, real-time progress bar, durationSecs tracking, done screen
+- **`research/analyze_familiarity.py`** — Offline analysis: tally per-word, print sorted table, save familiarity_results.json, exit 2 if flagged
+- **`research/pilot_readiness.py`** — Pre-pilot go/no-go checker 8 sections: env vars, HMAC token round-trip, MongoDB ping, required files, DESIGN_FREEZE signature, H5 screening completeness, Jest, tsc
+- **`research/PILOT_CHECKLIST.md`** — 35-item human checklist (A: Ethics, B: Word bank, C: Technical, D: E2E manual test, E: Rater calibration, F: Recruitment, G: Monitoring) + sign-off fields
+
+**Ngày mai:** Ngày 28 — Diễn tập toàn hệ thống (E2E test script tự động + smoke test production endpoints).
+
+---
+
+### Ngày 2 — 2026-08-05 (Thứ Tư)
+
+**Việc theo kế hoạch:** Dựng môi trường phân tích + smoke pipeline (Ngày 2 gốc đã ✅ ở batch 2 hôm qua). Trọng tâm hôm nay: **xử lý tồn đọng ⚠️ Ngày 3 — Type-I error**.
+
+**Agent đã làm:**
+
+- Cài đặt lại stats stack trong sandbox (`numpy 2.2.6`, `scipy 1.15.3`, `pandas`, `statsmodels`, `patsy`) — verify pipeline vẫn chạy được.
+- **Type-I quick chunks (weeks=4):** 3× 30-rep runs với seed 2000/3000/4000. Kết hợp với `type1_quick.json` cũ (seed 1000) → **120 reps tổng**.
+- **Type-I chunks tại tham số thật của study (weeks=8):** 3× 15-rep runs với seed 5000/6000/7000 → 45 reps tổng.
+- Viết aggregator, sinh `reports/type1_aggregated.json` (weeks=4) và `reports/type1_weeks8_aggregated.json` (weeks=8).
+- **Chẩn đoán:** viết `research/reports/TYPE1_DIAGNOSTIC_2026-08-05.md` — nêu bằng chứng, giả thuyết nguyên nhân (LRT dùng `n = số dòng` thay vì tính đến clustering theo `userId`), và 2 hướng sửa (cluster-bootstrap vs sandwich).
+- **Regression health check:** `npx tsc --noEmit --skipLibCheck` trên 11 file `lib/*` cốt lõi → PASS. `npx jest` với pattern (judgeRubric|participantAuth|experimentBlinding|retrievalTasks|posttestBuilder) → **117/117 PASS** (5 suites, 16.5s). Không có regression từ batch 8 hôm qua.
+- **KHÔNG sửa `dart_model.py`** — quyết định statistical này phải là pre-registration decision của người dùng, không phải fix âm thầm.
+
+**Kết quả chạy được (mô phỏng — không phải kết quả):**
+
+| Cấu hình | Reps | Reject rate | 95% Wald CI | Kết luận |
+|---|---:|---:|---|---|
+| N=60, weeks=4, words=30 | **120** | **0.183** | [0.114, 0.253] | **ANTI-CONSERVATIVE** (CI floor > 0.05) |
+| N=60, weeks=8, words=30 | 45 | 0.111 | [0.019, 0.203] | Suggestive nhưng chưa đủ power để chốt |
+
+Chi tiết: mean_alpha ước lượng dưới null (alpha_true=0) dao động **0.11–0.18** — bias dương lớn.
+
+**Phát hiện / cảnh báo:**
+
+- 🚨 Type-I inflation **confirmed** ở weeks=4 (CI floor 0.114 > 0.05). Weeks=8 chưa đủ reps để confirm nhưng point estimate 0.111 cũng ≥ 2× nominal.
+- Giả thuyết nguyên nhân: `lrt_alpha` trong `dart_model.py` dùng `n = len(rows)` (~28k–56k) trong khi dữ liệu phân cụm theo learner (60 cụm). LRT asymptotics giả IID — inflated Type-I là hậu quả trực tiếp.
+- Nếu confirmed → **RQ1 kiểm định chính bị ảnh hưởng** → cần fix trước pre-registration (Ngày 26 đã ✅ nhưng nếu phải sửa thì phải amendment).
+- Sandbox 45s/lệnh không đủ chạy full `--reps 200 --weeks 8 --grid 60,180`. Bắt buộc chạy trên laptop.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+
+1. **H1 IRB — QUÁ HẠN 1 ngày.** Đường găng, mỗi ngày trễ mất một ngày của cả dự án. Nộp ngay hôm nay.
+2. **H2 ký `research/DESIGN_FREEZE.md` — QUÁ HẠN 1 ngày.** Chặn H1.
+3. **H3 tạo `.env.research`** — HÔM NAY LÀ HẠN. Chặn Ngày 6 (tách DB), integration test.
+4. **Chạy full Type-I trên laptop** (~30–60 phút):
+   ```bash
+   cd research
+   python power_analysis.py --grid 60,180 --alpha-true 0 --reps 200 --weeks 8 \
+       --out reports/type1_full.json
+   ```
+   Nếu rejection rate ở weeks=8 vẫn > 0.10 với CI floor > 0.05 → xác nhận bug clustering, cần quyết định sửa `lrt_alpha` (cluster-bootstrap là an toàn nhất) trước khi làm bất cứ gì tiếp với DART.
+5. Đọc `research/reports/TYPE1_DIAGNOSTIC_2026-08-05.md` để có ngữ cảnh cho quyết định (3).
+
+**Bị chặn:**
+
+- Ngày 6 tách DB — vẫn chờ H3.
+- Confirm/deny Type-I inflation ở weeks=8 — cần laptop-time.
+
+**Ngày mai:** Nếu H1/H2/H3 chưa xong sẽ tiếp tục cảnh báo. Nếu có thời gian, tiếp Ngày 11 (LLM-Judge queue) — nhưng thực tế bị chặn bởi Redis config trong H3.
+
+---
 
 ### Ngày 26 — Pre-registration + DESIGN_FREEZE — 2026-08-04 (batch 8)
 
