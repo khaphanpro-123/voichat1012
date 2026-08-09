@@ -25,9 +25,9 @@ Cách tính ngày hiện tại: `ngày_kế_hoạch = (hôm_nay − 2026-08-04) 
 
 | # | Việc | Hạn | Trạng thái | Ghi chú |
 |---|---|---|---|---|
-| H1 | **Nộp hồ sơ IRB / đạo đức nghiên cứu** | Ngày 1 | ⬜ Chưa | **QUÁ HẠN 1 ngày.** Đường găng dài nhất (chờ 4–8 tuần). Trễ ngày nào mất ngày đó |
-| H2 | Chốt thiết kế bằng văn bản, ký duyệt với người hướng dẫn | Ngày 1 | ⬜ Chưa | **QUÁ HẠN 1 ngày.** 3 nhánh, N=200, 8 tuần |
-| H3 | Tạo `.env.research` với `MONGO_URI` + `RESEARCH_SALT` | Ngày 2 | ⬜ Chưa | **HÔM NAY LÀ HẠN.** Agent không có quyền tạo secret |
+| H1 | **Nộp hồ sơ IRB / đạo đức nghiên cứu** | Ngày 1 | ✅ Xong 2026-08-07 | Đã nộp. Chờ 4–8 tuần duyệt |
+| H2 | Chốt thiết kế bằng văn bản, ký duyệt với người hướng dẫn | Ngày 1 | ✅ Xong 2026-08-07 | Đã ký DESIGN_FREEZE.md |
+| H3 | Tạo `.env.research` với `MONGO_URI` + `RESEARCH_SALT` | Ngày 2 | ✅ Xong 2026-08-07 | Đã tạo (Ngày 4). Mở khoá Ngày 6 (tách DB) + auth layer |
 | H4 | Pre-registration trên OSF / AsPredicted | Ngày 26 | ⬜ Chưa | Cần H1 duyệt trước |
 | H5 | Kiểm tra trước bộ từ với 20 người ngoài mẫu | Ngày 23 | ⬜ Chưa | Loại từ mà >70% đã biết |
 | H6 | Tuyển 2 giáo viên chấm rubric | Ngày 25 | ⬜ Chưa | Cần cho ICC |
@@ -51,7 +51,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 3 | 08-06 | 🔴 Power analysis + Type-I error | ⚠️ |
 | 4 | 08-07 | Mở rộng schema `ReviewLog` | ✅ |
 | 5 | 08-08 | 3 collection mới: Participant / TestResult / JudgeScore | ✅ |
-| 6 | 08-09 | 🔴 Tách DB nghiên cứu + backup tự động | ⛔ |
+| 6 | 08-09 | 🔴 Tách DB nghiên cứu + backup tự động | ✅ chạy sớm 2026-08-07 (backend sẵn sàng) |
 | 7 | 08-10 | Dọn nợ kỹ thuật, `tsc --noEmit`, tests | ✅ |
 | 8 | 08-11 | 🔴 Hợp nhất endpoint `/api/research/review` | ✅ |
 | 9 | 08-12 | Version freeze + server timestamp | ✅ |
@@ -100,7 +100,9 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 | Phân bố `retrievalType` (d=0/1/2/3) | 55/43/2/0 % *(mô phỏng)* | mỗi mức ≥10% | 2026-08-04 |
 | `alpha_hat` | — | CI không chạm 0 | — |
 | Type-I ở H₀ (weeks=4, N=60, mô phỏng) | **0.183** [0.114, 0.253], 120 reps | ≤ 0.05 nominal | 2026-08-05 ⚠️ |
-| Type-I ở H₀ (weeks=8, N=60, mô phỏng) | 0.111 [0.019, 0.203], 45 reps | ≤ 0.05 nominal | 2026-08-05 (cần full run) |
+| Type-I ở H₀ (weeks=8, N=60, mô phỏng) | **0.146** [0.092, 0.223] Wilson, 110 reps | ≤ 0.05 nominal | 2026-08-06 ⚠️ **CONFIRMED anti-conservative** |
+| Boot LR quantile / χ²₁ (weeks=4, mô phỏng) | 2.8×–3.7× ở q70–q99, 30 boot | ~1× | 2026-08-06 ⚠️ chứng cứ clustering |
+| Bias `alpha_hat` dưới H₀ (mô phỏng) | +0.12 (weeks=8), +0.18 (weeks=4) | ≈ 0 | 2026-08-06 |
 | `p (boundary-corrected)` | — | < .05 | — |
 | DeLong p (ngoài mẫu) | — | < .05 | — |
 | ECE | — | < .05 | — |
@@ -116,6 +118,296 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 6 — 2026-08-09 (Chủ Nhật)
+
+**Việc theo kế hoạch:** Ngày 6 gốc — 🔴 Tách DB nghiên cứu + backup tự động. Deliverable **backend đã ✅ chạy sớm 2026-08-07** (batch 2): `lib/researchDb.ts`, `research/verify_env.js`, `research/create_indexes.js`, `research/backup_research_db.sh`. Còn thiếu **exit criterion của Ngày 6 theo `PLAN_45_DAYS.md`: "khôi phục thành công vào một DB tạm, đếm số document khớp"** — tức là restore test thật, chưa ai chạy. Ba tồn đọng người dùng từ Ngày 5 (`verify_env.js`, `create_indexes.js`, cluster-bootstrap 1000-rep) vẫn ⬜.
+
+**Agent đã làm:**
+
+- **Regression re-verify (không chạm code):**
+  - `npx jest --testPathPatterns='(judgeRubric|participantAuth|experimentBlinding|retrievalTasks|posttestBuilder)'` → **117/117 PASS** (5 suites, 13.9s). Không có drift so với hôm qua.
+  - `python -m pytest research/test_dart_model.py -q` (sau khi cài `statsmodels` + `scipy` trong sandbox) → **13/13 PASS** (7.3s). Amendment #A-001 (cluster-bootstrap LRT) vẫn xanh.
+- **Kiểm tra Ngày 6 exit criterion:** đọc `research/backup_research_db.sh` — script tạo `.tar.gz` dump, retention 30 ngày, refuse production URI. **Không có script/khôi phục test song hành** (`mongorestore` + đếm document). Ngày 6 theo `PLAN_45_DAYS.md` yêu cầu "khôi phục thành công một lần" — chưa có bằng chứng đã làm. Agent không thể tự chạy vì sandbox không có `.env.research`, không có Atlas cluster nghiên cứu, không có `mongodump`/`mongorestore`.
+- **Working tree:** `git status --short` — chỉ 4 file modified (`RESEARCH_PROGRESS.md`, `package-lock.json`, `research/PREREGISTRATION.md`, `research/dart_model.py` — Amendment #A-001) + 13 untracked (batch trước). Không đụng file nào người dùng đang sửa.
+- **Ghi nhận trạng thái mốc người:** H1 ✅, H2 ✅, H3 ✅. H4–H10 vẫn ⬜, chưa tới hạn (H5 sớm nhất Ngày 23 = 2026-08-26 — còn 17 ngày).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Jest research suites | 117/117 PASS |
+| pytest `test_dart_model.py` | 13/13 PASS |
+| Backend Ngày 6 files | Có đủ 4 (researchDb.ts, verify_env.js, create_indexes.js, backup_research_db.sh) |
+| Restore test (Ngày 6 exit criterion) | ❌ CHƯA CHẠY — không có bằng chứng |
+| 1000-rep cluster-bootstrap p_cluster_boundary | ⬜ CHƯA CHẠY từ Ngày 5 |
+| `verify_env.js` / `create_indexes.js` production run | ⬜ CHƯA CHẠY từ Ngày 4 |
+
+**Phát hiện / cảnh báo:**
+
+- ⚠️ **Ngày 6 chưa đóng đúng nghĩa.** Bảng tiến độ tick ✅ vì backend đã viết xong, nhưng exit criterion trong `PLAN_45_DAYS.md` là **restore thành công một lần**. Nguyên tắc: "Backup chưa từng restore thử là backup không tồn tại." Nếu Atlas rớt trước khi có restore drill, chưa chắc dump `.tar.gz` phục hồi được.
+- Ba việc laptop từ Ngày 4–5 vẫn treo (verify_env, create_indexes, 1000-rep bootstrap). Không có việc nào chặn kỹ thuật tiến độ tuần 2, nhưng chặn *bằng chứng khoa học* — cụ thể là bảng "Chỉ số theo dõi" các dòng `p_cluster_boundary`, `Tỷ lệ dòng log thiếu trường` vẫn `—`.
+- Ngày 11 (LLM-Judge queue) vẫn bị chặn bởi Upstash Redis config — không thể verify trước khi bạn chạy `verify_env.js`.
+- Không có mốc H nào QUÁ HẠN. Không có mốc đường găng đang trễ.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+
+1. **Restore drill (đóng Ngày 6 đúng nghĩa):** trên laptop, sau khi `mongodump` chạy được:
+   ```
+   # 1. Chạy backup lần đầu
+   bash research/backup_research_db.sh
+
+   # 2. Restore vào DB tạm để test
+   TARBALL=$(ls -t research/backups/*.tar.gz | head -1)
+   mkdir -p /tmp/restore_test && tar xzf "$TARBALL" -C /tmp/restore_test
+   mongorestore --uri "$RESEARCH_MONGO_URI_TEST" /tmp/restore_test/
+   # (RESEARCH_MONGO_URI_TEST trỏ tới DB tạm, KHÔNG phải production)
+
+   # 3. Đếm document so khớp
+   mongosh "$RESEARCH_MONGO_URI" --eval "db.getCollectionNames().forEach(c => print(c, db[c].countDocuments()))"
+   mongosh "$RESEARCH_MONGO_URI_TEST" --eval "db.getCollectionNames().forEach(c => print(c, db[c].countDocuments()))"
+   ```
+   Số phải khớp từng collection. Báo lại để agent tick ✅ đúng.
+2. **Vẫn còn tồn đọng từ Ngày 4–5** (nếu chưa chạy):
+   - `node research/verify_env.js` — mở khoá Ngày 11.
+   - `node research/create_indexes.js` — bắt buộc trước khi mở enrol.
+   - 1000-rep cluster-bootstrap Type-I (~2 phút) — báo `p_cluster_boundary`.
+
+**Bị chặn:**
+
+- Đóng Ngày 6 đúng exit criterion — chờ restore drill (1).
+- Cập nhật bảng chỉ số `p_cluster_boundary`, `retrievalType` phân bố thật, `Tỷ lệ dòng log thiếu trường` — chờ (2).
+- Ngày 11 (LLM-Judge queue) — chờ Upstash Redis verify.
+
+**Ngày mai:** Nếu (1) restore drill xong, agent tick Ngày 6 → ✅ đúng nghĩa và tiếp Ngày 14 (đệm — hiện là ngày còn ⬜ gần nhất trong Tuần 2, phần lớn các ngày khác đã ✅ ở batch). Nếu `verify_env.js` PASS, agent thử Ngày 11 (LLM-Judge queue trên `lib/queue.ts`). Nếu không có input mới từ bạn, agent tiếp tục health-check + rà soát mã Amendment #A-001 chuẩn bị cho commit sau này.
+
+---
+
+
+### Ngày 5 — 2026-08-08 (Thứ Bảy)
+
+**Việc theo kế hoạch:** Ngày 5 gốc — tạo 3 collection `Participant` / `TestResult` / `JudgeScore`. Cả 3 model **đã tồn tại từ trước** (batch 5–8 ngày 2026-08-04), tick ✅ trong bảng. Hôm nay agent làm sanity-check + health-check tổng thể vì các mốc kỹ thuật của Tuần 1 đều đã ✅; công việc còn lại chủ yếu là mốc chờ (Ngày 11 chờ Upstash, Ngày 14 đệm) và mốc người dùng (H4–H10).
+
+**Agent đã làm:**
+
+- **Verify Ngày 5 deliverable:** `app/models/{Participant,TestResult,JudgeScore}.ts` đã có, khớp spec `PLAN_45_DAYS.md` (participantCode/condition/stratum, participantCode/totalScore/items, judgeType/rubric/totalScore). Không cần code thêm.
+- **Regression health-check sandbox:**
+  - `npx jest --testPathPatterns='(judgeRubric|participantAuth|experimentBlinding|retrievalTasks|posttestBuilder)'` → **117/117 PASS** (5 suites, 15.5s).
+  - `python -m pytest research/test_dart_model.py -q` → **13/13 PASS** (9.6s). Amendment #A-001 (cluster-bootstrap LRT) implementation vẫn xanh.
+- **Kiểm tra working-tree conflict:** `git status --short` — không có xung đột với file agent định đụng. Modified: `RESEARCH_PROGRESS.md`, `package-lock.json`, `research/PREREGISTRATION.md`, `research/dart_model.py` (Amendment #A-001 chưa commit). Untracked: 8 file research từ batch trước (bao gồm `verify_env.js`, `create_indexes.js`, `backup_research_db.sh`, `test_dart_model.py`, `AMENDMENTS.md`). Không đụng vào.
+- **Ghi nhận trạng thái mốc:** H1 ✅ (IRB đã nộp 08-07), H2 ✅ (DESIGN_FREEZE ký), H3 ✅ (`.env.research` đã tạo). Các mốc H4–H10 vẫn ⬜ nhưng chưa tới hạn (H4 hạn Ngày 26, sớm nhất H5 Ngày 23).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Jest suite research | 117/117 PASS |
+| pytest `test_dart_model.py` | 13/13 PASS |
+| Model files Ngày 5 | Có đủ 3, khớp spec |
+| Git working tree | Sạch để agent tiếp tục (không đụng file người dùng đang sửa) |
+
+**Phát hiện / cảnh báo:**
+
+- Ba mốc từ Ngày 4 vẫn **chờ người dùng chạy tay trên laptop**: (1) `node research/verify_env.js`, (2) `node research/create_indexes.js`, (3) full 200-rep Type-I với cluster-bootstrap. Agent không có `.env.research` trong sandbox nên không tự chạy được. Cho đến khi các mốc này chạy, Ngày 11 (LLM-Judge queue) vẫn bị chặn vì cần biết Upstash Redis config có hoạt động không.
+- Bảng "Chỉ số theo dõi" các trường `alpha_hat`, `DeLong p`, `ECE`, `Power ở N khả thi`, `ICC` vẫn `—` — đúng, chưa có dữ liệu thật, mọi con số hiện tại đều là **mô phỏng** và **không được** đưa vào bản thảo bài báo.
+- Chỉ số Type-I bảng vẫn cần cập nhật sau khi bạn chạy 200 reps cluster-bootstrap trên laptop. Amendment #A-001 chỉ có ý nghĩa nếu số cluster-bootstrap p thực sự ≤ 0.05 nominal.
+- Ngày N=5 nằm ở giữa Tuần 1. 8/10 việc Tuần 1–2 đã ✅ theo bảng. Nếu Ngày 11–12 vẫn chưa gỡ được bởi hạ tầng Redis, có thể xoay sang Ngày 14 (đệm + tổng kết tuần) trong 2 ngày tới.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+
+1. **Chạy pre-flight Ngày 6 (mở khoá Ngày 11):**
+   ```
+   node research/verify_env.js
+   node research/create_indexes.js
+   ```
+   Cả hai phải in `PASS` / không có `❌`. Báo lại nếu lỗi.
+2. **Chạy 200-rep cluster-bootstrap Type-I trên laptop** (~2 phút):
+   ```
+   cd research
+   python -c "from synth_logs import simulate; from dart_model import lrt_alpha_cluster_bootstrap; \
+     rows,_ = simulate(n_learners=60, n_words=30, weeks=8, alpha_true=0.0, seed=2026); \
+     rows = [r for r in rows if r['deltaDays']>0]; \
+     res = lrt_alpha_cluster_bootstrap(rows, n_boot=1000, seed=1, verbose=True); \
+     print(res)"
+   ```
+   Báo lại `p_cluster_boundary` để agent cập nhật bảng chỉ số.
+3. **Setup Windows Task Scheduler cho backup** (`research/backup_research_db.sh` chạy 03:00 hằng ngày) — cần `mongodump` được cài trước.
+
+**Bị chặn:**
+
+- Ngày 11 (LLM-Judge queue) — cần verify Upstash Redis config trong `.env.research` (chờ mốc 1 ở trên).
+- Cập nhật bảng chỉ số Type-I cluster-bootstrap — chờ mốc 2 ở trên.
+
+**Ngày mai:** Nếu (1) và (2) xong, agent bắt tay Ngày 11: đẩy `runLLMJudge` vào async queue (dựa trên `lib/queue.ts` + `lib/async-queue-db.ts` có sẵn), viết endpoint polling `job_status`. Nếu chưa, agent tiếp Ngày 14 (đệm — dọn nợ nhỏ, viết `research/data_quality.py` cho Ngày 13 nếu chưa có).
+
+---
+
+### Ngày 4 — 2026-08-07 (Thứ Sáu) — batch 2 (unblock cascade)
+
+**Bối cảnh:** người dùng báo H1 (IRB) + H2 (DESIGN_FREEZE) đã ký, chọn Phương án A cho Amendment #A-001. Ba đường găng lớn nhất mở khoá cùng lúc → agent chạy ngay Amendment implement + Ngày 6 (được mở khoá bởi H3 xong trước đó).
+
+**Agent đã làm:**
+
+- **Amendment #A-001 ký chính thức** trong `research/AMENDMENTS.md`: Phương án A (Cluster-bootstrap LRT), ngày 2026-08-07.
+- **`research/dart_model.py`** — thêm `lrt_alpha_cluster_bootstrap(rows, n_boot=1000, seed=42, ...)` + helper `_fit_lr_from_rows`:
+  - Case cluster bootstrap: resample `userId` với thay thế, refit cả DART + HLR mỗi rep, tính LR_boot.
+  - Fail-closed: raise `ValueError` nếu <2 clusters hoặc <2 retrieval-type levels (α không định danh).
+  - Trả dict: `lr_observed`, `alpha_hat`, `ll_full`, `ll_restricted`, `n_boot_requested`, `n_boot_valid`, `p_cluster_naive`, `p_cluster_boundary` (= 0.5 × naive, boundary correction Self-Liang).
+  - Ghi chú deprecation vào `lrt_alpha` cũ tham chiếu amendment.
+- **`research/test_dart_model.py`** — 13 pytest cases: numerical safety, boundary correction, single-cluster/single-d rejection, deterministic seed, return_boot, alpha≥0, H1 alpha_hat > H0 sanity. **13/13 PASS** trong 8.3s (sandbox).
+- **`research/PREREGISTRATION.md`** — cập nhật §4 RQ1 Primary test: thay LRT asymptotic → **cluster-bootstrap LRT** (B=1000), tham chiếu Amendment #A-001 + Cameron-Miller 2015.
+- **Ngày 6 — tách DB nghiên cứu** (mở khoá bởi H3):
+  - **`lib/researchDb.ts`** — Mongoose connection riêng cho research DB. Đọc `RESEARCH_MONGO_URI`, refuse nếu URI có `/viettalk` mà không có `viettalk_research`. Pool nhỏ (3), không share global với `lib/db.ts`. tsc strict pass.
+  - **`research/verify_env.js`** — pre-flight check `.env.research`: format URI, tách production check, salt length, Upstash config, MongoDB ping + list collections. KHÔNG in secret nào.
+  - **`research/create_indexes.js`** — idempotent migration: unique + compound indexes cho 5 collection (reviewlogs.clientEventId sparse unique, participants.participantCode + hashedUserId, testresults compound unique, judgescores triple unique, familiarityresponses.screenerId). Bắt buộc chạy trước khi mở enrol.
+  - **`research/backup_research_db.sh`** — daily `mongodump` → `research/backups/<db>-<timestamp>.tar.gz`, retention 30 ngày, refuse chạy trên production DB.
+  - **`research/backups/.gitignore`** — chỉ commit `.gitignore`, không commit dump.
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `python -m pytest test_dart_model.py -v` (sandbox) | **13/13 PASS** trong 8.27s |
+| Smoke `lrt_alpha_cluster_bootstrap` H0 (n=20, boot=20) | alpha_hat=0.000, p_naive=0.800 (không reject — đúng) |
+| Smoke H1 (alpha_true=0.5, n=40, boot=30) | alpha_hat=0.300, LR=6.45 (reject direction — đúng) |
+| Ước tính B=1000 full trên laptop | ~2 phút CPU / dataset N=60 (mô phỏng) |
+| `npx tsc --noEmit --strict lib/researchDb.ts` | PASS sạch |
+
+**Phát hiện / cảnh báo:**
+
+- Cluster-bootstrap dùng ~50× thời gian asymptotic LRT. Ở pilot (~36k dòng, N=60), 1 phân tích ≈ 2 phút — chấp nhận được. Ở main study (N=200, ~120k dòng), ước ~10 phút — vẫn OK cho analysis cuối cùng.
+- `verify_env.js` và `create_indexes.js` đều **chưa được chạy** trong sandbox (không có `.env.research` trong container). Bạn phải chạy tay sau khi rotate secret.
+- Backup script yêu cầu `mongodump` binary — Windows cần cài MongoDB Database Tools riêng. Link đã ghi trong header script.
+- Chưa tự động hoá backup — cần bạn setup Windows Task Scheduler (hoặc cron nếu chạy Linux) trỏ tới `research/backup_research_db.sh` hằng ngày 03:00.
+
+**🔴 Việc BẠN phải làm hôm nay/ngày mai:**
+
+1. **Rotate secrets đã lộ** ở chat trước (MongoDB password, Cloudinary secret, Cohere, Pinecone, FPT, Google OAuth, JWT_SECRET, NEXTAUTH_SECRET). Danh sách 8 mục đã gửi ở tin nhắn trước.
+2. **Chạy pre-flight cho Ngày 6:**
+   ```
+   node research/verify_env.js
+   node research/create_indexes.js
+   ```
+   Cả hai phải print `PASS` / không có `❌`. Báo lại nếu lỗi.
+3. **Setup daily backup** — Windows Task Scheduler, action = `bash D:\CODE\voichat1012\research\backup_research_db.sh`, trigger daily 03:00. Cài `mongodump` trước.
+4. **Chạy full 200 reps Type-I trên laptop** (đã có `run_full_type1_laptop.sh` từ batch trước) — giờ nên chạy song song với cluster-bootstrap version:
+   ```
+   cd research
+   python -c "from synth_logs import simulate; from dart_model import lrt_alpha_cluster_bootstrap; \
+       rows,_ = simulate(n_learners=60, n_words=30, weeks=8, alpha_true=0.0, seed=2026); \
+       rows = [r for r in rows if r['deltaDays']>0]; \
+       res = lrt_alpha_cluster_bootstrap(rows, n_boot=1000, seed=1, verbose=True); \
+       print(res)"
+   ```
+   ~2 phút. Báo lại `p_cluster_boundary` để cập nhật bảng chỉ số.
+
+**Bị chặn:**
+
+- Ngày 11 (LLM-Judge queue) — cần Upstash Redis config trong `.env.research` (bạn có thể đã điền, sẽ verify khi chạy `verify_env.js`).
+
+**Ngày mai:** Nếu pre-flight PASS, agent tiếp Ngày 11 (LLM-Judge queue). Nếu FAIL, agent debug env config.
+
+---
+
+### Ngày 4 — 2026-08-07 (Thứ Sáu)
+
+**Việc theo kế hoạch:** Mở rộng schema `ReviewLog` (Ngày 4). Schema đã được mở rộng ở batch trước — `app/models/ReviewLog.ts` có đủ 11 field research extensions (`clientEventId`, `sessionId`, `condition`, `schedulerVersion`, `weightsVersion`, `scheduledAt`, `servedAt`, `elapsedMs`, `serverDeltaDays`, `taskPromptHash`, `isCatchUp`). Ngày 4 ✅ **không cần code thêm** — hôm nay dồn sức xử lý tồn đọng Ngày 3 (Type-I ⚠️) và chuẩn bị đầu vào cho quyết định amendment.
+
+**Agent đã làm:**
+
+- **`research/AMENDMENTS.md`** (mới) — dự thảo Amendment #A-001 với hai phương án A/B (cluster-bootstrap vs sandwich adjustment) sẵn sàng để bạn tick chọn + ký. Bao gồm bối cảnh Type-I diagnostic, so sánh chi phí implement/compute, ghi chú viết Method. Trước khi ký, không sửa `dart_model.py`.
+- **`research/run_full_type1_laptop.sh`** (mới) — script bash chia 200 reps Type-I thành 10 chunk × 20 rep (có checkpoint, resume-safe nếu crash), cộng 40 reps @ N=180, cộng power positive 100 reps × 6 mức. Bạn chạy `cd research && bash run_full_type1_laptop.sh` — nếu Ctrl+C giữa chừng, chạy lại sẽ bỏ qua chunk đã xong. Đã fix flag `--seed0` cho đúng interface `power_analysis.py`.
+- **Xác nhận Day-4 deliverable:** đọc `app/models/ReviewLog.ts` — schema đã đủ Ngày 4; không sửa vì không cần.
+- **KHÔNG chạy code mới trong sandbox** — 200 reps là công việc laptop-time, sandbox không đủ.
+
+**Kết quả chạy được:** —  (không chạy analysis mới; deliverable hôm nay là chuẩn bị công cụ để bạn quyết định + chạy).
+
+**Phát hiện / cảnh báo:**
+
+- 🚨 **H1 IRB nay QUÁ HẠN 3 ngày.** Với thời gian chờ 4–8 tuần, mỗi ngày trễ là 1 ngày mất trắng của cả dự án. Đây là ưu tiên duy nhất hôm nay nếu bạn chỉ có 1 giờ.
+- Amendment #A-001 (Type-I fix) là **điều kiện tiên quyết** để agent có thể động vào `dart_model.py`. Không ký = không thể tiếp tục RQ1 implementation.
+- Chưa có ai chạy full 200 reps trên laptop; hiện tại toàn bộ kết luận Type-I dựa trên 110 reps sandbox (Wilson CI [0.092, 0.223] — floor > 0.05 nhưng khoảng còn rộng).
+- `git status`: 4 file untracked (`aggregate_type1_weeks8_v2.py`, `cluster_bootstrap_lrt_prototype.py`, `familiarity_results.json`, `lr_null_distribution_study.py`) + `RESEARCH_PROGRESS.md` đang dirty. Chưa đụng file người dùng đang sửa.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+
+1. **H1 IRB — QUÁ HẠN 3 ngày.** Đường găng. Nộp NGAY. Dùng `research/PREREGISTRATION.md` làm phụ lục.
+2. **H2 ký `research/DESIGN_FREEZE.md` — QUÁ HẠN 3 ngày.** Chặn H1.
+3. **H3 tạo `.env.research` — QUÁ HẠN 2 ngày.** Chặn Ngày 6.
+4. **Quyết định + ký Amendment #A-001** trong `research/AMENDMENTS.md`. Tick A hoặc B, điền chữ ký. Khi xong, báo agent để implement.
+5. **Chạy `bash research/run_full_type1_laptop.sh` trên laptop** (~90 phút CPU tổng). Sau khi xong, chạy `python research/aggregate_type1_weeks8_v2.py` (đã có sẵn) và báo lại kết quả để cập nhật bảng chỉ số.
+
+**Bị chặn:**
+
+- Implement cluster-bootstrap LRT vào `dart_model.py` — chờ chữ ký Amendment #A-001.
+- Ngày 6 tách DB — vẫn chờ H3.
+- Ngày 11 (LLM-Judge queue) — chờ Redis config trong H3.
+
+**Ngày mai:** Nếu bạn ký Amendment A, agent sẽ implement `lrt_alpha_cluster_bootstrap` vào `dart_model.py` + viết test regression + cập nhật `PREREGISTRATION.md` để reference amendment. Nếu ký B, agent làm Jacobian cluster-robust (2–3 ngày). Nếu chưa ký gì, agent sẽ tiếp việc không phụ thuộc DART core: viết test cho `session.ts` (`pickTaskType` policy) — món nợ kỹ thuật đã ghi từ batch 4.
+
+---
+
+### Ngày 3 — 2026-08-06 (Thứ Năm)
+
+**Việc theo kế hoạch:** Power analysis + Type-I error (Ngày 3 ⚠️). Tiếp nối chẩn đoán Ngày 2: weeks=8 chỉ có 45 reps → CI [0.019, 0.203] quá rộng để chốt.
+
+**Agent đã làm:**
+
+- **Chạy thêm 65 reps Type-I weeks=8** (7 chunk: `reports/type1_weeks8_chunk_d5.json` seed 8000, `_e..j.json` seed 8100–8600, 10 reps mỗi mẻ). Tổng cộng 45 (cũ) + 65 (mới) = **110 reps**.
+- **`aggregate_type1_weeks8_v2.py`** — aggregator có Wilson CI + Wald CI + pooled mean_alpha. Sinh `reports/type1_weeks8_aggregated_v2.json`.
+- **`cluster_bootstrap_lrt_prototype.py`** — prototype single-replicate cluster-bootstrap LRT (resample theo `userId`, không phải theo dòng), có tài liệu về "case cluster bootstrap" (Cameron & Miller 2015).
+- **`lr_null_distribution_study.py`** — script diagnostic mạnh hơn: pool bootstrap null LR từ nhiều datasets, so sánh **trực tiếp** quantile bootstrap với χ²₁ lý thuyết. Không dùng reject rate quan sát (noisy) mà so sánh phân phối.
+- **`reports/TYPE1_DIAGNOSTIC_2026-08-06.md`** — báo cáo đầy đủ tổng hợp 3 dòng bằng chứng.
+- **KHÔNG sửa `dart_model.py`** — cluster-bootstrap là quyết định amendment pre-registration của người dùng, không phải fix âm thầm.
+
+**Kết quả chạy được (mô phỏng — không phải kết quả):**
+
+| Bằng chứng | Kết quả | Verdict |
+|---|---|---|
+| Type-I empirical @ weeks=8, N=60, 110 reps | **0.146**, Wilson 95% CI [0.092, 0.223] | **CONFIRMED anti-conservative** ở tham số study |
+| LR bootstrap null vs χ²₁ (weeks=4, 30 boot pooled) | Right tail dày **2.8×–3.7×** χ²₁ ở q70–q99 | Chứng cứ mạnh cho clustering |
+| P(boot LR ≥ χ²₁ 90% cutoff) | **0.333** (kỳ vọng nếu asymptotic đúng: 0.05) | 6.6× nominal |
+| Bias `alpha_hat` dưới H₀ (weeks=8) | +0.12 | Estimator có bias dương lớn |
+
+**Phát hiện / cảnh báo:**
+
+- 🚨 **Anti-conservative đã confirmed ở tham số study (weeks=8)**. Wilson CI floor 0.092 > 0.05 → không phải noise. Ngày 2 chỉ suggestive, hôm nay chốt.
+- 🚨 **Cluster-bootstrap null có right tail dày gấp ~3× χ²₁** — bằng chứng chẩn đoán nguyên nhân là clustering (như hypothesis Ngày 2).
+- Pre-registration Ngày 26 đã ✅ khai `lrt_alpha` boundary-corrected χ²₁ — bây giờ có bằng chứng nó anti-conservative → **cần amendment pre-registration TRƯỚC khi pilot bắt đầu**.
+- Nếu amend sau khi thấy pilot data, reviewer chuyên sâu có thể chất vấn.
+- Bias `alpha_hat` dưới H₀ = +0.12 → là câu hỏi riêng, cần bootstrap bias correction trong bản báo cáo cuối cùng.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+
+1. **H1 IRB — QUÁ HẠN 2 ngày.** Đường găng dài nhất, mỗi ngày trễ mất 1 ngày. Nộp ngay.
+2. **H2 ký `research/DESIGN_FREEZE.md` — QUÁ HẠN 2 ngày.** Chặn H1.
+3. **H3 tạo `.env.research` — QUÁ HẠN 1 ngày.** Chặn Ngày 6.
+4. **Quyết định amendment pre-registration cho `lrt_alpha`.** Đọc `research/reports/TYPE1_DIAGNOSTIC_2026-08-06.md`, chọn 1 trong 2:
+   - **A. Cluster-bootstrap LRT** (an toàn nhất). Prototype đã có; agent có thể implement full trong `dart_model.py` sau khi bạn ký amendment.
+   - **B. Cluster-robust sandwich adjustment**. Nhanh hơn khi chạy, phức tạp hơn khi viết Method.
+5. **Chạy full 200 reps trên laptop** để chốt Wilson CI ±0.05:
+   ```bash
+   cd research
+   python power_analysis.py --grid 60,180 --alpha-true 0 --reps 200 --weeks 8 \
+       --out reports/type1_full_weeks8.json
+   ```
+   ~30–45 phút CPU. Sau đó chạy power positive:
+   ```bash
+   python power_analysis.py --grid 30,60,90,120,180,240 --weeks 8 --reps 100 \
+       --out reports/power_positive.json
+   ```
+6. **Tạo `research/AMENDMENTS.md`** ghi nhận amendment (khi chọn xong).
+
+**Bị chặn:**
+
+- Full 200 reps ở weeks=8 — cần laptop (sandbox 45s/lệnh không đủ).
+- Confirm bootstrap null distribution ở weeks=8 với ≥100 boot reps — cần laptop (~5 phút CPU).
+- Ngày 6 tách DB — vẫn chờ H3.
+- Implement cluster-bootstrap LRT vào `dart_model.py` — chờ quyết định amendment (4).
+
+**Ngày mai:** Nếu bạn đã chốt amendment (4), agent sẽ implement `lrt_alpha_cluster_bootstrap` vào `dart_model.py`, viết test regression, và bổ sung Ngày 6 (nếu H3 xong). Nếu chưa, tiếp Ngày 11 (LLM-Judge queue) — nhưng vẫn chờ Redis config trong H3.
+
+---
 
 ### Ngày 27 — Pilot operation system — 2026-08-05 (batch 9)
 

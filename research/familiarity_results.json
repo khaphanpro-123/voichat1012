@@ -1,0 +1,475 @@
+{
+  "generatedAt": "2026-08-05T13:33:37.340572+00:00",
+  "nScreeners": 1,
+  "threshold": 0.7,
+  "actionable": false,
+  "totalWords": 60,
+  "flaggedCount": 43,
+  "flagged": [
+    "w_001",
+    "w_002",
+    "w_003",
+    "w_004",
+    "w_005",
+    "w_006",
+    "w_007",
+    "w_008",
+    "w_009",
+    "w_010",
+    "w_011",
+    "w_012",
+    "w_013",
+    "w_014",
+    "w_016",
+    "w_017",
+    "w_018",
+    "w_019",
+    "w_020",
+    "w_021",
+    "w_022",
+    "w_023",
+    "w_024",
+    "w_025",
+    "w_026",
+    "w_027",
+    "w_028",
+    "w_029",
+    "w_030",
+    "w_034",
+    "w_038",
+    "w_040",
+    "w_043",
+    "w_044",
+    "w_046",
+    "w_047",
+    "w_050",
+    "w_051",
+    "w_052",
+    "w_053",
+    "w_055",
+    "w_059",
+    "w_060"
+  ],
+  "results": [
+    {
+      "wordId": "w_001",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_002",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_003",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_004",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_005",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_006",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_007",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_008",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_009",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_010",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_011",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_012",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_013",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_014",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_016",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_017",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_018",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_019",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_020",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_021",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_022",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_023",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_024",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_025",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_026",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_027",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_028",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_029",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_030",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_034",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_038",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_040",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_043",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_044",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_046",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_047",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_050",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_051",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_052",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_053",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_055",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_059",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_060",
+      "knownCount": 1,
+      "nScreeners": 1,
+      "familiarityRate": 1.0,
+      "flagged": true
+    },
+    {
+      "wordId": "w_015",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_031",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_032",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_033",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_035",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_036",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_037",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_039",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_041",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_042",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_045",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_048",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_049",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_054",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_056",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_057",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    },
+    {
+      "wordId": "w_058",
+      "knownCount": 0,
+      "nScreeners": 1,
+      "familiarityRate": 0.0,
+      "flagged": false
+    }
+  ]
+}

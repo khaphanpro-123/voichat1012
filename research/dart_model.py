@@ -244,6 +244,13 @@ def lrt_alpha(ll_full: float, ll_restricted: float, n: int):
     Because alpha >= 0 puts H0 on the boundary, the null is a 50:50 chi2(0)/chi2(1)
     mixture -> halve the naive p-value.
 
+    ANTI-CONSERVATIVE UNDER CLUSTERING (Ngày 3 diagnostic). This asymptotic test
+    assumes IID rows but ReviewLog is clustered by userId. Empirical Type-I at
+    the study parameters (weeks=8, N=60) = 0.146 (Wilson 95% CI [0.092, 0.223])
+    vs 0.05 nominal. Per Amendment #A-001 (signed 2026-08-07), the pre-registered
+    primary test for RQ1 is `lrt_alpha_cluster_bootstrap` below. This function is
+    retained for legacy reports and for comparison in the Method section.
+
     Returns (LR_statistic, p_boundary, p_naive_chi2_1).
     """
     from scipy.stats import chi2
@@ -252,3 +259,134 @@ def lrt_alpha(ll_full: float, ll_restricted: float, n: int):
     lr = max(lr, 0.0)
     p_naive = float(chi2.sf(lr, df=1))
     return lr, 0.5 * p_naive, p_naive
+
+
+# ----------------------------------------------------------------------------
+# Cluster-bootstrap LRT — Amendment #A-001 (signed 2026-08-07)
+# ----------------------------------------------------------------------------
+#
+# Pre-registered primary test for RQ1. Case cluster bootstrap resampling users
+# with replacement, refitting both DART and HLR on each bootstrap sample, and
+# comparing the observed LR against the empirical null distribution.
+#
+# Rationale: see Amendment #A-001 in `research/AMENDMENTS.md`. Cameron & Miller
+# (2015, "A Practitioner's Guide to Cluster-Robust Inference") justifies the
+# case cluster bootstrap for clustered data with a moderate number of clusters
+# (>=30). At N=60 learners we are near the lower end; sandwich adjustment
+# (Amendment option B, not chosen) was the alternative.
+#
+# Convention: `rows` is a list of dicts with keys
+#   userId, featureVector, retrievalType, deltaDays, recall
+# matching the ReviewLog schema (`app/models/ReviewLog.ts`) and synth_logs.py.
+
+def _fit_lr_from_rows(rows, lam=1e-3, seed=0):
+    """Fit DART + HLR on a list of row dicts, return (LR, ll_full, ll_restricted, alpha_hat).
+    Returns None if the sample has fewer than 2 retrieval-type levels (alpha unidentified)."""
+    if len(rows) == 0:
+        return None
+    X = np.asarray([r["featureVector"] for r in rows], dtype=np.float64)
+    D = np.asarray([r["retrievalType"] for r in rows], dtype=np.int64)
+    delta = np.asarray([r["deltaDays"] for r in rows], dtype=np.float64)
+    r_arr = np.asarray([r["recall"] for r in rows], dtype=np.float64)
+    if len(set(D.tolist())) < 2:
+        return None
+    th_d, al_d, _ = fit(X, D, delta, r_arr, lam=lam, fit_alpha=True, seed=seed)
+    th_h, _, _ = fit(X, D, delta, r_arr, lam=lam, fit_alpha=False, seed=seed)
+    ll_f = mean_loglik(th_d, al_d, X, D, delta, r_arr)
+    ll_r = mean_loglik(th_h, 0.0, X, D, delta, r_arr)
+    lr = max(2.0 * len(rows) * (ll_f - ll_r), 0.0)
+    return float(lr), float(ll_f), float(ll_r), float(al_d)
+
+
+def lrt_alpha_cluster_bootstrap(
+    rows,
+    n_boot: int = 1000,
+    lam: float = 1e-3,
+    seed: int = 42,
+    return_boot: bool = False,
+    verbose: bool = False,
+):
+    """
+    Pre-registered primary RQ1 test (Amendment #A-001).
+
+    Case cluster bootstrap: resample userId with replacement, refit both models,
+    compute LR* on each bootstrap sample. p-value is the fraction of bootstrap
+    LR* that exceed the observed LR. Boundary correction (0.5x) is applied.
+
+    Parameters
+    ----------
+    rows : list of dict
+        Each row must have keys: userId, featureVector, retrievalType, deltaDays, recall.
+    n_boot : int
+        Number of bootstrap replicates. Pre-registered value is 1000; the analytic
+        SE for a proportion at p=0.05 is ~0.007 at B=1000, adequate for a 0.05 gate.
+    lam : float
+        L2 penalty (default 1e-3 to match `fit`).
+    seed : int
+        RNG seed.
+    return_boot : bool
+        If True, also return the raw list of bootstrap LR statistics for diagnostics.
+    verbose : bool
+        If True, print progress every 100 reps.
+
+    Returns
+    -------
+    dict with keys:
+        lr_observed, alpha_hat, ll_full, ll_restricted,
+        n_boot_requested, n_boot_valid,
+        p_cluster_naive, p_cluster_boundary,
+        boot_lrs (only if return_boot=True)
+    """
+    rng = np.random.default_rng(seed)
+
+    users = sorted({r["userId"] for r in rows})
+    if len(users) < 2:
+        raise ValueError(f"Need >=2 clusters for cluster bootstrap; got {len(users)}")
+    by_user: dict = {u: [] for u in users}
+    for r in rows:
+        by_user[r["userId"]].append(r)
+    n_users = len(users)
+
+    obs = _fit_lr_from_rows(rows, lam=lam, seed=seed)
+    if obs is None:
+        raise ValueError("Original data has <2 retrieval-type levels; alpha not identified.")
+    lr_obs, ll_f, ll_r, alpha_hat = obs
+
+    boot_lrs: list = []
+    for b in range(n_boot):
+        idx = rng.integers(0, n_users, size=n_users)
+        sampled = []
+        for i in idx:
+            sampled.extend(by_user[users[i]])
+        res = _fit_lr_from_rows(
+            sampled, lam=lam, seed=int(rng.integers(0, 1_000_000))
+        )
+        if res is None:
+            continue
+        boot_lrs.append(res[0])
+        if verbose and (b + 1) % 100 == 0:
+            print(f"  bootstrap {b + 1}/{n_boot}, valid so far: {len(boot_lrs)}")
+
+    if not boot_lrs:
+        raise RuntimeError(
+            "No valid bootstrap replicates (all had <2 retrieval-type levels). "
+            "Original sample may be too small or too imbalanced."
+        )
+
+    boot_arr = np.asarray(boot_lrs)
+    p_naive = float(np.mean(boot_arr >= lr_obs))
+    p_boundary = 0.5 * p_naive  # boundary correction (Self & Liang 1987)
+
+    result = {
+        "lr_observed": lr_obs,
+        "alpha_hat": alpha_hat,
+        "ll_full": ll_f,
+        "ll_restricted": ll_r,
+        "n_boot_requested": n_boot,
+        "n_boot_valid": len(boot_lrs),
+        "p_cluster_naive": p_naive,
+        "p_cluster_boundary": p_boundary,
+    }
+    if return_boot:
+        result["boot_lrs"] = boot_lrs
+    return result
