@@ -46,6 +46,24 @@ async function featureVectorFor(vocab: any, userId: string) {
   });
 }
 
+/**
+ * Mock vocabulary for demo/lab mode when vocabularyId starts with "demo-"
+ */
+function createDemoVocab(vocabularyId: string, userId: string) {
+  const demoProfiles: Record<string, Partial<any>> = {
+    "demo-word-001": { level: "B1", timesReviewed: 1, timesCorrect: 1, lastRetrievalType: 0 },
+    "demo-word-042": { level: "C1", timesReviewed: 15, timesCorrect: 14, lastRetrievalType: 3 },
+    "demo-word-017": { level: "B2", timesReviewed: 5, timesCorrect: 2, lastRetrievalType: 1 },
+  };
+  const profile = demoProfiles[vocabularyId] || { level: "B1", timesReviewed: 0, timesCorrect: 0, lastRetrievalType: 0 };
+  return {
+    _id: vocabularyId,
+    userId,
+    word: "demo",
+    ...profile,
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -57,15 +75,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
     }
 
-    // Validate ObjectId format
-    if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "Invalid vocabularyId format. Must be a 24-character hex string." 
-      }, { status: 400 });
+    // Demo mode: support lab/testing with mock data
+    const isDemoMode = vocabularyId.startsWith("demo-");
+    let vocab;
+
+    if (isDemoMode) {
+      vocab = createDemoVocab(vocabularyId, userId);
+    } else {
+      // Validate ObjectId format for real data
+      if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
+        return NextResponse.json({ 
+          success: false, 
+          message: "Invalid vocabularyId format. Must be a 24-character hex string or start with 'demo-'." 
+        }, { status: 400 });
+      }
+      vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     }
 
-    const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
     const x = await featureVectorFor(vocab, userId);
@@ -93,15 +119,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
     }
 
-    // Validate ObjectId format
-    if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "Invalid vocabularyId format. Must be a 24-character hex string." 
-      }, { status: 400 });
+    // Demo mode: support lab/testing with mock data
+    const isDemoMode = vocabularyId.startsWith("demo-");
+    let vocab;
+
+    if (isDemoMode) {
+      vocab = createDemoVocab(vocabularyId, userId);
+    } else {
+      // Validate ObjectId format for real data
+      if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
+        return NextResponse.json({ 
+          success: false, 
+          message: "Invalid vocabularyId format. Must be a 24-character hex string or start with 'demo-'." 
+        }, { status: 400 });
+      }
+      vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     }
 
-    const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
     const x = await featureVectorFor(vocab, userId);
