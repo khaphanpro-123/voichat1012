@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || "https://voichat1012-production.up.railway.app").replace(/\/$/, "")
+// Remove trailing slash AND ensure we don't have double slashes
+const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || "https://voichat1012-production.up.railway.app").replace(/\/+$/, "")
+
+console.log("[Proxy Init] BACKEND_URL:", BACKEND_URL)
+console.log("[Proxy Init] Raw env:", process.env.NEXT_PUBLIC_API_URL)
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,11 +12,16 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     
     // Forward to Railway backend
-    const response = await fetch(`${BACKEND_URL}/api/upload-document-complete`, {
+    const backendEndpoint = `${BACKEND_URL}/api/upload-document-complete`
+    console.log("[Proxy] Forwarding to:", backendEndpoint)
+    
+    const response = await fetch(backendEndpoint, {
       method: "POST",
       body: formData,
       // Don't set Content-Type header - let fetch set it with boundary
     })
+    
+    console.log("[Proxy] Backend response status:", response.status)
     
     if (!response.ok) {
       let errorDetail = response.statusText
