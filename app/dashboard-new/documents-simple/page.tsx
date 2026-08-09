@@ -102,6 +102,12 @@ export default function DocumentsPage() {
   const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set())
   const [uploadedDocs, setUploadedDocs] = useState<any[]>([])
   const [cameraActive, setCameraActive] = useState(false)
+  const [saveResult, setSaveResult] = useState<null | {
+    savedCount: number
+    failedCount: number
+    total: number
+    sampleError: { word: string; status: number; reason?: string; error?: string } | null
+  }>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -195,6 +201,7 @@ export default function DocumentsPage() {
     setUploading(true)
     setError("")
     setResult(null)
+    setSaveResult(null)
     
     try {
       const fileType = detectFileType(file)
@@ -318,8 +325,13 @@ export default function DocumentsPage() {
   const handleSaveToDatabase = async (data: any) => {
     try {
       const vocabularyToSave = data.vocabulary || data.flashcards || []
-      if (vocabularyToSave.length === 0) return { savedCount: 0, failedCount: 0 }
+      if (vocabularyToSave.length === 0) {
+        setSaveResult({ savedCount: 0, failedCount: 0, total: 0, sampleError: null })
+        return { savedCount: 0, failedCount: 0 }
+      }
       let savedCount = 0, failedCount = 0
+      const errorSamples: Array<{ word: string; status: number; reason?: string; error?: string }> = []
+
       const savePromises = vocabularyToSave.map(async (item: any) => {
         if (!item || (!item.word && !item.phrase)) return
         const payload = {
@@ -337,12 +349,51 @@ export default function DocumentsPage() {
         if (!payload.word?.trim()) { failedCount++; return }
         try {
           const res = await fetch("/api/vocabulary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-          if (res.ok) savedCount++; else failedCount++
-        } catch { failedCount++ }
+          if (res.ok) {
+            savedCount++
+          } else {
+            failedCount++
+            // Capture first ~3 failure reasons so user knows WHY (was silent before)
+            if (errorSamples.length < 3) {
+              let reason = ""; let errMsg = ""
+              try {
+                const j = await res.json()
+                reason = j.reason || ""
+                errMsg = j.error || ""
+              } catch {}
+              errorSamples.push({ word: payload.word, status: res.status, reason, error: errMsg })
+              console.error(`[Vocabulary save] ${payload.word} → HTTP ${res.status}`, { reason, error: errMsg })
+            }
+          }
+        } catch (netErr: any) {
+          failedCount++
+          if (errorSamples.length < 3) {
+            errorSamples.push({ word: payload.word, status: 0, error: String(netErr?.message ?? netErr) })
+            console.error(`[Vocabulary save] ${payload.word} → network error`, netErr)
+          }
+        }
       })
       await Promise.all(savePromises)
+      const total = savedCount + failedCount
+      setSaveResult({ savedCount, failedCount, total, sampleError: errorSamples[0] ?? null })
+      // Extra visibility for the user (top-level status): show a persistent message.
+      if (failedCount > 0 && savedCount === 0) {
+        const first = errorSamples[0]
+        const hint =
+          first?.status === 401 ? "Bạn cần đăng nhập lại (session hết hạn hoặc chưa có cookie)."
+          : first?.status === 429 ? "Đang bị giới hạn tốc độ, chờ 1 phút rồi thử lại."
+          : first?.status === 400 ? "Có từ không hợp lệ (thiếu trường bắt buộc)."
+          : first?.status === 500 ? "Lỗi server — xem tab Network để biết chi tiết."
+          : "Lỗi không xác định — mở DevTools Console xem log chi tiết."
+        setError(`Không lưu được từ vựng nào (${failedCount}/${total}). ${hint}`)
+      } else if (failedCount > 0) {
+        // Some saved, some failed — soft notice via console + saveResult banner
+        console.warn(`[Vocabulary save] ${failedCount}/${total} từ thất bại — mở Console xem chi tiết`)
+      }
       return { savedCount, failedCount }
-    } catch {
+    } catch (err: any) {
+      console.error("[Vocabulary save] Unexpected error:", err)
+      setError(`Lỗi lưu từ vựng: ${err?.message ?? "không xác định"}`)
       return { savedCount: 0, failedCount: 0 }
     }
   }
@@ -450,6 +501,39 @@ export default function DocumentsPage() {
               {(error.includes("502") || error.includes("khởi động")) && (
                 <button onClick={handleUpload} disabled={uploading} className="mt-2 block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-base font-medium">
                   Thử lại
+                </button>
+              )}
+            </div>
+          )}
+
+          {saveResult && saveResult.total > 0 && (
+            <div className={`p-3 rounded-lg text-base border ${
+              saveResult.failedCount === 0
+                ? "bg-green-50 text-green-800 border-green-200"
+                : saveResult.savedCount === 0
+                ? "bg-red-50 text-red-800 border-red-200"
+                : "bg-yellow-50 text-yellow-900 border-yellow-200"
+            }`}>
+              <div className="font-semibold">
+                {saveResult.failedCount === 0
+                  ? `Đã lưu ${saveResult.savedCount}/${saveResult.total} từ vào Từ vựng.`
+                  : saveResult.savedCount === 0
+                  ? `Không lưu được từ nào (${saveResult.failedCount}/${saveResult.total}).`
+                  : `Lưu ${saveResult.savedCount}/${saveResult.total} từ. ${saveResult.failedCount} thất bại.`}
+              </div>
+              {saveResult.sampleError && (
+                <div className="text-sm mt-1 opacity-90">
+                  Ví dụ lỗi: "{saveResult.sampleError.word}" — HTTP {saveResult.sampleError.status}
+                  {saveResult.sampleError.reason && ` (${saveResult.sampleError.reason})`}
+                  {saveResult.sampleError.error && `: ${saveResult.sampleError.error}`}
+                </div>
+              )}
+              {saveResult.savedCount > 0 && (
+                <button
+                  onClick={() => (window.location.href = "/dashboard-new/vocabulary")}
+                  className="mt-2 px-3 py-1.5 bg-white text-gray-800 rounded-md text-sm font-medium border border-gray-300 hover:bg-gray-50"
+                >
+                  Xem từ vựng đã lưu →
                 </button>
               )}
             </div>

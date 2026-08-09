@@ -12,20 +12,29 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json(
-        { error: "Unauthorized - Please login" },
+        { error: "Unauthorized - Please login", reason: "no_session_cookie" },
         { status: 401 }
       )
     }
 
     const userId = (session.user as any).id
     if (!userId) {
-      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 })
+      return NextResponse.json(
+        { error: "User ID not found in session", reason: "session_missing_id", debug: { email: (session.user as any).email } },
+        { status: 401 }
+      )
     }
 
-    // Rate limit: 60 saves per minute per user (document uploads can batch many words)
-    const { allowed } = rateLimit(`vocab-post:${userId}`, 60, 60_000)
+    // Rate limit: 200 saves per minute per user.
+    // Batched document uploads can sync 50-100 words in one flush; 60/min
+    // rejected legitimate batch uploads. 200/min is generous enough that a
+    // single doc upload never trips it while still catching runaway loops.
+    const { allowed } = rateLimit(`vocab-post:${userId}`, 200, 60_000)
     if (!allowed) {
-      return NextResponse.json({ error: "Quá nhiều yêu cầu, vui lòng thử lại sau" }, { status: 429 })
+      return NextResponse.json(
+        { error: "Quá nhiều yêu cầu, vui lòng thử lại sau", reason: "rate_limited", retryAfterSec: 60 },
+        { status: 429 }
+      )
     }
 
     const body = await request.json()
