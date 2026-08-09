@@ -49,6 +49,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
     }
 
+    // Validate ObjectId format (24-char hex string) for real MongoDB documents
+    if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid vocabularyId format. Must be a 24-character hex string (MongoDB ObjectId)." 
+      }, { status: 400 });
+    }
+
     const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 

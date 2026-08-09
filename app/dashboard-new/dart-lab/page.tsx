@@ -1,484 +1,348 @@
 "use client";
 
 /**
- * DART / CARTS Lab — Story-mode redesign (2026-08-09, Decision D-009 approach A).
+ * DART / CARTS Lab — Duolingo-style redesign (2026-08-09, D-011).
  *
- * Trước: 4 tab rời (Tổng quan / Thử lịch / Chấm câu / Chia nhóm) — mỗi tab test 1 endpoint,
- * user không thấy được luồng nối các endpoint. Đặc biệt user hỏi "DART nằm chỗ nào" khi
- * xem tab Chấm câu → chỉ ra gap khoa học thật: judge score chưa từng feed vào DART.
- *
- * Sau (approach A trong D-009):
- *   1. Single-scroll narrative — 4 chương xuyên suốt 1 học viên giả định.
- *   2. Chương 1 "Vấn đề": SVG so sánh Anki (khoảng cách đều) vs DART (theo độ khó).
- *   3. Chương 2 "Bên trong DART": thanh cuộn ngang B1→B2→B3 (theo đề xuất của user)
- *      với SVG minh hoạ + text tiếng Việt cho từng bước.
- *   4. Chương 3 "Thử ngay": interactive schedule + judge được nối lại — sau khi chấm
- *      câu, tự động re-run DART với judgeComposite mới, hiển thị delta half-life.
- *      Đây chính là câu trả lời cho "DART nằm chỗ nào?".
- *   5. Chương 4 "Nghiên cứu": bảng so sánh 3 nhóm DART / HLR / SM-2, ai được gán gì,
- *      link tới paper draft.
- *
- * Kiến trúc dữ liệu mới (Amendment #A-002): recentJudgeComposite là feature x[5] mới
- * trong DART. Trang này VISUAL hoá đúng vòng feedback đó.
+ * Palette: #58cc02 xanh · #ffc800 vàng · #ff4b4b đỏ · #1cb0f6 xanh nước · #ce82ff tím.
+ * Mascot "Voi Con" dẫn dắt xuyên 4 level. Nút 3D shadow, chữ tối thiểu, XP bar.
+ * Chi tiết khoa học chuyển hết vào Chế độ chuyên gia.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import {
-  Brain, Sparkles, FlaskConical, Beaker, RefreshCw, Send, Loader2,
-  Info, PlayCircle, ChevronRight, ChevronLeft, ArrowRight, Zap, Users,
-  BookOpen, Target, TrendingUp, HelpCircle,
-} from "lucide-react";
 
 type RetrievalType = 0 | 1 | 2 | 3;
 
-const RETRIEVAL: Array<{ label: string; vi: string; hint: string }> = [
-  { label: "Recognition MCQ",   vi: "Trắc nghiệm (nhận diện)",       hint: "Dễ nhất — chọn 1 trong 4 định nghĩa" },
-  { label: "Cloze completion",  vi: "Điền chỗ trống",                hint: "Trung bình — điền từ vào câu có gợi ý" },
-  { label: "Constrained gen",   vi: "Đặt câu có ràng buộc",          hint: "Khó — tự viết câu dùng từ đó" },
-  { label: "Open paraphrase",   vi: "Viết lại đoạn văn",             hint: "Khó nhất — paraphrase giữ nguyên nghĩa" },
-];
+// ═════════════════════════════════════════════════════════════════════════════
+// DUOLINGO-STYLE PALETTE
+// ═════════════════════════════════════════════════════════════════════════════
 
-const PRESETS = [
-  {
-    name: "Học viên mới",
-    desc: "Vừa gặp từ này lần đầu, làm MCQ đúng",
-    values: { vocabularyId: "demo-word-001", userId: "learner-new", quality: 4, dPrev: 0 as RetrievalType },
-  },
-  {
-    name: "Học viên thành thạo",
-    desc: "Đã ôn nhiều lần, làm được cả paraphrase",
-    values: { vocabularyId: "demo-word-042", userId: "learner-advanced", quality: 5, dPrev: 3 as RetrievalType },
-  },
-  {
-    name: "Học viên đang gặp khó",
-    desc: "Làm cloze nhưng chỉ đúng một nửa",
-    values: { vocabularyId: "demo-word-017", userId: "learner-struggling", quality: 2, dPrev: 1 as RetrievalType },
-  },
-];
+const C = {
+  green: "#58cc02", greenDark: "#58a700", greenLight: "#d7ffb8",
+  yellow: "#ffc800", yellowDark: "#e5a500", yellowLight: "#fff4d6",
+  red: "#ff4b4b", redDark: "#ea2b2b", redLight: "#ffdfe0",
+  blue: "#1cb0f6", blueDark: "#0a91d3", blueLight: "#ddf4ff",
+  purple: "#ce82ff", purpleDark: "#a560e8", purpleLight: "#f4e4ff",
+  grayText: "#4b4b4b", grayBorder: "#e5e5e5", grayLight: "#f7f7f7",
+};
 
-interface WeightsResp {
-  success: boolean;
-  weights: { theta: number[]; alpha: number; featureNames?: string[]; thresholds?: any };
-  meta: { source: string | null; mtimeMs: number | null; trained: boolean };
+// ═════════════════════════════════════════════════════════════════════════════
+// MASCOT — "Voi Con" (little elephant, our study buddy)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function Mascot({ size = 120, mood = "happy" }: { size?: number; mood?: "happy" | "wave" | "think" | "cheer" }) {
+  return (
+    <svg viewBox="0 0 120 120" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+      {/* body */}
+      <ellipse cx="60" cy="78" rx="38" ry="34" fill={C.blue} />
+      <ellipse cx="60" cy="82" rx="30" ry="26" fill="#67c6ff" />
+      {/* head */}
+      <circle cx="60" cy="48" r="30" fill={C.blue} />
+      {/* ears */}
+      <ellipse cx="30" cy="46" rx="14" ry="18" fill={C.blueDark} />
+      <ellipse cx="90" cy="46" rx="14" ry="18" fill={C.blueDark} />
+      <ellipse cx="30" cy="46" rx="8" ry="12" fill="#ff9db8" />
+      <ellipse cx="90" cy="46" rx="8" ry="12" fill="#ff9db8" />
+      {/* trunk */}
+      {mood === "wave" ? (
+        <path d="M 55 60 Q 45 75, 55 85 Q 60 90, 70 82 Q 75 78, 72 72" fill="none" stroke={C.blue} strokeWidth="10" strokeLinecap="round" />
+      ) : (
+        <path d="M 55 60 Q 55 78, 62 84 Q 68 88, 68 78" fill="none" stroke={C.blue} strokeWidth="10" strokeLinecap="round" />
+      )}
+      {/* eyes */}
+      <circle cx="48" cy="45" r="6" fill="white" />
+      <circle cx="72" cy="45" r="6" fill="white" />
+      <circle cx="49" cy="46" r="3" fill="#1a1a1a" />
+      <circle cx="73" cy="46" r="3" fill="#1a1a1a" />
+      <circle cx="50" cy="45" r="1" fill="white" />
+      <circle cx="74" cy="45" r="1" fill="white" />
+      {/* mouth (mood-dependent) */}
+      {mood === "cheer" ? (
+        <path d="M 54 58 Q 60 66, 66 58" fill="#ff9db8" stroke={C.grayText} strokeWidth="1.5" />
+      ) : mood === "think" ? (
+        <line x1="56" y1="60" x2="64" y2="60" stroke={C.grayText} strokeWidth="2" strokeLinecap="round" />
+      ) : (
+        <path d="M 56 58 Q 60 62, 64 58" fill="none" stroke={C.grayText} strokeWidth="2" strokeLinecap="round" />
+      )}
+      {/* cheeks */}
+      <circle cx="42" cy="54" r="4" fill="#ff9db8" opacity="0.5" />
+      <circle cx="78" cy="54" r="4" fill="#ff9db8" opacity="0.5" />
+    </svg>
+  );
 }
 
-interface ScheduleResp {
-  success: boolean;
-  schedule?: {
-    interval?: number;
-    intervalDays?: number;
-    halfLife: number;
-    nextRetrievalType: RetrievalType;
-    predictedRecall?: number;
-    contextId?: string;
-    contextScore?: number;
-    retrievalLabel?: string;
+// ═════════════════════════════════════════════════════════════════════════════
+// DUOLINGO-STYLE ATOMS
+// ═════════════════════════════════════════════════════════════════════════════
+
+function BigButton({ onClick, disabled, busy, children, color = "green", size = "md" }: any) {
+  const palette: Record<string, { bg: string; shadow: string; text: string }> = {
+    green:   { bg: C.green,   shadow: C.greenDark,   text: "white" },
+    yellow:  { bg: C.yellow,  shadow: C.yellowDark,  text: C.grayText },
+    red:     { bg: C.red,     shadow: C.redDark,     text: "white" },
+    blue:    { bg: C.blue,    shadow: C.blueDark,    text: "white" },
+    purple:  { bg: C.purple,  shadow: C.purpleDark,  text: "white" },
+    white:   { bg: "white",   shadow: C.grayBorder,  text: C.grayText },
   };
-  features?: { recentJudgeComposite?: number };
-  task?: any;
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-// SVG ILLUSTRATIONS
-// ═════════════════════════════════════════════════════════════════════════════
-
-function AnkiVsDartSvg() {
+  const p = palette[color];
+  const sz = size === "lg"
+    ? "text-lg px-8 py-4"
+    : size === "sm"
+    ? "text-sm px-4 py-2"
+    : "text-base px-6 py-3";
   return (
-    <svg viewBox="0 0 640 220" className="w-full max-w-3xl" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <marker id="arrowRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626" />
-        </marker>
-        <marker id="arrowIndigo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#4f46e5" />
-        </marker>
-      </defs>
-      {/* Left: Anki-style, evenly spaced regardless of difficulty */}
-      <g>
-        <text x="20" y="24" fontSize="13" fontWeight="700" fill="#7c2d12">Anki / Quizlet</text>
-        <text x="20" y="42" fontSize="10" fill="#7c2d12">bỏ qua độ khó bài</text>
-        {/* Timeline line */}
-        <line x1="20" y1="120" x2="300" y2="120" stroke="#fca5a5" strokeWidth="2" />
-        {/* Even dots */}
-        {[40, 100, 160, 220, 280].map((cx, i) => (
-          <g key={i}>
-            <circle cx={cx} cy="120" r="8" fill="#dc2626" />
-            <text x={cx} y="145" textAnchor="middle" fontSize="9" fill="#7c2d12">ngày {i * 3 + 1}</text>
-          </g>
-        ))}
-        <text x="20" y="180" fontSize="10" fill="#7c2d12" fontStyle="italic">
-          → khoảng cách bằng nhau dù bài dễ hay khó
-        </text>
-      </g>
-      {/* Divider */}
-      <line x1="320" y1="10" x2="320" y2="210" stroke="#e5e7eb" strokeWidth="1" strokeDasharray="4 4" />
-      {/* Right: DART, spacing scales with difficulty */}
-      <g>
-        <text x="340" y="24" fontSize="13" fontWeight="700" fill="#3730a3">DART</text>
-        <text x="340" y="42" fontSize="10" fill="#3730a3">giãn theo độ khó bài vừa làm</text>
-        <line x1="340" y1="120" x2="620" y2="120" stroke="#a5b4fc" strokeWidth="2" />
-        {/* Variable-spaced dots */}
-        {[
-          { cx: 355, d: 0, label: "MCQ" },
-          { cx: 395, d: 1, label: "Cloze" },
-          { cx: 460, d: 2, label: "Gen" },
-          { cx: 545, d: 3, label: "Para" },
-          { cx: 610, d: 2, label: "" },
-        ].map((p, i) => (
-          <g key={i}>
-            <circle cx={p.cx} cy="120" r="8" fill="#4f46e5" />
-            {p.label && <text x={p.cx} y="106" textAnchor="middle" fontSize="9" fill="#3730a3">{p.label}</text>}
-            <text x={p.cx} y="145" textAnchor="middle" fontSize="9" fill="#3730a3">
-              {i === 0 ? "d1" : `d${[1, 4, 11, 22][i - 1]}`}
-            </text>
-          </g>
-        ))}
-        <text x="340" y="180" fontSize="10" fill="#3730a3" fontStyle="italic">
-          → vừa làm bài khó → tự tin trí nhớ chắc → ôn muộn hơn
-        </text>
-      </g>
-    </svg>
-  );
-}
-
-function FeatureVectorSvg() {
-  return (
-    <svg viewBox="0 0 320 200" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <text x="160" y="20" textAnchor="middle" fontSize="12" fontWeight="700" fill="#3730a3">
-        Vector đặc trưng x
-      </text>
-      {[
-        { y: 40, name: "CEFR", val: "B1" },
-        { y: 62, name: "Tần suất", val: "10³" },
-        { y: 84, name: "Độ chính xác", val: "0.72" },
-        { y: 106, name: "Số lần ôn", val: "5" },
-        { y: 128, name: "Điểm câu gần nhất", val: "0.85", hi: true },
-      ].map((row, i) => (
-        <g key={i}>
-          <rect x="30" y={row.y - 12} width="180" height="18" rx="4"
-                fill={row.hi ? "#fef3c7" : "#eef2ff"}
-                stroke={row.hi ? "#f59e0b" : "#c7d2fe"} strokeWidth="1" />
-          <text x="40" y={row.y} fontSize="10" fill="#374151">{row.name}</text>
-          <text x="200" y={row.y} textAnchor="end" fontSize="10" fontWeight="600"
-                fill={row.hi ? "#92400e" : "#4f46e5"}>{row.val}</text>
-        </g>
-      ))}
-      <text x="30" y="160" fontSize="9" fill="#92400e">
-        ★ Từ 2026-08-09: thêm điểm chấm câu (Amendment #A-002)
-      </text>
-      <text x="30" y="180" fontSize="9" fill="#6b7280" fontStyle="italic">
-        6 con số này biểu diễn "học viên nào, học từ gì, quen chưa"
-      </text>
-    </svg>
-  );
-}
-
-function HalfLifeFormulaSvg() {
-  return (
-    <svg viewBox="0 0 320 200" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <text x="160" y="20" textAnchor="middle" fontSize="12" fontWeight="700" fill="#3730a3">
-        Công thức nửa đời trí nhớ
-      </text>
-      <text x="160" y="65" textAnchor="middle" fontSize="18" fontWeight="700" fill="#111827"
-            fontFamily="ui-monospace, monospace">
-        h = 2<tspan fontSize="12" dy="-6">θ·x</tspan><tspan dy="6"> </tspan>·<tspan> </tspan>exp(α · φ(d))
-      </text>
-      <line x1="30" y1="90" x2="290" y2="90" stroke="#e5e7eb" strokeWidth="1" />
-      {[
-        { y: 108, sym: "θ·x", meaning: "6 feature × 6 hệ số → độ tự tin cơ bản" },
-        { y: 128, sym: "α", meaning: "hệ số DART (mới) — độ khó bài quan trọng cỡ nào" },
-        { y: 148, sym: "φ(d)", meaning: "độ khó bài vừa làm: 0 → 0.33 → 0.66 → 1.0" },
-        { y: 168, sym: "h", meaning: "nửa đời: sau bao nhiêu ngày HV nhớ còn 50%" },
-      ].map((r, i) => (
-        <g key={i}>
-          <rect x="30" y={r.y - 10} width="42" height="14" rx="3" fill="#eef2ff" />
-          <text x="51" y={r.y} textAnchor="middle" fontSize="11" fontWeight="600" fill="#4f46e5"
-                fontFamily="ui-monospace, monospace">{r.sym}</text>
-          <text x="80" y={r.y} fontSize="10" fill="#374151">{r.meaning}</text>
-        </g>
-      ))}
-      <text x="160" y="192" textAnchor="middle" fontSize="9" fill="#6b7280" fontStyle="italic">
-        Alg 2 dòng 2 trong bài báo
-      </text>
-    </svg>
-  );
-}
-
-function RetrievalLadderSvg() {
-  return (
-    <svg viewBox="0 0 320 220" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <text x="160" y="20" textAnchor="middle" fontSize="12" fontWeight="700" fill="#3730a3">
-        4 dạng bài — thang độ khó
-      </text>
-      {[
-        { y: 50,  d: 0, label: "MCQ",        hint: "chọn 1 trong 4",     w: 60 },
-        { y: 90,  d: 1, label: "Cloze",      hint: "điền chỗ trống",     w: 130 },
-        { y: 130, d: 2, label: "Đặt câu",    hint: "tự viết có ràng buộc", w: 200 },
-        { y: 170, d: 3, label: "Paraphrase", hint: "viết lại giữ nghĩa",  w: 260 },
-      ].map((r, i) => (
-        <g key={i}>
-          <rect x="30" y={r.y - 14} width={r.w} height="26" rx="5"
-                fill={`hsl(${240 - i * 20}, 70%, ${85 - i * 6}%)`}
-                stroke={`hsl(${240 - i * 20}, 70%, ${55 - i * 5}%)`} strokeWidth="1" />
-          <text x="40" y={r.y - 1} fontSize="10" fontWeight="600" fill="#1e293b">
-            d={r.d} · {r.label}
-          </text>
-          <text x="40" y={r.y + 10} fontSize="9" fill="#475569">{r.hint}</text>
-        </g>
-      ))}
-      <path d="M 285 40 L 285 190" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 3" />
-      <text x="295" y="50" fontSize="9" fill="#475569">dễ</text>
-      <text x="295" y="185" fontSize="9" fill="#475569">khó</text>
-      <text x="160" y="210" textAnchor="middle" fontSize="9" fill="#6b7280" fontStyle="italic">
-        Vượt qua bài khó → trí nhớ chắc hơn → ôn muộn hơn
-      </text>
-    </svg>
-  );
-}
-
-function ThreeGroupsSvg() {
-  const groups = [
-    { name: "SM-2", desc: "baseline Anki",       cx: 60,  color: "#94a3b8" },
-    { name: "HLR",  desc: "no-α ablation",       cx: 160, color: "#f59e0b" },
-    { name: "DART", desc: "có α (ours)",         cx: 260, color: "#4f46e5" },
-  ];
-  return (
-    <svg viewBox="0 0 320 180" className="w-full max-w-md" xmlns="http://www.w3.org/2000/svg">
-      <text x="160" y="20" textAnchor="middle" fontSize="12" fontWeight="700" fill="#3730a3">
-        Randomised controlled trial — 3 nhóm
-      </text>
-      {groups.map((g, i) => (
-        <g key={i}>
-          <circle cx={g.cx} cy="80" r="34" fill={g.color} opacity="0.15" stroke={g.color} strokeWidth="2" />
-          <text x={g.cx} y="80" textAnchor="middle" fontSize="14" fontWeight="700" fill={g.color}>
-            {g.name}
-          </text>
-          <text x={g.cx} y="94" textAnchor="middle" fontSize="9" fill="#374151">{g.desc}</text>
-          <text x={g.cx} y="140" textAnchor="middle" fontSize="10" fontWeight="600" fill="#111827">
-            n≈65
-          </text>
-          <text x={g.cx} y="154" textAnchor="middle" fontSize="9" fill="#6b7280">học viên</text>
-        </g>
-      ))}
-      <text x="160" y="170" textAnchor="middle" fontSize="9" fill="#6b7280" fontStyle="italic">
-        userId → hash FNV-1a → nhóm (ổn định, không phụ thuộc thời điểm gọi)
-      </text>
-    </svg>
-  );
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Small UI atoms
-// ═════════════════════════════════════════════════════════════════════════════
-
-function Chapter({ n, title, children }: { n: string; title: string; children: any }) {
-  return (
-    <section className="scroll-mt-6">
-      <div className="flex items-baseline gap-3 mb-4">
-        <span className="text-xs font-mono px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">
-          {n}
-        </span>
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{title}</h2>
-      </div>
-      <div className="space-y-4">{children}</div>
-    </section>
-  );
-}
-
-function Card({ children, className = "" }: any) {
-  return (
-    <div className={`rounded-2xl border border-neutral-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 shadow-sm p-6 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-function PrimaryButton({ onClick, disabled, busy, children, color = "indigo" }: any) {
-  const colors: Record<string, string> = {
-    indigo:  "bg-indigo-600 hover:bg-indigo-700",
-    emerald: "bg-emerald-600 hover:bg-emerald-700",
-    amber:   "bg-amber-600 hover:bg-amber-700",
-    neutral: "bg-neutral-800 hover:bg-black",
-  };
-  return (
-    <button onClick={onClick} disabled={disabled}
-      className={`inline-flex items-center gap-2 text-white text-base font-medium px-5 py-2.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition ${colors[color]}`}>
-      {busy ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-      {children}
+    <button onClick={onClick} disabled={disabled || busy}
+      className={`${sz} font-bold uppercase tracking-wide rounded-2xl transition-all
+                  active:translate-y-1 active:shadow-none
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0`}
+      style={{ background: p.bg, color: p.text, boxShadow: `0 4px 0 ${p.shadow}`, border: `2px solid ${p.shadow}` }}>
+      {busy ? "..." : children}
     </button>
   );
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// Chapter 2 — horizontal B1→B2→B3 walkthrough
-// ═════════════════════════════════════════════════════════════════════════════
-
-function InsideDartWalkthrough() {
-  const [step, setStep] = useState(0);
-  const steps = [
-    {
-      id: "B1", title: "Biến học viên và từ thành số",
-      svg: <FeatureVectorSvg />,
-      body: (
-        <>
-          <p>
-            Trước khi tính "bao giờ ôn lại", thuật toán biến <b>mọi thứ nó biết về học viên và từ</b>
-            thành một dãy số gọi là <b>vector đặc trưng x</b>. Ví dụ: trình độ CEFR, tần suất của từ trong
-            tiếng Anh, tỷ lệ đúng của chính học viên đó, số lần đã ôn.
-          </p>
-          <p>
-            <b>Mới từ 2026-08-09</b> (Amendment #A-002): thêm phần thứ 6 — <i>điểm chấm câu gần nhất</i>.
-            Nếu HV vừa viết câu và LLM chấm 8.5/10 → phần này = 0.85. Feature này là cầu nối giữa
-            "Chương 3 chấm câu" và "Chương 3 tính lịch" — trước đây hai bên không nói chuyện.
-          </p>
-        </>
-      ),
-    },
-    {
-      id: "B2", title: "Tính nửa đời trí nhớ h",
-      svg: <HalfLifeFormulaSvg />,
-      body: (
-        <>
-          <p>
-            Từ vector x, thuật toán tính <b>half-life h</b> — số ngày kể từ lần ôn cuối tới lúc HV
-            còn nhớ khoảng 50%. Công thức có 2 phần nhân với nhau:
-          </p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li><b>Phần 1 (θ·x):</b> tính độ tự tin cơ bản từ 6 con số của học viên.</li>
-            <li><b>Phần 2 (α·φ(d)):</b> nhân thêm nếu bài <i>vừa làm</i> là bài khó. <b>α là điểm mới của DART</b> —
-                các thuật toán trước (HLR, SM-2) coi mọi bài như nhau (α = 0).</li>
-          </ul>
-          <p>
-            Nói cách khác: <b>vừa vượt qua bài khó (paraphrase) → h dài gấp ~1.4 lần</b> so với vừa
-            vượt bài dễ (MCQ), <i>với cùng học viên, cùng từ</i>. Đó là toàn bộ đóng góp của DART trong 1 câu.
-          </p>
-        </>
-      ),
-    },
-    {
-      id: "B3", title: "Chọn dạng bài kế tiếp",
-      svg: <RetrievalLadderSvg />,
-      body: (
-        <>
-          <p>
-            Có h rồi → thuật toán chọn <b>dạng bài kế tiếp</b> theo thang: h ngắn → cho bài dễ
-            (MCQ) để đỡ nản. h dài → cho bài khó (paraphrase) để "nạp sâu" trí nhớ hơn.
-          </p>
-          <p>
-            Ba ngưỡng mặc định (có thể huấn luyện lại): h &lt; 2 ngày → MCQ, &lt; 7 ngày → Cloze,
-            &lt; 30 ngày → Đặt câu, còn lại → Paraphrase.
-          </p>
-          <p className="text-neutral-500 text-sm italic">
-            Ba bước B1 → B2 → B3 chạy trong đúng &lt; 5ms mỗi lần HV nộp 1 bài, chạy hàng nghìn lần
-            mỗi phiên học của lớp thí nghiệm.
-          </p>
-        </>
-      ),
-    },
-  ];
-
+function Card({ children, color = "white", className = "" }: any) {
+  const bg = { white: "white", green: C.greenLight, yellow: C.yellowLight, red: C.redLight, blue: C.blueLight, purple: C.purpleLight }[color as string] ?? "white";
+  const border = { white: C.grayBorder, green: C.green, yellow: C.yellow, red: C.red, blue: C.blue, purple: C.purple }[color as string] ?? C.grayBorder;
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 overflow-hidden shadow-sm">
-      {/* Step nav */}
-      <div className="grid grid-cols-3 divide-x divide-neutral-100 dark:divide-neutral-800 bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-200">
-        {steps.map((s, i) => (
-          <button key={s.id} onClick={() => setStep(i)}
-            className={`px-4 py-3 text-left transition ${step === i ? "bg-white dark:bg-neutral-900" : "hover:bg-white/60 dark:hover:bg-neutral-900/60"}`}>
-            <div className={`text-[10px] font-mono font-bold ${step === i ? "text-indigo-700 dark:text-indigo-300" : "text-neutral-400"}`}>
-              {s.id}
-            </div>
-            <div className={`text-sm font-semibold mt-0.5 ${step === i ? "text-neutral-900 dark:text-neutral-100" : "text-neutral-500"}`}>
-              {s.title}
-            </div>
-          </button>
-        ))}
-      </div>
-      {/* Step body */}
-      <div className="grid md:grid-cols-2 gap-6 p-6">
-        <div className="bg-neutral-50 dark:bg-neutral-950 rounded-xl p-4 flex items-center justify-center">
-          {steps[step].svg}
-        </div>
-        <div className="prose prose-sm dark:prose-invert max-w-none text-base leading-relaxed space-y-3">
-          {steps[step].body}
-        </div>
-      </div>
-      {/* Prev / next */}
-      <div className="flex items-center justify-between px-6 pb-5 -mt-2">
-        <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}
-                className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed">
-          <ChevronLeft size={16} /> Trước
-        </button>
-        <div className="text-xs text-neutral-400">{step + 1} / {steps.length}</div>
-        <button onClick={() => setStep(Math.min(steps.length - 1, step + 1))} disabled={step === steps.length - 1}
-                className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed">
-          Sau <ChevronRight size={16} />
-        </button>
-      </div>
+    <div className={`rounded-3xl p-6 ${className}`}
+         style={{ background: bg, border: `2px solid ${border}` }}>
+      {children}
     </div>
   );
 }
 
+function Badge({ children, color = "yellow" }: any) {
+  const bg = { green: C.green, yellow: C.yellow, red: C.red, blue: C.blue, purple: C.purple }[color as string] ?? C.yellow;
+  return (
+    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-white"
+          style={{ background: bg }}>
+      {children}
+    </span>
+  );
+}
+
+// XP star icon
+function StarXp({ size = 20, filled = true }: { size?: number; filled?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
+      <path d="M12 2 L14.5 9 L22 9 L16 13.5 L18 21 L12 16.5 L6 21 L8 13.5 L2 9 L9.5 9 Z"
+            fill={filled ? C.yellow : "#f0f0f0"} stroke={C.yellowDark} strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
-// Main page
+// LEVEL 1 — VẤN ĐỀ (interactive Anki vs DART comparison)
 // ═════════════════════════════════════════════════════════════════════════════
 
-export default function DartLabPage() {
-  const [expert, setExpert] = useState(false);
+function Level1Problem({ onComplete }: { onComplete: () => void }) {
+  const [picked, setPicked] = useState<"anki" | "dart" | null>(null);
+  return (
+    <Card>
+      <div className="flex items-start gap-6">
+        <div className="flex-shrink-0"><Mascot size={100} mood="wave" /></div>
+        <div className="flex-1">
+          <div className="text-lg font-bold" style={{ color: C.grayText }}>
+            Bạn nghĩ app nào ôn từ tốt hơn?
+          </div>
+          <div className="text-sm mt-1" style={{ color: C.grayText, opacity: 0.7 }}>
+            Bấm chọn 1 — Voi Con sẽ giải thích.
+          </div>
+        </div>
+      </div>
 
-  // Weights
-  const [weights, setWeights] = useState<WeightsResp | null>(null);
-  const [weightsLoading, setWeightsLoading] = useState(false);
+      <div className="grid md:grid-cols-2 gap-4 mt-6">
+        {[
+          { id: "anki", name: "Anki", tag: "khoảng cách đều", color: "red" as const, dots: [10, 30, 50, 70, 90] },
+          { id: "dart", name: "DART", tag: "theo độ khó bài", color: "green" as const, dots: [5, 15, 35, 65, 95] },
+        ].map((opt) => (
+          <button key={opt.id} onClick={() => setPicked(opt.id as any)}
+            className={`text-left rounded-2xl p-5 transition-all ${picked === opt.id ? "ring-4" : ""}`}
+            style={{
+              background: picked === opt.id
+                ? (opt.color === "green" ? C.greenLight : C.redLight)
+                : "white",
+              border: `2px solid ${picked === opt.id
+                ? (opt.color === "green" ? C.green : C.red)
+                : C.grayBorder}`,
+              ...(picked === opt.id ? { boxShadow: `0 0 0 4px ${opt.color === "green" ? "#c4f19e" : "#ffb8b8"}` } : {}),
+            }}>
+            <div className="flex items-baseline justify-between mb-3">
+              <span className="text-xl font-bold" style={{ color: C.grayText }}>{opt.name}</span>
+              <Badge color={opt.color}>{opt.tag}</Badge>
+            </div>
+            <svg viewBox="0 0 100 30" className="w-full h-8">
+              <line x1="5" y1="15" x2="95" y2="15" stroke={C.grayBorder} strokeWidth="2" />
+              {opt.dots.map((cx, i) => (
+                <circle key={i} cx={cx} cy="15" r="4"
+                        fill={opt.color === "green" ? C.green : C.red} />
+              ))}
+            </svg>
+            <div className="text-xs mt-2" style={{ color: C.grayText, opacity: 0.7 }}>
+              {opt.id === "anki" ? "5 lần ôn, cách nhau đúng bằng nhau" : "gần lúc đầu, giãn dần khi HV giỏi"}
+            </div>
+          </button>
+        ))}
+      </div>
 
-  // Interactive demo state
-  const [vocabularyId, setVocabularyId] = useState("");
-  const [userId, setUserId] = useState("demo-user");
-  const [quality, setQuality] = useState(4);
-  const [dPrev, setDPrev] = useState<RetrievalType>(0);
-  const [dartSched, setDartSched] = useState<ScheduleResp | null>(null);
+      {picked && (
+        <div className="mt-6 rounded-2xl p-4 flex items-start gap-4"
+             style={{ background: picked === "dart" ? C.greenLight : C.yellowLight,
+                      border: `2px solid ${picked === "dart" ? C.green : C.yellow}` }}>
+          <Mascot size={60} mood={picked === "dart" ? "cheer" : "think"} />
+          <div className="flex-1 text-sm" style={{ color: C.grayText }}>
+            {picked === "dart" ? (
+              <>
+                <b>Chính xác!</b> DART biết được bạn <b>vừa làm bài khó hay dễ</b>.
+                Vượt bài khó → trí nhớ chắc hơn → ôn muộn hơn. Anki bỏ qua tín hiệu này.
+              </>
+            ) : (
+              <>
+                Anki dễ dùng, nhưng nó <b>bỏ qua độ khó của bài ôn</b>.
+                Cùng 1 từ, nếu bạn viết được cả 1 đoạn dùng nó → nhớ chắc hơn nhiều so với chỉ chọn 1 trong 4 đáp án.
+                DART tận dụng điều đó.
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
-  // Judge state
-  const [word, setWord] = useState("resilient");
-  const [learnerSentence, setLearnerSentence] = useState("The bridge is resilient to floods.");
-  const [judgeScores, setJudgeScores] = useState<any>(null);
-  // Simulated "next schedule if HV had judgeComposite = X" — computed locally
-  const [schedAfterJudge, setSchedAfterJudge] = useState<number | null>(null);
+      {picked && (
+        <div className="mt-6 text-center">
+          <BigButton onClick={onComplete} color="green" size="lg">
+            Sang Level 2 →
+          </BigButton>
+        </div>
+      )}
+    </Card>
+  );
+}
 
-  // Assign
-  const [assignUserId, setAssignUserId] = useState("learner-new");
-  const [assignment, setAssignment] = useState<any>(null);
+// ═════════════════════════════════════════════════════════════════════════════
+// LEVEL 2 — CƠ CHẾ (3 mini cards, tap to flip)
+// ═════════════════════════════════════════════════════════════════════════════
 
-  // Common
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-    const r = await fetch(url, {
-      ...init,
-      headers: { "content-type": "application/json", ...(init?.headers || {}) },
+function Level2Mechanism({ onComplete }: { onComplete: () => void }) {
+  const [flipped, setFlipped] = useState<Set<number>>(new Set());
+  const cards = [
+    { color: "blue" as const, front: "6 số", back: "về học viên và từ (trình độ, tần suất, số lần ôn, điểm câu gần nhất…)", label: "B1" },
+    { color: "yellow" as const, front: "1 phép nhân", back: "gộp 6 số + độ khó bài vừa làm → ra 'nửa đời trí nhớ' (số ngày)", label: "B2" },
+    { color: "purple" as const, front: "Chọn dạng bài", back: "nửa đời ngắn → cho MCQ dễ. Nửa đời dài → cho paraphrase khó", label: "B3" },
+  ];
+  const flip = (i: number) => {
+    setFlipped((s) => {
+      const n = new Set(s);
+      n.has(i) ? n.delete(i) : n.add(i);
+      return n;
     });
-    if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`);
-    return r.json() as Promise<T>;
-  }
+  };
+  const allFlipped = flipped.size === cards.length;
 
-  async function loadWeights(force = false) {
-    setWeightsLoading(true); setError(null);
-    try {
-      const r = await fetchJson<WeightsResp>("/api/dart/weights", force ? { method: "POST" } : undefined);
-      setWeights(r);
-    } catch (e: any) { setError(e.message); }
-    finally { setWeightsLoading(false); }
-  }
+  return (
+    <Card>
+      <div className="flex items-start gap-6 mb-4">
+        <Mascot size={100} mood="think" />
+        <div>
+          <div className="text-lg font-bold" style={{ color: C.grayText }}>DART làm 3 việc, chỉ trong 5 mili-giây</div>
+          <div className="text-sm mt-1" style={{ color: C.grayText, opacity: 0.7 }}>
+            Bấm từng thẻ để lật xem chi tiết.
+          </div>
+        </div>
+      </div>
 
-  async function runDartSchedule() {
-    if (!vocabularyId) return setError("Chưa chọn từ nào — bấm 1 ví dụ ở trên");
-    setBusy("dart"); setError(null); setSchedAfterJudge(null);
+      <div className="grid md:grid-cols-3 gap-4">
+        {cards.map((c, i) => {
+          const bg = { blue: C.blueLight, yellow: C.yellowLight, purple: C.purpleLight }[c.color];
+          const border = { blue: C.blue, yellow: C.yellow, purple: C.purple }[c.color];
+          return (
+            <button key={i} onClick={() => flip(i)}
+              className="text-left rounded-2xl p-5 h-40 transition-all hover:scale-105"
+              style={{ background: bg, border: `2px solid ${border}` }}>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                      style={{ background: border, color: "white" }}>{c.label}</span>
+                {flipped.has(i) && <StarXp size={14} />}
+              </div>
+              {flipped.has(i) ? (
+                <div className="text-sm leading-relaxed" style={{ color: C.grayText }}>{c.back}</div>
+              ) : (
+                <div className="text-2xl font-bold mt-4" style={{ color: C.grayText }}>{c.front}</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {allFlipped && (
+        <div className="mt-6 rounded-2xl p-4 flex items-center gap-4"
+             style={{ background: C.greenLight, border: `2px solid ${C.green}` }}>
+          <Mascot size={60} mood="cheer" />
+          <div className="flex-1 text-sm font-medium" style={{ color: C.grayText }}>
+            Xong Level 2! Giờ thử với 1 học viên thật ở Level 3.
+          </div>
+          <BigButton onClick={onComplete} color="green">Level 3 →</BigButton>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// LEVEL 3 — THỬ NGAY (persona → schedule → judge → feedback loop)
+// ═════════════════════════════════════════════════════════════════════════════
+
+interface WeightsResp {
+  success: boolean;
+  weights: { theta: number[]; alpha: number };
+  meta: { source: string | null };
+}
+interface ScheduleResp {
+  success: boolean;
+  schedule?: { halfLife: number; intervalDays?: number; interval?: number; nextRetrievalType: RetrievalType };
+  features?: { recentJudgeComposite?: number };
+}
+
+const PERSONAS = [
+  { id: "new", emoji: "🌱", name: "Học viên mới", desc: "Vừa gặp từ lần đầu",
+    values: { vocabularyId: "demo-word-001", userId: "learner-new", quality: 4, dPrev: 0 as RetrievalType } },
+  { id: "pro", emoji: "🏆", name: "Học viên giỏi", desc: "Đã ôn nhiều lần",
+    values: { vocabularyId: "demo-word-042", userId: "learner-advanced", quality: 5, dPrev: 3 as RetrievalType } },
+  { id: "struggle", emoji: "💪", name: "Đang gặp khó", desc: "Cloze chỉ đúng nửa",
+    values: { vocabularyId: "demo-word-017", userId: "learner-struggling", quality: 2, dPrev: 1 as RetrievalType } },
+];
+
+const RETRIEVAL_VI = ["Trắc nghiệm", "Điền chỗ trống", "Đặt câu", "Viết lại đoạn"];
+
+function Level3TryNow({ weights, onComplete, setError }: {
+  weights: WeightsResp | null;
+  onComplete: () => void;
+  setError: (s: string | null) => void;
+}) {
+  const [persona, setPersona] = useState<typeof PERSONAS[0] | null>(null);
+  const [sched, setSched] = useState<ScheduleResp | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [word, setWord] = useState("resilient");
+  const [sentence, setSentence] = useState("The bridge is resilient to floods.");
+  const [scores, setScores] = useState<any>(null);
+  const [newH, setNewH] = useState<number | null>(null);
+
+  async function runSched() {
+    if (!persona) return;
+    setBusy("sched"); setError(null); setNewH(null);
     try {
-      const r = await fetchJson<ScheduleResp>("/api/dart/schedule", {
+      const r = await fetch("/api/dart/schedule", {
         method: "POST",
-        body: JSON.stringify({ vocabularyId, userId, quality, lastRetrievalType: dPrev }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          vocabularyId: persona.values.vocabularyId,
+          userId: persona.values.userId,
+          quality: persona.values.quality,
+          lastRetrievalType: persona.values.dPrev,
+        }),
       });
-      setDartSched(r);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      setSched(await r.json());
     } catch (e: any) { setError(e.message); }
     finally { setBusy(null); }
   }
@@ -486,449 +350,414 @@ export default function DartLabPage() {
   async function runJudge() {
     setBusy("judge"); setError(null);
     try {
-      // sync mode for interactive demo (async queue is for the study pipeline)
-      const r = await fetchJson<any>("/api/context-transfer/judge?sync=1", {
+      const r = await fetch("/api/context-transfer/judge?sync=1", {
         method: "POST",
-        body: JSON.stringify({ word, learnerSentence, userId }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ word, learnerSentence: sentence, userId: persona?.values.userId }),
       });
-      setJudgeScores(r.scores);
-      // Show visually: if judge composite were fed into DART, what's the new half-life?
-      // Compute locally with current weights for immediate feedback.
-      if (weights?.weights && dartSched?.schedule?.halfLife) {
-        const composite01 = (r.scores?.composite ?? 5) / 10;
-        // Current schedule was computed with default judgeComposite=0.5 when no prior judge.
-        // Delta in feature space: (composite01 - 0.5) * theta[5]
-        const delta = (composite01 - 0.5) * (weights.weights.theta[5] ?? 0);
-        const newHalfLife = dartSched.schedule.halfLife * Math.pow(2, delta);
-        setSchedAfterJudge(newHalfLife);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      setScores(j.scores);
+      if (weights?.weights && sched?.schedule) {
+        const c = (j.scores?.composite ?? 5) / 10;
+        const delta = (c - 0.5) * (weights.weights.theta[5] ?? 0);
+        setNewH(sched.schedule.halfLife * Math.pow(2, delta));
       }
     } catch (e: any) { setError(e.message); }
     finally { setBusy(null); }
   }
 
-  async function runAssign() {
-    setBusy("assign"); setError(null);
-    try {
-      const r = await fetchJson<any>(`/api/experiment/assign?userId=${encodeURIComponent(assignUserId)}`);
-      setAssignment(r);
-    } catch (e: any) { setError(e.message); }
-    finally { setBusy(null); }
-  }
-
-  useEffect(() => { loadWeights(); }, []);
-
-  // Half-life projection using current weights
-  const projection = useMemo(() => {
-    if (!weights?.weights) return [];
-    const { theta, alpha } = weights.weights;
-    const PHI = [0, 0.33, 0.66, 1.0];
-    // Feature vector demo — includes recentJudgeComposite default 0.5 for the 6th slot
-    const x = [1, 0.4, 0.5, 0.6, 0.3, 0.5];
-    const dot = theta.reduce((s, t, i) => s + t * (x[i] ?? 0), 0);
-    const h0 = Math.pow(2, dot);
-    return PHI.map((phi, d) => ({ d, phi, h: h0 * Math.exp(alpha * phi) }));
-  }, [weights]);
-  const maxH = Math.max(0.001, ...projection.map((p) => p.h));
-
   return (
-    <DashboardLayout>
-      <div className="max-w-5xl mx-auto p-6 space-y-12">
-        {/* ── Hero ────────────────────────────────────────────────────── */}
-        <header className="rounded-2xl bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950 dark:to-neutral-900 border border-indigo-100 dark:border-indigo-900 p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-white dark:bg-neutral-900 p-3 shadow-sm border border-indigo-100">
-              <FlaskConical className="text-indigo-600" size={28} />
+    <div className="space-y-4">
+      {/* Sub-level 3a: pick persona */}
+      <Card color={persona ? "green" : "white"}>
+        <div className="flex items-baseline justify-between mb-3">
+          <div className="font-bold text-lg" style={{ color: C.grayText }}>Chọn 1 học viên để thử</div>
+          {persona && <StarXp />}
+        </div>
+        <div className="grid md:grid-cols-3 gap-3">
+          {PERSONAS.map((p) => (
+            <button key={p.id} onClick={() => { setPersona(p); setSched(null); setScores(null); setNewH(null); }}
+              className="text-left rounded-2xl p-4 transition-all hover:scale-105"
+              style={{
+                background: persona?.id === p.id ? C.greenLight : "white",
+                border: `2px solid ${persona?.id === p.id ? C.green : C.grayBorder}`,
+              }}>
+              <div className="text-4xl mb-2" aria-hidden>{p.emoji}</div>
+              <div className="font-bold text-base" style={{ color: C.grayText }}>{p.name}</div>
+              <div className="text-xs mt-1" style={{ color: C.grayText, opacity: 0.7 }}>{p.desc}</div>
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Sub-level 3b: DART schedule */}
+      {persona && (
+        <Card color={sched ? "green" : "white"}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-bold text-lg" style={{ color: C.grayText }}>Hỏi DART: bao giờ ôn lại?</div>
+              <div className="text-xs mt-1" style={{ color: C.grayText, opacity: 0.7 }}>1 cú bấm, kết quả tính trong 5ms</div>
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-                Phòng thử DART / CARTS
-              </h1>
-              <p className="text-base text-neutral-700 dark:text-neutral-300 mt-1 leading-relaxed">
-                Trang này kể lại toàn bộ luồng thuật toán bằng 1 câu chuyện: <b>Vấn đề → Cách hoạt động → Thử ngay → Nghiên cứu</b>.
-                Cứ cuộn xuống, không cần bấm tab.
-              </p>
-            </div>
-            <label className="flex items-center gap-2 text-sm text-neutral-600 whitespace-nowrap">
-              <input type="checkbox" checked={expert} onChange={(e) => setExpert(e.target.checked)}
-                     className="w-4 h-4 rounded" />
-              Chế độ chuyên gia
-            </label>
+            <BigButton onClick={runSched} busy={busy === "sched"} disabled={!!busy} color="blue">
+              Hỏi DART
+            </BigButton>
           </div>
-        </header>
+          {sched?.schedule && (
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <div className="rounded-2xl p-3 text-center" style={{ background: C.blueLight, border: `2px solid ${C.blue}` }}>
+                <div className="text-xs uppercase font-bold" style={{ color: C.blueDark }}>Nửa đời</div>
+                <div className="text-3xl font-black mt-1" style={{ color: C.blueDark }}>
+                  {sched.schedule.halfLife.toFixed(1)}
+                </div>
+                <div className="text-xs" style={{ color: C.blueDark }}>ngày</div>
+              </div>
+              <div className="rounded-2xl p-3 text-center" style={{ background: C.greenLight, border: `2px solid ${C.green}` }}>
+                <div className="text-xs uppercase font-bold" style={{ color: C.greenDark }}>Ôn sau</div>
+                <div className="text-3xl font-black mt-1" style={{ color: C.greenDark }}>
+                  {(sched.schedule.intervalDays ?? sched.schedule.interval ?? 0).toFixed(1)}
+                </div>
+                <div className="text-xs" style={{ color: C.greenDark }}>ngày</div>
+              </div>
+              <div className="rounded-2xl p-3 text-center" style={{ background: C.yellowLight, border: `2px solid ${C.yellow}` }}>
+                <div className="text-xs uppercase font-bold" style={{ color: C.yellowDark }}>Bài kế</div>
+                <div className="text-base font-black mt-1" style={{ color: C.yellowDark }}>
+                  {RETRIEVAL_VI[sched.schedule.nextRetrievalType]}
+                </div>
+                <div className="text-xs" style={{ color: C.yellowDark }}>d = {sched.schedule.nextRetrievalType}</div>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
 
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 text-red-800 p-4 flex gap-3">
-            <span className="font-medium">Lỗi:</span> <span>{error}</span>
+      {/* Sub-level 3c: Judge → feedback loop */}
+      {sched && (
+        <Card color={scores ? "green" : "white"}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="font-bold text-lg" style={{ color: C.grayText }}>HV viết câu → LLM chấm</div>
+              <div className="text-xs mt-1" style={{ color: C.grayText, opacity: 0.7 }}>
+                Xong sẽ thấy DART <b>đổi lịch</b> theo điểm chấm ↓
+              </div>
+            </div>
+            <BigButton onClick={runJudge} busy={busy === "judge"} disabled={!!busy} color="yellow">
+              Chấm câu
+            </BigButton>
           </div>
-        )}
-
-        {/* ═══════════════════════════════════════════════════════════════
-             CHAPTER 1 — VẤN ĐỀ
-           ═══════════════════════════════════════════════════════════════ */}
-        <Chapter n="Chương 1" title="Vấn đề: các app hiện tại bỏ sót một tín hiệu quan trọng">
-          <Card>
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div>
-                <p className="text-base leading-relaxed">
-                  Hầu hết ứng dụng học từ vựng (Anki, Quizlet, Duolingo) quyết định
-                  "khi nào ôn từ này lần tới" chỉ dựa vào <b>thời gian đã trôi qua</b> và
-                  <b> HV nhớ hay quên</b>. Chúng bỏ qua một tín hiệu quan trọng:
-                  <b> bài retrieval HV vừa làm khó hay dễ</b>.
-                </p>
-                <p className="text-base leading-relaxed mt-3">
-                  Chọn 1 trong 4 định nghĩa (MCQ) rất khác với tự viết một câu dùng từ đó.
-                  Nếu HV vừa vượt qua bài <i>khó</i>, trí nhớ chắc hơn — có thể giãn khoảng ôn dài hơn.
-                  Ngược lại, nếu vừa qua bài <i>dễ</i>, nên ôn sớm hơn để bù.
-                </p>
-                <p className="text-base leading-relaxed mt-3">
-                  <b>DART</b> mở rộng thuật toán HLR bằng đúng 1 tham số — <b>α</b> — đo mức độ
-                  "bài khó thì trí nhớ chắc hơn". Trang này giúp bạn thấy quyết định của α trong
-                  từng tình huống cụ thể.
-                </p>
-              </div>
-              <div className="bg-neutral-50 dark:bg-neutral-950 rounded-xl p-4">
-                <AnkiVsDartSvg />
-              </div>
+          <div className="grid md:grid-cols-2 gap-3 mt-2">
+            <div>
+              <label className="text-xs font-bold uppercase" style={{ color: C.grayText, opacity: 0.7 }}>Từ</label>
+              <input value={word} onChange={(e) => setWord(e.target.value)}
+                     className="w-full rounded-xl px-4 py-3 mt-1 text-base font-medium"
+                     style={{ background: "white", border: `2px solid ${C.grayBorder}` }} />
             </div>
-          </Card>
-        </Chapter>
-
-        {/* ═══════════════════════════════════════════════════════════════
-             CHAPTER 2 — BÊN TRONG DART (horizontal B1→B2→B3)
-           ═══════════════════════════════════════════════════════════════ */}
-        <Chapter n="Chương 2" title="Bên trong DART: 3 bước B1 → B2 → B3">
-          <p className="text-neutral-600 dark:text-neutral-400 text-base">
-            Mỗi lần HV nộp 1 bài retrieval, hệ thống chạy 3 bước này. Bấm từng ô để xem chi tiết:
-          </p>
-          <InsideDartWalkthrough />
-
-          {/* Live projection with current server weights */}
-          <Card>
-            <div className="flex items-baseline gap-2 mb-3">
-              <TrendingUp className="text-indigo-600" size={18} />
-              <h3 className="font-semibold">Thời gian đến lần ôn tiếp — theo độ khó bài vừa làm</h3>
+            <div>
+              <label className="text-xs font-bold uppercase" style={{ color: C.grayText, opacity: 0.7 }}>Câu HV viết</label>
+              <input value={sentence} onChange={(e) => setSentence(e.target.value)}
+                     className="w-full rounded-xl px-4 py-3 mt-1 text-base"
+                     style={{ background: "white", border: `2px solid ${C.grayBorder}` }} />
             </div>
-            <p className="text-sm text-neutral-600 mb-4">
-              Với trọng số hiện tại của server ({weights?.meta.source ?? "in-memory defaults"}) và
-              1 học viên demo. Cột càng dài = ôn càng muộn.
-            </p>
-            {weightsLoading ? (
-              <div className="text-neutral-500 flex items-center gap-2"><Loader2 className="animate-spin" size={16} /> Đang tải…</div>
-            ) : (
-              <div className="space-y-3">
-                {projection.map(({ d, h }) => (
-                  <div key={d}>
-                    <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-sm font-medium">d={d} · {RETRIEVAL[d].vi}</span>
-                      <span className="font-mono text-sm text-indigo-700 font-semibold">{h.toFixed(2)} ngày</span>
-                    </div>
-                    <div className="h-3 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all"
-                           style={{ width: `${(h / maxH) * 100}%` }} />
-                    </div>
+          </div>
+
+          {scores && (
+            <div className="mt-4 rounded-2xl p-4" style={{ background: C.yellowLight, border: `2px solid ${C.yellow}` }}>
+              <div className="flex items-baseline justify-between mb-3">
+                <div className="font-bold" style={{ color: C.grayText }}>Điểm LLM chấm</div>
+                <div className="text-3xl font-black" style={{ color: C.yellowDark }}>
+                  {scores.composite?.toFixed(1)}<span className="text-sm">/10</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { k: "accuracy",        vi: "Đúng nghĩa" },
+                  { k: "fluency",         vi: "Trôi chảy" },
+                  { k: "appropriateness", vi: "Hợp cảnh" },
+                  { k: "creativity",      vi: "Sáng tạo" },
+                ].map((d) => (
+                  <div key={d.k} className="text-center rounded-xl p-2 bg-white">
+                    <div className="text-[10px] font-bold uppercase" style={{ color: C.grayText, opacity: 0.6 }}>{d.vi}</div>
+                    <div className="text-xl font-black" style={{ color: C.grayText }}>{scores[d.k]}</div>
                   </div>
                 ))}
               </div>
-            )}
-            {expert && (
-              <div className="mt-4 pt-4 border-t border-neutral-100 text-xs font-mono text-neutral-500">
-                α={weights?.weights.alpha.toFixed(4)}
-                · θ=[{weights?.weights.theta.map((v) => v.toFixed(2)).join(", ")}]
-                <button onClick={() => loadWeights(true)}
-                        className="ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded border hover:bg-neutral-50">
-                  <RefreshCw size={11} /> Reload
-                </button>
-              </div>
-            )}
-          </Card>
-        </Chapter>
-
-        {/* ═══════════════════════════════════════════════════════════════
-             CHAPTER 3 — THỬ NGAY (schedule + judge nối lại)
-           ═══════════════════════════════════════════════════════════════ */}
-        <Chapter n="Chương 3" title="Thử ngay: 1 học viên, 1 từ, thấy DART và LLM-Judge nói chuyện với nhau">
-          <p className="text-neutral-600 dark:text-neutral-400 text-base">
-            Đây là chỗ trả lời câu hỏi <i>"DART nằm chỗ nào trong việc chấm câu?"</i>.
-            Chạy schedule trước → chấm câu HV → tự động thấy half-life kế đổi thế nào.
-          </p>
-
-          {/* Step 1: pick persona */}
-          <Card>
-            <div className="flex items-baseline gap-2 mb-3">
-              <PlayCircle className="text-indigo-600" size={18} />
-              <h3 className="font-semibold">Bước 1 — Chọn 1 học viên giả định</h3>
             </div>
-            <div className="grid md:grid-cols-3 gap-3">
-              {PRESETS.map((p) => (
-                <button key={p.name} onClick={() => {
-                  setVocabularyId(p.values.vocabularyId);
-                  setUserId(p.values.userId);
-                  setQuality(p.values.quality);
-                  setDPrev(p.values.dPrev);
-                  setDartSched(null);
-                  setJudgeScores(null);
-                  setSchedAfterJudge(null);
-                }}
-                  className={`text-left rounded-xl border-2 p-4 transition ${
-                    userId === p.values.userId
-                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950"
-                      : "border-neutral-200 hover:border-indigo-300"
-                  }`}>
-                  <div className="font-semibold text-neutral-900 dark:text-neutral-100">{p.name}</div>
-                  <div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{p.desc}</div>
-                </button>
-              ))}
-            </div>
-            {expert && (
-              <details className="mt-4">
-                <summary className="text-xs text-neutral-500 cursor-pointer hover:text-neutral-800">Chỉnh chi tiết…</summary>
-                <div className="grid md:grid-cols-2 gap-4 mt-3">
-                  <label className="block text-sm">
-                    <div className="text-neutral-700 mb-1">vocabularyId</div>
-                    <input value={vocabularyId} onChange={(e) => setVocabularyId(e.target.value)}
-                           className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm font-mono" />
-                  </label>
-                  <label className="block text-sm">
-                    <div className="text-neutral-700 mb-1">userId</div>
-                    <input value={userId} onChange={(e) => setUserId(e.target.value)}
-                           className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm font-mono" />
-                  </label>
-                  <label className="block text-sm">
-                    <div className="text-neutral-700 mb-1">quality 0–5</div>
-                    <div className="flex gap-1">
-                      {[0,1,2,3,4,5].map((q) => (
-                        <button key={q} onClick={() => setQuality(q)}
-                                className={`flex-1 py-1.5 rounded-lg border text-sm ${quality === q ? "border-indigo-500 bg-indigo-500 text-white" : "border-neutral-200 hover:border-indigo-300"}`}>
-                          {q}
-                        </button>
-                      ))}
+          )}
+
+          {newH !== null && sched.schedule && (
+            <div className="mt-4 rounded-2xl p-5 flex items-start gap-4"
+                 style={{ background: `linear-gradient(135deg, ${C.greenLight}, white)`,
+                          border: `3px solid ${C.green}` }}>
+              <Mascot size={70} mood="cheer" />
+              <div className="flex-1">
+                <div className="font-bold text-base mb-2" style={{ color: C.grayText }}>
+                  Đây là chỗ DART "nằm"!
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <div>
+                    <div className="text-[10px] uppercase font-bold" style={{ color: C.grayText, opacity: 0.6 }}>Trước</div>
+                    <div className="text-2xl font-black line-through" style={{ color: C.grayText, opacity: 0.5 }}>
+                      {sched.schedule.halfLife.toFixed(1)}d
                     </div>
-                  </label>
-                  <label className="block text-sm">
-                    <div className="text-neutral-700 mb-1">lastRetrievalType d</div>
-                    <select value={dPrev} onChange={(e) => setDPrev(Number(e.target.value) as RetrievalType)}
-                            className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm">
-                      {RETRIEVAL.map((r, i) => <option key={i} value={i}>d={i} · {r.vi}</option>)}
-                    </select>
-                  </label>
-                </div>
-              </details>
-            )}
-          </Card>
-
-          {/* Step 2: DART schedule */}
-          <Card>
-            <div className="flex items-baseline justify-between mb-3">
-              <div className="flex items-baseline gap-2">
-                <Sparkles className="text-indigo-600" size={18} />
-                <h3 className="font-semibold">Bước 2 — Chạy DART: khi nào nên ôn từ này?</h3>
-              </div>
-              <PrimaryButton onClick={runDartSchedule} busy={busy === "dart"} disabled={busy !== null}>
-                Chạy DART
-              </PrimaryButton>
-            </div>
-            {dartSched?.schedule ? (
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950 p-4">
-                  <div className="text-xs uppercase font-semibold text-indigo-800 tracking-wide">Half-life h</div>
-                  <div className="text-2xl font-bold text-indigo-900 dark:text-indigo-100 mt-1">
-                    {dartSched.schedule.halfLife.toFixed(2)} <span className="text-sm font-normal">ngày</span>
                   </div>
-                  <div className="text-xs text-indigo-700 mt-1">Sau ~ này HV còn nhớ 50%</div>
-                </div>
-                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950 p-4">
-                  <div className="text-xs uppercase font-semibold text-emerald-800 tracking-wide">Ôn lại sau</div>
-                  <div className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mt-1">
-                    {(dartSched.schedule.intervalDays ?? dartSched.schedule.interval ?? 0).toFixed(2)} <span className="text-sm font-normal">ngày</span>
-                  </div>
-                  <div className="text-xs text-emerald-700 mt-1">Đặt lịch cho bài kế</div>
-                </div>
-                <div className="rounded-xl bg-amber-50 dark:bg-amber-950 p-4">
-                  <div className="text-xs uppercase font-semibold text-amber-800 tracking-wide">Dạng bài kế</div>
-                  <div className="text-lg font-bold text-amber-900 dark:text-amber-100 mt-1">
-                    {RETRIEVAL[dartSched.schedule.nextRetrievalType].vi}
-                  </div>
-                  <div className="text-xs text-amber-700 mt-1">d = {dartSched.schedule.nextRetrievalType}</div>
-                </div>
-                <div className="md:col-span-3 text-sm text-neutral-600 border-t border-neutral-100 pt-3 flex items-start gap-2">
-                  <Info size={14} className="mt-0.5 text-neutral-400" />
-                  <span>
-                    <b>Nghĩa là:</b> hệ thống dự đoán HV còn nhớ ~50% sau {dartSched.schedule.halfLife.toFixed(1)} ngày;
-                    lịch đặt bài kế là {(dartSched.schedule.intervalDays ?? 0).toFixed(1)} ngày sau,
-                    dạng bài <i>{RETRIEVAL[dartSched.schedule.nextRetrievalType].vi.toLowerCase()}</i>.
-                    {typeof dartSched.features?.recentJudgeComposite === "number" && (
-                      <span> Điểm chấm câu gần nhất input vào feature x[5] = {dartSched.features.recentJudgeComposite.toFixed(2)}.</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-neutral-500">Chưa chạy. Chọn 1 học viên ở Bước 1, bấm <b>Chạy DART</b>.</div>
-            )}
-          </Card>
-
-          {/* Step 3: Judge → feed back to DART */}
-          <Card>
-            <div className="flex items-baseline justify-between mb-3">
-              <div className="flex items-baseline gap-2">
-                <Beaker className="text-amber-600" size={18} />
-                <h3 className="font-semibold">Bước 3 — HV viết câu → LLM chấm → DART nghe được</h3>
-            </div>
-              <PrimaryButton onClick={runJudge} busy={busy === "judge"} disabled={busy !== null || !dartSched} color="amber">
-                Chấm câu
-              </PrimaryButton>
-            </div>
-            {!dartSched ? (
-              <div className="text-sm text-neutral-500">Chạy Bước 2 trước để có baseline half-life so sánh.</div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <label className="block">
-                    <div className="text-sm font-medium mb-1">Từ mục tiêu</div>
-                    <input value={word} onChange={(e) => setWord(e.target.value)}
-                           className="w-full border border-neutral-300 rounded-lg px-3 py-2" />
-                  </label>
-                  <label className="block">
-                    <div className="text-sm font-medium mb-1">Câu học viên viết</div>
-                    <input value={learnerSentence} onChange={(e) => setLearnerSentence(e.target.value)}
-                           className="w-full border border-neutral-300 rounded-lg px-3 py-2" />
-                  </label>
-                </div>
-                {judgeScores && (
-                  <>
-                    <div className="grid grid-cols-4 gap-3">
-                      {[
-                        { k: "accuracy",        vi: "Đúng nghĩa" },
-                        { k: "fluency",         vi: "Trôi chảy" },
-                        { k: "appropriateness", vi: "Hợp ngữ cảnh" },
-                        { k: "creativity",      vi: "Sáng tạo" },
-                      ].map((d) => (
-                        <div key={d.k} className="rounded-xl border border-neutral-200 p-3">
-                          <div className="text-[10px] uppercase text-neutral-500 font-semibold tracking-wide">{d.vi}</div>
-                          <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mt-1">
-                            {judgeScores[d.k]}<span className="text-sm font-normal">/10</span>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="text-2xl font-black" style={{ color: C.green }}>→</div>
+                  <div>
+                    <div className="text-[10px] uppercase font-bold" style={{ color: C.greenDark }}>Sau khi có điểm chấm</div>
+                    <div className="text-3xl font-black" style={{ color: newH > sched.schedule.halfLife ? C.greenDark : C.red }}>
+                      {newH.toFixed(1)}d
+                      <span className="text-sm ml-2">
+                        ({newH > sched.schedule.halfLife ? "+" : ""}
+                        {(newH - sched.schedule.halfLife).toFixed(1)})
+                      </span>
                     </div>
-                    <div className="rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 p-4">
-                      <div className="text-xs uppercase text-amber-800 font-semibold">Điểm tổng</div>
-                      <div className="text-3xl font-bold text-amber-900 dark:text-amber-100 mt-1">
-                        {judgeScores.composite?.toFixed(2)}<span className="text-sm font-normal"> / 10</span>
-                      </div>
-                      {judgeScores.rationale && (
-                        <div className="text-sm text-amber-900 dark:text-amber-200 italic mt-2">{judgeScores.rationale}</div>
-                      )}
-                    </div>
-
-                    {/* ► THE KEY CONNECTION: judge → DART */}
-                    {schedAfterJudge !== null && dartSched.schedule && (
-                      <div className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950 dark:to-neutral-900 p-5">
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <Zap className="text-indigo-600" size={16} />
-                          <div className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">
-                            → DART cập nhật: half-life kế đổi theo điểm chấm này
-                          </div>
-                        </div>
-                        <div className="flex items-baseline gap-4 mt-3">
-                          <div>
-                            <div className="text-xs text-neutral-500">Trước khi có điểm chấm</div>
-                            <div className="text-lg font-mono font-bold text-neutral-700 line-through decoration-neutral-400 decoration-2">
-                              {dartSched.schedule.halfLife.toFixed(2)} ngày
-                            </div>
-                          </div>
-                          <ArrowRight className="text-indigo-500 mt-4" size={20} />
-                          <div>
-                            <div className="text-xs text-indigo-600 font-semibold">Sau khi cộng điểm chấm câu vào x[5]</div>
-                            <div className={`text-2xl font-mono font-bold ${schedAfterJudge > dartSched.schedule.halfLife ? "text-emerald-700" : "text-red-700"}`}>
-                              {schedAfterJudge.toFixed(2)} ngày
-                              <span className="text-sm ml-2">
-                                ({schedAfterJudge > dartSched.schedule.halfLife ? "+" : ""}
-                                {(schedAfterJudge - dartSched.schedule.halfLife).toFixed(2)})
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-sm text-neutral-700 dark:text-neutral-300 mt-3 leading-relaxed">
-                          <b>Đây chính là chỗ DART "nằm" trong việc chấm câu:</b> điểm 0–10 của LLM-Judge
-                          được chia 10 → thành feature x[5] mới trong vector đặc trưng. Từ ngày{" "}
-                          <code className="text-xs">2026-08-09</code> (Amendment #A-002), điểm chấm câu cao
-                          → DART giãn khoảng ôn dài hơn; điểm thấp → ôn sớm hơn.
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </Card>
-        </Chapter>
-
-        {/* ═══════════════════════════════════════════════════════════════
-             CHAPTER 4 — NGHIÊN CỨU
-           ═══════════════════════════════════════════════════════════════ */}
-        <Chapter n="Chương 4" title="Nghiên cứu: tại sao cần chia 3 nhóm?">
-          <Card>
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div>
-                <p className="text-base leading-relaxed">
-                  Muốn tuyên bố "DART tốt hơn HLR" thì phải cho <b>cả hai chạy cùng một điều kiện</b>
-                  trên các học viên tương đương — RCT (randomised controlled trial). Nghiên cứu này
-                  chia học viên thành <b>3 nhóm</b> ngẫu nhiên:
-                </p>
-                <ul className="list-disc pl-6 space-y-2 mt-3 text-base">
-                  <li><b>SM-2:</b> thuật toán mặc định của Anki. Baseline "công nghiệp".</li>
-                  <li><b>HLR:</b> Half-Life Regression cổ điển (Settles & Meeder 2016) — <b>ablation của DART</b>,
-                      giống DART nhưng α = 0. Nếu DART thắng HLR → chứng minh α có ý nghĩa.</li>
-                  <li><b>DART:</b> mô hình đề xuất — có α.</li>
-                </ul>
-                <p className="text-base leading-relaxed mt-3">
-                  <b>Cách chia:</b> hash FNV-1a của userId → nhóm. Cùng userId luôn ra cùng nhóm,
-                  không phụ thuộc thời điểm gọi. HV được làm mù về điều kiện (không thấy chữ "DART"
-                  hay "HLR" ở đâu trong app).
-                </p>
-              </div>
-              <div className="bg-neutral-50 dark:bg-neutral-950 rounded-xl p-4">
-                <ThreeGroupsSvg />
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-baseline gap-2 mb-3">
-              <Users className="text-neutral-800" size={18} />
-              <h3 className="font-semibold">Thử chia nhóm: nhập userId, xem HV này sẽ vào nhóm nào</h3>
-            </div>
-            <div className="flex gap-3 items-end">
-              <label className="flex-1">
-                <div className="text-sm font-medium mb-1">userId</div>
-                <input value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)}
-                       className="w-full border border-neutral-300 rounded-lg px-3 py-2 font-mono" />
-              </label>
-              <PrimaryButton onClick={runAssign} busy={busy === "assign"} disabled={busy !== null} color="neutral">
-                Chia nhóm
-              </PrimaryButton>
-            </div>
-            {assignment && (
-              <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                <div className="text-xs uppercase text-neutral-500 font-semibold tracking-wide">Kết quả</div>
-                <div className="text-2xl font-bold text-neutral-900 mt-1">
-                  Nhóm <span className="text-indigo-700">{assignment.condition ?? assignment.assignment?.condition}</span>
+                  </div>
                 </div>
-                <div className="text-sm text-neutral-600 mt-1">
-                  Cùng userId <code className="text-xs">{assignUserId}</code> luôn ra cùng nhóm.
+                <div className="text-xs mt-3" style={{ color: C.grayText, opacity: 0.7 }}>
+                  Điểm chấm cao → DART tin trí nhớ chắc → giãn lịch ôn dài hơn.
                 </div>
               </div>
-            )}
-          </Card>
-        </Chapter>
+            </div>
+          )}
 
-        {/* Footer */}
-        <footer className="pt-8 border-t border-neutral-100 dark:border-neutral-800 text-center text-xs text-neutral-500 space-x-4">
-          <span>Tài liệu đầy đủ: <code>docs/IMPLEMENTATION.md</code></span>
-          <span>Bản thảo bài báo: <code>research/PAPER_DRAFT_v1.md</code></span>
-          <span>Quyết định thiết kế: <code>docs/DECISIONS.md</code></span>
-        </footer>
+          {scores && (
+            <div className="mt-4 text-center">
+              <BigButton onClick={onComplete} color="green" size="lg">Level 4 →</BigButton>
+            </div>
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// LEVEL 4 — NGHIÊN CỨU (assign + explanation)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function Level4Research({ onComplete, setError }: { onComplete: () => void; setError: (s: string | null) => void }) {
+  const [uid, setUid] = useState("learner-new");
+  const [group, setGroup] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function assign() {
+    setBusy(true); setError(null);
+    try {
+      const r = await fetch(`/api/experiment/assign?userId=${encodeURIComponent(uid)}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      setGroup((j.condition ?? j.assignment?.condition ?? "").toUpperCase());
+    } catch (e: any) { setError(e.message); }
+    finally { setBusy(false); }
+  }
+
+  const groups = [
+    { name: "SM-2", desc: "Anki (chuẩn)", color: C.grayBorder, textColor: C.grayText },
+    { name: "HLR",  desc: "DART không α",  color: C.yellow, textColor: C.yellowDark },
+    { name: "DART", desc: "Có α (ours)",   color: C.green,  textColor: C.greenDark },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <div className="flex items-start gap-4 mb-4">
+          <Mascot size={80} mood="think" />
+          <div>
+            <div className="font-bold text-lg" style={{ color: C.grayText }}>Chia học viên ngẫu nhiên vào 3 nhóm</div>
+            <div className="text-sm mt-1" style={{ color: C.grayText, opacity: 0.7 }}>
+              Để so được DART thắng hay thua, phải cho 3 nhóm chạy song song.
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {groups.map((g) => (
+            <div key={g.name} className="rounded-2xl p-4 text-center"
+                 style={{ background: "white", border: `3px solid ${g.color}` }}>
+              <div className="text-2xl font-black" style={{ color: g.textColor }}>{g.name}</div>
+              <div className="text-xs mt-1" style={{ color: C.grayText, opacity: 0.7 }}>{g.desc}</div>
+              <div className="text-sm font-bold mt-2" style={{ color: C.grayText }}>~65 HV</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="font-bold text-lg mb-2" style={{ color: C.grayText }}>Thử gán nhóm cho 1 HV</div>
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="text-xs font-bold uppercase" style={{ color: C.grayText, opacity: 0.7 }}>userId</label>
+            <input value={uid} onChange={(e) => setUid(e.target.value)}
+                   className="w-full rounded-xl px-4 py-3 mt-1 text-base font-mono"
+                   style={{ background: "white", border: `2px solid ${C.grayBorder}` }} />
+          </div>
+          <BigButton onClick={assign} busy={busy} color="blue">Gán</BigButton>
+        </div>
+        {group && (
+          <div className="mt-4 rounded-2xl p-5 text-center"
+               style={{ background: C.greenLight, border: `3px solid ${C.green}` }}>
+            <div className="text-xs uppercase font-bold" style={{ color: C.greenDark }}>Kết quả</div>
+            <div className="text-4xl font-black mt-1" style={{ color: C.greenDark }}>
+              Nhóm {group}
+            </div>
+            <div className="text-xs mt-2" style={{ color: C.grayText, opacity: 0.7 }}>
+              Cùng userId luôn ra cùng nhóm (hash FNV-1a)
+            </div>
+          </div>
+        )}
+        {group && (
+          <div className="mt-6 text-center">
+            <BigButton onClick={onComplete} color="green" size="lg">
+              Hoàn tất!
+            </BigButton>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ═════════════════════════════════════════════════════════════════════════════
+
+export default function DartLabPage() {
+  const [expert, setExpert] = useState(false);
+  const [weights, setWeights] = useState<WeightsResp | null>(null);
+  const [level, setLevel] = useState(1);
+  const [xp, setXp] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dart/weights").then((r) => r.json()).then(setWeights).catch(() => {});
+  }, []);
+
+  const totalLevels = 4;
+  const progressPct = ((level - 1) / totalLevels) * 100;
+
+  const complete = (next: number) => {
+    setXp((x) => x + 10);
+    setLevel(next);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-3xl mx-auto p-6 space-y-6">
+
+        {/* ── Top bar: XP + progress ─────────────────────── */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-full px-3 py-1.5"
+               style={{ background: C.yellowLight, border: `2px solid ${C.yellow}` }}>
+            <StarXp size={18} />
+            <span className="font-bold text-sm" style={{ color: C.yellowDark }}>{xp} XP</span>
+          </div>
+          <div className="flex-1 h-4 rounded-full overflow-hidden"
+               style={{ background: C.grayLight, border: `2px solid ${C.grayBorder}` }}>
+            <div className="h-full transition-all duration-500"
+                 style={{ width: `${progressPct}%`,
+                          background: `linear-gradient(90deg, ${C.green}, ${C.greenDark})` }} />
+          </div>
+          <div className="text-sm font-bold" style={{ color: C.grayText }}>{level}/{totalLevels}</div>
+          <label className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: C.grayText }}>
+            <input type="checkbox" checked={expert} onChange={(e) => setExpert(e.target.checked)}
+                   className="w-3.5 h-3.5" />
+            Chuyên gia
+          </label>
+        </div>
+
+        {/* ── Hero ─────────────────────── */}
+        <div className="rounded-3xl p-6 flex items-center gap-6"
+             style={{ background: `linear-gradient(135deg, ${C.blueLight}, ${C.greenLight})`,
+                      border: `2px solid ${C.blue}` }}>
+          <Mascot size={130} mood="wave" />
+          <div className="flex-1">
+            <div className="text-2xl font-black" style={{ color: C.grayText }}>
+              Chào! Cùng khám phá DART
+            </div>
+            <div className="text-sm mt-1" style={{ color: C.grayText, opacity: 0.8 }}>
+              4 level ngắn. Bấm nút to bên dưới để bắt đầu.
+            </div>
+            {level === 1 && (
+              <div className="mt-3">
+                <Badge color="green">Bắt đầu ngay</Badge>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Error toast (dismissible) ─────────────────────── */}
+        {error && (
+          <div className="rounded-2xl p-3 flex items-center justify-between"
+               style={{ background: C.redLight, border: `2px solid ${C.red}` }}>
+            <span className="text-sm font-medium" style={{ color: C.redDark }}>{error}</span>
+            <button onClick={() => setError(null)}
+                    className="text-xs px-3 py-1 rounded-full font-bold"
+                    style={{ background: C.red, color: "white" }}>
+              Đóng
+            </button>
+          </div>
+        )}
+
+        {/* ── Level title ─────────────────────── */}
+        <div className="flex items-baseline gap-3">
+          <Badge color={level === 1 ? "red" : level === 2 ? "yellow" : level === 3 ? "blue" : "green"}>
+            Level {level} / {totalLevels}
+          </Badge>
+          <div className="font-black text-xl" style={{ color: C.grayText }}>
+            {level === 1 && "Vấn đề gì?"}
+            {level === 2 && "DART làm gì?"}
+            {level === 3 && "Thử ngay với 1 học viên"}
+            {level === 4 && "Nghiên cứu chia 3 nhóm"}
+          </div>
+        </div>
+
+        {/* ── Level content ─────────────────────── */}
+        {level === 1 && <Level1Problem onComplete={() => complete(2)} />}
+        {level === 2 && <Level2Mechanism onComplete={() => complete(3)} />}
+        {level === 3 && <Level3TryNow weights={weights} onComplete={() => complete(4)} setError={setError} />}
+        {level === 4 && <Level4Research onComplete={() => complete(5)} setError={setError} />}
+
+        {level > totalLevels && (
+          <Card color="green">
+            <div className="text-center py-8">
+              <Mascot size={140} mood="cheer" />
+              <div className="text-3xl font-black mt-4" style={{ color: C.greenDark }}>
+                Hoàn tất!
+              </div>
+              <div className="text-base mt-2" style={{ color: C.grayText }}>
+                Bạn đã hiểu toàn bộ DART/CARTS. {xp} XP kiếm được.
+              </div>
+              <div className="mt-6">
+                <BigButton onClick={() => { setLevel(1); setXp(0); }} color="blue" size="lg">
+                  Chơi lại
+                </BigButton>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ── Level nav (prev only, next là CTA của level) ─────────────────────── */}
+        {level > 1 && level <= totalLevels && (
+          <div className="flex justify-start">
+            <BigButton onClick={() => setLevel(level - 1)} color="white" size="sm">
+              ← Level {level - 1}
+            </BigButton>
+          </div>
+        )}
+
+        {/* ── Expert-mode extras ─────────────────────── */}
+        {expert && weights?.weights && (
+          <Card color="purple">
+            <div className="font-bold text-sm mb-2" style={{ color: C.purpleDark }}>Chế độ chuyên gia</div>
+            <div className="text-xs font-mono" style={{ color: C.grayText }}>
+              α = {weights.weights.alpha.toFixed(4)} · θ = [{weights.weights.theta.map((v) => v.toFixed(2)).join(", ")}]
+              · nguồn: {weights.meta.source ?? "defaults"}
+            </div>
+            <div className="text-xs mt-2" style={{ color: C.grayText, opacity: 0.7 }}>
+              Chi tiết khoa học đầy đủ: <code>docs/DECISIONS.md</code>, <code>research/PAPER_DRAFT_v1.md</code>,
+              Amendment #A-002 trong <code>research/AMENDMENTS.md</code>.
+            </div>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

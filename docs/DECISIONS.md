@@ -15,6 +15,51 @@
 
 <!-- DECISION_INSERT_POINT -->
 
+## D-011 · DART Lab UI — chốt phong cách Duolingo (playful, mascot, gamified)
+**Ngày:** 2026-08-09 · **Trạng thái:** ✅ Active · **Liên quan:** `app/dashboard-new/dart-lab/page.tsx`, D-010, D-009
+
+**Quyết định:** User chọn **Duolingo** làm style reference. Từ nay:
+- Palette Duolingo: xanh #58cc02 (primary), vàng #ffc800 (accent), đỏ #ff4b4b (warning), xanh nước #1cb0f6 (info), trắng.
+- **Mascot** dẫn dắt — nhân vật hoạt hình SVG "Voi Con" (VoiChat mascot) xuất hiện xuyên trang, dẫn từng level.
+- **Level** (không phải "Chương") — 4 màn ngắn có XP progress bar trên cùng.
+- **Nút 3D shadow** — style Duolingo signature: `box-shadow: 0 4px 0` để nút có cảm giác bấm được.
+- **Chữ tối thiểu** — mỗi level ≤ 2 câu nội dung, còn lại là visual + tương tác.
+- **Chi tiết khoa học** ẩn hoàn toàn dưới "Chế độ chuyên gia" (giữ nguyên toggle từ D-009).
+- Không dùng emoji — dùng SVG cartoon inline.
+
+**Hệ quả:** Viết lại `dart-lab/page.tsx` lần 4. Tất cả text kỹ thuật (α, θ, feature vector, Amendment #A-002) đẩy vào expert mode. Story mode narrative giữ lại nhưng dịch sang ngôn ngữ Duolingo: "Level 1: Vấn đề gì?", "Level 2: DART làm gì?", "Level 3: Thử ngay!", "Level 4: Nghiên cứu".
+
+---
+
+## D-010 · UI cần polish thương mại, không phải doc-density (chờ user chọn reference)
+**Ngày:** 2026-08-09 · **Trạng thái:** 🟡 Blocked (chờ user chọn style reference) · **Liên quan:** `app/dashboard-new/dart-lab/page.tsx`, D-009
+
+**Ngữ cảnh:** Sau khi ship approach A của D-009 (story mode 4 chương), user phản hồi vòng 3: *"vẫn chưa hiểu làm gì, bấm gì, chữ quá nhiều, ko có hình minh họa, ko chia ra giao diện đẹp"*. Cộng với 2 vòng trước (D-007 "hint dưới field không đủ", D-009 "4 tab rời") → pattern đã rõ: **tôi đang viết wiki khoa học, không phải sản phẩm**. SVG hiện tại là chart tối giản, không phải illustration marketing-grade. Text density cao (mỗi Card có 3–5 đoạn văn). CTA loãng (nút "Chạy DART" ẩn ở giữa trang, không có 1 primary action rõ ngay đầu).
+
+**Chẩn đoán gốc rễ:** Tôi không biết "đẹp" theo tiêu chuẩn nào của user. UI "đẹp" có nhiều trường phái đối lập:
+- **Duolingo:** playful, illustration nhân vật, màu tươi, ít chữ, gamified.
+- **Notion / Linear:** minimal, whitespace nhiều, typography là main design element.
+- **Grammarly / Framer:** hero image lớn, gradient sang trọng, marketing-landing-page.
+- **Anki desktop:** dense, thông tin nhiều, dev-tool aesthetic (rõ ràng user KHÔNG muốn cái này).
+
+Không có reference → mỗi iteration tôi đoán một hướng, và trệch. Không thể fix tiếp bằng cách viết thêm code.
+
+**Quyết định:** **Yêu cầu user chọn 1 reference cụ thể** (URL, screenshot, hoặc tên app) trước khi tôi sửa tiếp. Đây là quyết định thẩm mỹ chỉ user có thẩm quyền.
+
+**Cạm bẫy đã học được (lưu cho các phiên sau):**
+- **N1 — Text density:** một section trong sản phẩm không dev nên có **≤ 2 câu**, hoặc thay bằng icon + label. Đoạn văn 3–5 câu là dấu hiệu tôi đang viết doc chứ không phải UI.
+- **N2 — CTA rõ:** mỗi màn phải có **1 primary action ngay above-the-fold**. Nếu user phải cuộn để tìm nút, đã sai.
+- **N3 — SVG minh hoạ ≠ chart:** khi user nói "hình minh hoạ", họ muốn illustration có nhân vật/kịch tính, không phải box + text SVG kiểu diagram. Chart chỉ dành cho khối "Chương/Chapter 2: cơ chế".
+- **N4 — Không auto-hiện error banner ở đầu trang:** nếu error do user action (như "chưa chọn từ") → toast tạm thời hoặc inline gần nút bấm, không phải sticky banner top. **Bug hiện tại: `error` state không auto-clear khi user chuyển chương.**
+- **N5 — Doc-mode gate:** giữ nội dung khoa học chi tiết cho "Chế độ chuyên gia" (đã có checkbox), user thường chỉ thấy layout gọn.
+
+**Hệ quả:**
+- Không tiếp tục iterate UI cho tới khi user cung cấp reference.
+- Fix ngay 1 bug cụ thể user thấy trong screenshot: error banner load state (không xoá khi user chuyển chương). Fix nhỏ, không đợi reference.
+- Sau khi có reference → viết lại lần thứ 4 theo đúng phong cách reference, không đoán nữa.
+
+---
+
 ## D-009 · DART Lab — story-mode narrative, judge → DART feed (Approach A, đã triển khai)
 **Ngày:** 2026-08-09 · **Trạng thái:** ✅ Active (chọn A, đã ship, chờ user test) · **Liên quan:** `app/dashboard-new/dart-lab/page.tsx`, `lib/dart.ts`, `research/AMENDMENTS.md#A-002`, `docs/UI_UX.md`, thay thế D-007
 
