@@ -52,9 +52,19 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const vocabularyId = searchParams.get("vocabularyId");
     const userId = searchParams.get("userId") || "anonymous";
+    
     if (!vocabularyId) {
       return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
     }
+
+    // Validate ObjectId format
+    if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid vocabularyId format. Must be a 24-character hex string." 
+      }, { status: 400 });
+    }
+
     const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
@@ -78,9 +88,19 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const { vocabularyId, userId = "anonymous", quality = 5, lastRetrievalType } = body || {};
+    
     if (!vocabularyId) {
       return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
     }
+
+    // Validate ObjectId format
+    if (!vocabularyId.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid vocabularyId format. Must be a 24-character hex string." 
+      }, { status: 400 });
+    }
+
     const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
     if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
