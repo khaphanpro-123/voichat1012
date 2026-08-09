@@ -47,34 +47,54 @@ async function featureVectorFor(vocab: any, userId: string) {
 }
 
 export async function GET(req: NextRequest) {
-  await connectDB();
-  const { searchParams } = new URL(req.url);
-  const vocabularyId = searchParams.get("vocabularyId");
-  const userId = searchParams.get("userId") || "anonymous";
-  if (!vocabularyId) {
-    return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
-  }
-  const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
-  if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  try {
+    await connectDB();
+    const { searchParams } = new URL(req.url);
+    const vocabularyId = searchParams.get("vocabularyId");
+    const userId = searchParams.get("userId") || "anonymous";
+    if (!vocabularyId) {
+      return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
+    }
+    const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
+    if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
-  const x = await featureVectorFor(vocab, userId);
-  const dPrev = (vocab.lastRetrievalType ?? 0) as RetrievalType;
-  const sched = calculateNextReviewDart({ featureVector: x, lastRetrievalType: dPrev, quality: 5 }, getDartWeights());
-  return NextResponse.json({ success: true, schedule: sched, features: { recentJudgeComposite: x[5] } });
+    const x = await featureVectorFor(vocab, userId);
+    const dPrev = (vocab.lastRetrievalType ?? 0) as RetrievalType;
+    const sched = calculateNextReviewDart({ featureVector: x, lastRetrievalType: dPrev, quality: 5 }, getDartWeights());
+    return NextResponse.json({ success: true, schedule: sched, features: { recentJudgeComposite: x[5] } });
+  } catch (error: any) {
+    console.error("[DART Schedule GET Error]:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined 
+    }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  await connectDB();
-  const body = await req.json();
-  const { vocabularyId, userId = "anonymous", quality = 5, lastRetrievalType } = body || {};
-  if (!vocabularyId) {
-    return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
-  }
-  const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
-  if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  try {
+    await connectDB();
+    const body = await req.json();
+    const { vocabularyId, userId = "anonymous", quality = 5, lastRetrievalType } = body || {};
+    if (!vocabularyId) {
+      return NextResponse.json({ success: false, message: "vocabularyId required" }, { status: 400 });
+    }
+    const vocab = await Vocabulary.findOne({ _id: vocabularyId, userId });
+    if (!vocab) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
-  const x = await featureVectorFor(vocab, userId);
-  const dPrev = (lastRetrievalType ?? vocab.lastRetrievalType ?? 0) as RetrievalType;
-  const sched = calculateNextReviewDart({ featureVector: x, lastRetrievalType: dPrev, quality }, getDartWeights());
-  return NextResponse.json({ success: true, schedule: sched, features: { recentJudgeComposite: x[5] } });
+    const x = await featureVectorFor(vocab, userId);
+    const dPrev = (lastRetrievalType ?? vocab.lastRetrievalType ?? 0) as RetrievalType;
+    const sched = calculateNextReviewDart({ featureVector: x, lastRetrievalType: dPrev, quality }, getDartWeights());
+    return NextResponse.json({ success: true, schedule: sched, features: { recentJudgeComposite: x[5] } });
+  } catch (error: any) {
+    console.error("[DART Schedule POST Error]:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined 
+    }, { status: 500 });
+  }
 }
