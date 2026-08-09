@@ -62,6 +62,17 @@ Does DART produce higher Context Transfer (CT) scores than comparator arms, as a
 
 **Pre-condition**: LLM judge ICC(2,1) ≥ 0.70 vs human rater mean (measured on ~40-item calibration set, Ngày 39–40). If ICC < 0.70, CT scores cannot be used as primary outcome; RQ3 becomes exploratory.
 
+### RQ4 (exploratory, added 2026-08-09 per Amendment #A-002) — Judge composite as retention predictor
+
+Does the most recent LLM-Judge composite score (`recentJudgeComposite`, feature x[5] added by Amendment #A-002) provide **incremental predictive value** for future recall, beyond the 5 shallow features (bias, CEFR, wordFreq, userAvgAcc, timesReviewed)?
+
+- **H₀ (RQ4)**: θ[5] = 0 in the DART model fitted on pilot+main data.
+- **H₁ (RQ4)**: θ[5] > 0 (higher recent judge composite predicts longer half-life).
+
+**Status**: Exploratory / sensitivity. RQ1 and its primary model (M2, see §9.4bis) are **unchanged**. RQ4 is reported alongside but does **not** modify RQ1 conclusions.
+
+**Guardrail**: If θ[5] is estimated but α (in the same M3 model) loses significance while α in M2 has it, we report the confound honestly and do not claim RQ4-alone-supports-DART. See `research/AMENDMENTS.md#A-002` for the full rationale and mitigations already applied (theta[5] init reduced 0.4 → 0.2 after oscillation simulation).
+
 ---
 
 ## 4bis. Giải thích chi tiết 3 RQ (bản tiếng Việt)
@@ -277,6 +288,23 @@ Delayed posttest score (Week 10), section Recall + Cloze + CT, total 0–100.
 - Comparison with LECTOR/KARL/CARTS via offline simulation on review logs
 - Retention curve shape by arm
 - α heterogeneity across retrieval types
+- RQ4: Judge composite as retention predictor (see §9.4bis, Amendment #A-002)
+
+### 9.4bis Ablation Table 3 — DART feature-set comparison (Amendment #A-002)
+
+Required for the paper Results section per Amendment #A-002. Fits three nested models on the same pilot+main dataset:
+
+| Model | Features | α (difficulty coef) | x[5] judge feature | Role |
+|---|---|---|---|---|
+| **M1** | [bias, CEFR, wordFreq, userAvgAcc, timesReviewed] | — (no α) | — | Baseline HLR (Settles & Meeder 2016) |
+| **M2** | Same 5 features | ✅ α ≥ 0 | — | **Primary DART, RQ1 confirmatory** |
+| **M3** | 5 features + `recentJudgeComposite` | ✅ α ≥ 0 | ✅ θ[5] | **Sensitivity DART, RQ4 exploratory** |
+
+Report for each model: log-likelihood on held-out fold, DeLong AUC (§9.1), cluster-bootstrap LRT p vs nested (M2 vs M1 for RQ1, M3 vs M2 for RQ4). Confidence intervals for α and θ[5] via cluster-bootstrap (B=1000, resample by userId).
+
+**Decision rule for the paper's main claim (RQ1)**: **M2 alone** must reach the RQ1 significance criteria (p_boundary < .05 AND DeLong p < .05). If M3's α loses significance while M2's α retains it, we discuss the confound and do not claim the M3 result overturns M2.
+
+Also fit **M3-clean** on the subset of reviews that actually received a judge score (d=2, d=3 only) — this removes the 0.5 imputation mass and gives an unbiased θ[5] estimate. Report as robustness check.
 
 ### 9.5 Data quality exclusion criteria (pre-specified)
 Applied before any analysis:

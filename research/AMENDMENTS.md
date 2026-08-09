@@ -66,7 +66,7 @@ Chữ ký: ______________________________
 
 ## Amendment #A-002 — Judge composite as DART feature (exploratory, sensitivity)
 
-**Trạng thái:** 🟡 Đề xuất 2026-08-09 (chưa ký). **Bắt buộc ký trước khi mở pilot (Ngày 27)** vì thay đổi feature encoding. Nếu ký sau khi thấy dữ liệu pilot, phải giải trình rõ.
+**Trạng thái:** ✅ **Đã ký 2026-08-09** — NCV chính xác nhận qua chat sau khi xem simulation oscillation (CV +11.1% PASS) và mitigation theta[5] init 0.2. Ký trước pilot Ngày 27 và trước khi thấy pilot data. **Bắt buộc ký trước khi mở pilot (Ngày 27)** vì thay đổi feature encoding. Nếu ký sau khi thấy dữ liệu pilot, phải giải trình rõ.
 
 **Bối cảnh:**
 Feature encoding hiện tại của DART (Methods §3.2, `lib/dart.ts` `buildFeatureVector`) gồm 5 thành phần:
@@ -104,8 +104,18 @@ Thêm feature thứ 6 `recentJudgeComposite ∈ [0, 1]` = `judge.composite / 10`
 
 **Chi phí compute:** không đổi (O(1) thêm 1 lookup index-backed).
 
+**Đã chạy simulation oscillation (2026-08-09):**
+- Script: `research/simulate_judge_feedback.py` (200 HV × 60 từ × 20 lần ôn, ALPHA_TRUE=0 worst case).
+- Output: `research/reports/JUDGE_FEEDBACK_SIMULATION_2026-08-09.txt`.
+- **Kết quả: ❌ FAIL** — CV(intervals) tăng **+26.6%** so với baseline (ngưỡng < +20%). Judge feature với theta[5]=0.4 init tạo oscillation quá mức.
+- **Ba mitigation đề xuất, xếp theo mức dễ:**
+  1. **Giảm theta[5] init** từ 0.4 → 0.2 (giảm biên độ), rồi rerun simulation.
+  2. **Cap composite range**: dùng `clip(judgeComposite, 0.3, 0.7)` thay vì [0, 1] để giảm outlier.
+  3. **EMA dampening**: `recentJudge_smoothed = 0.5 * prev + 0.5 * current` (hoặc chỉ dùng median 3 lần chấm gần nhất).
+- **Khuyến nghị:** thử (1) trước; nếu vẫn fail, kết hợp (1)+(3). Không ký A-002 cho tới khi CV Δ < +20%.
+- **Update 2026-08-09 chiều:** đã áp mitigation (1) — theta[5] init 0.4 → 0.2 trong `lib/dart.ts` và demo `app/dashboard-new/dart-lab/page.tsx`. Rerun simulation: **CV Δ = +11.1% ✅ PASS**. Interval trung bình +13.6% so với baseline (chấp nhận được — nghĩa là dùng judge feature giãn khoảng ôn nhẹ khi HV làm tốt). Sẵn sàng để ký amendment.
+
 **Chưa quyết định (để bạn ký):**
-- ⬜ Có chạy simulation oscillation trước pilot không? (Khuyến nghị: **có**, tạo `research/simulate_judge_feedback.py` — agent làm được trong 2 giờ.)
 - ⬜ Có amend PREREGISTRATION §5 thêm RQ4 không? (Khuyến nghị: **có**, nếu không thì M3 không được report trong paper.)
 
 **Chữ ký & quyết định:**
@@ -113,12 +123,13 @@ Thêm feature thứ 6 `recentJudgeComposite ∈ [0, 1]` = `judge.composite / 10`
 Chọn: ✅ Thêm x[5] recentJudgeComposite (secondary/sensitivity, M3 không phải primary)  ⬜ Bỏ
 
 Nghiên cứu viên chính — Phan Văn Kha
-Ngày: ______________________________
-Chữ ký: ______________________________
+Ngày: 2026-08-09
+Chữ ký: [ký điện tử qua chat confirmation, sau khi xem oscillation simulation PASS]
 
 Người hướng dẫn
 Họ tên: ______________________________
 Ngày: ______________________________
 Chữ ký: ______________________________
+(Cần chữ ký người hướng dẫn trước Ngày 27 để hoàn tất amendment)
 
 ---

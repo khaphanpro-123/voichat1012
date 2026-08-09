@@ -34,11 +34,12 @@ export const PHI: Record<RetrievalType, number> = {
 //
 // recentJudgeComposite (added 2026-08-09, Amendment #A-002): ∈ [0, 1] = judge.composite / 10
 // from the most recent LLM-Judge for this (user, vocab). Defaults to 0.5 (neutral) when
-// no prior judge exists. theta[5] initial value 0.4 will be re-estimated by train_dart.py
-// on pilot data. See research/AMENDMENTS.md#A-002 for the science justification and the
-// ablation plan (M2 primary vs M3 sensitivity).
+// no prior judge exists. theta[5] initial value 0.2 (reduced from 0.4 after
+// oscillation simulation on 2026-08-09 showed CV +26.6% > 20% threshold with 0.4;
+// 0.2 gives CV +11.1% < 20%). train_dart.py will re-estimate on pilot data.
+// See research/AMENDMENTS.md#A-002 and research/reports/JUDGE_FEEDBACK_SIMULATION_2026-08-09.txt.
 export const DEFAULT_DART_WEIGHTS: DartWeights = {
-  theta: [1.2, -0.4, 0.3, 0.8, 0.5, 0.4],
+  theta: [1.2, -0.4, 0.3, 0.8, 0.5, 0.2],
   alpha: 0.35,
   featureNames: [
     "bias",

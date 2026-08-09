@@ -56,8 +56,8 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 8 | 08-11 | 🔴 Hợp nhất endpoint `/api/research/review` | ✅ |
 | 9 | 08-12 | Version freeze + server timestamp | ✅ |
 | 10 | 08-13 | Endpoint enrol + assign | ✅ |
-| 11 | 08-14 | LLM-Judge chuyển sang hàng đợi | ⬜ |
-| 12 | 08-15 | Cache task + fallback provider | ⬜ |
+| 11 | 08-14 | LLM-Judge chuyển sang hàng đợi | ✅ chạy sớm 2026-08-09 (D-008) |
+| 12 | 08-15 | Cache task + fallback provider | ✅ chạy sớm 2026-08-09 + wire prod (D-013) |
 | 13 | 08-16 | Export + kiểm tra chất lượng dữ liệu | ✅ |
 | 14 | 08-17 | Đệm + tổng kết tuần | ⬜ |
 | 15 | 08-18 | Khung `RetrievalTask` + đo thời gian chuẩn | ✅ |
@@ -110,6 +110,11 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 | ICC LLM–người | — | > .70 | — |
 | Tỷ lệ dòng log thiếu trường | — | < 1% | — |
 | Tỷ lệ tuân thủ phiên học | — | > 70% | — |
+| Amendment #A-002 (judge composite feature) | ✅ ký NCV, chờ ký người hướng dẫn | ký trước Ngày 27 | 2026-08-09 |
+| Judge feedback oscillation CV Δ | +11.1% (mô phỏng, theta[5]=0.2) | < +20% | 2026-08-09 ✅ PASS |
+| DeLong test infrastructure | ✅ ship + 15/15 test | sẵn sàng Ngày 37 | 2026-08-09 |
+| Async LLM-Judge queue | ✅ ship 200-req→1 LLM real | SLA POST ≤ 2s | 2026-08-09 |
+| AI cache infrastructure | ✅ wire prod (judge + retrieval task gen) | 200 same call → 1 LLM | 2026-08-09 D-013 |
 
 ---
 
@@ -118,6 +123,81 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 6 — 2026-08-09 (Chủ Nhật) — chiều/tối, batch khoa học + Ngày 11-13
+
+**Việc theo kế hoạch:** batch chạy sớm Ngày 11 (LLM-Judge queue), Ngày 12 (Cache + fallback), Ngày 13 (Export + DQ gap fill), + amendment #A-002 khoa học đầy đủ vòng đời (đề xuất → simulation → mitigation → ký).
+
+**Agent đã làm:**
+
+- **Amendment #A-002 hoàn thành vòng đời (D-004 + D-009 + D-012):**
+  - Ghi ADR đầy đủ vào `research/AMENDMENTS.md #A-002`.
+  - `lib/dart.ts` mở rộng 5→6 dim feature, thêm `recentJudgeComposite`.
+  - `lib/researchDb.ts` không đụng — `app/models/ReviewLog.ts` thêm `judgeComposite` top-level + `judge.*` block.
+  - `/api/dart/schedule` query ReviewLog gần nhất có judgeComposite → feed x[5].
+  - `/api/context-transfer/judge` + `/status` mirror `judgeComposite = composite/10`.
+  - **Simulation oscillation** (`research/simulate_judge_feedback.py`, 200 HV × 60 từ × 20 lần ôn): theta[5]=0.4 → CV +26.6% FAIL → giảm 0.4→0.2 → CV +11.1% ✅ PASS. Report lưu `research/reports/JUDGE_FEEDBACK_SIMULATION_2026-08-09.txt`.
+  - **User ký** qua chat confirmation 2026-08-09. Còn chờ chữ ký người hướng dẫn.
+  - `research/PREREGISTRATION.md` thêm **RQ4 exploratory** + **§9.4bis Table 3 ablation M1/M2/M3** + M3-clean robustness. Ghi rõ M2 vẫn là primary.
+
+- **Ngày 11 — Async LLM-Judge queue (D-008):**
+  - Chọn MongoDB queue + piggyback worker (không cần Upstash Redis).
+  - Ship: `app/models/JudgeJob.ts`, `lib/judgeQueue.ts`, refactor `app/api/context-transfer/judge/route.ts` (POST 202 `{jobId}` ≤2s, giữ `?sync=1` cho demo), `app/api/context-transfer/judge/status/route.ts` GET + safety-net worker kick.
+  - Test: 10/10 PASS bao gồm SLA "50 enqueue < 1s, drain < 5s với judge mock".
+
+- **Ngày 12 — Cache task + fallback + budget (D-013):**
+  - Ship 3 module + 2 model: `lib/aiCache.ts`, `lib/callAICached.ts`, `lib/aiBudget.ts`, `app/models/AICache.ts` (TTL 7 ngày), `app/models/AIBudgetDaily.ts`.
+  - Test: 22/22 PASS, **exit criterion "200 calls → 1 LLM call thật" ✅**.
+  - Env: `AI_DAILY_BUDGET_USD` (default 5), `AI_BUDGET_ALERT_PCT` (default 80).
+  - **Wire prod code cùng ngày**: `lib/contextTransferJudge.ts` (namespace `context-transfer-judge`, T=0) + `lib/retrievalTaskGenerator.ts` (namespace `retrieval-task-d{0..3}`, T=0.6). Cùng nhánh HV → cùng task LLM sinh → nội dung task không còn confound. 172/172 regression PASS.
+
+- **Ngày 13 — Export + DQ (bổ sung check thiếu):**
+  - `research/export_logs.py` và `research/dq_check.py` đã có sẵn — audit thấy thiếu 3 check của spec.
+  - Bổ sung: **Check 1b** (elapsedMs/contextId coverage), **Check 9** (0-review learners attrition), **Check 10** (Δ<0 → crit, Δ>60 → warn/crit).
+  - `research/test_dq_check.py` mới, 9/9 PASS (synthetic fixture + subprocess e2e). Exit criterion Ngày 13 xác nhận: script chạy được, exit code đúng, missing rate < 1% trên fixture sạch.
+
+- **Row 16 roadmap (DeLong out-of-sample test):**
+  - `research/delong_test.py` (~180 dòng, reimplement Sun & Xu 2014 fast midrank, không sklearn).
+  - `research/test_delong.py` 15/15 PASS. RQ1 primary mở khoá cho Ngày 37 fit DART.
+
+- **UI DART Lab — 5 vòng iterate:**
+  - D-007 → D-009 → D-011 (Duolingo) → D-012 (landing product answering 6 user questions).
+  - Bug error banner load state đã fix (dismissible + auto-clear).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Jest research suite (9 file) | 172/172 PASS |
+| Python pytest (dart + delong + dq_check + judge_feedback) | 37/37 PASS |
+| Amendment #A-002 oscillation | CV Δ +11.1% ✅ (theta[5]=0.2) |
+| Ngày 11 SLA (50 enqueue) | < 1s enqueue, < 5s drain (mocked) |
+| Ngày 12 exit criterion (200 calls → 1 LLM) | ✅ mock chỉ gọi 1 lần |
+| Ngày 13 DQ script | Runs on synthetic export, đúng exit code |
+
+**Phát hiện / cảnh báo:**
+
+- Amendment #A-002 chờ **chữ ký người hướng dẫn** — hạn chót Ngày 27 (2026-08-30). Nếu không ký, không thể dùng θ[5] chính thức trong bài báo.
+- **3 việc user vẫn treo** (không blocking tuần 2, blocking evidence tuần 3):
+  1. Restore drill Ngày 6 exit criterion.
+  2. `node research/verify_env.js` + `create_indexes.js` production run.
+  3. 1000-rep cluster-bootstrap Type-I trên laptop → báo `p_cluster_boundary`.
+- Row 25 PAPER.xlsx đã cập nhật; row 10 (1000-rep) và row 22 (restore drill) vẫn "Chưa bắt đầu" chờ user.
+- Không có H nào QUÁ HẠN. H1 IRB đã ✅. H4 Pre-registration đã ✅ (2026-08-29 kế hoạch, chạy sớm).
+
+**🔴 Việc BẠN phải làm hôm nay:** *(không đổi so với mục sáng)*
+
+1. Restore drill (đóng Ngày 6 đúng nghĩa).
+2. `verify_env.js` + `create_indexes.js` production.
+3. 1000-rep cluster-bootstrap → cập nhật `p_cluster_boundary`.
+4. **Mới:** xin chữ ký người hướng dẫn cho Amendment #A-002.
+
+**Bị chặn:** như mục sáng + chờ ký amendment cho pipeline khoa học chính thức.
+
+**Ngày mai:** Ngày 7 (2026-08-10). `PLAN_45_DAYS.md`: "Dọn nợ kỹ thuật, `tsc --noEmit`, tests" — đã ✅. Agent sẽ chạy `npx tsc --noEmit` full repo (phát hiện lỗi thật, `next.config.js` bỏ qua khi build), + audit Tuần 2 vào `docs/IMPLEMENTATION.md`.
+
+---
+
 
 ### Ngày 6 — 2026-08-09 (Chủ Nhật) — lần chạy thứ 2 trong ngày
 

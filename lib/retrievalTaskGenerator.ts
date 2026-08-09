@@ -1,8 +1,14 @@
 // lib/retrievalTaskGenerator.ts
 // Prompt templates for the four retrieval types d ∈ {0,1,2,3} from x.pdf.
 // Called from /api/carts/schedule after DART picks nextRetrievalType.
+//
+// D-013 wiring (Ngày 12, 2026-08-09): LLM calls go through callAICached so that
+// two learners in the same arm requesting the same (word, retrievalType, context)
+// receive the SAME generated task. This preserves internal validity of the RCT
+// (task-content noise is not a confound) and cuts LLM cost proportionally to
+// cache hit rate.
 
-import { callAI } from "./aiProvider";
+import { callAICached } from "./callAICached";
 import { RetrievalType } from "./dart";
 
 export interface RetrievalTask {
@@ -59,16 +65,21 @@ export async function generateRetrievalTask(
   type: RetrievalType,
 ): Promise<RetrievalTask> {
   const prompt = TEMPLATES[type](word, context);
-  const res = await callAI(
+  const res = await callAICached({
     prompt,
-    {
+    keys: {
       openaiKey: process.env.OPENAI_API_KEY,
       groqKey: process.env.GROQ_API_KEY,
       cohereKey: process.env.COHERE_API_KEY,
     },
-    { maxTokens: 400, temperature: 0.6 } as any,
-  );
-  const text = String((res as any)?.text || (res as any)?.content || "");
+    temperature: 0.6,
+    maxTokens: 400,
+    // Namespace by retrieval type so d=0 and d=1 with the same (word, ctx) hash
+    // don't collide even in the unlikely event the prompts are identical after
+    // template rendering.
+    namespace: `retrieval-task-d${type}`,
+  });
+  const text = String(res.content || "");
   const parsed = extractJSON(text);
 
   return {

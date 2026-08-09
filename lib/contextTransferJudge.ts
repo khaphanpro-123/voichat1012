@@ -2,8 +2,13 @@
 // LLM-as-a-Judge scorer for context transfer (paper Sec 2.5, RQ3).
 // Four 0-10 dimensions: Accuracy, Fluency, Appropriateness, Creativity.
 // Validated in the paper against human raters (ICC > 0.80, Pearson > 0.70).
+//
+// D-013 wiring (Ngày 12, 2026-08-09): LLM calls go through callAICached.
+// Temperature is already 0 so the underlying call is deterministic — caching
+// simply removes redundant API cost when the same (word, sentence) is graded
+// again (e.g. re-runs, batch validation against human raters).
 
-import { callAI } from "./aiProvider";
+import { callAICached } from "./callAICached";
 
 export interface JudgeInput {
   word: string;                   // target vocabulary
@@ -54,17 +59,19 @@ function clamp10(v: unknown): number {
 
 export async function judgeContextTransfer(input: JudgeInput): Promise<JudgeScores> {
   const prompt = buildPrompt(input);
-  const res = await callAI(
+  const res = await callAICached({
     prompt,
-    {
+    keys: {
       openaiKey: process.env.OPENAI_API_KEY,
       groqKey: process.env.GROQ_API_KEY,
       cohereKey: process.env.COHERE_API_KEY,
     },
-    { maxTokens: 300, temperature: 0 } as any,
-  );
+    temperature: 0,
+    maxTokens: 300,
+    namespace: "context-transfer-judge",
+  });
 
-  const text = (res as any)?.text || (res as any)?.content || "";
+  const text = res.content || "";
   const parsed = extractJSON(String(text)) ?? {};
 
   const accuracy = clamp10(parsed.accuracy);

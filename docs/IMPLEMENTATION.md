@@ -23,6 +23,49 @@
 - Blockers: ...
 -->
 
+### 2026-08-09 — Tuần 2 batch: Ngày 11-13 + Amendment #A-002 + DeLong + UI DART Lab
+
+Batch lớn nhất từ đầu dự án. Đóng Ngày 11-13 sớm 5-6 ngày; xong toàn bộ vòng đời khoa học của một amendment (đề xuất → simulate → mitigate → ký); ship DeLong infra cho RQ1; iterate UI DART Lab 5 vòng theo phản hồi user.
+
+**Khoa học — Amendment #A-002 (judge composite → DART feature x[5]):**
+- File: `research/AMENDMENTS.md #A-002` (ADR), `lib/dart.ts` (5→6 dim), `app/models/ReviewLog.ts` (judgeComposite + judge.* block), `research/simulate_judge_feedback.py` (oscillation test), `research/reports/JUDGE_FEEDBACK_SIMULATION_2026-08-09.txt`, `research/PREREGISTRATION.md` (thêm RQ4 exploratory + §9.4bis Table 3 M1/M2/M3).
+- Simulation: theta[5]=0.4 → CV Δ +26.6% FAIL → giảm 0.4→0.2 → CV Δ +11.1% ✅ PASS.
+- Ký NCV 2026-08-09; chờ chữ ký người hướng dẫn trước Ngày 27.
+
+**Ngày 11 — Async LLM-Judge queue (D-008):**
+- File: `lib/judgeQueue.ts`, `app/models/JudgeJob.ts`, `app/api/context-transfer/judge/{route,status/route}.ts`, `__tests__/judgeQueue.test.ts` (10/10 PASS, bao gồm SLA 50-request drain).
+- MongoDB queue + piggyback worker; không cần Upstash Redis. POST trả 202 `{jobId}` < 2s; GET status kick worker safety-net.
+
+**Ngày 12 — Cache task + budget cap + fallback verify (D-013):**
+- File: `lib/aiCache.ts`, `lib/callAICached.ts`, `lib/aiBudget.ts`, `app/models/{AICache,AIBudgetDaily}.ts`, `__tests__/aiCache.test.ts` (22/22 PASS).
+- **Exit criterion**: 200 calls cùng input → 1 LLM call thật ✅.
+- **Wire prod code**: `lib/contextTransferJudge.ts` (namespace `context-transfer-judge`, T=0) + `lib/retrievalTaskGenerator.ts` (namespace `retrieval-task-d{0..3}`, T=0.6). Cùng arm HV → cùng task LLM sinh → nội dung task hết là confound.
+- Env: `AI_DAILY_BUDGET_USD` (default 5), `AI_BUDGET_ALERT_PCT` (default 80).
+
+**Ngày 13 — Export + DQ gap fill:**
+- File: `research/dq_check.py` (+ 3 check mới: 1b elapsedMs/contextId coverage, 9 zero-review learners attrition, 10 Δ<0 crit / Δ>60 warn), `research/test_dq_check.py` (9/9 PASS synthetic e2e subprocess).
+
+**Row 16 roadmap — DeLong out-of-sample test:**
+- File: `research/delong_test.py` (~180 dòng, reimplement Sun & Xu 2014 fast midrank), `research/test_delong.py` (15/15 PASS).
+- Mở khoá cho Ngày 37 fit DART. Kết hợp với cluster-bootstrap LRT (#A-001), RQ1 có đủ 2 kiểm định pre-registered.
+
+**UI DART Lab — 5 vòng iterate theo phản hồi user (D-007 → D-012):**
+- Vòng 1 (D-007): side-help panel + tooltip động — không đủ.
+- Vòng 2 (D-009): story mode 4-chương end-to-end, judge → DART feedback loop trực quan — vẫn "chưa hiểu làm gì".
+- Vòng 3 (D-011): Duolingo game 4-level với mascot Voi Con — vẫn text-heavy.
+- Vòng 4 (D-012): landing product answering 6 câu hỏi cụ thể user (là gì? tác dụng? cách dùng? thực hành? quản lý? kết luận?) — chuyển vai trò trang từ "scientific demo" sang "product landing".
+- Palette Duolingo giữ. CTA duy nhất "Bắt đầu học ngay →" dẫn `/dashboard-new/vocabulary`. Chi tiết thuật toán gate qua "Chế độ chuyên gia".
+
+**Cạm bẫy đã học (D-010):** N1 text density ≤ 2 câu/section; N2 1 primary CTA above-the-fold; N3 illustration ≠ diagram chart; N4 error banner không sticky top; N5 doc-mode gate. Đã nhập vào `docs/UI_UX.md`.
+
+**Test:** Jest research 172/172 PASS. Python 37/37 PASS (dart 13 + delong 15 + dq_check 9). Regression sạch trên `(judge|dart|aiCache|contextTransfer|participantAuth|experimentBlinding|retrievalTasks|posttestBuilder|wordBankSelector)`.
+
+**Blockers còn:**
+- Chữ ký người hướng dẫn cho A-002.
+- User: restore drill Ngày 6, verify_env + create_indexes production, 1000-rep cluster-bootstrap.
+
+---
+
 ### 2026-08-09 — Reorg toàn repo + consolidate docs
 
 - Sắp xếp lại 44 file MD root → `docs/{architecture,pipeline,features,archive}` + 40+ script rời → `scripts/{legacy,manual-tests}`.

@@ -7,6 +7,7 @@ and prints a report with ✅ / ⚠️ / 🚨 flags. Non-zero exit code if any �
 Checks (each maps to a decision the paper needs to defend):
 
   1. Missing required fields on reviews (should be <1% per RESEARCH_PROGRESS.md)
+  1b. Optional-but-tracked fields missing rate (elapsedMs, contextId for CARTS)
   2. retrievalType balance (each of d=0/1/2/3 should be ≥10%)
   3. Per-condition row counts (should be within 30% of each other)
   4. Per-participant tuân thủ (compliance): days_active ≥ 70% of study weeks
@@ -15,6 +16,8 @@ Checks (each maps to a decision the paper needs to defend):
   7. serverDeltaDays vs deltaDays discrepancy — clock drift or bug
   8. TestResult coverage — every enrolled participant should have pretest;
      completers should have posttest_delayed
+  9. Learners with 0 review rows (enrolled but never studied — attritors)
+  10. Δ out of expected range [0, 60] days (clock skew / stale review)
 
 Usage
 -----
@@ -128,6 +131,25 @@ def main():
         if not any_bad:
             flag("ok", "all required fields present on all rows")
 
+    # ---------------- 1b. Optional-but-tracked fields ----------------------
+    print("\n1b. Optional field coverage (elapsedMs, contextId)")
+    if reviews:
+        n = len(reviews)
+        miss_elapsed = sum(1 for r in reviews if r.get("elapsedMs") is None)
+        pct_e = miss_elapsed / n
+        level_e = "ok" if pct_e < 0.01 else "warn" if pct_e < 0.05 else "crit"
+        bump(flag(level_e, f"elapsedMs missing: {miss_elapsed:,}/{n} ({pct_e:.2%})"))
+
+        # contextId only expected for CARTS condition — filter first
+        carts_rows = [r for r in reviews if r.get("condition") == "carts"]
+        if carts_rows:
+            miss_ctx = sum(1 for r in carts_rows if not r.get("contextId"))
+            pct_c = miss_ctx / len(carts_rows)
+            level_c = "ok" if pct_c < 0.01 else "warn" if pct_c < 0.05 else "crit"
+            bump(flag(level_c, f"contextId missing on CARTS rows: {miss_ctx:,}/{len(carts_rows)} ({pct_c:.2%})"))
+        else:
+            flag("ok", "no CARTS rows yet — skip contextId check")
+
     # ---------------- 2. retrievalType balance ------------------------------
     print("\n2. retrievalType distribution (need each ≥ {:.0%})".format(args.min_retrieval_share))
     if reviews:
@@ -232,6 +254,35 @@ def main():
             flag("ok", "all completers have posttest_delayed")
     else:
         flag("ok", "no participants/tests yet — skip")
+
+    # ---------------- 9. Learners with 0 review rows ------------------------
+    print("\n9. Enrolled learners with 0 review rows (attritors)")
+    if parts:
+        reviewers = {r.get("participant") for r in reviews if r.get("participant")}
+        zero_review = [p["participantCode"] for p in parts if p.get("participantCode") not in reviewers]
+        pct = len(zero_review) / len(parts)
+        # >10% zero-review attrition is concerning for internal validity
+        level = "ok" if pct < 0.05 else "warn" if pct < 0.10 else "crit"
+        bump(flag(level, f"{len(zero_review)}/{len(parts)} enrolled but 0 reviews ({pct:.1%})"))
+    else:
+        flag("ok", "no participants yet — skip")
+
+    # ---------------- 10. Δ out of range [0, 60] ----------------------------
+    print("\n10. deltaDays out of expected range [0, 60]")
+    if reviews:
+        neg = sum(1 for r in reviews if (r.get("serverDeltaDays") or 0) < 0)
+        toobig = sum(1 for r in reviews if (r.get("serverDeltaDays") or 0) > 60)
+        n = len(reviews)
+        if neg > 0:
+            bump(flag("crit", f"{neg:,} rows with Δ < 0 (clock skew / stale event) — MUST fix before analysis"))
+        else:
+            flag("ok", "no negative Δ")
+        if toobig > 0:
+            pct = toobig / n
+            level = "warn" if pct < 0.02 else "crit"
+            bump(flag(level, f"{toobig:,} rows with Δ > 60 days ({pct:.2%}) — likely stale event or delivery lapse"))
+        else:
+            flag("ok", "no Δ > 60 days")
 
     print(f"\nOverall: {worst.upper()}")
     sys.exit(0 if worst != "crit" else 1)

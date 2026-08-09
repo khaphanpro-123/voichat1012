@@ -15,6 +15,50 @@
 
 <!-- DECISION_INSERT_POINT -->
 
+## D-013 · Ngày 12 — Content-addressed LLM cache + daily budget cap
+**Ngày:** 2026-08-09 · **Trạng thái:** ✅ Active · **Liên quan:** `lib/aiCache.ts`, `lib/callAICached.ts`, `lib/aiBudget.ts`, `app/models/AICache.ts`, `app/models/AIBudgetDaily.ts`, `__tests__/aiCache.test.ts`
+
+**Ngữ cảnh:** Ngày 12 kế hoạch yêu cầu (1) cache task `(word, retrievalType, contextId)` → tiết kiệm tiền + đảm bảo cùng nhánh HV nhận task tương đương (internal validity), (2) verify fallback provider chain của `lib/aiProvider.ts`, (3) đặt ngân sách + cảnh báo. Exit criterion: 200 calls cùng input → 1 LLM call thật.
+
+**Quyết định:**
+- **Cache key:** `SHA-256(prompt + preferProvider + temperature + maxTokens + namespace)`. Namespace là tag semantic (`context-transfer-judge`, `retrieval-task-cloze-d1`, …) để tránh collision cross-feature dù prompt tình cờ trùng. Temperature normalise 4 chữ số để tránh float noise.
+- **Storage:** MongoDB `AICache` collection với TTL 7 ngày (index `expiresAt: { expires: 0 }`). Hitcount + lastHitAt cho analytics chất lượng cache.
+- **Wrapper:** `callAICached(input, deps)` giữ nguyên fallback chain của `callAI` khi cache miss. Cache write fail không phá result. Cache miss + LLM fail cũng không cache (đúng — retry hợp lệ).
+- **Budget:** `AIBudgetDaily` (1 doc/ngày UTC), `chargeAI({provider, model, tokensIn, tokensOut})` trả `{allowed, chargedUsd, totalUsd, capUsd, alertLevel}`. Env `AI_DAILY_BUDGET_USD` (default 5), `AI_BUDGET_ALERT_PCT` (default 80). Groq = $0 (free tier); OpenAI + Cohere theo bảng giá early-2026, unknown → fallback conservative.
+- **Không wire vào các endpoint** ở lượt này — chỉ ship infrastructure + tests. Wiring `retrievalTasks/*.ts` và `contextTransferJudge.ts` để dùng `callAICached` là follow-up (Ngày 15-17 code đã có sẵn, chỉ cần swap). ✅ **Đã wire cùng ngày 2026-08-09 chiều**: `lib/contextTransferJudge.ts` (namespace `context-transfer-judge`, temperature=0) và `lib/retrievalTaskGenerator.ts` (namespace `retrieval-task-d{type}`, temperature=0.6). Cache đảm bảo cùng nhánh nhận task tương đương. 172/172 test PASS.
+
+**Kết quả:**
+- Test 22/22 PASS. Ngày 12 exit criterion PASS: 200 calls cùng input → llmMock được gọi đúng **1 lần**.
+- Regression 9 suite research (172/172 test) PASS, không drift.
+- `AI_DAILY_BUDGET_USD=5` là default; production nghiên cứu nên tăng lên tùy scale pilot. Trong `.env.research` chưa đặt — sẽ nhắc user khi mở pilot.
+
+**Hệ quả:**
+- Row 25 roadmap (Cache task + fallback provider) mở khoá → có thể tick ✅.
+- Wiring vào task generators là 1 chỉnh sửa small (1 dòng import mỗi call site). Tôi có thể làm luôn hoặc chờ user quyết trước khi swap production code.
+
+---
+
+## D-012 · `/dart-lab` không phải scientific demo — là landing product answering 6 user questions
+**Ngày:** 2026-08-09 · **Trạng thái:** ✅ Active · **Liên quan:** `app/dashboard-new/dart-lab/page.tsx`, D-011
+
+**Ngữ cảnh:** Sau 4 vòng thử (dev-tool → 4-tab → story mode → Duolingo game), user vẫn phản hồi 6 câu: (1) DART là gì? tác dụng? cách dùng? (2) thực hành thế nào? bộ dữ liệu? (3) quản lý việc học thế nào? pivot ở đâu? (4) con số nghĩa gì với user? (5) kết luận trên UI? (6) tôi là user không hiểu cần làm gì. → Chẩn đoán mới: page này đang định vị sai. User không cần thấy α, θ, half-life; user cần biết **DART giúp họ nhớ từ lâu hơn thế nào** và **họ phải bấm nút nào để bắt đầu**.
+
+**Quyết định:** `/dart-lab` chuyển thành **landing feature page** trả lời đúng 6 câu:
+1. **DART là gì?** — 1 câu định nghĩa product ("app tự chọn khi nào ôn từ nào cho bạn"), KHÔNG dùng chữ "half-life regression".
+2. **Tác dụng?** — 3 benefit icon: (a) nhớ lâu hơn, (b) không phí giờ ôn từ đã thuộc, (c) bài tập vừa sức.
+3. **Cách dùng?** — 3 bước visual: Upload/chọn từ → Làm bài → DART tự lên lịch.
+4. **Thực hành:** demo nhanh "thử 1 từ" (không cần login).
+5. **Quản lý:** mockup dashboard "Hôm nay: N từ đến hạn, streak X ngày, đã học Y từ" — kết nối tới `/dashboard-new/study` thật.
+6. **Kết luận + CTA:** nút to "Bắt đầu học ngay" là **primary action** duy nhất above-the-fold.
+
+**Chuyển ra khỏi page:**
+- Chi tiết thuật toán (α, θ, feature vector, Amendment #A-002) → chỉ hiện trong "Chế độ chuyên gia" hoặc chuyển sang `/dashboard-new/dart-lab-science` riêng (chưa cần tạo, khi nào researcher hỏi thì tách).
+- SVG chart phức tạp (formula, retrieval ladder) → chỉ trong expert mode.
+
+**Hệ quả:** Giữ palette Duolingo + mascot Voi Con (D-011). Nội dung viết lại hoàn toàn theo ngôn ngữ user, không dev/researcher. Nếu sau khi ship user vẫn không hiểu → có thể vấn đề không phải UI mà là **feature Study thực chưa tồn tại đủ** để CTA "Bắt đầu học ngay" dẫn tới đâu có ý nghĩa. Sẽ check sau khi ship.
+
+---
+
 ## D-011 · DART Lab UI — chốt phong cách Duolingo (playful, mascot, gamified)
 **Ngày:** 2026-08-09 · **Trạng thái:** ✅ Active · **Liên quan:** `app/dashboard-new/dart-lab/page.tsx`, D-010, D-009
 
