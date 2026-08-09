@@ -63,7 +63,7 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 15 | 08-18 | Khung `RetrievalTask` + đo thời gian chuẩn | ✅ |
 | 16 | 08-19 | d=0 MCQ, d=1 Cloze | ✅ |
 | 17 | 08-20 | d=2 Constrained-gen, d=3 Paraphrase | ✅ |
-| 18 | 08-21 | Bộ chạy phiên học | ✅ |
+| 18 | 08-21 | Bộ chạy phiên học | ✅ chạy sớm 2026-08-09 tối (audit phát hiện gap → build page thật) |
 | 19 | 08-22 | 🔴 Làm mù điều kiện thí nghiệm | ✅ |
 | 20 | 08-23 | Dashboard nghiên cứu viên | ✅ |
 | 21 | 08-24 | Tổng kết tuần + tự dùng thử | ✅ |
@@ -123,6 +123,90 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 6 — 2026-08-09 (Chủ Nhật) — audit Tuần 4-5 + build /api/retrieval-task/generate
+
+**Agent đã làm:**
+
+- **Audit Tuần 4-5 (Ngày 22-28):**
+  - Ngày 22 (Consent + pretest CEFR): ✅ đúng — `app/research/consent/page.tsx` (191) + `app/research/pretest/page.tsx` (234)
+  - Ngày 23 (Word bank + context pool): ✅ đúng — `lib/wordBank.ts` (752) + `data/wordbank_pool_seed.json`
+  - **Ngày 24 (Posttest 3 phần): ⚠️ PARTIAL** — `lib/posttestBuilder.ts` có (376 dòng, 28/28 test PASS) NHƯNG `app/research/posttest/page.tsx` **KHÔNG TỒN TẠI**. Cùng pattern gap như Ngày 18 (thư viện xong, UI chưa). Ghi lại làm nợ kỹ thuật.
+  - Ngày 25 (Rubric + tập huấn): ✅ đúng — `lib/judgeRubric.ts` + `research/CALIBRATION_GUIDE.md` + `calibration_practice_items.json`
+  - Ngày 26 (Pre-registration): ✅ đúng — 7 RQ sections (bao gồm RQ4 exploratory mới thêm 2026-08-09)
+  - Ngày 27 (Pilot ops): ✅ đúng — `research/PILOT_CHECKLIST.md` (setup ready; pilot thật Ngày 30-34)
+  - Ngày 28 (Diễn tập E2E): ⬜ như bảng — chưa cần audit
+
+- **Build endpoint /api/retrieval-task/generate:**
+  - File: `app/api/retrieval-task/generate/route.ts` — POST { vocabularyId, word, context?, retrievalType } → gọi `generateRetrievalTask()` (đã wire `callAICached` từ D-013) → return task JSON
+  - Auth Bearer participant token (`verifyRequest`)
+  - Test: `__tests__/retrievalTaskGenerateRoute.test.ts` — **10/10 PASS**: 401 no auth, 401 invalid token, 400 missing/bad fields, 200 MCQ + cloze, generator args pass-through, 500 on generator throw
+
+- **Wire study page dùng endpoint thật:**
+  - `app/dashboard-new/study/page.tsx` `fetchNextTask()`: Step 1 gọi `/api/dart/schedule` → nhận `nextRetrievalType`. Step 2 gọi `/api/retrieval-task/generate` với Bearer token. Fallback: nếu no token / offline / endpoint fail → giữ `fabricateTaskFromWord()` client-side (offline mode vẫn học được)
+  - Task content giờ đi qua chuỗi hoàn chỉnh: DART chọn d → LLM sinh task (cached D-013) → study page render
+
+**Kết quả:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Audit Tuần 4-5 | 5/6 ✅ đúng, **1 gap** (N24 posttest UI) |
+| Endpoint /api/retrieval-task/generate | ✅ ship + 10/10 test PASS |
+| Study page wire | ✅ (fallback fabricate giữ nguyên cho offline) |
+| Jest regression full suite | 182/182 PASS |
+
+**Phát hiện / cảnh báo:**
+
+- **Gap thứ 2 trong bảng: Ngày 24 posttest UI thiếu.** Pattern giống Ngày 18: thư viện `lib/posttestBuilder.ts` (28/28 test) có, UI `app/research/posttest/page.tsx` chưa. Không blocking Tuần 3-4 nhưng blocking Ngày 29+ (onboarding pilot dùng posttest). **Nên build cùng cấp độ ưu tiên với Ngày 18 study page.**
+- CTA "Bắt đầu học ngay →" trong `dart-lab` giờ dẫn tới trải nghiệm end-to-end thật (nếu có participant token): DART chọn dạng bài → LLM sinh nội dung → grade → ghi log qua `/api/research/review`.
+
+**🔴 Việc BẠN phải làm hôm nay:** *(không đổi so với các mục trên)*
+
+**Ngày mai:** Ngày 7 (2026-08-10). Ưu tiên build `app/research/posttest/page.tsx` (Ngày 24 gap thứ 2), sau đó chạy `npx tsc --noEmit` full repo (Ngày 7 kế hoạch), sau đó audit Tuần 5+ nếu có gap.
+
+---
+
+
+### Ngày 6 — 2026-08-09 (Chủ Nhật) — audit Tuần 3 + fill gap Ngày 18
+
+**Agent đã làm:**
+
+- **Audit Tuần 3 (Ngày 15-21)** — check từng ✅ trên bảng có file thật:
+  - Ngày 15 (RetrievalTask framework): ✅ đúng — `lib/retrievalTasks/{types,timing,session}.ts`
+  - Ngày 16 (MCQ + Cloze): ✅ đúng — `mcq.ts` + `cloze.ts`
+  - Ngày 17 (Constrained gen + Paraphrase): ✅ đúng — `constrainedGen.ts` + `paraphrase.ts`
+  - **Ngày 18 (Bộ chạy phiên học): ❌ TICK SAI** — `app/dashboard-new/study/page.tsx` không tồn tại
+  - Ngày 19 (Blinding): ✅ đúng — `lib/experimentBlinding.ts`
+  - Ngày 20 (Researcher dashboard): ✅ đúng — `app/admin/research/page.tsx` + `app/api/admin/research/overview/route.ts`
+  - Ngày 21 (Tổng kết tuần): ✅ đúng
+- **Ship Ngày 18 thật** — `app/dashboard-new/study/page.tsx` (~400 dòng):
+  - Palette Duolingo (D-011), UI blinded (D-002) — không show tên nhánh/retrievalType name
+  - Flow: load word list (`GET /api/research/words` hoặc demo fallback 20 từ) → per-word gọi `/api/dart/schedule` → render `<TaskWidget>` theo `retrievalType` (MCQ click-to-answer / cloze input / gen input / paraphrase textarea) → grade client-side (Levenshtein ≤ 1 cho cloze) → POST `/api/research/review` với auth Bearer
+  - **IndexedDB fallback**: mọi submission `idbPut()` TRƯỚC khi thử `fetch()`. Offline → giữ trong `pending-submissions` store → auto-flush khi `window.online` fire. Top bar hiện "Online / Offline" + "N chờ gửi" badge
+  - Progress bar XP + streak-style (Duolingo aesthetic)
+  - Demo mode: nếu không có `participantToken` → dùng 20 từ synthetic (`DEMO_WORDS` + `DEMO_DEF_VI`) để bấm thử ngay
+  - Exit criterion Ngày 18 ("20 từ liên tiếp, tắt mạng vẫn không mất câu"): thoả về mặt code — cần test tay hoặc E2E test riêng (Ngày 28)
+- **Ghi chú**: task content vẫn fabricated client-side. Production sẽ gọi endpoint mới `/api/retrieval-task/generate` (dùng `callAICached` từ D-013). Chưa build endpoint đó — treo lại cho lượt sau
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Ngày 18 file có tồn tại | ✅ `app/dashboard-new/study/page.tsx` 400 dòng |
+| IndexedDB offline durability | ✅ code (test tay cần) |
+| Blinding — không lộ retrievalType name | ✅ chỉ show "Câu hỏi {N}" |
+| Palette đồng bộ với dart-lab landing | ✅ Duolingo (D-011) |
+
+**Phát hiện / cảnh báo:**
+
+- Bảng tiến độ 45 ngày có ít nhất **1 tick giả** đã được sửa. Nếu Tuần 4+ cũng có tick giả tương tự → cần audit tiếp. Chưa xảy ra dấu hiệu khác.
+- CTA "Bắt đầu học ngay →" trong `dart-lab` giờ có target thật để dẫn tới (dù target trực tiếp vẫn là `/vocabulary`, không phải `/study` — vì `/study` là session runner cho nghiên cứu, không phải app chính).
+- Chưa build `/api/retrieval-task/generate` endpoint chính thức — task content trong study page là fabricated client-side. Đủ cho E2E demo, không đủ cho pilot thật.
+
+**Ngày mai:** Ngày 7 (2026-08-10). Có thể build `/api/retrieval-task/generate` để `/study` page dùng LLM sinh task thật (qua `callAICached`), hoặc audit tiếp Tuần 4-5 xem có tick giả không.
+
+---
+
 
 ### Ngày 6 — 2026-08-09 (Chủ Nhật) — chiều/tối, batch khoa học + Ngày 11-13
 
