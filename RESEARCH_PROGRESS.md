@@ -119,6 +119,44 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 
 <!-- AGENT_LOG_INSERT_POINT -->
 
+### Ngày 6 — 2026-08-09 (Chủ Nhật) — lần chạy thứ 2 trong ngày
+
+**Việc theo kế hoạch:** Cùng Ngày 6 (đã có mục sáng nay). Đây là lượt chạy bổ sung do scheduled task kích hoạt lại. Ghi lại thay đổi kể từ commit `524d189` (2026-08-09 09:35 +0700).
+
+**Agent đã làm:**
+
+- **Phát hiện commit lớn của bạn lúc 09:35** (`524d189 Update project`): +302 dòng `RESEARCH_PROGRESS.md` (chốt nhật ký sáng nay), thêm `AGENTS.md`, `PAPER_tasks.xlsx`, `__tests__/wordBankSelector.test.ts` (+201), `data/wordbank_pool_seed.json`, `lib/defaultWordBankPool.ts`, và một loạt tài liệu mới trong `docs/` (`ARCHITECTURE.md`, `DATABASE.md`, `FEATURES.md`, `IMPLEMENTATION.md`, `INDEX.md`, `PIPELINE.md`, `UI_UX.md`) — 5 file `research/*` cũng cập-nhật (build_paper_xlsx.py, PAPER_DRAFT_v1.md, RESEARCH_STATUS_MATRIX.md, WORDBANK_TWO_TIER_DESIGN.md, mockups/review_ui_v1.html). Working tree hiện sạch.
+- **Re-verify regression** trên trạng thái mới:
+  - `npx jest` 6 suite `(judgeRubric|participantAuth|experimentBlinding|retrievalTasks|posttestBuilder|wordBankSelector)` → **133/133 PASS** (13.2s). Suite `wordBankSelector` mới (16 test) xanh — bao gồm `seedFromUserAndDate` xác định.
+  - `pytest research/test_dart_model.py` → **13/13 PASS** (9.05s). Amendment #A-001 vẫn xanh.
+- **Không sửa code** trong lượt này (mọi thứ vừa xanh + không có drift để dọn).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Jest 6 suites (thêm wordBankSelector) | 133/133 PASS |
+| pytest `test_dart_model.py` | 13/13 PASS |
+| Git working tree | Sạch (sau commit 524d189) |
+| Restore drill Ngày 6 exit criterion | ❌ vẫn CHƯA CHẠY |
+
+**Phát hiện / cảnh báo:**
+
+- Yêu cầu người dùng từ nhật ký sáng vẫn còn nguyên: (1) restore drill để đóng Ngày 6 đúng nghĩa, (2) `verify_env.js` + `create_indexes.js` production, (3) 1000-rep cluster-bootstrap `p_cluster_boundary`. Không cái nào chạy được từ sandbox.
+- Không có H nào QUÁ HẠN. Không có mốc đường găng đang trễ.
+
+**🔴 Việc BẠN phải làm hôm nay:** *(không đổi so với mục sáng — xem chi tiết ở mục Ngày 6 phía dưới)*
+
+1. Restore drill (`mongodump` → `mongorestore` DB tạm → so đếm document) — đóng Ngày 6.
+2. `node research/verify_env.js` (mở khoá Ngày 11) và `node research/create_indexes.js` (bắt buộc trước enrol).
+3. 1000-rep cluster-bootstrap Type-I → báo `p_cluster_boundary`.
+
+**Bị chặn:** như mục sáng.
+
+**Ngày mai:** Ngày 7 = 2026-08-10 (Thứ Hai), theo `PLAN_45_DAYS.md`: "Dọn nợ kỹ thuật, `tsc --noEmit`, tests" — đã ✅ trong bảng. Agent sẽ chạy `npx tsc --noEmit` toàn repo (phát hiện lỗi thực chất, vì `next.config.js` bỏ qua khi build) + Ngày 14 (đệm) nếu bạn chưa mở khoá hạ tầng.
+
+---
+
 ### Ngày 6 — 2026-08-09 (Chủ Nhật)
 
 **Việc theo kế hoạch:** Ngày 6 gốc — 🔴 Tách DB nghiên cứu + backup tự động. Deliverable **backend đã ✅ chạy sớm 2026-08-07** (batch 2): `lib/researchDb.ts`, `research/verify_env.js`, `research/create_indexes.js`, `research/backup_research_db.sh`. Còn thiếu **exit criterion của Ngày 6 theo `PLAN_45_DAYS.md`: "khôi phục thành công vào một DB tạm, đếm số document khớp"** — tức là restore test thật, chưa ai chạy. Ba tồn đọng người dùng từ Ngày 5 (`verify_env.js`, `create_indexes.js`, cluster-bootstrap 1000-rep) vẫn ⬜.

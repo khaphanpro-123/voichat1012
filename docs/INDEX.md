@@ -15,6 +15,7 @@ Từ nay khi có nội dung mới → **cập nhật section trong file phù h�
 | [`UI_UX.md`](./UI_UX.md) | Nguyên tắc thiết kế, palette, review UI, accessibility, mockup | Redesign UI, đổi palette, thêm component pattern |
 | [`FEATURES.md`](./FEATURES.md) | Từng feature (camera, noise detection, translation, …) | Thêm feature mới → thêm section |
 | [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) | Rolling log — thông báo "đã làm xong X" | **Mỗi khi hoàn thành mảng công việc lớn** |
+| [`DECISIONS.md`](./DECISIONS.md) | ADR-lite — quyết định thiết kế / hướng đi đã chốt | Agent tự chèn khi bạn nói "chốt", "quyết định", "từ nay dùng X" |
 
 ---
 

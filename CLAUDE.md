@@ -2,6 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Persistent memory protocol (bắt buộc mỗi phiên)
+
+Claude không có bộ nhớ giữa các phiên chat. Để tái tạo context, **đầu mỗi phiên** phải đọc lướt các file sau (nếu có, theo thứ tự ưu tiên):
+
+1. `docs/DECISIONS.md` — quyết định thiết kế đã chốt (ADR-lite). Đây là "ký ức" quan trọng nhất.
+2. `RESEARCH_PROGRESS.md` — mục mới nhất ở đầu, biết đang ở Ngày mấy của kế hoạch DART.
+3. `docs/IMPLEMENTATION.md` — mảng công việc lớn đã ship gần đây.
+4. `docs/INDEX.md` — bản đồ 7 file canonical trong `docs/`.
+
+**Ghi lại tự động, không cần user nhắc:**
+- Khi user nói **"chốt / quyết định / từ nay dùng X / đổi hướng / góp ý UI: … / không dùng Y nữa"** → chèn 1 mục mới ở đầu `docs/DECISIONS.md` (dưới `<!-- DECISION_INSERT_POINT -->`), format ADR-lite: `D-###`, ngày, trạng thái, ngữ cảnh, quyết định, hệ quả. ID tăng dần, không tái sử dụng.
+- Khi hoàn thành 1 mảng công việc lớn (feature ship, milestone kế hoạch xong) → thêm entry đầu section "Log" của `docs/IMPLEMENTATION.md`.
+- Quyết định thay thế mục cũ → đánh dấu mục cũ `⛔ Superseded by D-XXX`, không xoá.
+
+**Không tạo file MD mới rải rác** — quy tắc `docs/INDEX.md` (D-006 trong DECISIONS): mọi thay đổi phải fit vào 7 file canonical (`ARCHITECTURE`, `DATABASE`, `PIPELINE`, `UI_UX`, `FEATURES`, `IMPLEMENTATION`, `DECISIONS`). Muốn tạo file thứ 8 → phải hỏi user trước.
+
+---
+
+
 ## What this is
 
 An English-learning web app for Vietnamese speakers ("EnglishPal" / viettalk). Users upload documents (PDF/DOCX/images) or chat with AI, and the system extracts vocabulary, generates bilingual (EN/VI) flashcards (definitions, examples, collocations, synonyms), clusters vocabulary into topics, and offers voice/text AI chat, pronunciation practice, listening, and writing practice, plus a RAG document-chat feature.
