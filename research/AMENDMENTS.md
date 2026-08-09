@@ -63,3 +63,62 @@ Chữ ký: ______________________________
 ---
 
 <!-- Add new amendments below this line, most recent on top -->
+
+## Amendment #A-002 — Judge composite as DART feature (exploratory, sensitivity)
+
+**Trạng thái:** 🟡 Đề xuất 2026-08-09 (chưa ký). **Bắt buộc ký trước khi mở pilot (Ngày 27)** vì thay đổi feature encoding. Nếu ký sau khi thấy dữ liệu pilot, phải giải trình rõ.
+
+**Bối cảnh:**
+Feature encoding hiện tại của DART (Methods §3.2, `lib/dart.ts` `buildFeatureVector`) gồm 5 thành phần:
+`x = [1, cefr, wordFreqLog, userAvgAcc, timesReviewedLog]` (bias + 4 feature). Tất cả đều "shallow" — không có feature nào phản ánh **chất lượng sản sinh** (productive quality) của lần retrieval trước. Levels-of-processing theory (Craik & Lockhart 1972; Fisher & Craik 1977) dự báo depth of encoding là predictor mạnh của long-term retention. LLM-Judge (Sec 2.5) chấm 4 chiều 0–10 (accuracy, fluency, appropriateness, creativity) và trả về `composite` — chính là proxy cho depth of processing của lần constrained-gen / paraphrase (d=2, d=3).
+
+**Đề xuất:**
+Thêm feature thứ 6 `recentJudgeComposite ∈ [0, 1]` = `judge.composite / 10` của **lần retrieval judge-scored gần nhất** cho cùng cặp (userId, vocabularyId). Nếu chưa có (d=0/d=1 không được judge, hoặc HV chưa từng làm bài productive) → **default 0.5** (neutral prior, không phạt cũng không thưởng).
+
+`buildFeatureVector` → trả 6 phần tử; `theta` mở rộng 6 phần tử (thêm `theta[5]`). Giá trị khởi tạo `theta[5] = 0.4` (dương vừa phải; huấn luyện thật sẽ estimate lại trong `train_dart.py` Ngày 37). `α` không thay đổi ý nghĩa — vẫn là hệ số của `φ(d)`.
+
+**Ba câu hỏi khoa học phải trả lời trong bài:**
+
+1. **Rủi ro confound với α:** judge composite có thể tương quan âm với retrievalType (bài khó thường điểm judge thấp hơn). Nếu thêm x[5] hút mất variance từ α → mất khả năng chứng minh RQ1. **Mitigation:** report ablation Table 3 với 3 mô hình:
+   - M1: baseline HLR (không có α, không có x[5])
+   - M2: DART (có α, không có x[5]) — **primary** cho RQ1 (giữ nguyên preregistration)
+   - M3: DART + judge (có α, có x[5]) — **sensitivity**, exploratory
+   Nếu α trong M3 không còn có ý nghĩa nhưng α trong M2 có → discuss confound, không tuyên bố M3 là mô hình chính.
+
+2. **Missing data mechanism:** default 0.5 khi không có judge → tạo mass point tại 0.5 trong distribution. Có nguy cơ bias theta[5] về 0 (vì đa số row là 0.5). Sensitivity phân tích thứ 2: fit lại M3 chỉ trên subset row có judge thực (d=2, d=3) → theta[5] trên subset này mới là ước lượng "sạch".
+
+3. **Vòng lặp nội tại (feedback loop):** judge composite cao → half-life dài → ôn muộn → khi ôn lại có thể quên → judge thấp. Có thể tạo dao động. **Mitigation:** simulation với `synth_logs.py` trước pilot: chèn feature x[5] với `alpha_true = 0`, `theta[5]_true = 0.4`, xem có tạo oscillation không. **Chưa chạy — đặt điều kiện ký amendment này**.
+
+**Thay đổi trong PREREGISTRATION.md phải cập nhật kèm:**
+- §3.2 Feature encoding: thêm x[5] vào bảng.
+- §5 RQ list: thêm RQ4 (post-hoc / exploratory): "Does recent productive-quality (judge composite) predict future retention beyond shallow features?"
+- §7 Analysis plan: khai báo M2 vẫn là primary cho RQ1; M3 là secondary/sensitivity; ablation Table 3 bắt buộc report.
+- §8 Threats to validity: thêm mục α-confound risk.
+
+**Chi phí implement:** agent hoàn thành trong 1 ngày (đã bắt đầu 2026-08-09):
+- `lib/dart.ts` — buildFeatureVector accept optional `recentJudgeComposite`; DEFAULT_DART_WEIGHTS.theta mở rộng lên 6 dim; featureNames thêm mục.
+- `app/models/ReviewLog.ts` — thêm top-level field `judgeComposite?: number` (mirror `judge.composite / 10`) cho query nhanh.
+- `lib/judgeQueue.ts` worker + `/api/context-transfer/judge/status` — sau khi mirror `judge.composite`, cũng ghi `judgeComposite`.
+- `app/api/dart/schedule` — trước khi build feature, query ReviewLog gần nhất có `judgeComposite`, đưa vào.
+- Tests: `__tests__/dart.test.ts` cập nhật 6-dim, thêm test cho recentJudgeComposite.
+
+**Chi phí compute:** không đổi (O(1) thêm 1 lookup index-backed).
+
+**Chưa quyết định (để bạn ký):**
+- ⬜ Có chạy simulation oscillation trước pilot không? (Khuyến nghị: **có**, tạo `research/simulate_judge_feedback.py` — agent làm được trong 2 giờ.)
+- ⬜ Có amend PREREGISTRATION §5 thêm RQ4 không? (Khuyến nghị: **có**, nếu không thì M3 không được report trong paper.)
+
+**Chữ ký & quyết định:**
+
+Chọn: ✅ Thêm x[5] recentJudgeComposite (secondary/sensitivity, M3 không phải primary)  ⬜ Bỏ
+
+Nghiên cứu viên chính — Phan Văn Kha
+Ngày: ______________________________
+Chữ ký: ______________________________
+
+Người hướng dẫn
+Họ tên: ______________________________
+Ngày: ______________________________
+Chữ ký: ______________________________
+
+---

@@ -30,11 +30,24 @@ export const PHI: Record<RetrievalType, number> = {
 };
 
 // Server-side fallback weights (used until train_dart.py has produced real ones).
-// Feature order: [bias, cefr, wordFreqLog, userAvgAcc, timesReviewedLog].
+// Feature order: [bias, cefr, wordFreqLog, userAvgAcc, timesReviewedLog, recentJudgeComposite].
+//
+// recentJudgeComposite (added 2026-08-09, Amendment #A-002): ∈ [0, 1] = judge.composite / 10
+// from the most recent LLM-Judge for this (user, vocab). Defaults to 0.5 (neutral) when
+// no prior judge exists. theta[5] initial value 0.4 will be re-estimated by train_dart.py
+// on pilot data. See research/AMENDMENTS.md#A-002 for the science justification and the
+// ablation plan (M2 primary vs M3 sensitivity).
 export const DEFAULT_DART_WEIGHTS: DartWeights = {
-  theta: [1.2, -0.4, 0.3, 0.8, 0.5],
+  theta: [1.2, -0.4, 0.3, 0.8, 0.5, 0.4],
   alpha: 0.35,
-  featureNames: ["bias", "cefr", "wordFreqLog", "userAvgAcc", "timesReviewedLog"],
+  featureNames: [
+    "bias",
+    "cefr",
+    "wordFreqLog",
+    "userAvgAcc",
+    "timesReviewedLog",
+    "recentJudgeComposite",
+  ],
   thresholds: { low: 2, mid: 7, high: 30 },
 };
 
@@ -115,17 +128,22 @@ export function dartSchedule(
 /**
  * Build learner feature vector x consistent with DEFAULT_DART_WEIGHTS.featureNames.
  * CEFR: A1=0..C2=5. Missing values fall back to 0 (bias term stays 1).
+ *
+ * Amendment #A-002 (2026-08-09): added `recentJudgeComposite ∈ [0,1]`. When omitted,
+ * defaults to 0.5 (neutral prior — no evidence either way). Clamped to [0,1].
  */
 export function buildFeatureVector(input: {
   cefr?: number;
   wordFrequency?: number;
   userAverageAccuracy?: number;
   timesReviewed?: number;
+  recentJudgeComposite?: number; // ∈ [0, 1]; judge.composite / 10; default 0.5
 }): number[] {
   const cefr = (input.cefr ?? 2) / 5;
   const wordFreq = input.wordFrequency ?? 1;
   const wordFreqLog = Math.log(1 + wordFreq) / Math.log(1e6);
   const acc = Math.min(Math.max(input.userAverageAccuracy ?? 0.5, 0), 1);
   const reviewed = Math.log(1 + (input.timesReviewed ?? 0)) / Math.log(50);
-  return [1, cefr, wordFreqLog, acc, reviewed];
+  const judge = Math.min(Math.max(input.recentJudgeComposite ?? 0.5, 0), 1);
+  return [1, cefr, wordFreqLog, acc, reviewed, judge];
 }

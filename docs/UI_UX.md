@@ -5,6 +5,7 @@
 **Mục lục:**
 
 - [Nguyên tắc thiết kế tổng](#principles)
+- [Story-mode narrative cho trang Lab](#story-mode)
 - [Màn Review Flashcard (DART)](#review-ui)
 - [Palette & Typography](#palette)
 - [Accessibility](#a11y)
@@ -23,6 +24,34 @@ Toàn app (bao gồm cả nhánh nghiên cứu và production) tuân N1–N8 —
 
 - Mọi thay đổi UI áp cho **cả 3 nhánh** DART/HLR/SM-2 cùng lúc. Không có "chỉ DART có motif hay hơn".
 - Sau Ngày 27 UI đóng băng — mọi thay đổi phải qua Amendment ký.
+
+---
+
+<a id="story-mode"></a>
+## Story-mode narrative cho trang Lab
+
+**Áp dụng cho:** `app/dashboard-new/dart-lab/page.tsx` (tham chiếu D-009 approach A trong `DECISIONS.md`). Nguyên tắc này có thể mở rộng cho các trang Lab tương lai (assessment lab, familiarity lab, retrieval-task lab).
+
+**Vấn đề mà pattern này giải:** trang Lab dev-tool thường là "N widget rời, mỗi widget test 1 endpoint". User không phải dev thấy N nút bấm cô lập, không biết chúng nối với nhau ra sao và tại sao tồn tại.
+
+**Pattern chuẩn:**
+
+1. **1 học viên giả định xuyên suốt** — mọi widget đều thao tác trên cùng 1 persona, không phải "user demo A cho widget 1, user demo B cho widget 2".
+2. **Cuộn dọc, không tab** — user không cần biết widget nào ở đâu, chỉ cần cuộn theo thứ tự.
+3. **Cấu trúc 4 chương:** *Vấn đề → Cách hoạt động → Thử ngay → Nghiên cứu*.
+   - Chương 1: SVG so sánh trước/sau (baseline vs mô hình mới).
+   - Chương 2: horizontal step-by-step nội bộ mô hình (đề xuất của user 2026-08-09: "B1 → B2 → B3 dạng thanh cuộn ngang, mỗi bước 1 ảnh + text"). Prev/Next arrow, dot indicator.
+   - Chương 3: interactive demo — các endpoint phải **nối lại với nhau**, không phải chạy song song rời. Sau khi endpoint A trả kết quả, feed vào endpoint B và show delta ngay tại chỗ.
+   - Chương 4: bảng so sánh RCT / cách chia nhóm, link tới paper draft.
+4. **Kết quả có "Nghĩa là:"** — mỗi output số phải kèm 1 câu tiếng Việt template hoá diễn giải ý nghĩa cho user không đọc code.
+5. **Jargon (α, θ, LRT, φ) gate bằng "Chế độ chuyên gia"** checkbox, mặc định off.
+6. **Không dùng emoji** trừ khi user yêu cầu. Lucide icon đủ vai trò visual cue.
+
+**Cạm bẫy đã gặp:**
+- Nếu Chương 3 demo endpoint A và B mà chúng chưa nối được ở tầng khoa học (ví dụ judge score chưa vào DART feature) → user hỏi "X nằm chỗ nào?" và mất niềm tin. **Fix ở tầng khoa học trước, không giấu bằng UI.** D-009 chọn approach A vì lý do này.
+
+**Changelog:**
+- 2026-08-09: pattern rút ra từ D-009 sau phản hồi user về `dart-lab`. Ba SVG mẫu inline: `AnkiVsDartSvg`, `FeatureVectorSvg`, `HalfLifeFormulaSvg`, `RetrievalLadderSvg`, `ThreeGroupsSvg`.
 
 ---
 

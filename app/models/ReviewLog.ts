@@ -30,6 +30,16 @@ export interface IReviewLog extends Document {
   taskPromptHash?: string;           // sha256 prompt để verify version bộ đề
   isCatchUp?: boolean;               // true nếu người học làm bù lượt bỏ lỡ
 
+  // --- Amendment #A-002 (2026-08-09): judge composite feature ---
+  judgeComposite?: number;           // ∈ [0, 1] = judge.composite / 10; feature x[5] input
+  judge?: {                          // full LLM-Judge output mirrored here for RQ3 plots
+    accuracy?: number;
+    fluency?: number;
+    appropriateness?: number;
+    creativity?: number;
+    composite?: number;              // ∈ [0, 10]
+  };
+
   createdAt: Date;
 }
 
@@ -57,6 +67,16 @@ const ReviewLogSchema = new Schema<IReviewLog>({
   serverDeltaDays: { type: Number },
   taskPromptHash: { type: String },
   isCatchUp: { type: Boolean, default: false },
+
+  // --- Amendment #A-002 fields ---
+  judgeComposite: { type: Number, min: 0, max: 1, index: true },
+  judge: {
+    accuracy: { type: Number, min: 0, max: 10 },
+    fluency: { type: Number, min: 0, max: 10 },
+    appropriateness: { type: Number, min: 0, max: 10 },
+    creativity: { type: Number, min: 0, max: 10 },
+    composite: { type: Number, min: 0, max: 10 },
+  },
 }, { timestamps: { createdAt: true, updatedAt: false } });
 
 ReviewLogSchema.index({ userId: 1, createdAt: -1 });
