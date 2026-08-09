@@ -228,7 +228,8 @@ export default function DocumentsPage() {
         await uploadToBackend(file, file.name)
       }
     } catch (err: any) {
-      setError("Hệ thống xử lý tài liệu đã xảy ra lỗi, vui lòng tải tệp khác")
+      const errorMessage = err?.message || "Không xác định"
+      setError(`Hệ thống xử lý tài liệu đã xảy ra lỗi: ${errorMessage}. Vui lòng kiểm tra console để biết thêm chi tiết.`)
       console.error("[Upload] Error:", err)
     } finally {
       setUploading(false)
@@ -251,13 +252,20 @@ export default function DocumentsPage() {
         method: "POST", 
         body: formData 
       })
+      
+      console.log("[Upload] Response status:", response.status)
+      
       const data = await response.json()
+      console.log("[Upload] Response data:", data)
 
       if (!response.ok) {
         if (response.status === 413) { setError("File quá lớn (tối đa 50MB)"); return }
         if (response.status === 504) { setError("Xử lý quá lâu. Vui lòng thử file nhỏ hơn"); return }
         if (response.status === 502) { setError("Backend đang khởi động. Vui lòng đợi 10 giây và thử lại..."); return }
-        throw new Error(data.error || `Upload failed: ${response.statusText}`)
+        if (response.status === 503) { setError("Backend tạm thời không khả dụng. Vui lòng thử lại sau."); return }
+        const errorMsg = data.error || data.detail || response.statusText
+        setError(`Lỗi ${response.status}: ${errorMsg}`)
+        throw new Error(errorMsg)
       }
       if (!data || typeof data !== "object") throw new Error("Invalid response format")
       if (!data.flashcards && !data.vocabulary) throw new Error("Response missing vocabulary data")
