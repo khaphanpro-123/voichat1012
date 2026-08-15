@@ -47,8 +47,15 @@ export async function POST(req: NextRequest) {
   if (!["posttest_immediate", "posttest_delayed"].includes(body.testType)) {
     return bad("testType must be posttest_immediate or posttest_delayed");
   }
-  if (!body.answers || typeof body.answers !== "object") return bad("answers required");
+  if (!body.answers || typeof body.answers !== "object" || Array.isArray(body.answers)) {
+    return bad("answers must be an object");
+  }
   if (!body.administeredAt) return bad("administeredAt required");
+  // Validate administeredAt is a real ISO date — otherwise Mongo persists Invalid Date,
+  // which corrupts time-since-training analyses at Day 41.
+  if (typeof body.administeredAt !== "string" || Number.isNaN(new Date(body.administeredAt).getTime())) {
+    return bad("administeredAt must be a valid ISO date string");
+  }
 
   try {
     await connectDB();

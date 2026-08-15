@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Participant from "@/app/models/Participant";
+import PretestSubmission from "@/app/models/PretestSubmission";
 import { assignCondition, LIVE_ARMS } from "@/lib/experimentAssignment";
 import { toOpaque } from "@/lib/experimentBlinding";
 import { issueParticipantToken } from "@/lib/participantAuth";
@@ -24,12 +25,13 @@ import { issueParticipantToken } from "@/lib/participantAuth";
 export const dynamic = "force-dynamic";
 
 interface EnrolRequest {
-  participantCode: string;      // "P0001" — client-generated, we enforce format
+  participantCode: string;         // "P0001" — client-generated, we enforce format
   cefrLevel: "A2" | "B1" | "B2";
-  consentSignedAt: string;      // ISO
-  consentDocHash: string;       // sha256 of the exact consent PDF signed
-  pretestScore: number;         // 0–100
-  pretestCompletedAt: string;   // ISO
+  consentSignedAt: string;         // ISO
+  consentDocHash: string;          // sha256 of the exact consent PDF signed
+  pretestSubmissionId: string;     // D-016: server-issued, verified server-side
+  pretestScore?: number;           // deprecated; kept for backward-compat but overwritten by server
+  pretestCompletedAt: string;      // ISO
 }
 
 const PCODE = /^P\d{4}$/;
@@ -51,12 +53,22 @@ export async function POST(req: NextRequest) {
   }
   if (!["A2", "B1", "B2"].includes(body.cefrLevel)) return bad("cefrLevel must be A2, B1, or B2");
   if (!body.consentDocHash || body.consentDocHash.length < 32) return bad("consentDocHash required");
+  if (!body.pretestSubmissionId || typeof body.pretestSubmissionId !== "string") {
+    return bad("pretestSubmissionId required (issued by /api/research/pretest/score)");
+  }
+  // Validate ISO timestamps — Mongo will silently store Invalid Date otherwise,
+  // corrupting downstream consent-timing and pretest-timing analyses.
   if (
-    typeof body.pretestScore !== "number" ||
-    body.pretestScore < 0 ||
-    body.pretestScore > 100
+    typeof body.consentSignedAt !== "string" ||
+    Number.isNaN(new Date(body.consentSignedAt).getTime())
   ) {
-    return bad("pretestScore must be 0..100");
+    return bad("consentSignedAt must be a valid ISO date string");
+  }
+  if (
+    typeof body.pretestCompletedAt !== "string" ||
+    Number.isNaN(new Date(body.pretestCompletedAt).getTime())
+  ) {
+    return bad("pretestCompletedAt must be a valid ISO date string");
   }
 
   try {
@@ -75,6 +87,27 @@ export async function POST(req: NextRequest) {
         participantToken: issueParticipantToken(body.participantCode),
       });
     }
+
+    // D-016: verify pretest submission server-side.
+    // - Must exist (client can't invent submissionIds; the score route mints them).
+    // - Must be unused (single-use — one submission = one enrolment).
+    // - Server-recorded cefrLevel must match what the client claims (defence
+    //   against a client mutating cefrLevel after seeing the score).
+    const submission = await PretestSubmission.findOne({ submissionId: body.pretestSubmissionId });
+    if (!submission) {
+      return bad("pretestSubmissionId not found — complete the pretest first");
+    }
+    if ((submission as any).used) {
+      return bad("pretestSubmissionId already used for another enrolment");
+    }
+    if ((submission as any).cefrLevel !== body.cefrLevel) {
+      return bad(
+        `cefrLevel mismatch: submission recorded ${(submission as any).cefrLevel} but body claims ${body.cefrLevel}`,
+      );
+    }
+
+    // Trust server-side score, not the client-supplied value.
+    const verifiedPretestScore: number = (submission as any).score;
 
     // Stratified assignment using the same deterministic helper the app uses.
     const stratum = body.cefrLevel;
@@ -99,9 +132,18 @@ export async function POST(req: NextRequest) {
       enrolledAt: new Date(),
       consentSignedAt: new Date(body.consentSignedAt),
       consentDocHash: body.consentDocHash,
-      pretestScore: body.pretestScore,
+      pretestScore: verifiedPretestScore,  // D-016: server-verified
       pretestCompletedAt: new Date(body.pretestCompletedAt),
     });
+
+    // Mark submission consumed. Do it after Participant.create so a race that
+    // dup-keys on participantCode doesn't burn the submission (winner's own
+    // path already fired this update; loser goes through the 11000 branch and
+    // does NOT re-mark).
+    await PretestSubmission.updateOne(
+      { submissionId: body.pretestSubmissionId, used: false },
+      { $set: { used: true, usedByParticipantCode: body.participantCode, usedAt: new Date() } },
+    );
 
     return NextResponse.json({
       success: true,

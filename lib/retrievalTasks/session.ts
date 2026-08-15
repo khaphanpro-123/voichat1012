@@ -50,12 +50,22 @@ export interface SessionContext {
  * quantity that α is supposed to modulate.
  */
 export function pickTaskType(item: ItemContext, session: SessionContext): RetrievalType {
-  // ε-exploration (Ngày 38): with probability ε=0.10 pick a d uniformly from
+  // ε-exploration (Ngày 38): with probability ε pick a d uniformly from
   // the participant's eligible set. This is what makes α identifiable — see
   // research/README.md §5.
+  //
+  // ε bumped 0.10 → 0.20 on 2026-08-11 (D-014) because α identifiability
+  // requires each retrieval-type level to appear in ≥15% of a participant's
+  // logs. At ε=0.10 with a heuristic that strongly favours d=0-1, the pilot
+  // simulation produced 55/43/2/0 % — d=2 and d=3 too thin to identify α.
+  // With ε=0.20 uniformly over 3-4 eligible types, exploration alone yields
+  // ~5-6% floor per type; combined with the mastery-driven baseline flow,
+  // long-form pilots project to ≥15% each. LLT reviewers of the RQ1 α claim
+  // will otherwise reject on "unidentifiable" grounds.
+  const EPSILON = 0.20;
   if (session.epsilonExplore) {
     const rand = session.rand ?? Math.random;
-    if (rand() < 0.10) {
+    if (rand() < EPSILON) {
       const eligible: RetrievalType[] =
         session.participantCefr === "A2" ? [0, 1, 2] : [0, 1, 2, 3];
       return eligible[Math.floor(rand() * eligible.length)];

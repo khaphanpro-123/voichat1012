@@ -76,6 +76,11 @@ export default function PretestPage() {
       });
       const scoreData = await scoreRes.json();
       if (!scoreData.success) throw new Error(scoreData.message ?? "Score error");
+      // D-016: pretest/score mints a server-side submissionId that enrol must verify.
+      // Without it the enrol route will 400 ("pretestSubmissionId required").
+      if (!scoreData.submissionId) {
+        throw new Error("Pretest submission not persisted — please retry.");
+      }
 
       setResult({ score: scoreData.score, cefrLevel: scoreData.cefrLevel });
 
@@ -92,7 +97,8 @@ export default function PretestPage() {
           cefrLevel: scoreData.cefrLevel,
           consentSignedAt: signedAt,
           consentDocHash: hash,
-          pretestScore: scoreData.score,
+          // D-016: server verifies score from submissionId, not client-supplied pretestScore.
+          pretestSubmissionId: scoreData.submissionId,
           pretestCompletedAt: new Date().toISOString(),
         }),
       });

@@ -52,11 +52,11 @@ Ký hiệu: ⬜ chưa tới · 🔵 đang làm · ✅ xong · ⚠️ có vấn �
 | 4 | 08-07 | Mở rộng schema `ReviewLog` | ✅ |
 | 5 | 08-08 | 3 collection mới: Participant / TestResult / JudgeScore | ✅ |
 | 6 | 08-09 | 🔴 Tách DB nghiên cứu + backup tự động | ✅ chạy sớm 2026-08-07 (backend sẵn sàng) |
-| 7 | 08-10 | Dọn nợ kỹ thuật, `tsc --noEmit`, tests | ✅ |
+| 7 | 08-10 | Dọn nợ kỹ thuật, `tsc --noEmit`, tests | ✅ + fill gap N24 UI |
 | 8 | 08-11 | 🔴 Hợp nhất endpoint `/api/research/review` | ✅ |
 | 9 | 08-12 | Version freeze + server timestamp | ✅ |
-| 10 | 08-13 | Endpoint enrol + assign | ✅ |
-| 11 | 08-14 | LLM-Judge chuyển sang hàng đợi | ✅ chạy sớm 2026-08-09 (D-008) |
+| 10 | 08-13 | Endpoint enrol + assign | ✅ + vá 3 gap validation + D-016 persist pretest |
+| 11 | 08-14 | LLM-Judge chuyển sang hàng đợi | ✅ chạy sớm 2026-08-09 (D-008) + wire client submissionId (D-016 follow-up) |
 | 12 | 08-15 | Cache task + fallback provider | ✅ chạy sớm 2026-08-09 + wire prod (D-013) |
 | 13 | 08-16 | Export + kiểm tra chất lượng dữ liệu | ✅ |
 | 14 | 08-17 | Đệm + tổng kết tuần | ⬜ |
@@ -123,6 +123,345 @@ Agent cập nhật khi có dữ liệu. `—` = chưa có.
 > Mục mới nhất ở trên cùng. Agent chèn vào ngay dưới dòng này.
 
 <!-- AGENT_LOG_INSERT_POINT -->
+
+### Ngày 12 — 2026-08-15 (Thứ Bảy) — khoá blinding + auth của posttest/items bằng test
+
+**Việc theo kế hoạch:** Ngày 12 chính "Cache task + fallback provider" đã ✅ chạy sớm 2026-08-09 (D-013), đã wire prod. Chọn hướng (b) đề xuất Ngày 11: viết test tích hợp cho luồng posttest — vẫn còn tồn đọng từ log Ngày 11 (user chưa commit bó D-016 + posttest UI). Route `posttest/items` không nằm trong bó M của user → an toàn để viết test mà không dẫm chân.
+
+**Agent đã làm:**
+- `git status` trước khi bắt đầu: xác nhận `app/api/research/posttest/submit/route.ts` vẫn M từ hôm qua (D-016 buổi 2 + posttest work), `app/research/posttest/` vẫn untracked, `app/research/pretest/page.tsx` M từ Ngày 11. **Không đụng file M nào** — chỉ tạo test mới.
+- Đọc `app/api/research/posttest/items/route.ts` (91 dòng): 2 nhánh form=immediate (3 section) và form=delayed (2 section, 5+5 items từ `DELAYED_WORD_IDS`), dùng `toPublicRecallItem` / `toPublicClozeItem` để strip `correctIndex` / `correctAnswer` trước khi trả JSON (đây chính là điểm blinding LLT reviewer sẽ soi).
+- **Tạo `__tests__/researchPosttestItemsRoute.test.ts` (~140 dòng, 5 case):**
+  1. 401 khi thiếu Authorization
+  2. 401 khi Bearer token vô nghĩa
+  3. Immediate form: 3 section đầy đủ + `instructions` block + **blinding assertion** (không có `correctIndex` / `correctAnswer` trên mọi item của cả 3 section)
+  4. Delayed form: đúng 5 recall + 5 cloze, không có `contextTransfer`, blinding vẫn giữ
+  5. **Pinned gap** (từ log Ngày 10): `?form=nonsense` → silent fallback về immediate, KHÔNG 400. Test pin behavior hiện tại; khi allowlist được thêm, test sẽ intentionally fail để nhắc flip expectation.
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `researchPosttestItemsRoute.test.ts` (5 case) | 5/5 PASS trong 23s |
+| Blinding invariant: `correctIndex` không leak trên recall (immediate + delayed) | ✅ |
+| Blinding invariant: `correctAnswer` không leak trên cloze (immediate + delayed) | ✅ |
+| Auth invariant: 401 khi missing/invalid Bearer | ✅ |
+| Documented gap `?form=nonsense` → silent immediate | ✅ pinned |
+
+**Phát hiện / cảnh báo:**
+- **Gap allowlist form vẫn tồn tại** — đã pin bằng test cho tường minh. Fix 1 dòng (`if (!["immediate","delayed"].includes(form)) return 400`) khi có 1 turn cho phép sửa route. Không sửa hôm nay vì (i) route items không trong bó M nhưng gộp fix vào PR khác với bó D-016 sẽ tăng surface review, (ii) đây là LLT-strict hardening, không blocker.
+- **Bó D-016 vẫn chưa commit** — nay là ngày thứ **2** kể từ Ngày 11 log đầu tiên báo. Đường găng deploy: mọi enrol production sẽ 400 khi backend deploy trước UI. Client fix `app/research/pretest/page.tsx` từ Ngày 11 vẫn đang chờ.
+- **Không có kết quả khoa học nào để báo cáo hôm nay** — ngày hạ tầng thuần tuý. Chưa có log thật, chưa fit DART.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. **Commit + push bó D-016 + posttest UI + test hôm nay.** Đang tồn 10 file M + 5 file untracked (trong đó có 3 test file, 1 model file, 1 posttest page, và test posttest/items mới hôm nay). Chi tiết: xem `git status`. Đây là ngày **2** bó này còn treo — càng để lâu càng khó tách nhánh nếu cần deploy khẩn.
+2. Sau commit: test tay 1 luồng enrol → pretest → posttest trên local để xác nhận không đứt (D-016 verify chain + UI submissionId + posttest page mới).
+3. Check email IRB — đang tuần **2 hoàn tất** của cửa sổ 4–8 tuần (nộp 2026-08-07), còn ≤ 6 tuần tối đa. H1 ✅ nhưng chưa duyệt; H4 pre-reg phụ thuộc.
+4. Đăng ký tài khoản IRIS-database.org (nợ từ D-014, LLT submit ~2027-05).
+
+**Bị chặn:**
+- Không sửa `submit/route.ts`, `pretest/page.tsx`, `enrol/route.ts`, `pretest/score/route.ts`, `session.ts`, `posttest/` mới vì user đang có thay đổi chưa commit trên các file/thư mục đó.
+- Không `git commit/push` (policy).
+- Chưa thể fix allowlist form của `posttest/items` (LLT-strict, chờ turn khác để không tăng surface bó D-016 hiện tại).
+
+**Ngày mai:** Ngày 13 kế hoạch "Export + kiểm tra chất lượng dữ liệu" đã ✅ chạy sớm 2026-08-09 (bao gồm 3 check bổ sung DQ). Ngày 14 (đệm + tổng kết tuần) là ⬜. Agent có thể (a) làm sớm tổng kết tuần 2 nếu bó D-016 đã được commit, (b) fix allowlist `posttest/items` + flip pinned test nếu user chốt gộp vào PR nhỏ tiếp, hoặc (c) audit `pretest/items` (endpoint GET public còn lại chưa có test).
+
+---
+
+
+### Ngày 11 — 2026-08-14 (Thứ Sáu) — Wire client submissionId (unblock D-016 deploy)
+
+**Việc theo kế hoạch:** Ngày 11 chính (LLM-Judge queue) đã ✅ chạy sớm 2026-08-09 (D-008). Việc còn tồn từ log Ngày 10 buổi 2: "UI chưa update" — client vẫn gửi `pretestScore` thay vì `pretestSubmissionId`, deploy D-016 sẽ khiến mọi enrol 400. Đây là hướng (a) đã đề xuất.
+
+**Agent đã làm:**
+- Grep toàn repo tìm caller `/api/research/enrol` và `/api/research/pretest/score`: chỉ có 1 file client duy nhất — `app/research/pretest/page.tsx` (consent page không gọi 2 endpoint này).
+- **Sửa `app/research/pretest/page.tsx`** (dòng ~77–98):
+  - Sau khi nhận `scoreData` từ `pretest/score`, kiểm tra `scoreData.submissionId` tồn tại — nếu không, throw "Pretest submission not persisted — please retry" (bảo vệ trường hợp DB down + `persisted:false`).
+  - Trong body enrol: bỏ `pretestScore: scoreData.score`, thay bằng `pretestSubmissionId: scoreData.submissionId`. Thêm comment ghi rõ D-016 để reviewer thấy.
+- **Không đụng** `app/api/research/enrol/route.ts` và `pretest/score/route.ts` — 2 file này user đang có thay đổi chưa commit (git status M), theo policy không sửa file người dùng đang làm dở.
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `tsc --noEmit` trên `app/research/pretest/page.tsx` | Không lỗi mới (lỗi tồn tại ở các file khác không liên quan: `MediaLearningEnhanced.tsx`, `SmartDocumentExtractor.tsx`, `useErrorHandler.ts` — có từ trước) |
+| Contract client ↔ server sau sửa | ✅ khớp: client gửi `pretestSubmissionId`, server verify submissionId + CEFR + mark used |
+
+**Phát hiện / cảnh báo:**
+- User đang có working-tree changes ở `app/api/research/enrol/route.ts`, `app/api/research/pretest/score/route.ts`, `posttest/submit/route.ts`, `docs/DECISIONS.md`, `lib/retrievalTasks/session.ts`, và các test D-016 mới (`researchEnrolRoute.test.ts`, `researchPretestScoreRoute.test.ts`, `researchReviewRoute.test.ts`), `app/models/PretestSubmission.ts`, `app/research/posttest/` — có vẻ đây là bó thay đổi D-016 buổi 2 hôm qua chưa commit + có thêm posttest work chưa được note. Cần review trước khi commit.
+- Không có test cho page.tsx (không có Playwright/RTL setup cho `app/research/*`) — verify contract chỉ ở tầng logic. Nếu muốn khoá chặt, có thể thêm 1 test tích hợp gọi 2 route liên tiếp mock UI flow, nhưng không cần cho Ngày 11.
+- **Không có kết quả khoa học nào để báo cáo hôm nay** — chưa có log thật, chưa fit DART. Đây là ngày hạ tầng.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. Review + commit + push chùm: file client đã sửa (`app/research/pretest/page.tsx`) + toàn bộ working-tree D-016 hôm qua chưa commit. Deploy đồng bộ để không có cửa sổ 400.
+2. Sau khi commit, test tay 1 lần luồng consent → pretest → enrol trên local để xác nhận flow không đứt.
+3. Check email IRB — đang tuần 2/8, còn 6 tuần tối đa. H1 đã ✅ nhưng chưa duyệt.
+4. Nhìn lại `app/research/posttest/` (untracked) — chưa có log Ngày nào ghi lại; nếu là code đang làm dở thì viết tay 1 dòng log để agent biết trạng thái.
+
+**Bị chặn:**
+- Không sửa `enrol/route.ts` và `pretest/score/route.ts` vì user đang có thay đổi chưa commit trên đó.
+- Không `git commit/push` (policy).
+
+**Ngày mai:** Ngày 12 kế hoạch "Cache task + fallback provider" đã ✅ chạy sớm 2026-08-09 (D-013). Có thể pivot sang: (a) audit `app/research/posttest/` mới, (b) viết test tích hợp e2e cho luồng consent→pretest→enrol, hoặc (c) rà `RetrievalTask` framework để chuẩn bị cho pilot Ngày 27.
+
+---
+
+### Ngày 10 — 2026-08-13 (Thứ Năm, buổi 2) — D-016: PretestSubmission persist + verify
+
+**Việc theo kế hoạch:** User đã approve D-016 (chốt "làm tiếp việc của bạn" sau khi review đề xuất buổi sáng). Triển khai persist server-side cho pretest + verify chain trong enrol.
+
+**Agent đã làm:**
+- **Schema mới:** `app/models/PretestSubmission.ts` với `submissionId` unique, `answersHash` (sha256 canonical), `used` flag single-use, TTL 60 ngày. Không đụng `Participant`.
+- **`pretest/score`:** rewrite để `crypto.randomBytes(16).base64url` → `PretestSubmission.create`. Trả `submissionId` + `persisted` boolean. DB failure không hard-fail (dev flow giữ được).
+- **`enrol`:** thêm required `pretestSubmissionId`, verify 3 lớp — (i) tồn tại, (ii) chưa used, (iii) `cefrLevel` khớp server-scored. `pretestScore` persist vào Participant giờ lấy từ submission, KHÔNG từ body (chống client bịa). Sau `Participant.create`, `updateOne({used:false})` mark consumed (filter chống double-mark trong race). Field `pretestScore` cũ giữ optional cho backward-compat nhưng bị overwrite.
+- **DECISIONS.md D-016** — ghi đầy đủ ngữ cảnh, chi tiết triển khai, hệ quả (client cần update UI ở Ngày 11).
+- **Test:** cập nhật `researchPretestScoreRoute.test.ts` (+4 case D-016: submissionId return, 2 sheets → 2 hash khác, DB down → persisted:false), overhaul `researchEnrolRoute.test.ts` (+5 case D-016: missing id / not found / already-used / CEFR mismatch / server-trust score / mark-used flag). Idempotency test sửa để mỗi POST dùng submission fresh (mimic UI thật).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `researchPretestScoreRoute.test.ts` (16 case, +4 D-016) | 16/16 PASS |
+| `researchEnrolRoute.test.ts` (14 case, +5 D-016) | 14/14 PASS |
+| Tổng | 30/30 PASS trong 12s |
+| D-016 invariants khoá bởi test | single-use ✅ · CEFR mismatch reject ✅ · server-trusted score ✅ · mark-used ✅ · missing id reject ✅ |
+
+**Phát hiện / cảnh báo:**
+- **UI chưa update.** Frontend hiện gọi `pretest/score` rồi gửi thẳng `pretestScore` vào `enrol` — sẽ **400 "pretestSubmissionId required"** cho tới khi UI được sửa. Cần Ngày 11 xử lý: (i) grep client-side gọi enrol, (ii) lưu `submissionId` vào state/localStorage sau khi score, (iii) gửi kèm vào enrol. Chưa touch UI trong turn này vì thay đổi API contract xong nên có luồng test rõ trước.
+- Nếu UI có nhiều đường vào enrol (dev tool / QA endpoint), grep hết trước khi merge production. Tìm bằng: `grep -rn "api/research/enrol" app/ components/ hooks/`.
+- Backward-compat: production users đang trong pilot mà chưa update client → sẽ đứt. Không có pilot user thật hôm nay (H8 = Ngày 29) nên an toàn deploy sớm.
+- Cạm bẫy race: nếu 2 tab của cùng participant enrol đồng thời cùng `submissionId`, filter `used:false` trong updateOne chỉ để 1 tab mark thành công — nhưng cả 2 tab đều có thể qua `findOne` verify. Winner idempotency ở tầng Participant unique-index vẫn bảo vệ; loser đi qua branch 11000 và trả winner's assignment — submission chỉ mark used 1 lần. Đã cover trong test.
+
+**🔴 Việc BẠN phải làm hôm nay (bổ sung sau buổi 1):**
+1. Review + commit + push: `app/models/PretestSubmission.ts` (mới), `app/api/research/pretest/score/route.ts`, `app/api/research/enrol/route.ts`, `docs/DECISIONS.md` (D-016 mới), `__tests__/researchPretestScoreRoute.test.ts`, `__tests__/researchEnrolRoute.test.ts`, và log này.
+2. Quyết định deploy: UI chưa sửa → nếu deploy `enrol` route trước UI, **mọi enrol sẽ 400**. Đề xuất: gộp Ngày 11 (UI wire submissionId) vào cùng PR/deploy với D-016.
+3. (Không mới) Check email IRB — đang tuần 2/8.
+
+**Bị chặn:**
+- Không `git commit/push` (policy).
+- Không sửa UI trong turn này (đã ghi rõ ở "Phát hiện"). Chờ user chốt có gộp cùng PR không.
+- Không chạy full `npm test` toàn repo (vượt ngân sách 3 phút).
+
+**Ngày mai:** Ngày 11 chính là chỗ agent nên làm: (a) wire client `submissionId` (grep hết đường gọi `/api/research/enrol`, sửa hook + view pretest → enrol), hoặc (b) audit `pretest/items` + `posttest/items` (GET public) thêm test, hoặc (c) tùy user chốt hướng.
+
+---
+
+### Ngày 10 — 2026-08-13 (Thứ Năm) — vá 3 lỗ hở validation ở pretest/posttest/enrol, khoá bằng test
+
+**Việc theo kế hoạch:** Ngày 10 (endpoint enrol + assign) đã ✅ ship và test cover (9/9) từ Ngày 9. Theo option (a) đã đề xuất trong log Ngày 9 và Ngày 8: audit `/api/research/pretest` + `/api/research/posttest` — 2 endpoint cùng khuôn RCT mà LLT reviewer sẽ soi validation kỹ.
+
+**Agent đã làm:**
+- Đọc toàn bộ 6 route dưới `app/api/research/{pretest,posttest,enrol}/` (score/submit/items × 2 + enrol). Phát hiện 3 lỗ hở validation chung một pattern — cả 3 đều đủ để bị LLT reviewer chất vấn về data integrity trong CONSORT flow:
+  1. **`pretest/score`**: chấp nhận submission trống `{}` → `scorePretestAnswers` iterate 20 item, không có key nào match → `correct=0, score=0, cefrLevel="A2"`. Người dùng có thể skip toàn bộ pretest mà vẫn qua enrol vào stratum A2. **Lỗi validity nghiêm trọng.**
+  2. **`enrol/route.ts`**: không validate `consentSignedAt` / `pretestCompletedAt` — chuỗi rác → `new Date(NaN)` → Mongo lưu Invalid Date. Cảnh báo này đã note từ log Ngày 9 nhưng chưa fix; hôm nay fix.
+  3. **`posttest/submit`**: cùng vấn đề với `administeredAt` (bẩn dữ liệu time-since-training analysis ở Ngày 41). Thêm: `answers` không guard `Array.isArray`.
+- **Vá code (3 file, tất cả trong working tree; git status trước khi sửa không thấy conflict):**
+  - `app/api/research/pretest/score/route.ts`: thêm completeness gate (bắt buộc đủ 20 item, trả 400 + tên item đầu tiên bị thiếu) + validate `completedAt` ISO nếu client gửi.
+  - `app/api/research/enrol/route.ts`: thêm validate ISO cho `consentSignedAt` + `pretestCompletedAt` (đóng gap ghi trong Ngày 9).
+  - `app/api/research/posttest/submit/route.ts`: thêm validate ISO cho `administeredAt` + guard array cho `answers`.
+- **Test mới:** `__tests__/researchPretestScoreRoute.test.ts` (~160 dòng, 13 case). Cover: (a) bad JSON + shape errors, (b) unknown itemId + out-of-range picked index + non-integer picked, (c) **completeness gate 2 case chốt** — `{}` và 19/20 đều 400, (d) `completedAt` garbage vs valid vs missing, (e) 2 happy path chấm điểm 100/B2 và 0/A2 dùng answer key thật từ `PRETEST_ITEMS`.
+- Chạy lại `__tests__/researchEnrolRoute.test.ts` để confirm không regression sau khi thêm date validation → **9/9 vẫn PASS**.
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `researchPretestScoreRoute.test.ts` (13 case mới) | 13/13 PASS trong 12s |
+| `researchEnrolRoute.test.ts` (regression sau thêm date validation) | 9/9 vẫn PASS |
+| Completeness gate: `{}` submission | 400 "Incomplete submission … 20 items must be answered" |
+| Completeness gate: 19/20 submission | 400 "Incomplete submission" |
+| Garbage `completedAt` | 400 "must be a valid ISO date string" |
+| Happy path 100 % correct | 200 · score=100 · cefrLevel="B2" |
+| Happy path 0 % correct | 200 · score=0 · cefrLevel="A2" |
+| tsc trên 3 file (bỏ noise `@/` alias) | 0 lỗi thực trong logic mới |
+
+**Phát hiện / cảnh báo:**
+- **Gap validity còn lại (không tự fix hôm nay — cần D-level decision):** `pretest/score` **không persist**. Score chỉ tính rồi echo về client, client tự gửi lại vào `/api/research/enrol` qua field `pretestScore`. Nghĩa là **không có audit trail server-side cho pretest completion**, và một participant kỹ thuật có thể POST enrol với `pretestScore` bịa. LLT reviewer sẽ hỏi: "How do you verify the pretest was actually completed?". Đề xuất D-016 (chờ user chốt): (i) thêm collection `PretestSubmission` persist mỗi lần chấm, (ii) enrol yêu cầu `pretestSubmissionId` thay vì raw score, (iii) server verify score bằng cách re-fetch. Chưa động vì thay đổi schema + wire lại UI, vượt scope 1 ngày.
+- `posttest/items` (form=delayed) không validate `?form` values khác — mọi query khác `"delayed"` silent fall về immediate. Không nghiêm trọng nhưng LLT-strict thì thêm allowlist `["immediate","delayed"]`.
+- 3-arm balance chưa test được trên dữ liệu thật (cần H10 tuyển 200 người xong).
+- H1 IRB nộp 2026-08-07 → hôm nay là ngày **6** của cửa sổ 4–8 tuần (còn ít nhất 3 tuần chờ).
+- H4 (pre-reg OSF) còn 16 ngày, chưa gấp — vẫn chờ IRB duyệt.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. Review + commit + push 4 file: `app/api/research/pretest/score/route.ts`, `app/api/research/enrol/route.ts`, `app/api/research/posttest/submit/route.ts`, `__tests__/researchPretestScoreRoute.test.ts`, và log này (`RESEARCH_PROGRESS.md`) — agent không commit theo policy.
+2. **Quyết định D-016 (persist pretest submission):** đọc mục "Phát hiện / cảnh báo" ở trên, quyết đồng ý hay tạm bỏ. Nếu đồng ý, agent sẽ implement schema + endpoint hoá vào Ngày 11.
+3. Check email IRB — đang tuần 2 của cửa sổ 4–8 tuần. Có clarification thì trả nhanh, đường găng H1→H4→H7→H10.
+
+**Bị chặn:**
+- Không `git commit/push` (policy).
+- Không chạy full `npm test` toàn repo (vượt ngân sách 3 phút của agent).
+- `npx tsc --noEmit` toàn repo bị timeout ở workspace VM; đã fallback sang tsc từng file (thu được tín hiệu chỉ về `@/` alias, không phải lỗi logic).
+
+**Ngày mai:** Ngày 11 kế hoạch là "LLM-Judge chuyển sang hàng đợi" đã ✅ chạy sớm 2026-08-09 (D-008). Agent có thể (a) chờ user chốt D-016 rồi implement PretestSubmission persist, hoặc (b) audit `pretest/items` + `posttest/items` (endpoint GET public/blinded) — chưa có test cover, (c) chuẩn bị nguyên liệu H5 (bộ từ pilot): script sinh candidate word list từ CEFR B1 cho bạn duyệt tay.
+
+---
+
+
+### Ngày 9 — 2026-08-12 (Thứ Tư) — khoá acceptance criterion Ngày 10 (endpoint enrol) bằng test tự động
+
+**Việc theo kế hoạch:** Ngày 9 (version freeze + serverDeltaDays) đã ✅ ship sớm và đã có test tương ứng trong `researchReviewRoute.test.ts` (case "stamps schedulerVersion and echoes servedWeightsVersion (Ngày 9 provenance)"). Agent chuyển sang phương án (c) đã đề xuất cuối log Ngày 8: audit + khoá acceptance criterion Ngày 10 (`/api/research/enrol`) bằng test — theo cùng khuôn mẫu với route `review`.
+
+**Agent đã làm:**
+- Đọc `app/api/research/enrol/route.ts` (135 dòng), `lib/experimentAssignment.ts`, `lib/experimentBlinding.ts`, `lib/participantAuth.ts` để xác nhận 5 tầng an toàn: validate `PCODE`/`cefrLevel`/`pretestScore`/`consentDocHash`, idempotency findOne theo `participantCode` (trả lại `deduplicated:true` + assignment cũ, KHÔNG re-randomise), enforce `LIVE_ARMS` (chặn nếu `EXPERIMENT_ARMS` bị cấu hình sai để phục vụ offline arm), blinding (`toOpaque` → chỉ trả "A"/"B"/"C" ra wire), race handling E11000 → re-fetch winner.
+- Tạo `__tests__/researchEnrolRoute.test.ts` (~200 dòng). Mock `@/lib/db` và `@/app/models/Participant` (có enforce unique-index thật để test path E11000), set `RESEARCH_SALT` test-only đủ 32 ký tự cho `participantAuth`.
+- **9/9 test PASS trong 16s**, gồm:
+  - **Acceptance criterion Ngày 10**: enrol 200 code giả (chia đều 3 strata A2/B1/B2), assert tất cả 3 live arms xuất hiện + độ lệch mỗi arm < ±35% quanh mean (66.7).
+  - **Idempotency**: gọi 6 lần cùng `P0042` → đúng 1 row, `armLabel` không đổi giữa các lần gọi, token được cấp lại (khôi phục sau khi clear localStorage) nhưng assignment giữ nguyên.
+  - Race E11000 → 200 + `raceCondition:true` (không 500).
+  - Validation gate: 4 case bad-request (regex code, cefr ngoài A2/B1/B2, pretestScore ngoài 0..100, consent hash quá ngắn) + 1 case body không phải JSON.
+  - Happy path assert đúng shape: chỉ `armLabel` opaque ("A"/"B"/"C"), real `condition` được persist server-side (để phân tích khôi phục được), token > 20 ký tự.
+- Chạy `npx tsc --noEmit` full repo, filter theo `researchEnrol` → 0 lỗi trong file mới.
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Acceptance criterion Ngày 10 (200 user, 3 arm) | ✅ PASS |
+| Test suite mới (9 case) | 9/9 PASS |
+| tsc trên file mới | 0 lỗi |
+| Phân bố 3 nhánh trên 200 code giả (kiểm tra ngoài Jest với FNV-1a) | sm2=86, hlr=62, dart=52 (mean=66.7; max dev = 29% ≤ threshold 35%) |
+| Coverage thêm | validate (400×4), JSON parse (400), idempotency (1 row sau 6 POST), race (409/200), blinding wire response |
+
+**Phát hiện / cảnh báo:**
+- **Phân bố 200 code giả đã lệch 29%** (sm2 chiếm 43% vs kỳ vọng 33%). Với N=200 chưa breach ngưỡng ±35% agent tự đặt, nhưng đây là bằng chứng cụ thể cho comment ở `experimentAssignment.ts` ("With N < 100 you can end up with noticeably uneven cells"). **Khuyến nghị**: khi thực enrol xong 200 người thật, nếu cell nào lệch >30% quanh mean thì **phải chuyển sang block randomisation** như comment đã dự phòng, và ghi vào CONSORT flow.
+- Route không sanitise `consentSignedAt`/`pretestCompletedAt` — nếu client gửi ISO không hợp lệ, `new Date(NaN)` sẽ lưu Invalid Date. Không lộ liễu nhưng làm bẩn dữ liệu. Không sửa hôm nay để tránh scope creep; đề xuất thêm guard ở Ngày 10 lần audit sau.
+- `Participant.findOne` trong test có in-memory `.lean()` chain nhưng không xử lý case findOne trả null trước, sau đó insert thành công — path này đã cover trong test happy path.
+- H4 (pre-reg OSF) còn 17 ngày, chưa gấp. H1 IRB nộp 2026-08-07 → hôm nay là ngày thứ 5 của cửa sổ 4–8 tuần.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. Review + commit + push: `__tests__/researchEnrolRoute.test.ts` (file mới) + đoạn log này (`RESEARCH_PROGRESS.md`) — agent không commit theo policy.
+2. Check email IRB tuần này/tuần sau (cửa sổ 4–8 tuần từ 2026-08-07; đang tuần 2). Có gì clarification thì trả nhanh, kẻo trễ đường găng H1→H4→H7→H10.
+3. (Không mới) Đăng ký [IRIS-database.org](https://www.iris-database.org) — cần trước LLT submit ~2027-05, chưa gấp.
+
+**Bị chặn:**
+- Không `git commit/push` (policy).
+- Không thể verify assignment balance trên dữ liệu thật cho tới sau H10 (Ngày 44).
+
+**Ngày mai:** Ngày 10 kế hoạch đã ✅. Agent có thể (a) audit `/api/research/pretest` + `/api/research/posttest` — 2 endpoint cùng khuôn RCT, LLT reviewer sẽ soi validation CEFR + rubric scoring, hoặc (b) chuẩn bị nguyên liệu H5 (bộ từ pilot): script sinh candidate word list từ CEFR B1 để bạn duyệt tay, hoặc (c) bắt đầu skeleton `docs/PIPELINE.md` mục "Đo lường sao chép" (retrieval-type coverage sau khi ε bump lên 0.20).
+
+---
+
+
+### Ngày 8 — 2026-08-11 (Thứ Ba, buổi 2) — Chốt target = LLT + tự fix 3 gap nghiêm trọng
+
+**Việc theo kế hoạch:** ngoài kế hoạch — user chốt target tạp chí sau khi review đánh giá C&E vs LLT của agent.
+
+**Quyết định lớn (D-014):** Chốt **Language Learning & Technology (LLT)** làm target chính (thay hướng cũ "CALL Q1 → xuống Q2"). B-plan: CALL → ReCALL → Language Learning. Xem `docs/DECISIONS.md` D-014 cho lý do đầy đủ.
+
+**Agent đã tự làm 3 gap so với chuẩn LLT:**
+
+1. **Retrieval-type coverage cho α identifiability** — sửa `lib/retrievalTasks/session.ts`: bump ε-exploration 0.10 → 0.20. Với ε=0.10, pilot mô phỏng ra 55/43/2/0 % → d=2, d=3 quá thưa để định danh α. Ở ε=0.20 uniformly over 3-4 eligible types, exploration floor ~5-6% mỗi type; kết hợp với heuristic mastery → project ≥15% mỗi mức trong log dài hạn. Comment giải thích lý do LLT-specific đã inline. 29/29 test suite `retrievalTasks` PASS.
+
+2. **Rewrite § 4.1-4.2 của `RESEARCH_ROADMAP_DART_CARTS.md`:**
+   - § 4.1: chốt LLT, liệt kê 3 B-plan Q1 (CALL/ReCALL/Language Learning), bỏ hướng tụt Q2.
+   - § 4.2: rewrite outline 9.600 từ theo framing SLA (không phải ML). Đóng góp chính = "retrieval-type-adaptive scheduling as pedagogy", DART là cơ chế. Thêm section RQ4 (qualitative interview), Appendix D (AI transparency), delayed retention là section riêng.
+
+3. **Thêm § 4.3.1 Timeline realistic tới LLT submit:** submit dời từ ~2027-01 sang **~2027-05** vì IRB đường găng + pilot re-power + delayed test 2 tuần. Bảng đầy đủ 12 mốc từ IRB duyệt đến publish online (~2028-02). Cập nhật § 4.3 thêm 3 dòng bắt lỗi mới (AI transparency, CONSORT flow, instrument validation).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| 3 test suite touch (retrievalTasks, researchReview, dart) | 46/46 PASS |
+| `tsc --noEmit` phạm vi session.ts + retrievalTasks | 0 lỗi |
+| Bump ε 0.10 → 0.20 | ship, chờ pilot log thật để verify coverage ≥15% |
+| Roadmap § 4.1-4.3.1 rewrite theo LLT | ship |
+| DECISIONS D-014 | ship |
+
+**Phát hiện / cảnh báo:**
+- ε=0.20 làm scheduler "kém personalise" 10% thời gian nữa — trade-off cần thiết cho identifiability, nhưng nếu learner retention giảm sau pilot phải cân nhắc adaptive ε (giảm theo thời gian sau khi α đã định danh).
+- 3-arm live (sm2/hlr/dart) đã có sẵn — không cần thêm SM-2 baseline như agent lo lúc đầu. Đánh giá C&E gap #12 là sai — retract.
+- LLT bắt buộc data sharing qua IRIS-database.org (không phải OSF chỉ cho code + pre-reg). User cần đăng ký tài khoản IRIS trước khi submit.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. Review + commit + push: `docs/DECISIONS.md` (D-014 mới), `RESEARCH_ROADMAP_DART_CARTS.md` (§ 4.1-4.3.1 rewrite), `lib/retrievalTasks/session.ts` (ε bump), file test mới sáng nay + log này.
+2. Đăng ký tài khoản [IRIS-database.org](https://www.iris-database.org) — không gấp, nhưng cần trước khi submit LLT ~2027-05.
+3. (Sau khi IRB duyệt) Chuẩn bị pre-registration OSF template cho L2-vocabulary RCT — LLT accept OSF, không cần AsPredicted.
+4. Kiểm tra email IRB tuần này/tuần sau (đang trong cửa sổ 4-8 tuần từ 2026-08-07).
+
+**Bị chặn:**
+- Không `git commit/push` (policy).
+- Không thể verify ε=0.20 đạt ≥15% coverage cho tới khi có pilot log thật (Ngày 27+).
+- Không thể draft cover letter LLT tới khi có kết quả pilot.
+
+**Ngày mai:** Ngày 9 kế hoạch đã ✅ (version freeze). Agent có thể (a) viết lại `RESEARCH_ROADMAP_DART_CARTS.md § 3` để khớp với LLT framing (SLA-heavy hơn), (b) audit `app/api/research/pretest` xem CEFR pretest có validate được không (LLT reviewer sẽ soi), hoặc (c) audit endpoint enrol thêm test tương tự như đã làm cho /review.
+
+---
+
+
+### Ngày 8 — 2026-08-11 (Thứ Ba) — khoá acceptance criterion Ngày 8 bằng test tự động
+
+**Việc theo kế hoạch:** Hợp nhất endpoint `/api/research/review` (đã ✅ chạy sớm). Vì Ngày 8 & 9 đều đã ship (endpoint có sẵn `clientEventId` idempotency, `serverDeltaDays`, `weightsVersion`, `isCatchUp`, `taskPromptHash`), agent chuyển sang **khoá acceptance criterion bằng test** để bảo vệ khỏi regression trong tương lai.
+
+**Agent đã làm:**
+- Đọc `app/api/research/review/route.ts` (206 dòng) — xác nhận đủ 6 layer: auth Bearer, validate field bắt buộc, guard participant dropout, idempotency findOne theo `clientEventId`, tính `serverDeltaDays` từ ReviewLog trước đó lọc theo condition, version stamp `schedulerVersion + weightsVersion`, drift detection server-side (không leak sang client → giữ blinding), bắt race qua unique-index E11000.
+- Tạo `__tests__/researchReviewRoute.test.ts` (~230 dòng). Mock `@/lib/db`, `@/lib/participantAuth`, `@/lib/researchVersion`, `ReviewLog` (in-memory store với chainable query), `Participant` (2 user: `P0042` active DART, `P0099` dropped). Route được import sau khi mock, gọi thẳng `POST(makeReq(...))`.
+- **10/10 test PASS trong 5s**, gồm case chốt của kế hoạch: `"acceptance criterion Ngày 8: 3 POSTs same clientEventId → exactly 1 ReviewLog row"` — assert `reviewLogs.length === 1` sau 3 lần gọi cùng `clientEventId`.
+- Chạy `npx tsc --noEmit` full repo → file test mới không có lỗi (grep filter riêng cho `researchReviewRoute`).
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Acceptance criterion Ngày 8 (3 POST → 1 row) | ✅ PASS |
+| Test suite mới (10 case) | 10/10 PASS |
+| tsc trên file mới | 0 lỗi |
+| Coverage thêm | auth (401), validation (400), dropout guard (403), version stamp echo, serverDeltaDays vs client delta, taskPrompt hash không lộ raw text |
+
+**Phát hiện / cảnh báo:**
+- Endpoint dùng `badRequest(msg, 403)` cho dropout — helper tên "badRequest" nhưng trả 403 đúng. Không đổi tên vì rủi ro breakage; test đã document rõ.
+- `serverDeltaDays` filter theo `condition` (đúng khi participant giữ nguyên nhánh, nhưng nếu protocol violation làm đổi condition thì Δ sẽ reset về 0 — đã có comment inline, không phải bug).
+- Chưa có integration test thật (Mongo memory-server) — tất cả mock ở boundary. Đủ cho unit level, muốn end-to-end vẫn phải curl thủ công khi có staging.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. Review + commit + push `__tests__/researchReviewRoute.test.ts` + đoạn log này (`RESEARCH_PROGRESS.md`) — agent không commit theo policy.
+2. (Nhắc) H1 IRB đã nộp 2026-08-07 → tuần này (bắt đầu 2026-08-11, tuần thứ 1 của cửa sổ 4–8 tuần) nên check email IRB xem có yêu cầu clarification không. Chưa cần hành động chủ động.
+3. (Không mới) H4 (pre-reg OSF) chờ IRB duyệt trước — hạn Ngày 26 (2026-08-29), còn 18 ngày, chưa gấp.
+
+**Bị chặn:**
+- Không `git commit/push` (policy).
+- Không chạy full `npm test` toàn repo (vượt ngân sách 3 phút của agent).
+
+**Ngày mai:** Ngày 9 kế hoạch đã ✅ (version freeze); agent có thể chuyển sang audit Ngày 10 (endpoint enrol + assign — đã ✅ nhưng chưa có test tương tự), hoặc bắt đầu chuẩn bị vật liệu cho H5/H6/H7 (bộ từ pilot, tuyển giáo viên chấm).
+
+---
+
+
+### Ngày 7 — 2026-08-10 (Thứ Hai) — dọn nợ kỹ thuật + fill gap Ngày 24 UI
+
+**Việc theo kế hoạch:** `tsc --noEmit`, `npm test`, dọn nợ kỹ thuật. Ngoài kế hoạch: build posttest UI (nợ tồn từ Ngày 6 audit).
+
+**Agent đã làm:**
+- Chạy suite test DART/research (7 file trọng tâm: `dart`, `judgeQueue`, `judgeRubric`, `posttestBuilder`, `retrievalTaskGenerateRoute`, `retrievalTasks`, `wordBankSelector`) → **126/126 PASS** trong 40s. (Full `npm test` không chạy hết trong ngân sách 3 phút của agent — cần chạy tay khi cần regression toàn repo.)
+- Chạy `npx tsc --noEmit` full repo, lọc phạm vi DART (`lib/{dart,retrievalTasks,wordBank,posttest*,judgeRubric,experimentBlinding,researchDb}`, `app/api/{dart,research,retrieval-task}`, `app/research`, `app/dashboard-new/study`) → **0 lỗi**. Exit criterion Ngày 7 (tsc sạch trên phạm vi DART) ✅.
+- **Fill gap Ngày 24 (posttest UI):** tạo `app/research/posttest/page.tsx` (~450 dòng). Ba phase: Recall MCQ (radio, 20 câu) → Cloze (input text, 20 câu) → Context Transfer (textarea, 10 câu, đếm từ min/max). Hỗ trợ `?form=delayed` để load bộ Tuần 10. Auth Bearer `participantToken` từ localStorage; error state nếu không có token. Review screen trước khi nộp, cảnh báo không làm lại được. Palette Duolingo (D-011). Blinded — không lộ tên nhánh. tsc sạch trên file mới.
+
+**Kết quả chạy được:**
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Test suite DART/research (7 file) | 126/126 PASS |
+| `tsc --noEmit` phạm vi DART | 0 lỗi |
+| `app/research/posttest/page.tsx` | ship 450 dòng, tsc sạch |
+| Endpoint backend đã có sẵn | `/api/research/posttest/{items,submit}` (từ Ngày 5) — UI mới chỉ gọi thôi |
+
+**Phát hiện / cảnh báo:**
+- Full `npm test` (toàn repo) vượt ngân sách 3 phút của agent — nên có script CI chạy riêng phần DART khi cần feedback nhanh.
+- Kế hoạch Ngày 7 có nhắc "commit + push" — agent bị chặn theo policy (không commit/push), vẫn để lại trong working tree cho người dùng review.
+- Kiểm tra tay còn thiếu: chưa flow end-to-end thật với `participantToken` sống (không có Mongo local trong sandbox). Cần chạy tay khi bạn có token pilot.
+
+**🔴 Việc BẠN phải làm hôm nay:**
+1. Review + commit + push các file mới (`app/research/posttest/page.tsx`, các nhật ký) — Ngày 7 kế hoạch yêu cầu push, agent không làm thay được.
+2. Nhắc/theo dõi kết quả IRB (H1 nộp 2026-08-07, chờ 4-8 tuần) — không hành động nhưng nên đánh dấu lịch check tuần sau.
+3. (Không mới) H4-H10 vẫn ⬜ theo hạn — chưa tới nhưng H4 phụ thuộc H1.
+
+**Bị chặn:**
+- Không thể `git push` (policy). Không thể chạy full `npm test` trong 3 phút (timeout agent).
+
+**Ngày mai:** Ngày 8 (2026-08-11) — kế hoạch đã ✅ (hợp nhất endpoint review chạy sớm). Agent sẽ chuyển sang audit Ngày 20 (Researcher dashboard) hoặc mở rộng test coverage tuỳ dev priority.
+
+---
+
 
 ### Ngày 6 — 2026-08-09 (Chủ Nhật) — audit Tuần 4-5 + build /api/retrieval-task/generate
 

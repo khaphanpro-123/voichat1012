@@ -243,20 +243,101 @@ transfer ~ condition + cefr_pretest + (1 | learner) + (1 | word)
 
 ## PHẦN 4 — Viết bài báo Q2
 
-### 4.1 Chọn tạp chí
+### 4.1 Chọn tạp chí — **CHỐT: Language Learning & Technology (LLT)** [D-014, 2026-08-11]
 
-Ứng viên phù hợp chủ đề (CALL / công nghệ giáo dục / SLA). **Luôn kiểm tra lại quartile hiện hành trên Scimago (scimagojr.com) trước khi nộp — thứ hạng thay đổi hàng năm:**
+**Target chính:** [Language Learning & Technology](https://www.lltjournal.org/) — Q1 Linguistics/Ed-tech, IF ~4.5, open access, không APC. Editor: University of Hawaii + Michigan State. Chu kỳ review ~3-4 tháng.
 
-| Tạp chí | Nhận xét phù hợp |
-|---|---|
-| **Education and Information Technologies** (Springer) | Rất hợp: chấp nhận nghiên cứu hệ thống + RCT lớp học, chu kỳ phản biện tương đối nhanh, thân thiện với tác giả châu Á |
-| **Interactive Learning Environments** (Taylor & Francis) | Hợp với can thiệp có hệ thống thích ứng |
-| **Smart Learning Environments** (Springer, OA) | Open access, hợp với "adaptive learning system" |
-| **IEEE Transactions on Learning Technologies** | Nghiêng kỹ thuật hơn — hợp nếu nhấn mạnh phần thuật toán |
-| **Journal of Educational Computing Research** | Truyền thống, chuộng thiết kế thực nghiệm chặt |
-| **Computer Assisted Language Learning** (Q1) | Đích cao hơn — cân nhắc nếu kết quả mạnh |
+**Vì sao LLT:**
+- Scope khớp 100% (L2 + technology chuyên sâu, không phải ed-tech tổng quát).
+- Chấp nhận N ~ 60-150 nếu design chặt + có qualitative (C&E de facto ≥200).
+- Mixed-methods thân thiện — post-study interview + learner perception là plus.
+- Bắt buộc AI transparency statement (đã có sẵn thông tin: LLM cache namespace, judge, retrieval task gen).
+- Data sharing qua **IRIS-database.org** (chuẩn ngành L2), không phải OSF.
 
-**Chiến lược:** nhắm 1 tạp chí Q1 trước (CALL hoặc ReCALL). Nếu desk-reject → chuyển ngay xuống Q2. Chi phí chỉ là 2–4 tuần nhưng upside lớn.
+**B-plan nếu LLT desk-reject:**
+1. **CALL** (Computer Assisted Language Learning, T&F, Q1, IF ~5) — L2+tech, nghiêng kỹ thuật hơn LLT.
+2. **ReCALL** (Cambridge, Q1) — EUROCALL, L2+tech, chấp nhận technical papers.
+3. **Language Learning** (Wiley, Q1) — thuần L2/SLA, chấp nhận nghiên cứu can thiệp.
+
+Không tụt xuống Q2 vội — 3 lựa chọn Q1 trên đều ecosystem CALL/SLA, chi phí chuyển tạp chí chỉ 2-4 tuần reformat.
+
+**Không dùng (khác scope):**
+- Computers & Education (đã cân nhắc) — quá general, cần N ≥ 200 và story ed-tech rộng.
+- IEEE TLT — kỹ thuật hoá, mất SLA framing.
+- Springer EAIT / Smart Learning Env — Q2, không cần khi có 4 Q1 khả thi.
+
+### 4.2 Khung bài DART cho LLT (khác C&E)
+
+LLT không thưởng "novel algorithm". LLT thưởng "novel SLA/pedagogy claim, defended with rigor". Framing phải là:
+
+> "Chúng tôi cho thấy learners L2 học từ vựng tốt hơn khi hệ thống điều chỉnh **loại truy hồi** (retrieval type) theo mastery, so với điều chỉnh chỉ **thời điểm** — và cải thiện này chuyển được sang bối cảnh mới (contextual transfer)."
+
+DART là **cơ chế** để phục vụ claim đó, không phải là claim.
+
+```
+1. Introduction                                    ~1.200 từ
+   - L2 vocabulary → phổ biến, quan trọng, chưa giải quyết xong
+   - SRS tối ưu "khi nào"; content-aware tối ưu "cái nào"
+   - CHƯA ai tối ưu "như thế nào" (retrieval type) — desirable difficulties
+   - Đóng góp SLA: (i) retrieval-type-adaptive scheduling, (ii) ContextTransfer
+     metric cho productive use, (iii) RCT 8 tuần với learner Việt EFL
+
+2. Literature Review                               ~2.000 từ
+   2.1 Spaced repetition trong SLA (Nakata, Nation)
+   2.2 Retrieval practice + testing effect (Karpicke, Roediger)
+   2.3 Desirable difficulties (Bjork) — neo lý thuyết chính
+   2.4 Contextual variability & vocabulary transfer (Bolger, Balass)
+   2.5 AI-mediated vocabulary learning (KARL, LECTOR, FSRS)
+   2.6 Research Gap → khe hở "retrieval type as scheduling variable"
+
+3. Method                                          ~2.200 từ
+   3.1 Participants (N, CEFR, tuyển ở đâu, ethics)
+   3.2 Materials: word bank tier A/B, context pool
+   3.3 Design: 3-arm RCT (SM-2 / HLR / DART), stratified randomisation theo CEFR
+       — SM-2 là baseline "chuẩn ngành" (Anki), HLR là baseline "state-of-art timing"
+   3.4 4 retrieval types + căn cứ desirable-difficulties
+   3.5 Scheduler DART: h = 2^(θᵀx) · e^(α·φ(d)) — HLR là trường hợp α=0
+   3.6 Measures:
+       - Immediate posttest (Tuần 8): recall MCQ + cloze + context transfer
+       - Delayed posttest (Tuần 10): cùng bộ
+       - ContextTransfer metric — validate với 2 giáo viên (ICC ≥ .70)
+       - Learner perception survey + interview 15 người
+   3.7 Analysis plan (pre-registered):
+       - RQ1: DART vs HLR α ≠ 0 (bootstrap LR + DeLong out-of-sample AUC)
+       - RQ2: gain điểm posttest giữa 3 nhánh (mixed model, learner random)
+       - RQ3: delayed retention × arm (interaction)
+       - RQ4: interview thematic (qualitative)
+
+4. Results                                         ~1.800 từ
+   4.1 Descriptive: attrition, tuân thủ, α theo arm
+   4.2 RQ1 (log): LRT + DeLong + ECE + calibration plot
+   4.3 RQ2 (learning): gain scores, effect sizes, CI
+   4.4 RQ3 (retention): delayed vs immediate, arm × time
+   4.5 RQ4 (perception): thematic từ 15 interview
+   4.6 Judge validity: ICC + Krippendorff's α
+
+5. Discussion                                      ~1.500 từ
+   5.1 Retrieval type MATTERS beyond timing
+   5.2 Contextual transfer là biểu hiện của deep encoding
+   5.3 Ý nghĩa cho AI-mediated SLA
+   5.4 Kết nối với desirable difficulties + generation effect
+
+6. Limitations                                     ~500 từ
+   - N cho pilot country/level, generalisability EFL Việt
+   - LLM-Judge dependency (đã validate nhưng vẫn là proxy)
+   - 8 tuần chưa dài cho attrition thật của classroom
+
+7. Conclusion + Pedagogical implications           ~400 từ
+
+Appendices (LLT cho phép rộng rãi):
+   A. Word bank (link IRIS)
+   B. Rubric giám khảo
+   C. Interview protocol
+   D. AI transparency statement
+   E. Pre-registration DOI
+```
+
+**Khung này ~9.600 từ**, nằm trong giới hạn LLT (~8-10k không kể refs).
 
 ### 4.2 Khung bài Bài A (DART)
 
@@ -306,8 +387,30 @@ transfer ~ condition + cefr_pretest + (1 | learner) + (1 | word)
 | Không có delayed posttest | Đây là điểm mạnh của bạn, nhấn mạnh |
 | Thiếu tuyên bố đạo đức | Ghi rõ mã số IRB, consent, ẩn danh |
 | Thiếu tuyên bố về AI | Nhiều tạp chí nay bắt buộc khai báo dùng LLM ở khâu nào |
-| Không chia sẻ dữ liệu/code | Đưa lên OSF/Zenodo, có DOI — tăng điểm rõ rệt |
+| Không chia sẻ dữ liệu/code | **LLT ưu tiên IRIS-database.org** (iris-database.org) hơn OSF/Zenodo cho L2 field. Code lên GitHub + DOI Zenodo. |
 | Tiếng Anh không chuẩn | Thuê hiệu đính chuyên nghiệp. `PAPER (IJERI).md` hiện có nhiều câu chưa mạch lạc |
+| Không khai báo AI dùng ở khâu nào | **LLT bắt buộc từ 2024.** Phải có Appendix D "AI transparency statement" liệt kê: LLM providers (Groq/OpenAI/Cohere qua fallback chain), khâu dùng (retrieval task generation namespace `retrieval-task-d{0-3}`, judge namespace `context-transfer-judge`, temperature, cache TTL 7 ngày), **không** dùng LLM để viết bài. |
+| Không báo cáo attrition đúng CONSORT | Vẽ CONSORT flow diagram đủ 4 stage: enrolled → randomised → completed → analysed |
+| Instrument không được kiểm định | Word bank phải qua H5 (20 người ngoài mẫu, loại từ >70% biết trước). Rubric qua H6 (2 giáo viên, ICC ≥ .70). Đã có trong plan. |
+
+### 4.3.1 Timeline realistic tới LLT submit (cập nhật D-014)
+
+| Mốc | Ngày dự kiến | Ai làm | Blocker |
+|---|---|---|---|
+| IRB duyệt | 2026-08 → 2026-10 | Ủy ban ĐH | Đã nộp 2026-08-07 |
+| Pre-registration OSF (H4) | ~2026-10 (sau IRB) | User | H4 chờ IRB |
+| Pilot 15-20 người (H7) | 2026-10 → 2026-11 | User + agent hỗ trợ | IRB + H5 wordbank test |
+| Fix power + tham số từ pilot | 2026-11 | Agent | Pilot log thật |
+| Main study N=200 (H10) | 2026-12 → 2027-02 (8 tuần + delayed 2 tuần) | User tuyển | Pilot xong |
+| Analysis chính | 2027-02 → 2027-03 | Agent | ICC judge validate |
+| Draft đầy đủ | 2027-03 → 2027-04 | User + agent | Analysis |
+| Native proofreading | 2027-04 (2 tuần) | Editor thuê | Draft |
+| **Submit LLT** | **~2027-05** | User | Proofreading |
+| Review round 1 | 2027-08 → 2027-09 | LLT reviewers | |
+| Minor revision + accept | ~2027-12 | User + agent | Reviewer comments |
+| Publish online | ~2028-02 | LLT | Copyediting |
+
+**Thay đổi so với roadmap cũ:** submit dời từ ~2027-01 sang ~2027-05 vì (a) IRB đường găng 4-8 tuần, (b) pilot phải chạy đủ để re-power, (c) delayed test cần 2 tuần sau main. Ép ngắn hơn = rủi ro reject cao.
 
 ### 4.4 Về `PAPER (IJERI).md` — cảnh báo riêng
 

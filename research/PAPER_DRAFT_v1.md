@@ -223,74 +223,90 @@ Under-powered nulls (RQ2 or RQ3 with CI including practically meaningful effect)
 ---
 
 ## References
+## References
 
-*Preliminary reference list — to be completed and formatted to APA 7 conventions at final draft.*
+Abdelrahman, G., Wang, Q., & Nunes, B. (2023). Knowledge tracing: A survey. *ACM Computing Surveys, 55*(11), Article 224, 1–37. https://doi.org/10.1145/3569576
 
-Adesope, O. O., Trevisan, D. A., & Sundararajan, N. (2017). Rethinking the use of tests: A meta-analysis of practice testing. *Review of Educational Research, 87*(3), 659–701.
+Adesope, O. O., Trevisan, D. A., & Sundararajan, N. (2017). Rethinking the use of tests: A meta-analysis of practice testing. *Review of Educational Research, 87*(3), 659–701. https://doi.org/10.3102/0034654316689306
 
-Barcroft, J. (2007). Effects of opportunities for word retrieval during second language vocabulary learning. *Language Learning, 57*(1), 35–56.
+Barcroft, J. (2007). Effects of opportunities for word retrieval during second language vocabulary learning. *Language Learning, 57*(1), 35–56. https://doi.org/10.1111/j.1467-9922.2007.00401.x
+
+Bjork, E. L., & Bjork, R. A. (2011). Making things hard on yourself, but in a good way: Creating desirable difficulties to enhance learning. In M. A. Gernsbacher, R. W. Pew, L. M. Hough, & J. R. Pomerantz (Eds.), *Psychology and the real world: Essays illustrating fundamental contributions to society* (pp. 56–64). Worth Publishers.
 
 Bjork, R. A. (1994). Memory and metamemory considerations in the training of human beings. In J. Metcalfe & A. Shimamura (Eds.), *Metacognition: Knowing about knowing* (pp. 185–205). MIT Press.
 
-Bjork, E. L., & Bjork, R. A. (2011). Making things hard on yourself, but in a good way. In M. A. Gernsbacher et al. (Eds.), *Psychology and the real world* (pp. 56–64). Worth.
+Brezina, V., & Gablasova, D. (2015). Is there a core general vocabulary? Introducing the New General Service List. *Applied Linguistics, 36*(1), 1–22. https://doi.org/10.1093/applin/amt018
 
-Brezina, V., & Gablasova, D. (2015). Is there a core general vocabulary? Introducing the New General Service List. *Applied Linguistics, 36*(1), 1–22.
+Cameron, A. C., & Miller, D. L. (2015). A practitioner's guide to cluster-robust inference. *Journal of Human Resources, 50*(2), 317–372. https://doi.org/10.3368/jhr.50.2.317
 
-Cameron, A. C., & Miller, D. L. (2015). A practitioner's guide to cluster-robust inference. *Journal of Human Resources, 50*(2), 317–372.
+Cepeda, N. J., Vul, E., Rohrer, D., Wixted, J. T., & Pashler, H. (2008). Spacing effects in learning: A temporal ridgeline of optimal retention. *Psychological Science, 19*(11), 1095–1102. https://doi.org/10.1111/j.1467-9280.2008.02209.x
 
-Cepeda, N. J., Vul, E., Rohrer, D., Wixted, J. T., & Pashler, H. (2008). Spacing effects in learning: A temporal ridgeline of optimal retention. *Psychological Science, 19*(11), 1095–1102.
+Cheng, S., et al. (2022). *[Neural HLR extension—full reference TBD.]*
 
-Cheng, S., et al. (2022). *[Neural HLR extension — full ref TBD.]*
+Chernoff, H. (1954). On the distribution of the likelihood ratio. *The Annals of Mathematical Statistics, 25*(3), 573–578. https://doi.org/10.1214/aoms/1177728725
 
-Chernoff, H. (1954). On the distribution of the likelihood ratio. *Annals of Mathematical Statistics, 25*(3), 573–578.
+Cizek, G. J. (2016). Validating test score meaning and defending test score use: Different aims, different methods. *Assessment in Education: Principles, Policy & Practice, 23*(2), 212–225. https://doi.org/10.1080/0969594X.2015.1063479
 
-Cizek, G. J. (2016). Validating test score meaning and defending test score use: Different aims, different methods. *Assessment in Education, 23*(2), 212–225.
+Coxhead, A. (2000). A new academic word list. *TESOL Quarterly, 34*(2), 213–238. https://doi.org/10.2307/3587952
 
-Coxhead, A. (2000). A new academic word list. *TESOL Quarterly, 34*(2), 213–238.
+Dang, T. N. Y., Webb, S., & Coxhead, A. (2022). Relationships between lexical coverage, learner knowledge, and teacher perceptions of the usefulness of high-frequency words. *Foreign Language Annals, 55*(4), 1212–1230. https://doi.org/10.1111/flan.12663
 
-DeLong, E. R., DeLong, D. M., & Clarke-Pearson, D. L. (1988). Comparing the areas under two or more correlated receiver operating characteristic curves. *Biometrics, 44*(3), 837–845.
+DeLong, E. R., DeLong, D. M., & Clarke-Pearson, D. L. (1988). Comparing the areas under two or more correlated receiver operating characteristic curves: A nonparametric approach. *Biometrics, 44*(3), 837–845. https://doi.org/10.2307/2531595
 
-Doroudi, S., Aleven, V., & Brunskill, E. (2018). Where's the reward? A review of reinforcement learning for instructional sequencing. *IJAIED, 29*, 568–620.
+Doroudi, S., Aleven, V., & Brunskill, E. (2019). Where's the reward? A review of reinforcement learning for instructional sequencing. *International Journal of Artificial Intelligence in Education, 29*, 568–620. https://doi.org/10.1007/s40593-019-00187-7
 
-Ebbinghaus, H. (1885/1913). *Memory: A contribution to experimental psychology.* (H. A. Ruger & C. E. Bussenius, Trans.). Teachers College.
+Ebbinghaus, H. (1913). *Memory: A contribution to experimental psychology* (H. A. Ruger & C. E. Bussenius, Trans.). Teachers College, Columbia University. (Original work published 1885)
 
-Elmes, D. (2006). *Anki (Version 2.1) [Computer software]*. https://apps.ankiweb.net
+Elmes, D. (2006). *Anki* (Version 2.1) [Computer software]. https://apps.ankiweb.net/
 
-Karpicke, J. D., & Roediger, H. L. (2008). The critical importance of retrieval for learning. *Science, 319*(5865), 966–968.
+Karpicke, J. D., & Roediger, H. L. (2008). The critical importance of retrieval for learning. *Science, 319*(5865), 966–968. https://doi.org/10.1126/science.1152408
 
-Kornell, N., & Bjork, R. A. (2008). Learning concepts and categories: Is spacing the "enemy of induction"? *Psychological Science, 19*(6), 585–592.
+Kornell, N., & Bjork, R. A. (2008). Learning concepts and categories: Is spacing the “enemy of induction”? *Psychological Science, 19*(6), 585–592. https://doi.org/10.1111/j.1467-9280.2008.02127.x
 
-Metcalfe, J., & Finn, B. (2008). Evidence that judgments of learning are causally related to study choice. *Psychonomic Bulletin & Review, 15*(1), 174–179.
+Metcalfe, J., & Finn, B. (2008). Evidence that judgments of learning are causally related to study choice. *Psychonomic Bulletin & Review, 15*(1), 174–179. https://doi.org/10.3758/PBR.15.1.174
 
-Nakata, T. (2015). Effects of expanding and equal spacing on second language vocabulary learning. *Studies in Second Language Acquisition, 37*(4), 677–711.
+Nakata, T. (2015). Effects of expanding and equal spacing on second language vocabulary learning: Does gradually increasing spacing increase vocabulary learning? *Studies in Second Language Acquisition, 37*(4), 677–711. https://doi.org/10.1017/S0272263114000825
 
-Nation, I. S. P. (2006). How large a vocabulary is needed for reading and listening? *Canadian Modern Language Review, 63*(1), 59–82.
+Nation, I. S. P. (2006). How large a vocabulary is needed for reading and listening? *Canadian Modern Language Review, 63*(1), 59–82. https://doi.org/10.3138/cmlr.63.1.59
 
 Nation, I. S. P., & Beglar, D. (2007). A vocabulary size test. *The Language Teacher, 31*(7), 9–13.
 
-Nguyen, T. H., & Godfroid, A. (2020). *[Vietnamese EFL vocabulary — full ref TBD.]*
+Nguyen, T. H., & Godfroid, A. (2020). *[Vietnamese EFL vocabulary—full reference TBD.]*
 
-Pham, T., & Nguyen, L. (2024). *[Vietnamese IELTS candidate SRS usage — full ref TBD.]*
+Pham, T., & Nguyen, L. (2024). *[Vietnamese IELTS candidate SRS usage—full reference TBD.]*
 
-Reddy, S., Labutov, I., Banerjee, S., & Joachims, T. (2016). Unbounded human learning: Optimal scheduling for spaced repetition. *KDD 2016*, 1815–1824.
+Pham, T. T., Nguyen, L. A. D., Dang, H. M., & Le, T. T. P. (2024). Exploring tertiary Vietnamese EFL students’ engagement in vocabulary learning through the use of an AI tool. *Proceedings of the AsiaCALL International Conference, 4*, 129–149. https://doi.org/10.54855/paic.23410
 
-Rowland, C. A. (2014). The effect of testing versus restudy on retention: A meta-analytic review. *Psychological Bulletin, 140*(6), 1432–1463.
+Reddy, S., Labutov, I., Banerjee, S., & Joachims, T. (2016). Unbounded human learning: Optimal scheduling for spaced repetition. In *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 1815–1824). Association for Computing Machinery. https://doi.org/10.1145/2939672.2939850
 
-Self, S. G., & Liang, K.-Y. (1987). Asymptotic properties of maximum likelihood estimators and likelihood ratio tests under nonstandard conditions. *Journal of the American Statistical Association, 82*(398), 605–610.
+Rowland, C. A. (2014). The effect of testing versus restudy on retention: A meta-analytic review of the testing effect. *Psychological Bulletin, 140*(6), 1432–1463. https://doi.org/10.1037/a0037559
 
-Settles, B., & Meeder, B. (2016). A trainable spaced repetition model for language learning. *ACL 2016*, 1848–1858.
+Self, S. G., & Liang, K.-Y. (1987). Asymptotic properties of maximum likelihood estimators and likelihood ratio tests under nonstandard conditions. *Journal of the American Statistical Association, 82*(398), 605–610. https://doi.org/10.1080/01621459.1987.10478447
 
-Tabibian, B., Upadhyay, U., De, A., Zarezade, A., Schölkopf, B., & Gomez-Rodriguez, M. (2019). Enhancing human learning via spaced repetition optimization. *PNAS, 116*(10), 3988–3993.
+Settles, B., & Meeder, B. (2016). A trainable spaced repetition model for language learning. In *Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)* (pp. 1848–1858). Association for Computational Linguistics. https://doi.org/10.18653/v1/P16-1173
 
-Traxler, F., et al. (2024). *[Knowledge tracing + SRS integration — full ref TBD.]*
+Shen, S., Liu, Q., Huang, Z., Zheng, Y., Yin, M., Wang, M., & Chen, E. (2024). A survey of knowledge tracing: Models, variants, and applications. *IEEE Transactions on Learning Technologies, 17*, 1898–1919. https://doi.org/10.1109/TLT.2024.3383325
 
-Wozniak, P. A. (1990). *Optimization of learning* [Master's thesis]. University of Technology, Poznań.
+Tabibian, B., Upadhyay, U., De, A., Zarezade, A., Schölkopf, B., & Gomez-Rodriguez, M. (2019). Enhancing human learning via spaced repetition optimization. *Proceedings of the National Academy of Sciences, 116*(10), 3988–3993. https://doi.org/10.1073/pnas.1815156116
 
-Yang, C., Luo, L., Vadillo, M. A., Yu, R., & Shanks, D. R. (2021). Testing (quizzing) boosts classroom learning: A systematic and meta-analytic review. *Psychological Bulletin, 147*(4), 399–435.
+Traxler, F., et al. (2024). *[Knowledge tracing + SRS integration—full reference TBD.]*
 
-Ye, X., et al. (2022). *[Deep-RL for Chinese character learning — full ref TBD.]*
+van den Broek, G. S. E., Wesseling, E., Huijssen, L., Lettink, M., & van Gog, T. (2022). Vocabulary learning during reading: Benefits of contextual inferences versus retrieval opportunities. *Cognitive Science, 46*(4), e13135. https://doi.org/10.1111/cogs.13135
 
----
+Wang, X., & Reynolds, B. L. (2024). Beyond the books: Exploring factors shaping Chinese English learners’ engagement with large language models for vocabulary learning. *Education Sciences, 14*(5), 496. https://doi.org/10.3390/educsci14050496
+
+Wozniak, P. A. (1990). *Optimization of learning* [Master’s thesis, University of Technology, Poznań].
+
+Yang, C., Luo, L., Vadillo, M. A., Yu, R., & Shanks, D. R. (2021). Testing (quizzing) boosts classroom learning: A systematic and meta-analytic review. *Psychological Bulletin, 147*(4), 399–435. https://doi.org/10.1037/bul0000309
+
+Yang, T., Zuo, L., Yang, X., & Liu, N. (2022). Target-oriented teaching path planning with deep reinforcement learning for cloud computing-assisted instructions. *Applied Sciences, 12*(18), 9376. https://doi.org/10.3390/app12189376
+
+Ye, X., et al. (2022). *[Deep-RL for Chinese character learning—full reference TBD.]*
+
+*Retrieval practice enhances learning and memory retention of French words in Chinese-English bilinguals.* (2022). *Lingua, 272*, 103294. https://doi.org/10.1016/j.lingua.2022.103294
+
+*Retrieval practice plus feedback benefits a third language vocabulary learning.* (2024). *International Journal of Multilingualism, 21*(2), 1014–1033. https://doi.org/10.1080/14790718.2022.2102172
+
 
 ## Appendix A. Amendment log
 

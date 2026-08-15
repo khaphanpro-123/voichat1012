@@ -15,6 +15,71 @@
 
 <!-- DECISION_INSERT_POINT -->
 
+## D-016 · Persist server-side + verify pretest submission trước khi enrol
+**Ngày:** 2026-08-13 · **Trạng thái:** ✅ Active · **Liên quan:** `app/models/PretestSubmission.ts`, `app/api/research/pretest/score/route.ts`, `app/api/research/enrol/route.ts`.
+
+**Ngữ cảnh:** Audit Ngày 10 phát hiện: `/api/research/pretest/score` chỉ tính điểm rồi echo, không persist. Client tự gửi `pretestScore` vào `/api/research/enrol`. Nghĩa là (a) không có audit trail server-side chứng minh pretest đã hoàn thành, (b) participant có thể POST enrol với `pretestScore` bịa (bypass placement để lọt vào stratum ưa thích). LLT reviewer sẽ hỏi "how do you verify the pretest was actually completed?" — không có bằng chứng.
+
+**Quyết định:** Persist mỗi lần chấm pretest hợp lệ dưới dạng `PretestSubmission` (collection mới) với `submissionId` duy nhất, single-use. Enrol bắt buộc gửi `pretestSubmissionId` thay vì raw score; server re-fetch, verify, mark used.
+
+**Chi tiết triển khai:**
+1. **`app/models/PretestSubmission.ts`** — schema mới: `submissionId` (unique), `score`, `cefrLevel`, `correct`, `total`, `itemCount`, `answersHash` (sha256 canonical), `clientCompletedAt`, `serverScoredAt`, `used` (bool, default false), `usedByParticipantCode`, `usedAt`. TTL 60 ngày (đủ pilot + main study, tự dọn khi hết hạn).
+2. **`pretest/score` route:** sau khi validate + chấm, `crypto.randomBytes(16).toString("base64url")` sinh `submissionId`, `PretestSubmission.create(...)`, trả `{ submissionId, persisted, ... }` về client. DB failure không hard-fail — vẫn trả score nhưng `persisted: false` cho dev flow.
+3. **`enrol` route:** thêm bắt buộc `pretestSubmissionId` trong body. Trước khi assign, `PretestSubmission.findOne({submissionId})`; reject 400 nếu (i) không tồn tại, (ii) `used === true`, (iii) `cefrLevel` trong submission ≠ `body.cefrLevel` (chống client mutate CEFR sau khi thấy score). Sau khi `Participant.create` thành công, `PretestSubmission.updateOne({submissionId, used:false}, {$set:{used:true, usedByParticipantCode, usedAt}})` — filter `used:false` chống double-mark trong race.
+4. **`pretestScore` trong Participant giờ là server-trusted** (lấy từ submission, KHÔNG từ body). Field body cũ giữ optional cho backward-compat nhưng bị overwrite.
+
+**Hệ quả:**
+- Client flow thay đổi: sau `pretest/score` phải lưu `submissionId` (localStorage) rồi gửi kèm khi enrol. **UI cần cập nhật** (view `app/research/pretest/*`, nếu có, và hàm gọi API). Chưa touch UI trong D-016 này — sẽ làm ở Ngày 11.
+- Test coverage: 30/30 PASS (`researchPretestScoreRoute.test.ts` +4 case D-016; `researchEnrolRoute.test.ts` +5 case D-016 gồm single-use, CEFR-mismatch, server-trust score, mark-used, missing id).
+- Trade-off: enrol giờ đòi 1 round-trip nữa (score → enrol) trước đây có thể gộp. Chấp nhận — an toàn dữ liệu > 1 round-trip.
+- Không đụng schema `Participant` — `pretestScore` field vẫn còn, chỉ đổi nguồn.
+
+---
+
+## D-014 · Chốt target journal = **Language Learning & Technology (LLT)**
+**Ngày:** 2026-08-11 · **Trạng thái:** ✅ Active · **Thay thế:** hướng "CALL/ReCALL Q1 → xuống Q2" của roadmap cũ (mục § 4.1). **Liên quan:** `RESEARCH_ROADMAP_DART_CARTS.md § 4.1-4.2`.
+
+**Ngữ cảnh:** User đã nộp IRB (2026-08-07). Cần chốt tạp chí đích để (a) canh chỉnh outline bài, (b) định cỡ mẫu + phương pháp cho phù hợp yêu cầu, (c) tránh viết một bài "chung chung" không thắng ở đâu. Agent đưa 2 lựa chọn: Computers & Education (IF ~8.9, Q1, general ed-tech) hoặc Language Learning & Technology (IF ~4-5, Q1 Linguistics/Ed, L2 + tech chuyên sâu). User chọn LLT.
+
+**Quyết định:** Nhắm **LLT là target chính** cho bài DART.
+
+Lý do LLT hợp hơn C&E:
+1. **Scope khớp 100%:** LLT chỉ nhận bài L2 + technology. DART là "adaptive retrieval for L2 vocabulary" — đúng bản lề. C&E rộng hơn (K-12, MOOC, AI-in-general) → phải cạnh tranh với các đề tài không liên quan.
+2. **N khả thi hơn:** LLT chấp nhận N ~ 60-150 nếu design chặt và có qualitative. C&E de facto yêu cầu N ≥ 200 quantitative-heavy. Với H10 = 200 người còn phải tuyển, LLT cho dung sai tốt hơn.
+3. **Mixed-methods thân thiện:** LLT rất chuộng qualitative learner-perception (Ngày 35 phỏng vấn giữa pilot + post-study interview → dễ dùng làm 1 section riêng, tăng điểm rõ).
+4. **Open access, không phí:** không tốn APC ~$3.750 USD như một số C&E track.
+5. **Chu kỳ review nhanh hơn:** LLT trung bình 3-4 tháng vs C&E 5-6 tháng.
+
+Trade-off chấp nhận: IF thấp hơn (~4.5 vs ~8.9), prestige hẹp hơn. Nhưng nhìn theo "xác suất được nhận × giá trị bài", LLT thắng cho project này.
+
+**Đóng khung bài lại theo yêu cầu LLT** (khác C&E):
+- Đóng góp chính phải neo vào **SLA theory** (Retrieval Practice, Desirable Difficulties, Contextual Variability) — không chỉ ML.
+- **Ecological validity:** learner thật, task thật, thời lượng ≥ 8 tuần. Đã có.
+- **Learning outcomes phải là language competencies**, không chỉ recall accuracy: (i) receptive recall, (ii) productive use, (iii) contextual transfer. Ba mức đã có trong posttest UI (Ngày 24).
+- **AI transparency statement bắt buộc** — LLT enforce từ 2024: khai báo LLM dùng ở khâu nào (task generation, judge, không dùng để viết bài).
+- **Data + code trên IRIS-database.org** (LLT ưu tiên IRIS hơn OSF/Zenodo cho L2 field).
+
+**Điều chưa đủ mạnh so với chuẩn LLT (agent sẽ fix tự động lượt này):**
+
+| Gap | Xử lý ngay |
+|---|---|
+| Retrieval-type coverage ≥15% mỗi mức (α identifiability) | Bump ε-exploration 0.10 → 0.20 trong `lib/retrievalTasks/session.ts` + bật mặc định trong pilot |
+| Chưa có statement "target = LLT" trong roadmap | Rewrite § 4.1-4.2 của `RESEARCH_ROADMAP_DART_CARTS.md` |
+| Chưa có checklist AI transparency | Thêm mục check trong roadmap § 4.3 |
+| Timeline cũ (~6 tháng) không realistic cho LLT | Cập nhật tới 2027-02 submit, 2027-06 accept |
+
+**Gap phải chờ user (không tự làm được):**
+- H4 pre-registration trên OSF (LLT chấp nhận OSF) — cần IRB approval trước
+- Hiệu đính native EN cho draft cuối
+- Đăng ký tài khoản IRIS (iris-database.org) để chia sẻ instrument sau khi accept
+
+**Hệ quả:**
+- Bài DART là bài duy nhất nhắm LLT lần này. **Không nộp cùng dữ liệu cho L2-BRAIN (IJERI) và DART (LLT)** → salami slicing risk. Nếu cần 2 bài phải tách người tham gia, tách RQ, trích chéo.
+- Bài L2-BRAIN (`PAPER (IJERI).md`) vẫn giữ nguyên hướng IJERI — không đụng.
+- Cần chuẩn bị B-plan: nếu LLT desk-reject → chuyển sang **CALL (Q1, Taylor & Francis)** thay vì tụt xuống Q2 vội.
+
+---
+
 ## D-013 · Ngày 12 — Content-addressed LLM cache + daily budget cap
 **Ngày:** 2026-08-09 · **Trạng thái:** ✅ Active · **Liên quan:** `lib/aiCache.ts`, `lib/callAICached.ts`, `lib/aiBudget.ts`, `app/models/AICache.ts`, `app/models/AIBudgetDaily.ts`, `__tests__/aiCache.test.ts`
 
