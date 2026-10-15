@@ -65,6 +65,11 @@ by automated tests and a staging dry run:
   dated rationale, version identifiers, and the updated distribution/power
   check. Do not silently choose either value.
 
+**Resolution (documentation only):** `docs/DECISIONS.md` records active
+Decision D-014 (2026-08-11) raising ε to 0.20. The unpublished draft
+`PREREGISTRATION.md` and `DESIGN_FREEZE.md` were synchronized to 0.20 with that
+decision reference. This does not resolve the separate live-wiring gate below.
+
 ### 2026-10-15 — ε-exploration is not wired into the live study path
 
 - Repository search found no call site for `pickTaskType()` outside its
