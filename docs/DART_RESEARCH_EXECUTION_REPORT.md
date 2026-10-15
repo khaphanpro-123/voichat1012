@@ -225,6 +225,17 @@ decision reference. This does not resolve the separate live-wiring gate below.
   index-creation script, and a disposable-database backup/restore drill. This
   is an operational prerequisite, not a paper result.
 
+### 2026-10-16 — participant-facing arm-blinding unit check: PASS (narrow)
+
+- Command: `npx jest __tests__/experimentBlinding.test.ts --runInBand`.
+- Result: 1 suite / 11 tests passed. The tested functions map the three arms to
+  opaque labels, remove telltale keys/values from client payloads, and redact
+  arm names from judge prompts.
+- **Scope limit:** this validates the pure blinding utilities only. It does not
+  prove that the live scheduler authenticates a participant, dispatches the
+  stored arm, or never returns an arm-revealing response. The RCT scheduler
+  gate remains open until those endpoint-level tests pass.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
