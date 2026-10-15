@@ -163,6 +163,17 @@ decision reference. This does not resolve the separate live-wiring gate below.
   unsafe client fallback identified above. Passing tests do not clear the RCT
   scheduler gate.
 
+### 2026-10-15 — full TypeScript verification: blocked by unrelated syntax errors
+
+- `npx tsc --noEmit` did not reach research scheduling code because the current
+  repository has parser errors in `components/MediaLearningEnhanced.tsx`,
+  `components/SmartDocumentExtractor.tsx`, and `hooks/useErrorHandler.ts`
+  (unclosed JSX / JSX parsed in a `.ts` file).
+- These files were not changed by this workflow and are outside the RCT
+  scheduler scope. Targeted scheduler/review tests passed, but a clean global
+  type check remains unavailable until the repository-wide syntax errors are
+  repaired independently.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
