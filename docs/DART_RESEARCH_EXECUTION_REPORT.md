@@ -152,6 +152,17 @@ decision reference. This does not resolve the separate live-wiring gate below.
   confidence interval, p-values, AUC, nor calibration values are study findings
   or permitted manuscript results.
 
+### 2026-10-15 — existing unit-test baseline: PASS, but scope is insufficient
+
+- After `npm ci --ignore-scripts`, the following suites passed under Jest in
+  band: `__tests__/baselines.test.ts`, `__tests__/dart.test.ts`, and
+  `__tests__/researchReviewRoute.test.ts` (27 tests total).
+- These results cover isolated SM-2/HLR/DART computations, random assignment,
+  and review-write validation. They do **not** exercise participant-authenticated
+  schedule dispatch, arm-specific serving, server decision receipts, or the
+  unsafe client fallback identified above. Passing tests do not clear the RCT
+  scheduler gate.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
