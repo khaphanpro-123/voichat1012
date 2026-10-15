@@ -249,6 +249,20 @@ decision reference. This does not resolve the separate live-wiring gate below.
   it does not clear the scheduler, database, consent/IRB, or RQ1 inference
   gates.
 
+### 2026-10-16 — research regression set: PASS (scope bounded)
+
+- Command: `npx jest` over participant auth, enrolment, pretest scoring, review
+  logging, posttest items/builder, arm blinding, baselines, and DART inference,
+  with `--runInBand`.
+- Result: 9 suites / 124 tests passed. The observed `console.error` is the
+  expected mock of a MongoDB persistence failure in the pretest route test;
+  that test asserts `persisted=false` rather than treating the output as an
+  unhandled failure.
+- **Scope limit:** these are mocked/unit-route checks. They do not exercise a
+  configured research database, real participant sessions, live arm dispatch,
+  scheduler receipts, IRB/consent operations, or the corrected RQ1 inference
+  procedure.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
