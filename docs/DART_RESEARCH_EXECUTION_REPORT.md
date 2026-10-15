@@ -83,6 +83,24 @@ database migration, backup, preregistration, pilot, or data collection occurred.
   version/decision; and add integration tests proving one distinct dispatch
   path per arm.
 
+### 2026-10-15 — critical RCT integrity gap: unsafe client-side fallback
+
+- The study page sends the participant's signed token as `userId` to the
+  legacy `/api/dart/schedule` endpoint. That endpoint queries `Vocabulary` by
+  its own application user identifier, not by participant token, so a real
+  research participant can receive a not-found/error response.
+- On any scheduling or network error the page fabricates a default task, then
+  allows it to be submitted to `/api/research/review`. The research write path
+  can therefore receive a row that has no server-authoritative scheduling
+  decision.
+- **Do-not-enrol gate:** The new authenticated research scheduling endpoint
+  must fail closed. A task can be shown/submitted only with a short-lived,
+  server-issued decision receipt binding participant, vocabulary, arm,
+  retrieval type, feature vector, scheduler version, and weights version.
+  The review endpoint must validate and consume that receipt once. Offline
+  queues may retry an already-issued receipt but must never invent or replace a
+  study task client-side.
+
 ### 2026-10-15 — synthetic analysis-pipeline smoke test: PASS (test-only)
 
 - Environment: standard CPython 3.12 virtual environment with the versions in
