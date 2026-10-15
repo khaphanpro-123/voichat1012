@@ -193,6 +193,15 @@ decision reference. This does not resolve the separate live-wiring gate below.
   procedure), then retain its command, seed range, environment, and output
   alongside the analysis archive before recruitment.
 
+**Completed diagnostic (not a confirmatory test):** The legacy runner completed
+with `--grid 60,180 --alpha-true 0 --reps 200 --seed0 20261015`. It rejected
+the null in 32/200 replicates at N=60 (0.160; Monte-Carlo SE about 0.026) and
+23/200 at N=180 (0.115; Monte-Carlo SE about 0.023). Both observed rates exceed
+the repository's 0.10 anti-conservatism alert threshold. This is reproducible
+operating-characteristic evidence that the obsolete row-IID LRT remains
+miscalibrated; it is not participant data, a paper finding, or evidence that
+the pre-registered clustered RQ1 test is valid.
+
 ### 2026-10-16 — confirmatory RQ1 analysis is not wired to its amendment
 
 - `research/fit_dart.py` computes and exports `p_boundary` from
