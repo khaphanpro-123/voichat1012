@@ -101,6 +101,21 @@ database migration, backup, preregistration, pilot, or data collection occurred.
   queues may retry an already-issued receipt but must never invent or replace a
   study task client-side.
 
+### 2026-10-15 — critical baseline fidelity gap: SM-2 state is unavailable
+
+- The live research write path intentionally does not mutate application
+  `Vocabulary` state, and `ReviewLog` does not store per-item SM-2 ease factor,
+  interval, or repetition count. The study UI supplies binary recall, not the
+  0–5 quality input expected by the existing SM-2 implementation.
+- A condition-dispatch endpoint therefore cannot truthfully run the current
+  SM-2 baseline from the research log alone. Reconstructing it ad hoc would
+  create an undocumented, non-standard baseline and compromise the RCT.
+- **Do-not-enrol gate:** Specify and version a research-owned scheduler state
+  model (or a fully pre-registered deterministic reconstruction), including
+  the mapping from task response to SM-2 quality, all initial values, and the
+  update transaction. Then add state-transition fixtures and parity tests
+  before enabling any participant session.
+
 ### 2026-10-15 — synthetic analysis-pipeline smoke test: PASS (test-only)
 
 - Environment: standard CPython 3.12 virtual environment with the versions in
