@@ -36,6 +36,19 @@ database migration, backup, preregistration, pilot, or data collection occurred.
 
 ## Evidence log
 
+### 2026-10-15 — protocol/code consistency finding: ε-exploration
+
+- `lib/retrievalTasks/session.ts` uses `EPSILON = 0.20` and its code comment
+  attributes the change from 0.10 to 0.20 to decision D-014 on 2026-08-11.
+- `research/PREREGISTRATION.md` and `research/DESIGN_FREEZE.md` still specify
+  ε = 0.10. This is a material protocol/code discrepancy because ε determines
+  the randomized retrieval-type assignments used to identify the DART α
+  parameter.
+- **Gate:** Before any pilot or enrolment, either restore the implementation to
+  0.10 or amend the preregistration and design-freeze documents to 0.20 with a
+  dated rationale, version identifiers, and the updated distribution/power
+  check. Do not silently choose either value.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
