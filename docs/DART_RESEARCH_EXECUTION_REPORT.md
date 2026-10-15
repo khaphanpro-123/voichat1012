@@ -34,6 +34,22 @@ database migration, backup, preregistration, pilot, or data collection occurred.
 6. Obtain IRB approval, freeze/publish preregistration, then run familiarity and
    rater-calibration gates before the pilot.
 
+## Research scheduler remediation: acceptance criteria
+
+The RCT scheduler gate is complete only when all of the following are evidenced
+by automated tests and a staging dry run:
+
+| Requirement | Evidence required |
+| --- | --- |
+| Authentication | Missing, expired, or forged participant token returns 401; token identity is the only participant identity used by scheduling. |
+| Arm fidelity | A participant stored as `sm2`, `hlr`, or `dart` reaches exactly that server-side dispatcher; the arm is never received from the client. |
+| Baseline fidelity | Research-owned SM-2 state persists and transitions deterministically from the pre-registered quality mapping and initial state. HLR has α fixed to zero; DART uses the frozen weights/version. |
+| Task decision provenance | Every task has a server-signed, short-lived one-time receipt binding participant, vocabulary, arm, retrieval type, features, scheduler version, and weights version. |
+| Fail closed | A missing/invalid/expired/consumed receipt prevents review insertion. Offline retries reuse an issued receipt and cannot fabricate a replacement task. |
+| Blinding | Client response does not expose arm name, weights, or an arm-distinguishing explanation. |
+| Logging | The server writes the true arm and immutable decision version; the client cannot override either field. |
+| Pilot audit | A staging/controlled pilot export shows all assigned arms, no default/fabricated tasks, valid receipts only, and the planned retrieval-type distribution. |
+
 ## Evidence log
 
 ### 2026-10-15 — protocol/code consistency finding: ε-exploration
