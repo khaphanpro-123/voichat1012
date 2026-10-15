@@ -65,6 +65,24 @@ database migration, backup, preregistration, pilot, or data collection occurred.
   0.20 decision is therefore not only a documentation mismatch; currently
   neither value is evidenced in the live schedule path.
 
+### 2026-10-15 — critical RCT fidelity gap: live scheduler ignores assigned arm
+
+- Enrolment assigns and persists one of `sm2`, `hlr`, or `dart` in
+  `Participant.condition`, and the review-write endpoint correctly stamps that
+  condition on each log row.
+- In contrast, `app/dashboard-new/study/page.tsx` always calls
+  `/api/dart/schedule`. The request contains no assigned arm and the endpoint
+  does not authenticate a participant token or look up `Participant.condition`;
+  it always invokes the DART scheduling implementation.
+- **Do-not-enrol gate:** Running the current session flow would label logs as
+  three arms while serving the DART route to all of them. This invalidates the
+  randomized comparison. Before pilot or enrolment, implement a server-side,
+  authenticated research schedule endpoint that obtains the participant's
+  stored condition and dispatches SM-2, HLR, or DART accordingly; return only
+  an opaque, condition-blind task response; persist a verifiable scheduler
+  version/decision; and add integration tests proving one distinct dispatch
+  path per arm.
+
 ### 2026-10-15 — synthetic analysis-pipeline smoke test: PASS (test-only)
 
 - Environment: standard CPython 3.12 virtual environment with the versions in
