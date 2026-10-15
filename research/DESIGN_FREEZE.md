@@ -57,7 +57,7 @@
 - **Đơn vị bootstrap:** cụm theo `userId`, không theo dòng
 - **Chia CV:** 5-fold theo `userId` — bắt buộc, không được chia theo dòng
 - **Phân bố retrievalType:** mỗi mức d ∈ {0,1,2,3} phải ≥ 10% tổng lượt.
-  Nếu không, dùng ε-exploration 10% (khai báo trong Method)
+  Nếu không, dùng ε-exploration 20% (Decision D-014, 2026-08-11; khai báo trong Method)
 - **Xử lý dropout:** ITT chính + PP nhạy cảm. Định nghĩa dropout = < 60% phiên
 - **α biên:** báo cả p_boundary (Self & Liang 1987) và p naïve
 - **Ngưỡng power:** N nhỏ nhất đạt power ≥ .80 cho α = 0.45 (chốt ở Ngày 3)
@@ -82,7 +82,7 @@ Tất cả hằng số dưới đây **không được sửa sau khi thu dữ li
 | `MAX_PLAUSIBLE_ELAPSED_MS` | `300000` (5 phút) | `lib/retrievalTasks/timing.ts` | Trên ngưỡng = AFK → clamp cho phân tích |
 | `TOKEN_TTL_SECS` | `6048000` (70 ngày) | `lib/participantAuth.ts` | TTL cho participant token |
 | `FORM_VERSION` | `"posttest_v1.0"` | `lib/posttestBuilder.ts` | Bộ đề posttest — khoá trước pilot |
-| ε-exploration rate | `0.10` | `lib/retrievalTasks/session.ts` | 10% random task-type để đảm bảo identifiability α |
+| ε-exploration rate | `0.20` | `lib/retrievalTasks/session.ts` | 20% random task-type để đảm bảo identifiability α (Decision D-014, 2026-08-11) |
 | retrievalType threshold | 10% mỗi mức | `research/dq_check.py` check 2 | Cảnh báo α mất định danh nếu bất kỳ d nào < 10% |
 | ICC threshold | `≥ 0.70` | `research/CALIBRATION_GUIDE.md` | LLM Judge vs human — điều kiện để dùng LLM làm primary scorer |
 | Rubric max (4-dim) | 8 | `lib/judgeRubric.ts` | form+meaning+use+contextFit, mỗi chiều 0-2 |
@@ -114,3 +114,4 @@ Chữ ký: ______________________________
 Họ tên: ______________________________
 Ngày: ______________________________
 Chữ ký: ______________________________
+
