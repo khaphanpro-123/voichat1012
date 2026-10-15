@@ -34,6 +34,13 @@ export async function GET(req: NextRequest) {
 
   const form = new URL(req.url).searchParams.get("form") ?? "immediate";
 
+  if (form !== "immediate" && form !== "delayed") {
+    return NextResponse.json(
+      { success: false, message: "Invalid posttest form" },
+      { status: 400 },
+    );
+  }
+
   if (form === "delayed") {
     // Delayed posttest: 10 words, Recall (5 B1) + Cloze (5 B2)
     const delayedRecall = DELAYED_WORD_IDS.slice(0, 5).map((wordId) => {
@@ -89,3 +96,4 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
