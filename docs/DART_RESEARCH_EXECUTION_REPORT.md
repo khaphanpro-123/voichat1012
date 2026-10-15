@@ -193,6 +193,26 @@ decision reference. This does not resolve the separate live-wiring gate below.
   procedure), then retain its command, seed range, environment, and output
   alongside the analysis archive before recruitment.
 
+### 2026-10-16 — confirmatory RQ1 analysis is not wired to its amendment
+
+- `research/fit_dart.py` computes and exports `p_boundary` from
+  `dart_model.lrt_alpha()` and labels it "report THIS one". The primary analysis
+  command therefore continues to use the row-IID asymptotic LRT which Amendment
+  #A-001 replaced because it is anti-conservative under learner clustering.
+- `dart_model.lrt_alpha_cluster_bootstrap()` exists, but repository search
+  found no call from `fit_dart.py`. Its current implementation case-resamples
+  the observed learners and compares those LR values to the observed LR. The
+  adjacent prototype itself notes that such resampling is only a null
+  diagnostic when the data were generated with `alpha_true = 0`; under a real
+  alternative it preserves signal and is not a generated null distribution.
+- **Do-not-claim / do-not-enrol gate:** Do not run or report the current
+  `fit_dart.py` p-value as the preregistered RQ1 test. Before recruitment,
+  obtain a statistician-approved, frozen null procedure (for example a
+  restricted-model parametric or residual cluster bootstrap), implement it in
+  the production analysis command, and test its Type-I error and power with
+  reproducible seeds. Because this changes the practical inferential procedure,
+  record a dated amendment before viewing pilot data.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
