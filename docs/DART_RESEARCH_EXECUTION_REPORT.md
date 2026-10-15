@@ -49,6 +49,22 @@ database migration, backup, preregistration, pilot, or data collection occurred.
   dated rationale, version identifiers, and the updated distribution/power
   check. Do not silently choose either value.
 
+### 2026-10-15 — ε-exploration is not wired into the live study path
+
+- Repository search found no call site for `pickTaskType()` outside its
+  definition in `lib/retrievalTasks/session.ts`; consequently its
+  `epsilonExplore` switch and `EPSILON` constant are not part of the observed
+  application flow.
+- The live study page instead calls `/api/dart/schedule`, which calculates the
+  next retrieval type through `lib/dart.ts::dartSchedule()` and
+  `selectNextRetrievalType()`. Those functions have no ε-exploration input or
+  random override.
+- **Gate:** Do not claim the preregistered random exploration is implemented
+  until the live scheduler receives a reproducible, logged exploration decision
+  and the study tests cover both the random and non-random paths. The 0.10 vs
+  0.20 decision is therefore not only a documentation mismatch; currently
+  neither value is evidenced in the live schedule path.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
