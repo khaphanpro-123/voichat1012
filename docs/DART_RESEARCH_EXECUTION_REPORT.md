@@ -16,7 +16,7 @@ database migration, backup, preregistration, pilot, or data collection occurred.
 | Area | Repository evidence | Operational status | Next verification |
 | --- | --- | --- | --- |
 | DART / HLR model | `research/dart_model.py`, `research/fit_dart.py` | Not yet run in this execution environment | Install analysis dependencies; run synthetic pipeline only as a smoke test |
-| RQ1 inference | Cluster-bootstrap and DeLong code are present | No current real-log result | Confirm Type-I simulation and learner-level CV before preregistration |
+| RQ1 inference | DeLong and cluster-related code are present, but the production fit command still calls the invalid row-IID LRT | Confirmatory analysis is not operationally valid | Freeze a statistician-approved clustered null procedure; wire it into the production command; then verify Type-I control and learner-level CV |
 | Research database | `research/verify_env.js`, `research/create_indexes.js`, backup script exist | Blocked: no `.env.research` supplied to this environment | User provides/configures secrets locally; run the verifier without logging secrets |
 | IRB | Checklist/submission material exists | Unverified external gate | Record approval identifier and date; do not enrol until approved |
 | Preregistration | Draft exists | Unverified external gate | Publish a frozen version after IRB approval and technical gates |
