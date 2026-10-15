@@ -250,7 +250,7 @@ Delayed posttest score (Week 10), section Recall + Cloze + CT, total 0–100.
 20 MCQ items: 8 A2, 6 B1, 6 B2. Scoring band: ≥ 4 B2-level correct → B2; ≥ 4 B1-level correct → B1; else A2.
 
 ### Algorithm parameters
-- DART: half-life regression with difficulty modifier α; ε = 0.10 exploration rate (10% random retrieval-type assignment per session to ensure identifiability)
+- DART: half-life regression with difficulty modifier α; ε = 0.20 exploration rate (20% random retrieval-type assignment per session to ensure identifiability and adequate retrieval-type coverage; Decision D-014, 2026-08-11)
 - HLR: standard half-life regression (Settles & Meeder 2016), same features minus difficulty
 - SM-2: original algorithm (SuperMemo 2, 1987) as control
 
@@ -323,7 +323,7 @@ The following constants are locked before data collection begins. Changing them 
 |---|---|---|
 | `PARAPHRASE_OVERLAP_MAX` | 0.70 (Jaccard) | `lib/posttestBuilder.ts` |
 | Levenshtein typo tolerance | 1 edit, word ≥ 5 chars only | `lib/posttestBuilder.ts` |
-| ε-exploration rate | 0.10 | DART scheduler |
+| ε-exploration rate | 0.20 | DART scheduler; Decision D-014 (2026-08-11) |
 | `TOKEN_TTL_SECS` | 6,048,000 (70 days) | `lib/participantAuth.ts` |
 | `FORM_VERSION` | `"posttest_v1.0"` | `lib/posttestBuilder.ts` |
 | ICC threshold (RQ3 gate) | ≥ 0.70 | `research/CALIBRATION_GUIDE.md` |
@@ -380,3 +380,4 @@ De-identified review logs and anonymised posttest data will be made available vi
 *Document generated: 2026-08-04*
 *OSF submission date: [pending — fill after IRB approval]*
 *OSF registration DOI: [pending]*
+
