@@ -236,6 +236,19 @@ decision reference. This does not resolve the separate live-wiring gate below.
   stored arm, or never returns an arm-revealing response. The RCT scheduler
   gate remains open until those endpoint-level tests pass.
 
+### 2026-10-16 — posttest form allowlist: remediated and verified
+
+- Finding: `GET /api/research/posttest/items?form=<unknown>` silently served
+  the immediate-posttest item set. This could mask a caller error and return a
+  wrong instrument form.
+- Change: the route now accepts only `immediate` or `delayed`; every other
+  value returns HTTP 400 with `Invalid posttest form`. The route test was
+  changed from pinning the fail-open behaviour to asserting the rejection.
+- Verification: `npx jest __tests__/researchPosttestItemsRoute.test.ts
+  --runInBand` passed (1 suite, 5 tests). This is an instrument-integrity fix;
+  it does not clear the scheduler, database, consent/IRB, or RQ1 inference
+  gates.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
