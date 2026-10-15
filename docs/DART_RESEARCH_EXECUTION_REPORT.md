@@ -174,6 +174,25 @@ decision reference. This does not resolve the separate live-wiring gate below.
   type check remains unavailable until the repository-wide syntax errors are
   repaired independently.
 
+### 2026-10-16 — Type-I runner does not implement the pre-registered test
+
+- The running `research/power_analysis.py` Type-I job calls
+  `dart_model.lrt_alpha()` within `one_replicate()`. That is the legacy
+  row-IID asymptotic boundary LRT, not a clustered procedure.
+- The same repository explicitly marks that function anti-conservative for
+  clustered `ReviewLog` data, and the current pre-registration instead names
+  `lrt_alpha_cluster_bootstrap` as the RQ1 primary test. The documented
+  historical diagnostic is Type-I approximately 0.146 at the study setting,
+  versus 0.05 nominal.
+- **Classification:** even if this job completes normally, it is a regression
+  diagnostic for the legacy test only. It cannot validate Type-I control for
+  the confirmatory analysis and its numerical output must not be reported as a
+  study finding or a release gate pass.
+- **Do-not-enrol gate:** implement and version a Type-I simulation runner that
+  applies the frozen cluster-bootstrap RQ1 test (including its null-generation
+  procedure), then retain its command, seed range, environment, and output
+  alongside the analysis archive before recruitment.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
