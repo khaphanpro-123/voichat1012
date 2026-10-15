@@ -138,18 +138,18 @@ describe("GET /api/research/posttest/items — form=delayed", () => {
   });
 });
 
-describe("GET /api/research/posttest/items — documented gap: form allowlist", () => {
+describe("GET /api/research/posttest/items — form allowlist", () => {
   // From Ngày 10 log: "posttest/items (form=delayed) không validate ?form values
   // khác — mọi query khác 'delayed' silent fall về immediate. LLT-strict thì
-  // thêm allowlist ['immediate','delayed']." This test PINS current behaviour;
-  // when the allowlist is added, flip to expect 400.
-  it("(pinned) silently falls back to immediate for unknown form values", async () => {
+  // thêm allowlist ['immediate','delayed']." Invalid values must fail closed.
+  it("rejects an unknown form rather than silently serving immediate items", async () => {
     const res = await GET(
       makeReq("http://x/api/research/posttest/items?form=nonsense", AUTH()),
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.form).toBe("immediate");
-    expect(body.sections.contextTransfer).toBeDefined();
+    expect(body.success).toBe(false);
+    expect(body.message).toBe("Invalid posttest form");
   });
 });
+
