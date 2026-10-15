@@ -65,6 +65,21 @@ database migration, backup, preregistration, pilot, or data collection occurred.
   0.20 decision is therefore not only a documentation mismatch; currently
   neither value is evidenced in the live schedule path.
 
+### 2026-10-15 — synthetic analysis-pipeline smoke test: PASS (test-only)
+
+- Environment: standard CPython 3.12 virtual environment with the versions in
+  `research/requirements.txt` installed successfully.
+- Commands completed with seed `20261015`:
+  - `research/synth_logs.py --learners 60 --weeks 8 --seed 20261015`
+  - `research/fit_dart.py --source jsonl ... --boot 20 --seed 20261015`
+- The generated log contained 85,621 synthetic review rows across 60 synthetic
+  learners. Fitting completed with cluster bootstrap, five learner-level folds,
+  DeLong comparison, Brier score, and calibration output written successfully.
+- **Interpretation:** PASS demonstrates that the local analysis code path runs.
+  The generator embeds `alpha_true = 0.45`; therefore neither fitted α, its
+  confidence interval, p-values, AUC, nor calibration values are study findings
+  or permitted manuscript results.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
