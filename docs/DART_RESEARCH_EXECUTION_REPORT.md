@@ -213,6 +213,18 @@ decision reference. This does not resolve the separate live-wiring gate below.
   reproducible seeds. Because this changes the practical inferential procedure,
   record a dated amendment before viewing pilot data.
 
+### 2026-10-16 — isolated research database gate: blocked (verified)
+
+- Command run from the repository root: `node research/verify_env.js`.
+- Result: the verifier stopped before any database connection because
+  `.env.research` is absent. It requires `RESEARCH_MONGO_URI`,
+  `RESEARCH_MONGO_DB`, and `RESEARCH_SALT`; no secret values were requested,
+  read, written, or logged.
+- **Next owner action:** configure those values locally for an isolated research
+  database (not the production/application database), then rerun the verifier,
+  index-creation script, and a disposable-database backup/restore drill. This
+  is an operational prerequisite, not a paper result.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
