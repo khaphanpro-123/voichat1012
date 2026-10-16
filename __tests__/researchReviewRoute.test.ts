@@ -123,6 +123,7 @@ function goodBody(overrides: Partial<any> = {}): any {
     elapsedMs: 4200,
     recall: 1,
     responseTimeMs: 3800,
+    quality: 4,
     ...overrides,
   };
 }
@@ -160,6 +161,14 @@ describe("POST /api/research/review", () => {
   it("400 when retrievalType is outside 0..3", async () => {
     const res = await POST(makeReq(goodBody({ retrievalType: 4 }), "Bearer VALID"));
     expect(res.status).toBe(400);
+  });
+
+  it("400 when the required SM-2 self-rating is missing or invalid", async () => {
+    const missing = goodBody();
+    delete missing.quality;
+    expect((await POST(makeReq(missing, "Bearer VALID"))).status).toBe(400);
+    expect((await POST(makeReq(goodBody({ quality: 6 }), "Bearer VALID"))).status).toBe(400);
+    expect((await POST(makeReq(goodBody({ quality: 2.5 }), "Bearer VALID"))).status).toBe(400);
   });
 
   it("403 when participant has withdrawn (dropoutAt set)", async () => {
@@ -226,3 +235,4 @@ describe("POST /api/research/review", () => {
     expect(reviewLogs[0].taskPrompt).toBeUndefined();
   });
 });
+
