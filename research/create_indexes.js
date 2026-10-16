@@ -63,6 +63,15 @@ const INDEXES = {
   familiarityresponses: [
     { keys: { screenerId: 1 }, options: { name: "screenerId_unique", unique: true } },
   ],
+  researchsm2states: [
+    { keys: { participantCode: 1, vocabularyId: 1 }, options: { name: "participant_word_unique", unique: true } },
+    { keys: { participantCode: 1, nextReviewDate: 1 }, options: { name: "participant_due" } },
+  ],
+  researchdecisionreceipts: [
+    { keys: { receiptId: 1 }, options: { name: "receiptId_unique", unique: true } },
+    { keys: { participantCode: 1, vocabularyId: 1, consumedAt: 1 }, options: { name: "participant_word_consumed" } },
+    { keys: { expiresAt: 1, consumedAt: 1 }, options: { name: "expiry_consumed" } },
+  ],
 };
 
 (async () => {
@@ -104,3 +113,4 @@ const INDEXES = {
   console.log(`\nDone. ${created} index calls succeeded, ${failed} failed.`);
   process.exit(failed > 0 ? 1 : 0);
 })();
+
