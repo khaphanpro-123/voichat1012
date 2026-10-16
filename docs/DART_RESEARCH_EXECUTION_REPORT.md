@@ -414,6 +414,29 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   drill evidence, frozen scheduler/inference verification, and controlled-pilot
   records. Do not overwrite historical plan rows to manufacture completion.
 
+### 2026-10-16 — separate verified execution tracker created
+
+- A new Google Sheets tracker was created without changing the supplied
+  historical `PAPER` workbook:
+  `DART Research Execution Tracker — Verified 2026-10-16`
+  (spreadsheet ID `1r61rjvL_1aFe4nhcez1wxCivJQMxTnO-Qc9fR3w25ko`).
+- It contains nine ordered research gates with owner, verified evidence, next
+  concrete action, and blocking dependency. Its header explicitly says
+  “BLOCKED — do not enrol” and distinguishes code/simulation evidence from
+  external approvals and study results.
+- Import verification confirmed a native `DartExecutionTasks` table at
+  `Execution Tracker!A7:G16`, frozen rows, the preserved status validation
+  list, and all nine seeded records. The source tracker is therefore a live
+  evidence-oriented checklist, not a retrospective claim that the listed work
+  completed.
+- Local XLSX inspection found no formula-error token and its rendered preview
+  was readable. Native browser visual inspection was unavailable in this run
+  because the Windows UI helper failed during initialization; the API metadata
+  confirms structure and validation but does not substitute for a future
+  normal-zoom Google Sheets visual check.
+- **Scope limit:** no external approval, database, participant, pilot, or study
+  result was created by this tracker.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
