@@ -453,6 +453,26 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   IRB approval, OSF record, amendment signature, or statistical method was
   invented by this correction.
 
+### 2026-10-16 — protocol manuscript integrity sweep completed
+
+- A revision-guarded Google Docs pass replaced 12 additional unsupported or stale
+  protocol assertions while preserving the scientific questions and planned
+  three-arm design. The text no longer claims that the study is already
+  preregistered, that H5 was completed with 20 learners, that a word bank is
+  frozen, that OSF was submitted, or that Amendment #A-001 was signed.
+- The design sections now distinguish Decision D-014’s ε=.20 exploration target
+  from live implementation: the study scheduler has not yet wired or logged the
+  exploration decision, so it remains a do-not-enrol engineering gate.
+- RQ1 sections now distinguish the verified legacy row-IID diagnostic
+  (anti-conservative in clustered synthetic simulations) from the absent
+  confirmatory procedure. They require a statistician-approved clustered null
+  generator, production wiring, calibration, and a dated pre-data amendment.
+  The Abstract’s RQ1 parenthetical was made consistent with that state.
+- Readback confirmed the new Abstract RQ1 wording and the revised protocol
+  paragraphs. These changes do not create a statistical method, governance
+  record, implementation, participant, or result; they prevent the manuscript
+  from claiming one without evidence.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
