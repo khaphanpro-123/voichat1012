@@ -70,6 +70,9 @@ interface PendingSubmission {
   elapsedMs: number;
   recall: 0 | 1;
   responseTimeMs: number;
+  // Self-rated 0–5 SM-2 quality. This is collected after every answer for all
+  // blinded study arms; the server stores it next to the objective recall.
+  quality: number;
   answerText: string;             // learner's typed / picked answer
 }
 
@@ -280,6 +283,7 @@ export default function StudyPage() {
   const [taskStartTs, setTaskStartTs] = useState<number>(0);
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [feedback, setFeedback] = useState<null | { correct: 0 | 1; expected: string }>(null);
+  const [pendingReview, setPendingReview] = useState<PendingSubmission | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
   const [online, setOnline] = useState(true);
@@ -427,7 +431,10 @@ export default function StudyPage() {
 
     const now = Date.now();
     const elapsedMs = performance.now() - taskStartTs;
-    const sub: PendingSubmission = {
+    // Do not enqueue yet: the study protocol collects a 0–5 self-rating after
+    // the objective answer is graded. Keeping this separate prevents a client
+    // from silently fabricating a default SM-2 quality.
+    const sub = {
       clientEventId: (typeof crypto !== "undefined" && (crypto as any).randomUUID)
         ? (crypto as any).randomUUID()
         : `${now}-${Math.random().toString(36).slice(2)}`,
@@ -445,15 +452,23 @@ export default function StudyPage() {
       responseTimeMs: Math.round(elapsedMs),
       answerText: text,
     };
+    setPendingReview(sub as PendingSubmission);
+  }
+
+  async function submitRatedReview(quality: number) {
+    if (!pendingReview) return;
+    const sub: PendingSubmission = { ...pendingReview, quality };
     submissionsRef.current.push(sub);
 
-    // Always persist to IndexedDB first — durability before network
+    // Always persist to IndexedDB first — durability before network.
     try { await idbPut(sub); } catch {}
     setPendingCount((n) => n + 1);
 
     if (online && participantToken) {
-      trySubmit(sub);
+      await trySubmit(sub);
     }
+    setPendingReview(null);
+    advance();
   }
 
   async function trySubmit(sub: PendingSubmission) {
@@ -486,6 +501,7 @@ export default function StudyPage() {
   function advance() {
     setCurrentTask(null);
     setFeedback(null);
+    setPendingReview(null);
     if (wordIdx + 1 >= words.length) {
       setStatus("done");
     } else {
@@ -567,10 +583,29 @@ export default function StudyPage() {
             <div className="text-sm" style={{ color: C.grayText }}>
               Đáp án: <b>{feedback.expected}</b>
             </div>
-            <div className="mt-5 text-right">
-              <BigButton onClick={advance} color="green" size="lg">
-                {wordIdx + 1 < words.length ? "Từ tiếp →" : "Kết thúc"}
-              </BigButton>
+            <div className="mt-5 rounded-2xl p-4" style={{ background: "white", border: `2px solid ${C.grayBorder}` }}>
+              <div className="font-bold" style={{ color: C.grayText }}>
+                Bạn nhớ từ này ở mức nào?
+              </div>
+              <p className="text-xs mt-1" style={{ color: C.grayText }}>
+                Chọn theo mức độ nhớ của bạn, không phải chỉ đúng/sai. Câu hỏi này giống nhau cho mọi người học.
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
+                {[
+                  [0, "Quên hẳn"], [1, "Rất khó"], [2, "Khó"],
+                  [3, "Nhớ được"], [4, "Có do dự"], [5, "Rất dễ"],
+                ].map(([quality, label]) => (
+                  <button
+                    key={quality}
+                    onClick={() => submitRatedReview(quality as number)}
+                    disabled={!pendingReview}
+                    className="rounded-xl px-2 py-2 text-xs font-bold disabled:opacity-40"
+                    style={{ background: C.blueLight, border: `2px solid ${C.blue}`, color: C.blueDark }}
+                    aria-label={`Mức nhớ ${quality}: ${label}`}>
+                    <span className="block text-base">{quality}</span>{label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -610,3 +645,4 @@ const DEMO_DEF_VI = [
   "xuất hiện, nổi lên", "tăng cường", "tạo điều kiện", "tạo ra", "tác động",
   "tích hợp", "duy trì", "tối ưu hoá", "ưu tiên", "sử dụng",
 ];
+
