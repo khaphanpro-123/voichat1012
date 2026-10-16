@@ -25,14 +25,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import ReviewLog from "@/app/models/ReviewLog";
 import Participant from "@/app/models/Participant";
-import { SCHEDULER_VERSION, hashPrompt, isValidWeightsVersion, getWeightsVersion } from "@/lib/researchVersion";
+import ResearchDecisionReceipt from "@/app/models/ResearchDecisionReceipt";
+import { hashPrompt, getWeightsVersion } from "@/lib/researchVersion";
 import { verifyRequest } from "@/lib/participantAuth";
+import { verifyResearchDecisionReceipt } from "@/lib/researchDecisionReceipt";
 
 export const dynamic = "force-dynamic";
 
 interface ReviewRequest {
   clientEventId: string;         // UUIDv4 from client — idempotency key
   sessionId: string;             // groups a study session
+  decisionReceipt: string;       // opaque server-signed scheduling decision
   vocabularyId: string;
   word: string;
 
@@ -46,7 +49,7 @@ interface ReviewRequest {
   // so the row is attributed to the exact weights that served it — not to
   // whatever weights happen to be loaded at the moment the response arrives
   // (which can differ if retraining lands between decision and submit).
-  servedWeightsVersion: string;
+  servedWeightsVersion?: string; // legacy client field; ignored when receipt is valid
 
   // Timing (from client, we log but don't trust for Δ)
   scheduledAt: string;           // ISO
@@ -86,23 +89,17 @@ export async function POST(req: NextRequest) {
 
   // Required-field validation up-front — better a 400 now than a Mongo error later.
   const required = [
-    "clientEventId", "sessionId", "vocabularyId", "word",
-    "retrievalType", "featureVector", "servedWeightsVersion",
-    "scheduledAt", "servedAt",
+    "clientEventId", "sessionId", "decisionReceipt", "taskPrompt", "servedAt",
     "elapsedMs", "recall", "responseTimeMs", "quality",
   ] as const;
   for (const k of required) {
     if (body[k] === undefined || body[k] === null) return badRequest(`Missing field: ${k}`);
   }
-  if (![0, 1, 2, 3].includes(body.retrievalType)) return badRequest("retrievalType must be 0..3");
   if (![0, 1].includes(body.recall)) return badRequest("recall must be 0 or 1");
   if (!Number.isInteger(body.quality) || body.quality < 0 || body.quality > 5) {
     return badRequest("quality must be an integer from 0 to 5");
   }
-  if (!Array.isArray(body.featureVector)) return badRequest("featureVector must be array");
-  if (!isValidWeightsVersion(body.servedWeightsVersion)) {
-    return badRequest("servedWeightsVersion must be 'default' or 12 hex chars");
-  }
+  if (typeof body.taskPrompt !== "string" || !body.taskPrompt) return badRequest("taskPrompt required");
 
   try {
     await connectDB();
@@ -112,11 +109,37 @@ export async function POST(req: NextRequest) {
     if (!participant) return badRequest("Unknown participant", 403);
     if ((participant as any).dropoutAt) return badRequest("Participant has withdrawn", 403);
 
-    // 2. Idempotency: if clientEventId already logged, return the existing row.
+    // 2. Idempotency precedes receipt consumption: an offline retry after a
+    // successful write returns the original outcome even though its receipt was
+    // consumed by that first write.
     const existing = await ReviewLog.findOne({ clientEventId: body.clientEventId }).lean();
     if (existing) {
       return NextResponse.json({ success: true, deduplicated: true, id: (existing as any)._id });
     }
+
+    const receiptId = verifyResearchDecisionReceipt(body.decisionReceipt);
+    if (!receiptId) return badRequest("Invalid decision receipt");
+    const now = new Date();
+    const receipt = await ResearchDecisionReceipt.findOne({
+      receiptId,
+      participantCode,
+      consumedAt: { $exists: false },
+      expiresAt: { $gt: now },
+    }).lean();
+    if (!receipt) return badRequest("Decision receipt is expired, consumed, or unavailable", 409);
+    if ((receipt as any).condition !== (participant as any).condition) {
+      console.error(`[research/review] receipt arm mismatch for ${participantCode}`);
+      return badRequest("Decision receipt is unavailable", 409);
+    }
+    if (hashPrompt(body.taskPrompt) !== (receipt as any).taskPromptHash) {
+      return badRequest("Task does not match the issued decision receipt", 409);
+    }
+    const consumed = await ResearchDecisionReceipt.findOneAndUpdate(
+      { _id: (receipt as any)._id, consumedAt: { $exists: false }, expiresAt: { $gt: now } },
+      { $set: { consumedAt: now, consumedByClientEventId: body.clientEventId } },
+      { new: true },
+    ).lean();
+    if (!consumed) return badRequest("Decision receipt has already been consumed", 409);
 
     // 3. Compute serverDeltaDays from the previous ReviewLog for this
     //    (participant, vocabulary, condition). Do NOT trust client's deltaDays.
@@ -126,30 +149,25 @@ export async function POST(req: NextRequest) {
     const prev = await ReviewLog.findOne({
       userId: participantCode,
       vocabularyId: body.vocabularyId,
-      condition: (participant as any).condition,
+      condition: (receipt as any).condition,
     })
       .sort({ createdAt: -1 })
       .select({ createdAt: 1 })
       .lean();
-    const now = new Date();
     const serverDeltaDays = prev
       ? Math.max(0, (now.getTime() - new Date((prev as any).createdAt).getTime()) / (1000 * 60 * 60 * 24))
       : 0;
 
-    // 4. Version stamp — the client echoes the weightsVersion that /api/dart/schedule
-    //    handed it at decision time; that is the truth for attribution. We also log
-    //    the CURRENT server weightsVersion so we can detect drift (rows where the
-    //    scheduler weights changed between decide and submit).
+    // 4. Attribute the event to the server-issued decision, never client echo.
     const currentWeightsVersion = getWeightsVersion();
-    const taskPromptHash = body.taskPrompt ? hashPrompt(body.taskPrompt) : undefined;
 
     const doc = await ReviewLog.create({
       userId: participantCode,
-      vocabularyId: body.vocabularyId,
-      word: body.word,
+      vocabularyId: (receipt as any).vocabularyId,
+      word: (receipt as any).word,
       deltaDays: serverDeltaDays,   // trusted version
-      retrievalType: body.retrievalType,
-      featureVector: body.featureVector,
+      retrievalType: (receipt as any).retrievalType,
+      featureVector: (receipt as any).featureVector,
       contextId: body.contextId,
       recall: body.recall,
       responseTimeMs: body.responseTimeMs,
@@ -158,20 +176,20 @@ export async function POST(req: NextRequest) {
       // research fields
       clientEventId: body.clientEventId,
       sessionId: body.sessionId,
-      condition: (participant as any).condition,
-      schedulerVersion: SCHEDULER_VERSION,
-      weightsVersion: body.servedWeightsVersion,   // decision-time — trusted for audit
-      scheduledAt: new Date(body.scheduledAt),
+      condition: (receipt as any).condition,
+      schedulerVersion: (receipt as any).schedulerVersion,
+      weightsVersion: (receipt as any).weightsVersion,
+      scheduledAt: new Date((receipt as any).issuedAt),
       servedAt: new Date(body.servedAt),
       elapsedMs: body.elapsedMs,
       serverDeltaDays,
-      taskPromptHash,
+      taskPromptHash: (receipt as any).taskPromptHash,
       isCatchUp: body.isCatchUp ?? false,
     });
 
-    const drift = body.servedWeightsVersion !== currentWeightsVersion;
+    const drift = (receipt as any).weightsVersion !== currentWeightsVersion;
 
-    // 5. Update participant activity counters (fire-and-forget, best effort).
+    // 6. Update participant activity counters (fire-and-forget, best effort).
     Participant.updateOne(
       { participantCode },
       {
@@ -180,14 +198,14 @@ export async function POST(req: NextRequest) {
       }
     ).catch((e) => console.warn("Participant counter update failed:", e));
 
-    // 6. Server-side observability: log drift for the researcher dashboard.
+    // 7. Server-side observability: log drift for the researcher dashboard.
     //    Do NOT return drift/weightsVersion to the client — a participant who
     //    sees `default` for weeks then a 12-hex sha knows they were promoted
     //    to trained weights, breaking blinding.
     if (drift) {
       console.warn(
         `[research] weights drift: participant=${participantCode} ` +
-          `served=${body.servedWeightsVersion} current=${currentWeightsVersion}`
+          `served=${(receipt as any).weightsVersion} current=${currentWeightsVersion}`
       );
     }
 
