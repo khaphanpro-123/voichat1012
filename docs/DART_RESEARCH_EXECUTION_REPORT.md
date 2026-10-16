@@ -341,6 +341,27 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   already listed above. The runner is now an evidence-producing preflight, not
   an approval shortcut.
 
+### 2026-10-16 — one TypeScript parser fault removed; two truncated components remain
+
+- The parser fault in `hooks/useErrorHandler.ts` was mechanical: it contained
+  JSX despite the `.ts` extension. The file was moved unchanged to
+  `hooks/useErrorHandler.tsx`. Repository search found no source imports of the
+  hook or its `ErrorBanner` export, so the extension correction preserves its
+  public module resolution while allowing TypeScript to parse its JSX.
+- Verification command: `npx tsc --noEmit`. The `useErrorHandler` parser error
+  is gone. The command still exits 1 solely with parser diagnostics in
+  `components/MediaLearningEnhanced.tsx` (line 21) and
+  `components/SmartDocumentExtractor.tsx` (lines 253, 254, 296, and 331).
+- Both remaining files are clean in the worktree and their checked-in source is
+  structurally truncated; repository search found no source imports. No
+  semantics-preserving repair can be verified from the remaining text, so they
+  were not deleted, stubbed, or reconstructed. A maintainer must either recover
+  their intended source or explicitly authorize their retirement/rebuild before
+  the repository-wide TypeScript deployment gate can pass.
+- **Scope limit:** this fixes one build-health defect only. It does not clear
+  any RCT scheduler, research database, governance, or confirmatory-inference
+  gate.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
