@@ -473,6 +473,24 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   record, implementation, participant, or result; they prevent the manuscript
   from claiming one without evidence.
 
+### 2026-10-16 — manuscript reference placeholders removed
+
+- A source-verification pass could not substantiate five bibliography entries that
+  were explicitly marked `[TBD]` (Cheng et al. 2022; Nguyen & Godfroid 2020;
+  Pham & Nguyen 2024; Traxler et al. 2024; and Ye et al. 2022). They were
+  removed rather than converted into speculative citations.
+- Three narrative paragraphs that depended directly on those placeholders were
+  rewritten to retain only the supported general framing and the existing
+  completed citations. No effect-size, usage-rate, curriculum-coverage, or
+  neural-model claim was retained without a verifiable reference.
+- Readback found no remaining placeholder author/reference citation. The sole
+  remaining `[TBD]` is the protocol-status placeholder for future real-study
+  effect sizes, precision, and inference values, which is appropriate before
+  data collection.
+- **Scope limit:** citation cleanup does not validate the existing retained
+  bibliography wholesale; a journal-specific reference/style audit is still
+  required before submission.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
