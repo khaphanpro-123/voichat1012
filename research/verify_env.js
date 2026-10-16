@@ -9,7 +9,7 @@
  *   2. dbName trong URI KHÔNG phải "viettalk" (production)
  *   3. RESEARCH_SALT tồn tại, ≥ 32 ký tự hex
  *   4. Ping MongoDB thành công (connect + ping + list collections)
- *   5. (Tuỳ chọn) UPSTASH_REDIS_REST_URL/TOKEN có format hợp lệ
+ *   5. (Tuỳ chọn) kiểm tra cấu hình Upstash nếu được bật ngoài research queue
  *
  * KHÔNG in secret nào ra stdout. Chỉ in mask (số ký tự).
  */
@@ -85,14 +85,17 @@ if (!salt) {
   ok(`RESEARCH_SALT present (${salt.length} hex chars)`);
 }
 
-// --- Check 4: Upstash Redis (optional) ---
-const redisUrl = env.UPSTASH_REDIS_REST_URL;
-const redisToken = env.UPSTASH_REDIS_REST_TOKEN;
+// --- Check 4: Upstash Redis (optional; not required by the MongoDB research queue) ---
+// Support both the REST naming used by Upstash examples and the naming used by
+// lib/redis-client.ts, so the verifier does not approve one convention while
+// a caller reads the other.
+const redisUrl = env.UPSTASH_REDIS_REST_URL || env.UPSTASH_REDIS_URL;
+const redisToken = env.UPSTASH_REDIS_REST_TOKEN || env.UPSTASH_REDIS_TOKEN;
 if (!redisUrl && !redisToken) {
-  warn("Upstash Redis not configured — Ngày 11 (LLM-Judge queue) sẽ bị chặn");
+  warn("Upstash Redis not configured — acceptable: the research LLM-Judge queue uses MongoDB");
 } else if (redisUrl && redisToken) {
   if (!/^https:\/\/.*\.upstash\.io/.test(redisUrl)) {
-    warn(`UPSTASH_REDIS_REST_URL format lạ (${redisUrl.length} chars) — verify tay`);
+    warn(`Upstash URL format lạ (${redisUrl.length} chars) — verify tay`);
   } else {
     ok(`Upstash Redis configured (url=${redisUrl.length} chars, token=${redisToken.length} chars)`);
   }
@@ -142,3 +145,4 @@ const effectiveDb = dbName || "viettalk_research";
     process.exit(3);
   }
 })();
+
