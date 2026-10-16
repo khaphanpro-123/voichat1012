@@ -222,6 +222,18 @@ the pre-registered clustered RQ1 test is valid.
   reproducible seeds. Because this changes the practical inferential procedure,
   record a dated amendment before viewing pilot data.
 
+**Method note for the statistician (literature review, not a protocol change):**
+The replacement procedure must generate each bootstrap data set under the
+restricted/null model, not simply resample observed learners under a possible
+alternative. This distinction is consistent with parametric-bootstrap LRT work
+on boundary hypotheses (Drton & Williams, 2011,
+https://doi.org/10.1093/biomet/asr021) and cluster-inference guidance that
+emphasises imposing the null in bootstrap testing (Cameron & Miller, 2015,
+https://cameron.econ.ucdavis.edu/research/Cameron_Miller_JHR_2015.pdf). The
+specific null generator, treatment of learner-level dependence, bootstrap
+count, and p-value convention require statistician approval and a dated
+pre-data amendment; this note deliberately does not select them.
+
 ### 2026-10-16 — isolated research database gate: blocked (verified)
 
 - Command run from the repository root: `node research/verify_env.js`.
