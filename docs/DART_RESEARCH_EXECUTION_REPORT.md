@@ -144,6 +144,13 @@ decision reference. This does not resolve the separate live-wiring gate below.
 - **Finding:** the live study path neither collects learner self-ratings (option A) nor implements a deterministic, versioned binary-to-quality mapping (option B). The hard-coded scheduling value is not an observed review outcome and must not be treated as SM-2 input.
 - **Do-not-enrol gate:** the protocol owner must choose A or B, freeze the scale/mapping and initial state, then implement a condition-blind UI plus authenticated server-side state transitions and fixtures. This finding reinforces the existing SM-2 baseline-fidelity gate; it does not create a protocol choice or a participant result.
 
+### 2026-10-16 — SM-2 decision packet: numeric mapping changes later schedules
+
+- Static source reads at code commit `3bf1520960a5d3f638140f0193a2936f6f013d29` verified that `lib/spacedRepetition.ts::calculateNextReview()` stores and updates `easeFactor`, `interval`, and `repetitions`. The legacy `Vocabulary` defaults are ease factor 2.5, interval 1 day, and zero repetitions, but the research review path intentionally does not mutate that application state.
+- The implementation resets repetitions and sets interval to one day for quality below 3. A quality of 3, 4, or 5 advances repetitions, but updates ease factor by different amounts; therefore a binary-to-quality choice changes later SM-2 intervals even where the first successful interval is the same.
+- **Decision A:** collect a learner-selected 0–5 quality value after the objectively graded response, persist it with the immutable review event, and pre-specify whether every blinded arm receives the same rating interaction. **Decision B:** freeze an explicit mapping for both recall outcomes (including its version and rationale), and persist the derived quality plus the original binary recall. Neither option has been selected or implemented.
+- **Required implementation after a choice:** add research-owned state keyed to the participant and vocabulary, atomically apply the frozen initial values and update rule on a valid server receipt, and add fixtures covering every accepted quality/mapping outcome, retries, and concurrent submissions. This is a protocol/engineering decision packet, not a claim that any participant schedule has run.
+
 ### 2026-10-15 — synthetic analysis-pipeline smoke test: PASS (test-only)
 
 - Environment: standard CPython 3.12 virtual environment with the versions in
