@@ -137,6 +137,15 @@ decision reference. This does not resolve the separate live-wiring gate below.
   update transaction. Then add state-transition fixtures and parity tests
   before enabling any participant session.
 
+### 2026-10-16 — self-rated SM-2 quality: first implementation slice PASS (scope bounded)
+
+- The research lead granted autonomous execution in this chat. The working pre-data implementation choice is **A**: collect a participant self-rating from 0 to 5 after every objectively graded retrieval response. This is an implementation decision only; it is not an IRB approval, OSF registration, published preregistration, or evidence of any participant session.
+- Published on `main`: study UI change `f69565f1bedb6d6b41022163439d0edfc8842f61`, research-review validation `ad0edd09bf18dcd53b9bd1937c14a7624f687627`, and the regression test `7503d6ebbdbb8e92a9e0cf4fa9230157f461bcad`.
+- The study page now grades the response to immutable binary `recall`, then requires a 0–5 self-rating before it writes the event to IndexedDB or submits it. The prompt is condition-blind and identical for all study arms. It no longer defaults an outcome quality from the legacy scheduler request.
+- `POST /api/research/review` now requires `quality` and rejects non-integer values outside 0–5. The route persists that value alongside the objective recall; a missing value can no longer become an ambiguous SM-2 log row.
+- Verification command: `node .\\node_modules\\jest\\bin\\jest.js __tests__/researchReviewRoute.test.ts --runInBand --verbose`. Result: PASS, 1 suite / 11 tests, including missing, out-of-range, and fractional quality rejection. Isolated syntax check command: `node -e "... ts.transpileModule(... app/dashboard-new/study/page.tsx ...) ..."`; result: `study_page_syntax=pass`.
+- **Scope limit / remaining gate:** this slice does not yet create research-owned SM-2 state, a server-side arm dispatcher, or a signed one-time decision receipt. It does not make the existing client scheduling fallback safe, and it does not clear the do-not-enrol gate.
+
 ### 2026-10-16 — study UI currently records binary recall, not SM-2 quality
 
 - Static source audit at code commit `3bf1520960a5d3f638140f0193a2936f6f013d29` inspected `app/dashboard-new/study/page.tsx` and `app/api/research/review/route.ts`. The audit command was `rg -n -C 5 "quality|/api/vocabulary-review|recall|submit|handle.*Review|onReview" app\\dashboard-new\\study\\page.tsx`, followed by targeted source reads.
