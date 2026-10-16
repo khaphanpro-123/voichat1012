@@ -18,6 +18,7 @@
 
 // In-memory reviewlogs store the mocked ReviewLog writes to. Reset per test.
 const reviewLogs: any[] = [];
+const consumedReceipts = new Set<string>();
 
 jest.mock("@/lib/db", () => ({
   connectDB: jest.fn(async () => {}),
@@ -32,11 +33,43 @@ jest.mock("@/lib/participantAuth", () => ({
 }));
 
 jest.mock("@/lib/researchVersion", () => ({
-  SCHEDULER_VERSION: "dart@test",
   hashPrompt: (s: string) => `h(${s.length})`,
-  isValidWeightsVersion: (v: string) => v === "default" || /^[0-9a-f]{12}$/.test(v),
   getWeightsVersion: () => "default",
 }));
+
+jest.mock("@/lib/researchDecisionReceipt", () => ({
+  verifyResearchDecisionReceipt: (token: string) => token.startsWith("receipt-") ? token : null,
+}));
+
+jest.mock("@/app/models/ResearchDecisionReceipt", () => {
+  const chain = (val: any) => ({ lean: async () => val });
+  const record = (receiptId: string) => ({
+    _id: receiptId,
+    receiptId,
+    participantCode: "P0042",
+    vocabularyId: "v1",
+    word: "ubiquitous",
+    condition: "dart",
+    retrievalType: 1,
+    featureVector: [0.1, 0.2, 0.3],
+    schedulerVersion: "dart@test",
+    weightsVersion: "default",
+    taskPromptHash: "h(16)",
+    issuedAt: new Date("2026-08-11T08:00:00Z"),
+    expiresAt: new Date("2099-01-01T00:00:00Z"),
+  });
+  return {
+    __esModule: true,
+    default: {
+      findOne: jest.fn((filter: any) => chain(consumedReceipts.has(filter.receiptId) ? null : record(filter.receiptId))),
+      findOneAndUpdate: jest.fn((filter: any) => {
+        if (consumedReceipts.has(filter._id)) return chain(null);
+        consumedReceipts.add(filter._id);
+        return chain(record(filter._id));
+      }),
+    },
+  };
+});
 
 jest.mock("@/app/models/ReviewLog", () => {
   // Chainable Mongoose-ish query so `.sort().select().lean()` works.
@@ -81,12 +114,12 @@ jest.mock("@/app/models/Participant", () => {
     default: {
       findOne: jest.fn((filter: any) => {
         if (filter.participantCode === "P0042") {
-          return chain({ participantCode: "P0042", condition: "DART", dropoutAt: null });
+          return chain({ participantCode: "P0042", condition: "dart", dropoutAt: null });
         }
         if (filter.participantCode === "P0099") {
           return chain({
             participantCode: "P0099",
-            condition: "DART",
+            condition: "dart",
             dropoutAt: new Date("2026-08-01"),
           });
         }
@@ -110,14 +143,14 @@ function makeReq(body: any, authorization?: string): any {
 }
 
 function goodBody(overrides: Partial<any> = {}): any {
-  return {
+  const body = {
     clientEventId: "evt-1",
     sessionId: "s1",
     vocabularyId: "v1",
     word: "ubiquitous",
     retrievalType: 1,
     featureVector: [0.1, 0.2, 0.3],
-    servedWeightsVersion: "default",
+    taskPrompt: "The word is ___.",
     scheduledAt: "2026-08-11T08:00:00Z",
     servedAt: "2026-08-11T08:00:01Z",
     elapsedMs: 4200,
@@ -126,11 +159,13 @@ function goodBody(overrides: Partial<any> = {}): any {
     quality: 4,
     ...overrides,
   };
+  return { ...body, decisionReceipt: overrides.decisionReceipt ?? `receipt-${body.clientEventId}` };
 }
 
 describe("POST /api/research/review", () => {
   beforeEach(() => {
     reviewLogs.length = 0;
+    consumedReceipts.clear();
   });
 
   it("401 with no Authorization header", async () => {
@@ -153,14 +188,11 @@ describe("POST /api/research/review", () => {
     expect(j.message).toMatch(/sessionId/);
   });
 
-  it("400 when servedWeightsVersion is neither 'default' nor 12 hex", async () => {
-    const res = await POST(makeReq(goodBody({ servedWeightsVersion: "nope" }), "Bearer VALID"));
-    expect(res.status).toBe(400);
-  });
-
-  it("400 when retrievalType is outside 0..3", async () => {
-    const res = await POST(makeReq(goodBody({ retrievalType: 4 }), "Bearer VALID"));
-    expect(res.status).toBe(400);
+  it("rejects a missing or forged decision receipt", async () => {
+    const missing = goodBody();
+    delete missing.decisionReceipt;
+    expect((await POST(makeReq(missing, "Bearer VALID"))).status).toBe(400);
+    expect((await POST(makeReq(goodBody({ decisionReceipt: "forged" }), "Bearer VALID"))).status).toBe(400);
   });
 
   it("400 when the required SM-2 self-rating is missing or invalid", async () => {
@@ -200,12 +232,16 @@ describe("POST /api/research/review", () => {
     expect(reviewLogs[0].clientEventId).toBe("evt-idemp-1");
   });
 
-  it("stamps schedulerVersion and echoes servedWeightsVersion (Ngày 9 provenance)", async () => {
-    await POST(makeReq(goodBody({ clientEventId: "evt-stamp" }), "Bearer VALID"));
+  it("uses receipt provenance rather than client scheduler fields", async () => {
+    const res = await POST(makeReq(goodBody({
+      clientEventId: "evt-stamp", vocabularyId: "forged", word: "forged",
+      retrievalType: 3, featureVector: [99], servedWeightsVersion: "nope",
+    }), "Bearer VALID"));
+    expect(res.status).toBe(200);
     expect(reviewLogs).toHaveLength(1);
     expect(reviewLogs[0].schedulerVersion).toBe("dart@test");
     expect(reviewLogs[0].weightsVersion).toBe("default");
-    expect(reviewLogs[0].condition).toBe("DART");
+    expect(reviewLogs[0]).toMatchObject({ vocabularyId: "v1", word: "ubiquitous", retrievalType: 1, featureVector: [0.1, 0.2, 0.3], condition: "dart" });
   });
 
   it("computes serverDeltaDays from the previous review, ignoring client-supplied deltas", async () => {
