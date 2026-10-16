@@ -52,13 +52,14 @@ interface Task {
   prompt: string;                 // fully-rendered question
   options?: string[];             // MCQ only
   expectedAnswer: string;         // gold answer (client-side eval for immediate feedback)
-  weightsVersion: string;
   featureVector: number[];
+  decisionReceipt?: string;       // issued only by /api/research/schedule
 }
 
 interface PendingSubmission {
   clientEventId: string;          // UUIDv4
   sessionId: string;
+  decisionReceipt: string;
   vocabularyId: string;
   word: string;
   retrievalType: RetrievalType;
@@ -213,7 +214,7 @@ function TaskWidget({ task, onAnswer }: { task: Task; onAnswer: (text: string) =
 // For pilot / dev, we fabricate tasks client-side from the word entry.
 // In production this would call /api/retrieval-task/generate which uses the
 // cached callAICached (D-013) to keep task content consistent across the arm.
-function fabricateTaskFromWord(word: WordEntry, retrievalType: RetrievalType, weightsVersion: string, featureVector: number[]): Task {
+function fabricateTaskFromWord(word: WordEntry, retrievalType: RetrievalType, featureVector: number[]): Task {
   const w = word.word;
   const promptByType: Record<RetrievalType, string> = {
     0: `"${w}" nghĩa là gì?`,
@@ -232,7 +233,6 @@ function fabricateTaskFromWord(word: WordEntry, retrievalType: RetrievalType, we
     prompt: promptByType[retrievalType],
     options: optionsByType[retrievalType],
     expectedAnswer: retrievalType === 0 ? (word.defVi || "định nghĩa 1") : w,
-    weightsVersion,
     featureVector,
   };
 }
@@ -342,76 +342,57 @@ export default function StudyPage() {
     }
   }
 
-  // ── Fetch next task via DART schedule + LLM generation ─────────────────
+  // ── Fetch next task through the participant-authenticated scheduler ──────
   const fetchNextTask = useCallback(async (word: WordEntry) => {
     setError(null);
     const sched = new Date().toISOString();
     setScheduledAt(sched);
-    // Step 1: ask DART which retrievalType is next
-    let rt: RetrievalType = 0;
-    let weightsVersion = "default";
     let featureVector = [1, 0.4, 0.5, 0.5, 0.2, 0.5];
-    try {
-      const r = await fetch("/api/dart/schedule", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          vocabularyId: word.id,
-          userId: participantToken ?? "demo-user",
-          quality: 4,
-          lastRetrievalType: 0,
-        }),
-      });
-      const j = r.ok ? await r.json() : null;
-      rt = (j?.schedule?.nextRetrievalType ?? 0) as RetrievalType;
-      weightsVersion = j?.weightsVersion ?? "default";
-      featureVector = j?.features?.featureVector ?? featureVector;
-    } catch {
-      // Offline / no participant — fall through with defaults
-    }
-
-    // Step 2: ask backend to LLM-generate task content (cached via D-013)
-    // Falls back to client-side fabrication if endpoint / network fails.
-    let task: Task | null = null;
-    if (participantToken && online) {
+    if (participantToken) {
+      if (!online) {
+        setError("Cần kết nối để nhận nhiệm vụ học đã được hệ thống cấp.");
+        setStatus("idle");
+        return;
+      }
       try {
-        const r = await fetch("/api/retrieval-task/generate", {
+        const r = await fetch("/api/research/schedule", {
           method: "POST",
           headers: {
             "content-type": "application/json",
             Authorization: `Bearer ${participantToken}`,
           },
-          body: JSON.stringify({
-            vocabularyId: word.id,
-            word: word.word,
-            context: word.defVi ?? "",
-            retrievalType: rt,
-          }),
+          body: JSON.stringify({ vocabularyId: word.id }),
         });
-        if (r.ok) {
-          const j = await r.json();
-          const t = j?.task;
-          if (t?.prompt) {
-            task = {
-              vocabularyId: word.id,
-              word: word.word,
-              retrievalType: rt,
-              prompt: t.prompt,
-              options: t.options,
-              expectedAnswer: t.expectedAnswer ?? word.word,
-              weightsVersion,
-              featureVector,
-            };
-          }
+        const j = await r.json();
+        const t = j?.task;
+        if (!r.ok || !j?.decisionReceipt || !t?.prompt || ![0, 1, 2, 3].includes(t.retrievalType)) {
+          throw new Error(j?.message || "Không nhận được nhiệm vụ học hợp lệ.");
         }
-      } catch {
-        // fall through to fabrication
+        featureVector = Array.isArray(t.featureVector) ? t.featureVector : featureVector;
+        setScheduledAt(j.scheduledAt || sched);
+        setCurrentTask({
+          vocabularyId: t.vocabularyId,
+          word: t.word,
+          retrievalType: t.retrievalType as RetrievalType,
+          prompt: t.prompt,
+          options: t.options,
+          expectedAnswer: t.expectedAnswer ?? word.word,
+          featureVector,
+          decisionReceipt: j.decisionReceipt,
+        });
+        setTaskStartTs(performance.now());
+        setFeedback(null);
+        return;
+      } catch (error: any) {
+        setError(error?.message || "Không thể nhận nhiệm vụ học. Hãy thử lại khi có kết nối.");
+        setStatus("idle");
+        return;
       }
     }
-    if (!task) {
-      task = fabricateTaskFromWord(word, rt, weightsVersion, featureVector);
-    }
-    setCurrentTask(task);
+
+    // Preview mode never submits research data and is intentionally separate
+    // from the authenticated participant flow above.
+    setCurrentTask(fabricateTaskFromWord(word, 0, featureVector));
     setTaskStartTs(performance.now());
     setFeedback(null);
   }, [participantToken, online]);
@@ -439,12 +420,12 @@ export default function StudyPage() {
         ? (crypto as any).randomUUID()
         : `${now}-${Math.random().toString(36).slice(2)}`,
       sessionId,
+      decisionReceipt: currentTask.decisionReceipt ?? "",
       vocabularyId: currentTask.vocabularyId,
       word: currentTask.word,
       retrievalType: currentTask.retrievalType,
       featureVector: currentTask.featureVector,
       taskPrompt: currentTask.prompt,
-      servedWeightsVersion: currentTask.weightsVersion,
       scheduledAt,
       servedAt: new Date(taskStartTs).toISOString(),
       elapsedMs: Math.round(elapsedMs),
