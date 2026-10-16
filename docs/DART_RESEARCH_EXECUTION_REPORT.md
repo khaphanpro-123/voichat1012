@@ -368,6 +368,12 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   A fresh `npx tsc --noEmit` after those commits produced only the two
   remaining truncated-component parser diagnostics listed above.
 
+- Recovery check: a read-only archive-entry search using
+  `[System.IO.Compression.ZipFile]::OpenRead('D:\\WOKI for KIRO.zip')` with the
+  filename pattern `MediaLearningEnhanced|SmartDocumentExtractor|useErrorHandler`
+  found no matching source file. The archive was not extracted and its contents
+  were not used; it cannot supply a verified restoration for the two components.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
