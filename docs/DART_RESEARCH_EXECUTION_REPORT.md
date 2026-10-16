@@ -137,6 +137,13 @@ decision reference. This does not resolve the separate live-wiring gate below.
   update transaction. Then add state-transition fixtures and parity tests
   before enabling any participant session.
 
+### 2026-10-16 — study UI currently records binary recall, not SM-2 quality
+
+- Static source audit at code commit `3bf1520960a5d3f638140f0193a2936f6f013d29` inspected `app/dashboard-new/study/page.tsx` and `app/api/research/review/route.ts`. The audit command was `rg -n -C 5 "quality|/api/vocabulary-review|recall|submit|handle.*Review|onReview" app\\dashboard-new\\study\\page.tsx`, followed by targeted source reads.
+- In `fetchNextTask()`, the study page sends a hard-coded `quality: 4` only to the legacy `/api/dart/schedule` request. In `handleAnswer()`, it grades the answer to binary `recall` and submits that value to `/api/research/review`; `PendingSubmission` has no quality field. The research review route accepts `quality?` as optional and persists it if supplied, but it does not derive, require, or version a 0–5 value.
+- **Finding:** the live study path neither collects learner self-ratings (option A) nor implements a deterministic, versioned binary-to-quality mapping (option B). The hard-coded scheduling value is not an observed review outcome and must not be treated as SM-2 input.
+- **Do-not-enrol gate:** the protocol owner must choose A or B, freeze the scale/mapping and initial state, then implement a condition-blind UI plus authenticated server-side state transitions and fixtures. This finding reinforces the existing SM-2 baseline-fidelity gate; it does not create a protocol choice or a participant result.
+
 ### 2026-10-15 — synthetic analysis-pipeline smoke test: PASS (test-only)
 
 - Environment: standard CPython 3.12 virtual environment with the versions in
