@@ -266,6 +266,15 @@ Upstash pair. Copy it to the ignored `.env.research`, replace every placeholder
 locally, then run `node research/verify_env.js`. The template contains no
 credential and does not create a database connection.
 
+**Configuration consistency remediation:** Decision D-008 specifies a MongoDB
+research queue, but `verify_env.js` had warned that absent Upstash would block
+that queue; it also checked only `UPSTASH_REDIS_REST_*` while another client
+uses `UPSTASH_REDIS_*`. The verifier now states that Upstash is optional for
+the research queue and recognises either complete naming pair if configured.
+The secret-free template no longer suggests Upstash as a required research
+setup value. `node --check research/verify_env.js` passed; running the verifier
+without `.env.research` still correctly exits 1 before any connection attempt.
+
 ### 2026-10-16 — participant-facing arm-blinding unit check: PASS (narrow)
 
 - Command: `npx jest __tests__/experimentBlinding.test.ts --runInBand`.
