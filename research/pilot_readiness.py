@@ -6,7 +6,11 @@ Run from the repo root BEFORE H7 (recruiting pilot participants).
 All critical checks must pass. Warnings are informational.
 
 Usage:
-    MONGO_URI="..." RESEARCH_SALT="..." python research/pilot_readiness.py
+    python research/pilot_readiness.py
+
+The script reads the isolated root `.env.research` when present. Explicit
+`RESEARCH_*` process variables take precedence for automated runs. A legacy
+`MONGO_URI` process variable is accepted only after production-DB guards.
 
 Exit codes:
     0 — all critical checks pass
@@ -23,8 +27,38 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Windows consoles can default to cp1252, which cannot render this checklist's
+# Vietnamese and box-drawing output. Reconfigure only the script streams; this
+# has no effect on environment variables or database connections.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESEARCH_DIR = REPO_ROOT / "research"
+NPX_COMMAND = "npx.cmd" if os.name == "nt" else "npx"
+
+
+def load_research_env() -> dict[str, str]:
+    """Read the private research env file without modifying process env."""
+    path = REPO_ROOT / ".env.research"
+    if not path.exists():
+        return {}
+    parsed: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        parsed[key.strip()] = value
+    return parsed
+
+
+research_env = load_research_env()
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 _passed = 0
@@ -55,17 +89,38 @@ def section(title: str) -> None:
 # ══════════════════════════════════════════════════════════════════════════════
 section("1. Environment Variables")
 
-research_salt = os.environ.get("RESEARCH_SALT", "")
+research_salt = os.environ.get("RESEARCH_SALT", "") or research_env.get("RESEARCH_SALT", "")
 if len(research_salt) >= 32:
     ok(f"RESEARCH_SALT present ({len(research_salt)} chars)")
 else:
     fail(f"RESEARCH_SALT missing or too short ({len(research_salt)} chars — need ≥32)")
 
-mongo_uri = os.environ.get("MONGO_URI", "")
+mongo_uri = (
+    os.environ.get("RESEARCH_MONGO_URI", "")
+    or research_env.get("RESEARCH_MONGO_URI", "")
+    or research_env.get("MONGO_URI", "")
+    or os.environ.get("MONGO_URI", "")
+)
+research_db_name = (
+    os.environ.get("RESEARCH_MONGO_DB", "")
+    or research_env.get("RESEARCH_MONGO_DB", "")
+    or research_env.get("MONGO_DB", "")
+    or os.environ.get("MONGO_DB", "")
+    or "viettalk_research"
+)
 if mongo_uri.startswith("mongodb"):
-    ok("MONGO_URI present")
+    ok("Research MongoDB URI present")
 else:
-    fail("MONGO_URI missing or does not start with 'mongodb'")
+    fail("Research MongoDB URI missing or does not start with 'mongodb'")
+
+if research_db_name == "viettalk":
+    fail("Research DB is 'viettalk' (production) — refusing pilot readiness")
+    mongo_uri = ""
+elif "/viettalk?" in mongo_uri or mongo_uri.endswith("/viettalk"):
+    fail("Research MongoDB URI points at production 'viettalk' — refusing pilot readiness")
+    mongo_uri = ""
+else:
+    ok(f"Research DB selected: {research_db_name}")
 
 for var in ["NEXTAUTH_SECRET", "JWT_SECRET"]:
     val = os.environ.get(var, "")
@@ -128,7 +183,7 @@ if mongo_uri:
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=6000)
         client.admin.command("ping")
         ok("MongoDB ping successful")
-        db = client.get_database()
+        db = client[research_db_name]
         collections = db.list_collection_names()
         ok(f"Database reachable ({len(collections)} existing collections)")
 
@@ -248,28 +303,45 @@ else:
 section("7. Jest Tests")
 
 import subprocess
+# This is intentionally the RCT regression set, not every application test.
+# Pilot readiness cannot be inferred from unrelated document-context features;
+# a pass here is never reported as an application-wide Jest pass.
+RESEARCH_TEST_SUITES = [
+    "__tests__/participantAuth.test.ts",
+    "__tests__/researchEnrolRoute.test.ts",
+    "__tests__/researchPretestScoreRoute.test.ts",
+    "__tests__/researchReviewRoute.test.ts",
+    "__tests__/researchPosttestItemsRoute.test.ts",
+    "__tests__/posttestBuilder.test.ts",
+    "__tests__/experimentBlinding.test.ts",
+    "__tests__/baselines.test.ts",
+    "__tests__/dart.test.ts",
+    "__tests__/judgeQueue.test.ts",
+]
 test_result = subprocess.run(
-    ["npx", "jest", "--passWithNoTests", "--silent"],
-    capture_output=True, text=True, timeout=60, cwd=str(REPO_ROOT)
+    [NPX_COMMAND, "jest", *RESEARCH_TEST_SUITES, "--runInBand", "--silent"],
+    capture_output=True, text=True, encoding="utf-8", errors="replace",
+    timeout=60, cwd=str(REPO_ROOT)
 )
 if test_result.returncode == 0:
-    ok("Jest test suite passes")
+    ok(f"Research regression set passes ({len(RESEARCH_TEST_SUITES)} suites requested)")
 else:
-    stderr = test_result.stderr[-600:].strip()
-    fail(f"Jest tests failing:\n    {stderr}")
+    stderr = (test_result.stderr or test_result.stdout or "")[-600:].strip()
+    fail(f"Research regression tests failing:\n    {stderr}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 section("8. TypeScript Check")
 
 ts_result = subprocess.run(
-    ["npx", "tsc", "--noEmit"],
-    capture_output=True, text=True, timeout=60, cwd=str(REPO_ROOT)
+    [NPX_COMMAND, "tsc", "--noEmit"],
+    capture_output=True, text=True, encoding="utf-8", errors="replace",
+    timeout=60, cwd=str(REPO_ROOT)
 )
 if ts_result.returncode == 0:
     ok("TypeScript compilation clean (no type errors)")
 else:
-    stderr_lines = ts_result.stdout.strip().split("\n")[:8]
+    stderr_lines = (ts_result.stdout or ts_result.stderr or "").strip().split("\n")[:8]
     fail(f"TypeScript errors found:\n    " + "\n    ".join(stderr_lines))
 
 
@@ -294,3 +366,4 @@ if _failed == 0:
 else:
     print(f"  🔴  {_failed} CRITICAL CHECK(S) FAILED — resolve before recruiting pilots")
     sys.exit(1)
+
