@@ -234,6 +234,20 @@ specific null generator, treatment of learner-level dependence, bootstrap
 count, and p-value convention require statistician approval and a dated
 pre-data amendment; this note deliberately does not select them.
 
+**RQ1 statistician handoff packet (decision required):**
+
+| Item | Verified project fact | Decision/evidence requested |
+| --- | --- | --- |
+| Estimand | RQ1 tests DART's constrained `α ≥ 0` against nested HLR `α = 0`; rows are repeated within `userId`. | Confirm the null and alternative definitions and whether the one-sided boundary constraint is retained. |
+| Current failure | Legacy row-IID LRT gave Type-I 0.160 (N=60) and 0.115 (N=180) in 200 null simulations. | Confirm that this test is retired from every confirmatory report. |
+| Null generator | The existing case-resample implementation resamples observed learners and is not a null generator under an alternative. | Specify a restricted-model parametric/residual/other cluster-valid bootstrap, including which participant-level features and retrieval histories are generated or conditioned on. |
+| Calibration | There are roughly 60 planned learner clusters; no real participant data are available. | Set bootstrap count, seed policy, p-value formula, minimum valid replicates, and Type-I/power acceptance thresholds before data collection. |
+| Reproducibility | `research/fit_dart.py` currently exports the obsolete `lrt_alpha` p-value. | Provide signed/dated pseudocode or code review criteria; then replace the production path and archive a null simulation plus power report. |
+
+The required return artifact is a dated statistical-method approval (or written
+rejection with replacement plan), followed by a preregistration amendment
+before pilot data are viewed.
+
 ### 2026-10-16 — isolated research database gate: blocked (verified)
 
 - Command run from the repository root: `node research/verify_env.js`.
