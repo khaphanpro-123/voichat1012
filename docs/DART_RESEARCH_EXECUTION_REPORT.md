@@ -362,6 +362,12 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   any RCT scheduler, research database, governance, or confirmatory-inference
   gate.
 
+- Published on `main`: report triage commit `f5a0437edff3fd0f55945dca0d715b5aace734dd`,
+  creation of the TSX module `b6039124d497d82ca6187b666203448cfb9300da`, and removal
+  of the superseded TS module `7294a8822199afb515054065713b4b765ed69ab9`.
+  A fresh `npx tsc --noEmit` after those commits produced only the two
+  remaining truncated-component parser diagnostics listed above.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
