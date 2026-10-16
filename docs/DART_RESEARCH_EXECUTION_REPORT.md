@@ -260,6 +260,12 @@ before pilot data are viewed.
   index-creation script, and a disposable-database backup/restore drill. This
   is an operational prerequisite, not a paper result.
 
+**Safe setup aid added:** `research.env.example` is a tracked, secret-free
+template for the required isolated-MongoDB values and optional all-or-none
+Upstash pair. Copy it to the ignored `.env.research`, replace every placeholder
+locally, then run `node research/verify_env.js`. The template contains no
+credential and does not create a database connection.
+
 ### 2026-10-16 — participant-facing arm-blinding unit check: PASS (narrow)
 
 - Command: `npx jest __tests__/experimentBlinding.test.ts --runInBand`.
