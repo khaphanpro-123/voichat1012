@@ -393,6 +393,27 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   not evidence that the external actions did or did not occur elsewhere. Those
   gates still require their own operational records.
 
+### 2026-10-16 — source roadmap spreadsheet is a historical plan, not operational evidence
+
+- Read-only inspection of spreadsheet `PAPER`, visible tabs `ROADMAP` and
+  `TIMELINE`, bounded ranges `ROADMAP!A1:W80` and `TIMELINE!A1:Z50`, found
+  several historical “Đã hoàn thành” labels for design freeze, IRB,
+  preregistration, and `.env.research`.
+- The same `ROADMAP` rows carry a later checkout-verification column that says
+  “Cần chứng từ”, “Ngoài repo - chưa xác minh”, or “Một phần - thiếu cấu hình”;
+  for the research environment it explicitly states that `.env.research` does
+  not exist and the safe verifier fails. The sheet's own evidence column
+  therefore does not support treating the historical completion labels as proof.
+- `TIMELINE` contains calendar milestones in August–September 2026 marked
+  complete or pending. With no independently verified pilot, data, governance,
+  or research-database record in this execution, those dates remain a planning
+  snapshot—not evidence that a study occurred or completed.
+- **Action:** preserve the supplied sheet as a source/history. Re-baseline any
+  live execution tracker only from fresh artifacts: an approval identifier,
+  published preregistration URL, non-secret verifier output, isolated-database
+  drill evidence, frozen scheduler/inference verification, and controlled-pilot
+  records. Do not overwrite historical plan rows to manufacture completion.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
