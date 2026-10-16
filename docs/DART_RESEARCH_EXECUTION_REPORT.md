@@ -374,6 +374,25 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   found no matching source file. The archive was not extracted and its contents
   were not used; it cannot supply a verified restoration for the two components.
 
+### 2026-10-16 — Google Docs protocol status corrected (verified scope)
+
+- Target: the `Main Paper` Google Doc
+  (`1uZX1bOseNpjnh3HSGGUTjwCUR8BSGpXyP1B0XQrhi-c`, tab `t.0`). A revision-guarded
+  `documents.batchUpdate` replaced the obsolete projected pilot/main-study
+  dates in its status paragraph with a current execution-scope statement.
+- The revised text says that no IRB approval, OSF registration, isolated
+  research-database configuration, participant data, pilot, or main study has
+  been **verified in the current execution environment**; it retains
+  `[TBD]` for effect-size, precision, and inference values and labels any
+  simulation output as design justification only.
+- Readback at document indexes 890–1345 confirmed the new paragraph and
+  preserved the adjacent corresponding-author paragraph. No research result,
+  participant record, external approval, or manuscript conclusion was added or
+  changed.
+- **Scope limit:** this is an integrity/status correction in a pre-data protocol,
+  not evidence that the external actions did or did not occur elsewhere. Those
+  gates still require their own operational records.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
