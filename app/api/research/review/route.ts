@@ -56,7 +56,7 @@ interface ReviewRequest {
   // Outcome
   recall: 0 | 1;
   responseTimeMs: number;
-  quality?: number;              // 0-5 if learner used self-rating
+  quality: number;               // required self-rated 0-5 SM-2 quality
 
   // Metadata
   isCatchUp?: boolean;           // learner working through missed reviews
@@ -89,13 +89,16 @@ export async function POST(req: NextRequest) {
     "clientEventId", "sessionId", "vocabularyId", "word",
     "retrievalType", "featureVector", "servedWeightsVersion",
     "scheduledAt", "servedAt",
-    "elapsedMs", "recall", "responseTimeMs",
+    "elapsedMs", "recall", "responseTimeMs", "quality",
   ] as const;
   for (const k of required) {
     if (body[k] === undefined || body[k] === null) return badRequest(`Missing field: ${k}`);
   }
   if (![0, 1, 2, 3].includes(body.retrievalType)) return badRequest("retrievalType must be 0..3");
   if (![0, 1].includes(body.recall)) return badRequest("recall must be 0 or 1");
+  if (!Number.isInteger(body.quality) || body.quality < 0 || body.quality > 5) {
+    return badRequest("quality must be an integer from 0 to 5");
+  }
   if (!Array.isArray(body.featureVector)) return badRequest("featureVector must be array");
   if (!isValidWeightsVersion(body.servedWeightsVersion)) {
     return badRequest("servedWeightsVersion must be 'default' or 12 hex chars");
@@ -204,3 +207,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
   }
 }
+
