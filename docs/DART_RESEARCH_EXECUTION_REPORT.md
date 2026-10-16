@@ -313,6 +313,34 @@ without `.env.research` still correctly exits 1 before any connection attempt.
   scheduler receipts, IRB/consent operations, or the corrected RQ1 inference
   procedure.
 
+### 2026-10-16 — pilot-readiness runner: repaired and executed (BLOCKED)
+
+- `research/pilot_readiness.py` was made safe for the documented research
+  configuration: it reads local `.env.research` without mutating process
+  environment, prioritises `RESEARCH_MONGO_*`, selects `RESEARCH_MONGO_DB`,
+  and refuses the production `viettalk` database. Windows handling was repaired
+  for UTF-8 console output and `npx.cmd`; subprocess output is decoded as UTF-8
+  with replacement so a test failure is reported rather than crashing.
+- Its Jest gate is now explicitly a 10-suite RCT regression set (auth,
+  enrolment, research endpoints, posttest, blinding, baselines, DART, and judge
+  queue), not a misleading claim that all application tests pass. The full
+  application Jest run remains separately unhealthy: 23 suites / 345 tests
+  passed, while `sentenceContextSelector` had 7 expectation failures and
+  `async-upload` could not resolve `server-only` in Jest. Those are not used to
+  clear any RCT gate.
+- Command: `py -3.12 research/pilot_readiness.py` (no secret environment was
+  provided). Result: the 10 requested research suites passed, but the runner
+  exited 1 with five expected critical failures: missing research salt/URI,
+  consequent skipped HMAC and MongoDB checks, and the existing repository-wide
+  TypeScript parser errors. It also warned that the local familiarity artifact
+  reports only 1 screener; that file is not treated as evidence of a completed
+  H5 screen without a configured research database and an operational record.
+- **Do-not-enrol gate:** configure and verify the isolated database, resolve or
+  formally isolate the global TypeScript parser errors for deployment, complete
+  H5 and governance gates, and repair the RCT scheduler/RQ1 inference gates
+  already listed above. The runner is now an evidence-producing preflight, not
+  an approval shortcut.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
