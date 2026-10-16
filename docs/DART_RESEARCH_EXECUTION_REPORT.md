@@ -437,6 +437,22 @@ without `.env.research` still correctly exits 1 before any connection attempt.
 - **Scope limit:** no external approval, database, participant, pilot, or study
   result was created by this tracker.
 
+### 2026-10-16 — manuscript title and abstract no longer overclaim registration/inference
+
+- In the `Main Paper` Google Doc, a revision-guarded edit changed the title from
+  “Protocol for a Pre-Registered…” to “Protocol for a Planned…”.
+- The Abstract now says the RCT is planned; it says the primary tests and
+  procedures **will** be finalized and preregistered before data collection and
+  that the draft makes no claim of a completed registration.
+- It also replaced the unsupported claim that Amendment #A-001 was signed and
+  a cluster-bootstrap test had already become primary with the verified current
+  state: the legacy row-IID boundary test can be anti-conservative for clustered
+  logs, and a confirmatory RQ1 null-generation/bootstrap procedure still needs
+  statistician approval, production wiring, and a dated pre-data amendment.
+- Readback confirmed the revised title and Abstract text. No participant result,
+  IRB approval, OSF record, amendment signature, or statistical method was
+  invented by this correction.
+
 ### 2026-10-15 — initial environment audit
 
 - Python 3.12.12 and Node v24.14.0 are available in the execution environment.
