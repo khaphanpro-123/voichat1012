@@ -71,6 +71,14 @@ const INDEXES = {
     { keys: { receiptId: 1 }, options: { name: "receiptId_unique", unique: true } },
     { keys: { participantCode: 1, vocabularyId: 1, consumedAt: 1 }, options: { name: "participant_word_consumed" } },
     { keys: { expiresAt: 1, consumedAt: 1 }, options: { name: "expiry_consumed" } },
+    {
+      keys: { participantCode: 1, vocabularyId: 1, isActive: 1 },
+      options: {
+        name: "one_active_task_per_word",
+        unique: true,
+        partialFilterExpression: { isActive: true },
+      },
+    },
   ],
 };
 
