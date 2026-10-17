@@ -8,7 +8,7 @@ import ResearchTimingState from "@/app/models/ResearchTimingState";
 import { verifyRequest } from "@/lib/participantAuth";
 import { getWordById } from "@/lib/wordBank";
 import { buildFeatureVector } from "@/lib/dart";
-import { pickTaskType, type SchedulerName } from "@/lib/retrievalTasks/session";
+import { decideTaskType, RETRIEVAL_POLICY_VERSION, type SchedulerName } from "@/lib/retrievalTasks/session";
 import { generateRetrievalTask } from "@/lib/retrievalTaskGenerator";
 import { getVersionStamp, hashPrompt } from "@/lib/researchVersion";
 import { issueResearchDecisionReceipt } from "@/lib/researchDecisionReceipt";
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
       userAverageAccuracy: accuracy,
       timesReviewed: reviewed,
     });
-    const retrievalType = pickTaskType(
+    const taskDecision = decideTaskType(
       {
         word: word.word,
         vocabularyId: word.id,
@@ -129,7 +129,10 @@ export async function POST(req: NextRequest) {
       },
     );
 
-    const task = await generateRetrievalTask(word.word, word.sentences[0] ?? "", retrievalType);
+    const task = await generateRetrievalTask(word.word, word.sentences[0] ?? "", taskDecision.retrievalType);
+    if (task.type !== taskDecision.retrievalType) {
+      throw new Error("RETRIEVAL_TASK_TYPE_MISMATCH");
+    }
     const version = getVersionStamp();
     const receipt = issueResearchDecisionReceipt();
     const issuedAt = new Date();
@@ -139,7 +142,14 @@ export async function POST(req: NextRequest) {
       vocabularyId: word.id,
       word: word.word,
       condition,
-      retrievalType,
+      retrievalType: taskDecision.retrievalType,
+      taskPolicyVersion: RETRIEVAL_POLICY_VERSION,
+      heuristicRetrievalType: taskDecision.heuristicRetrievalType,
+      explorationEpsilon: taskDecision.epsilon,
+      explorationDraw: taskDecision.epsilonDraw,
+      explorationSelected: taskDecision.explorationSelected,
+      explorationEligibleTypes: taskDecision.explorationEligibleTypes,
+      explorationSelectionDraw: taskDecision.explorationSelectionDraw,
       featureVector,
       schedulerVersion: version.schedulerVersion,
       weightsVersion: version.weightsVersion,
