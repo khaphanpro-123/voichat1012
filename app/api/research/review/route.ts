@@ -28,12 +28,14 @@ import ReviewLog from "@/app/models/ReviewLog";
 import Participant from "@/app/models/Participant";
 import ResearchDecisionReceipt from "@/app/models/ResearchDecisionReceipt";
 import ResearchSm2State from "@/app/models/ResearchSm2State";
+import ResearchTimingState from "@/app/models/ResearchTimingState";
 import { hashPrompt, getWeightsVersion } from "@/lib/researchVersion";
 import { verifyRequest } from "@/lib/participantAuth";
 import { verifyResearchDecisionReceipt } from "@/lib/researchDecisionReceipt";
 import { initialResearchSm2State, transitionResearchSm2State } from "@/lib/researchSm2";
 import { scoreResearchAnswer } from "@/lib/researchAnswerScoring";
 import { runResearchTransaction } from "@/lib/researchTransaction";
+import { transitionResearchTimingState } from "@/lib/researchTiming";
 
 export const dynamic = "force-dynamic";
 
@@ -224,6 +226,45 @@ export async function POST(req: NextRequest) {
           if (!updated) throw new Error("SM2_STATE_CONFLICT");
         } else {
           await ResearchSm2State.create([{ participantCode, vocabularyId: (receipt as any).vocabularyId, ...stateUpdate, revision: 0 }], { session: session as any });
+        }
+      } else {
+        const condition = (receipt as any).condition as "hlr" | "dart";
+        const stored = await ResearchTimingState.findOne({
+          participantCode,
+          vocabularyId: (receipt as any).vocabularyId,
+          condition,
+        }).session(session as any).lean();
+        const next = transitionResearchTimingState({
+          condition,
+          featureVector: (receipt as any).featureVector,
+          lastRetrievalType: (receipt as any).retrievalType,
+          quality: body.quality,
+          now,
+        });
+        const stateUpdate = {
+          stateVersion: next.stateVersion,
+          interval: next.interval,
+          nextReviewDate: next.nextReviewDate,
+          lastRetrievalType: next.lastRetrievalType,
+          halfLife: next.halfLife,
+          predictedRecall: next.predictedRecall,
+          lastReceiptId: (receipt as any).receiptId,
+        };
+        if (stored) {
+          const updated = await ResearchTimingState.findOneAndUpdate(
+            { _id: (stored as any)._id, revision: (stored as any).revision ?? 0 },
+            { $set: stateUpdate, $inc: { revision: 1 } },
+            { new: true, session: session as any },
+          ).lean();
+          if (!updated) throw new Error("TIMING_STATE_CONFLICT");
+        } else {
+          await ResearchTimingState.create([{
+            participantCode,
+            vocabularyId: (receipt as any).vocabularyId,
+            condition,
+            ...stateUpdate,
+            revision: 0,
+          }], { session: session as any });
         }
       }
 
