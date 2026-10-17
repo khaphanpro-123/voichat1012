@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import Participant from "@/app/models/Participant";
 import ReviewLog from "@/app/models/ReviewLog";
 import ResearchDecisionReceipt from "@/app/models/ResearchDecisionReceipt";
+import ResearchSm2State from "@/app/models/ResearchSm2State";
 import { verifyRequest } from "@/lib/participantAuth";
 import { getWordById } from "@/lib/wordBank";
 import { buildFeatureVector } from "@/lib/dart";
@@ -52,6 +53,40 @@ export async function POST(req: NextRequest) {
       return badRequest("Participant scheduling is unavailable", 403);
     }
 
+    const now = new Date();
+    // A receipt is a lease on a task, not an unbounded token mint. Close only
+    // expired leases here; a live task must be submitted or expire before the
+    // same participant can receive another decision for this word.
+    await ResearchDecisionReceipt.updateMany(
+      { participantCode, vocabularyId: word.id, isActive: true, expiresAt: { $lte: now } },
+      { $set: { isActive: false } },
+    );
+    const activeReceipt = await ResearchDecisionReceipt.findOne({
+      participantCode,
+      vocabularyId: word.id,
+      isActive: true,
+      expiresAt: { $gt: now },
+    }).lean();
+    if (activeReceipt) {
+      return NextResponse.json(
+        { success: false, code: "active_task", message: "A study task for this word is still awaiting submission" },
+        { status: 409 },
+      );
+    }
+
+    // The SM-2 control must respect its persisted due date. HLR/DART timing
+    // state has not yet been implemented, so this endpoint deliberately does
+    // not pretend they use the same due-date policy.
+    if (condition === "sm2") {
+      const sm2State = await ResearchSm2State.findOne({ participantCode, vocabularyId: word.id }).lean();
+      if (sm2State && new Date((sm2State as any).nextReviewDate) > now) {
+        return NextResponse.json(
+          { success: false, code: "not_due", message: "This study word is not due yet" },
+          { status: 409 },
+        );
+      }
+    }
+
     const history = await ReviewLog.find({
       userId: participantCode,
       vocabularyId: word.id,
@@ -97,8 +132,10 @@ export async function POST(req: NextRequest) {
       schedulerVersion: version.schedulerVersion,
       weightsVersion: version.weightsVersion,
       taskPromptHash: hashPrompt(task.prompt),
+      expectedAnswer: task.expectedAnswer,
       issuedAt,
       expiresAt: receipt.expiresAt,
+      isActive: true,
     });
 
     // Do not include condition, scheduler version, weights version, or task
@@ -113,11 +150,17 @@ export async function POST(req: NextRequest) {
         retrievalType: task.type,
         prompt: task.prompt,
         options: task.options,
-        expectedAnswer: task.expectedAnswer,
         featureVector,
       },
     }));
   } catch (error) {
+    // The partial unique index is the race-safe backstop after the read above.
+    if ((error as any)?.code === 11000) {
+      return NextResponse.json(
+        { success: false, code: "active_task", message: "A study task for this word is still awaiting submission" },
+        { status: 409 },
+      );
+    }
     console.error("[research/schedule] failed", error);
     return badRequest("Unable to schedule a study task", 500);
   }
