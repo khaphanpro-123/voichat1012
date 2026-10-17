@@ -318,31 +318,39 @@ RESEARCH_TEST_SUITES = [
     "__tests__/dart.test.ts",
     "__tests__/judgeQueue.test.ts",
 ]
-test_result = subprocess.run(
-    [NPX_COMMAND, "jest", *RESEARCH_TEST_SUITES, "--runInBand", "--silent"],
-    capture_output=True, text=True, encoding="utf-8", errors="replace",
-    timeout=60, cwd=str(REPO_ROOT)
-)
-if test_result.returncode == 0:
-    ok(f"Research regression set passes ({len(RESEARCH_TEST_SUITES)} suites requested)")
+try:
+    test_result = subprocess.run(
+        [NPX_COMMAND, "jest", *RESEARCH_TEST_SUITES, "--runInBand", "--silent"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=60, cwd=str(REPO_ROOT)
+    )
+except subprocess.TimeoutExpired:
+    fail("Research regression tests timed out after 60 seconds")
 else:
-    stderr = (test_result.stderr or test_result.stdout or "")[-600:].strip()
-    fail(f"Research regression tests failing:\n    {stderr}")
+    if test_result.returncode == 0:
+        ok(f"Research regression set passes ({len(RESEARCH_TEST_SUITES)} suites requested)")
+    else:
+        stderr = (test_result.stderr or test_result.stdout or "")[-600:].strip()
+        fail(f"Research regression tests failing:\n    {stderr}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 section("8. TypeScript Check")
 
-ts_result = subprocess.run(
-    [NPX_COMMAND, "tsc", "--noEmit"],
-    capture_output=True, text=True, encoding="utf-8", errors="replace",
-    timeout=60, cwd=str(REPO_ROOT)
-)
-if ts_result.returncode == 0:
-    ok("TypeScript compilation clean (no type errors)")
+try:
+    ts_result = subprocess.run(
+        [NPX_COMMAND, "tsc", "--noEmit"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=60, cwd=str(REPO_ROOT)
+    )
+except subprocess.TimeoutExpired:
+    fail("TypeScript check timed out after 60 seconds")
 else:
-    stderr_lines = (ts_result.stdout or ts_result.stderr or "").strip().split("\n")[:8]
-    fail(f"TypeScript errors found:\n    " + "\n    ".join(stderr_lines))
+    if ts_result.returncode == 0:
+        ok("TypeScript compilation clean (no type errors)")
+    else:
+        stderr_lines = (ts_result.stdout or ts_result.stderr or "").strip().split("\n")[:8]
+        fail(f"TypeScript errors found:\n    " + "\n    ".join(stderr_lines))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
