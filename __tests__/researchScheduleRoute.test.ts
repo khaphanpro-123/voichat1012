@@ -25,6 +25,10 @@ jest.mock("@/app/models/ResearchSm2State", () => ({
   __esModule: true,
   default: { findOne: jest.fn(() => ({ lean: async () => null })) },
 }));
+jest.mock("@/app/models/ResearchTimingState", () => ({
+  __esModule: true,
+  default: { findOne: jest.fn(() => ({ lean: async () => null })) },
+}));
 jest.mock("@/lib/retrievalTasks/session", () => ({ pickTaskType: (...args: any[]) => picked(...args) }));
 jest.mock("@/lib/retrievalTaskGenerator", () => ({ generateRetrievalTask: (...args: any[]) => generated(...args) }));
 jest.mock("@/lib/researchVersion", () => ({ getVersionStamp: () => ({ schedulerVersion: "dart@test", weightsVersion: "default" }), hashPrompt: (prompt: string) => `hash:${prompt}` }));
