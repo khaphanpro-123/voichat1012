@@ -51,7 +51,9 @@ interface Task {
   retrievalType: RetrievalType;
   prompt: string;                 // fully-rendered question
   options?: string[];             // MCQ only
-  expectedAnswer: string;         // gold answer (client-side eval for immediate feedback)
+  // Present only in the local preview. Authenticated study tasks never expose
+  // an answer key; the review endpoint computes the stored recall outcome.
+  expectedAnswer?: string;
   featureVector: number[];
   decisionReceipt?: string;       // issued only by /api/research/schedule
 }
@@ -69,7 +71,6 @@ interface PendingSubmission {
   scheduledAt: string;
   servedAt: string;
   elapsedMs: number;
-  recall: 0 | 1;
   responseTimeMs: number;
   // Self-rated 0–5 SM-2 quality. This is collected after every answer for all
   // blinded study arms; the server stores it next to the objective recall.
@@ -365,6 +366,13 @@ export default function StudyPage() {
         });
         const j = await r.json();
         const t = j?.task;
+        if (r.status === 409 && j?.code === "not_due") {
+          // The server owns due timing. Skip an ineligible SM-2 item rather
+          // than fabricating a local task or treating it as a failed review.
+          if (wordIdx + 1 >= words.length) setStatus("done");
+          else setWordIdx((i) => i + 1);
+          return;
+        }
         if (!r.ok || !j?.decisionReceipt || !t?.prompt || ![0, 1, 2, 3].includes(t.retrievalType)) {
           throw new Error(j?.message || "Không nhận được nhiệm vụ học hợp lệ.");
         }
@@ -376,7 +384,6 @@ export default function StudyPage() {
           retrievalType: t.retrievalType as RetrievalType,
           prompt: t.prompt,
           options: t.options,
-          expectedAnswer: t.expectedAnswer ?? word.word,
           featureVector,
           decisionReceipt: j.decisionReceipt,
         });
@@ -395,7 +402,7 @@ export default function StudyPage() {
     setCurrentTask(fabricateTaskFromWord(word, 0, featureVector));
     setTaskStartTs(performance.now());
     setFeedback(null);
-  }, [participantToken, online]);
+  }, [participantToken, online, wordIdx, words.length]);
 
   // Auto-fetch task when we advance to a new word
   useEffect(() => {
@@ -407,8 +414,13 @@ export default function StudyPage() {
   // ── Handle answer submission ──────────────────────────────────────────
   async function handleAnswer(text: string) {
     if (!currentTask) return;
-    const recall = gradeAnswer(currentTask, text);
-    setFeedback({ correct: recall, expected: currentTask.expectedAnswer });
+    // Preview mode is deliberately separate and never submits a research row.
+    // An authenticated task is scored only by the server after the learner has
+    // supplied the self-rating below.
+    if (!participantToken && currentTask.expectedAnswer) {
+      const recall = gradeAnswer(currentTask, text);
+      setFeedback({ correct: recall, expected: currentTask.expectedAnswer });
+    }
 
     const now = Date.now();
     const elapsedMs = performance.now() - taskStartTs;
@@ -429,7 +441,6 @@ export default function StudyPage() {
       scheduledAt,
       servedAt: new Date(taskStartTs).toISOString(),
       elapsedMs: Math.round(elapsedMs),
-      recall,
       responseTimeMs: Math.round(elapsedMs),
       answerText: text,
     };
@@ -439,20 +450,27 @@ export default function StudyPage() {
   async function submitRatedReview(quality: number) {
     if (!pendingReview) return;
     const sub: PendingSubmission = { ...pendingReview, quality };
+    if (!participantToken) {
+      // Preview never reaches IndexedDB or the research endpoint.
+      advance();
+      return;
+    }
     submissionsRef.current.push(sub);
 
     // Always persist to IndexedDB first — durability before network.
     try { await idbPut(sub); } catch {}
     setPendingCount((n) => n + 1);
 
-    if (online && participantToken) {
-      await trySubmit(sub);
-    }
+    const result = online ? await trySubmit(sub) : null;
     setPendingReview(null);
+    if (result && (result.recall === 0 || result.recall === 1) && typeof result.expectedAnswer === "string") {
+      setFeedback({ correct: result.recall, expected: result.expectedAnswer });
+      return;
+    }
     advance();
   }
 
-  async function trySubmit(sub: PendingSubmission) {
+  async function trySubmit(sub: PendingSubmission): Promise<any | null> {
     try {
       const r = await fetch("/api/research/review", {
         method: "POST",
@@ -463,12 +481,15 @@ export default function StudyPage() {
         body: JSON.stringify(sub),
       });
       if (r.ok) {
+        const result = await r.json();
         await idbDelete(sub.clientEventId);
         setPendingCount((n) => Math.max(0, n - 1));
+        return result;
       }
     } catch {
       // Stay in IndexedDB, retry later
     }
+    return null;
   }
 
   async function flushPending() {
@@ -541,7 +562,7 @@ export default function StudyPage() {
           </div>
         )}
 
-        {status === "ready" && currentTask && !feedback && (
+        {status === "ready" && currentTask && !feedback && !pendingReview && (
           <div className="rounded-3xl p-6"
                style={{ background: "white", border: `2px solid ${C.grayBorder}` }}>
             <div className="text-xs uppercase font-bold mb-2 tracking-wide" style={{ color: C.grayText, opacity: 0.6 }}>
@@ -564,7 +585,7 @@ export default function StudyPage() {
             <div className="text-sm" style={{ color: C.grayText }}>
               Đáp án: <b>{feedback.expected}</b>
             </div>
-            <div className="mt-5 rounded-2xl p-4" style={{ background: "white", border: `2px solid ${C.grayBorder}` }}>
+              {pendingReview ? <div className="mt-5 rounded-2xl p-4" style={{ background: "white", border: `2px solid ${C.grayBorder}` }}>
               <div className="font-bold" style={{ color: C.grayText }}>
                 Bạn nhớ từ này ở mức nào?
               </div>
@@ -587,6 +608,32 @@ export default function StudyPage() {
                   </button>
                 ))}
               </div>
+              </div> : (
+                <div className="mt-5">
+                  <BigButton onClick={advance} color="blue">Tiếp tục</BigButton>
+                </div>
+              )}
+            </div>
+        )}
+
+        {status === "ready" && currentTask && pendingReview && !feedback && (
+          <div className="rounded-3xl p-6" style={{ background: "white", border: `2px solid ${C.grayBorder}` }}>
+            <div className="text-lg font-bold" style={{ color: C.grayText }}>Bạn nhớ từ này ở mức nào?</div>
+            <p className="text-xs mt-1" style={{ color: C.grayText }}>
+              Chọn theo mức độ nhớ của bạn, không phải chỉ đúng/sai. Câu hỏi này giống nhau cho mọi người học.
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
+              {[
+                [0, "Quên hẳn"], [1, "Rất khó"], [2, "Khó"],
+                [3, "Nhớ được"], [4, "Có do dự"], [5, "Rất dễ"],
+              ].map(([quality, label]) => (
+                <button key={quality} onClick={() => submitRatedReview(quality as number)}
+                  className="rounded-xl px-2 py-2 text-xs font-bold"
+                  style={{ background: C.blueLight, border: `2px solid ${C.blue}`, color: C.blueDark }}
+                  aria-label={`Mức nhớ ${quality}: ${label}`}>
+                  <span className="block text-base">{quality}</span>{label}
+                </button>
+              ))}
             </div>
           </div>
         )}
