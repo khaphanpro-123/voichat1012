@@ -15,7 +15,15 @@ jest.mock("@/app/models/ReviewLog", () => ({
 }));
 jest.mock("@/app/models/ResearchDecisionReceipt", () => ({
   __esModule: true,
-  default: { create: jest.fn(async (doc: any) => { created.push(doc); return doc; }) },
+  default: {
+    updateMany: jest.fn(async () => ({})),
+    findOne: jest.fn(() => ({ lean: async () => null })),
+    create: jest.fn(async (doc: any) => { created.push(doc); return doc; }),
+  },
+}));
+jest.mock("@/app/models/ResearchSm2State", () => ({
+  __esModule: true,
+  default: { findOne: jest.fn(() => ({ lean: async () => null })) },
 }));
 jest.mock("@/lib/retrievalTasks/session", () => ({ pickTaskType: (...args: any[]) => picked(...args) }));
 jest.mock("@/lib/retrievalTaskGenerator", () => ({ generateRetrievalTask: (...args: any[]) => generated(...args) }));
@@ -40,10 +48,12 @@ describe("POST /api/research/schedule", () => {
     expect(res.status).toBe(200);
     expect(picked).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ scheduler: "hlr" }));
     expect(created).toHaveLength(1);
-    expect(created[0]).toMatchObject({ participantCode: "P0042", vocabularyId: "w_001", condition: "hlr", retrievalType: 1, taskPromptHash: "hash:Fill in ____." });
+    expect(created[0]).toMatchObject({ participantCode: "P0042", vocabularyId: "w_001", condition: "hlr", retrievalType: 1, taskPromptHash: "hash:Fill in ____.", expectedAnswer: "significant", isActive: true });
     const json = await res.json();
     expect(json).toMatchObject({ success: true, decisionReceipt: "opaque.receipt", task: { vocabularyId: "w_001", retrievalType: 1 } });
     expect(JSON.stringify(json)).not.toMatch(/hlr|schedulerVersion|weightsVersion/i);
+    expect(JSON.stringify(json)).not.toMatch(/expectedAnswer/i);
+    expect(json.task.expectedAnswer).toBeUndefined();
   });
 
   it("rejects a missing token, malformed input, and unknown word", async () => {
