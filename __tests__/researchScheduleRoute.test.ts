@@ -1,5 +1,5 @@
 const generated = jest.fn();
-const picked = jest.fn(() => 1);
+const decided = jest.fn(() => ({ retrievalType: 1, heuristicRetrievalType: 1, epsilon: 0, explorationSelected: false }));
 const issued = jest.fn(() => ({ receiptId: "receipt-1", token: "opaque.receipt", expiresAt: new Date("2026-10-16T00:20:00.000Z") }));
 const created: any[] = [];
 
@@ -29,7 +29,10 @@ jest.mock("@/app/models/ResearchTimingState", () => ({
   __esModule: true,
   default: { findOne: jest.fn(() => ({ lean: async () => null })) },
 }));
-jest.mock("@/lib/retrievalTasks/session", () => ({ pickTaskType: (...args: any[]) => picked(...args) }));
+jest.mock("@/lib/retrievalTasks/session", () => ({
+  decideTaskType: (...args: any[]) => decided(...args),
+  RETRIEVAL_POLICY_VERSION: "retrieval-policy-v1",
+}));
 jest.mock("@/lib/retrievalTaskGenerator", () => ({ generateRetrievalTask: (...args: any[]) => generated(...args) }));
 jest.mock("@/lib/researchVersion", () => ({ getVersionStamp: () => ({ schedulerVersion: "dart@test", weightsVersion: "default" }), hashPrompt: (prompt: string) => `hash:${prompt}` }));
 jest.mock("@/lib/researchDecisionReceipt", () => ({ issueResearchDecisionReceipt: () => issued() }));
@@ -44,15 +47,15 @@ describe("POST /api/research/schedule", () => {
   beforeEach(() => {
     created.length = 0;
     generated.mockResolvedValue({ type: 1, prompt: "Fill in ____.", expectedAnswer: "significant" });
-    picked.mockClear();
+    decided.mockClear();
   });
 
   it("uses the stored arm and returns an opaque receipt without leaking it", async () => {
     const res = await POST(request({ vocabularyId: "w_001" }));
     expect(res.status).toBe(200);
-    expect(picked).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ scheduler: "hlr" }));
+    expect(decided).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ scheduler: "hlr" }));
     expect(created).toHaveLength(1);
-    expect(created[0]).toMatchObject({ participantCode: "P0042", vocabularyId: "w_001", condition: "hlr", retrievalType: 1, taskPromptHash: "hash:Fill in ____.", expectedAnswer: "significant", isActive: true });
+    expect(created[0]).toMatchObject({ participantCode: "P0042", vocabularyId: "w_001", condition: "hlr", retrievalType: 1, taskPolicyVersion: "retrieval-policy-v1", heuristicRetrievalType: 1, explorationEpsilon: 0, explorationSelected: false, taskPromptHash: "hash:Fill in ____.", expectedAnswer: "significant", isActive: true });
     const json = await res.json();
     expect(json).toMatchObject({ success: true, decisionReceipt: "opaque.receipt", task: { vocabularyId: "w_001", retrievalType: 1 } });
     expect(JSON.stringify(json)).not.toMatch(/hlr|schedulerVersion|weightsVersion/i);
@@ -64,6 +67,13 @@ describe("POST /api/research/schedule", () => {
     expect((await POST(request({ vocabularyId: "w_001" }, "Bearer NO"))).status).toBe(401);
     expect((await POST(request({}))).status).toBe(400);
     expect((await POST(request({ vocabularyId: "not-a-word" }))).status).toBe(404);
+  });
+
+  it("fails closed if the task generator changes the persisted retrieval type", async () => {
+    decided.mockReturnValueOnce({ retrievalType: 2, heuristicRetrievalType: 1, epsilon: 0.20, epsilonDraw: 0.1, explorationSelected: true, explorationEligibleTypes: [0, 1, 2, 3], explorationSelectionDraw: 0.7 });
+    generated.mockResolvedValueOnce({ type: 1, prompt: "Fill in ____.", expectedAnswer: "significant" });
+    expect((await POST(request({ vocabularyId: "w_001" }))).status).toBe(500);
+    expect(created).toHaveLength(0);
   });
 });
 
