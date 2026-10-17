@@ -157,6 +157,18 @@ jest.mock("@/app/models/ResearchSm2State", () => {
   };
 });
 
+jest.mock("@/app/models/ResearchTimingState", () => {
+  const chain = (val: any) => ({ session: () => chain(val), lean: async () => val });
+  return {
+    __esModule: true,
+    default: {
+      findOne: jest.fn(() => chain(null)),
+      findOneAndUpdate: jest.fn(() => chain({ _id: "timing" })),
+      create: jest.fn(async () => []),
+    },
+  };
+});
+
 import { POST } from "@/app/api/research/review/route";
 import ResearchSm2State from "@/app/models/ResearchSm2State";
 
