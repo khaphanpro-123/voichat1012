@@ -7,7 +7,10 @@ import mongoose, { Schema, Document } from "mongoose";
  */
 export interface IReviewLog extends Document {
   userId: string;
-  vocabularyId: mongoose.Types.ObjectId;
+  // App vocabulary uses ObjectId; the frozen RCT word bank uses stable IDs
+  // such as "w_001". Retaining both is necessary for an isolated research
+  // log and avoids coercing a study identifier into a nonexistent document.
+  vocabularyId: mongoose.Types.ObjectId | string;
   word: string;
   deltaDays: number;                 // Δ_i: elapsed days since last review
   retrievalType: 0 | 1 | 2 | 3;      // d_i
@@ -45,7 +48,7 @@ export interface IReviewLog extends Document {
 
 const ReviewLogSchema = new Schema<IReviewLog>({
   userId: { type: String, required: true, index: true },
-  vocabularyId: { type: Schema.Types.ObjectId, ref: "Vocabulary", required: true, index: true },
+  vocabularyId: { type: Schema.Types.Mixed, required: true, index: true },
   word: { type: String, required: true },
   deltaDays: { type: Number, required: true },
   retrievalType: { type: Number, min: 0, max: 3, required: true },
@@ -86,3 +89,4 @@ ReviewLogSchema.index({ sessionId: 1, createdAt: 1 });
 
 export default (mongoose.models.ReviewLog as mongoose.Model<IReviewLog>) ||
   mongoose.model<IReviewLog>("ReviewLog", ReviewLogSchema);
+
