@@ -40,6 +40,72 @@ export interface SessionContext {
   rand?: () => number;
 }
 
+export const DART_EXPLORATION_EPSILON = 0.20;
+export const RETRIEVAL_POLICY_VERSION = "retrieval-policy-v1";
+
+export interface TaskTypeDecision {
+  retrievalType: RetrievalType;
+  heuristicRetrievalType: RetrievalType;
+  epsilon: number;
+  epsilonDraw?: number;
+  explorationSelected: boolean;
+  explorationEligibleTypes?: RetrievalType[];
+  explorationSelectionDraw?: number;
+}
+
+function eligibleTypes(session: SessionContext): RetrievalType[] {
+  return session.participantCefr === "A2" ? [0, 1, 2] : [0, 1, 2, 3];
+}
+
+function heuristicTaskType(item: ItemContext, session: SessionContext): RetrievalType {
+  if (session.scheduler === "sm2") return 0;
+  const acc = item.userAvgAccuracy;
+  const reps = item.timesReviewed;
+  const canParaphrase = session.participantCefr !== "A2";
+  if (reps === 0 || acc < 0.5) return 0;
+  if (acc < 0.7) return 1;
+  if (acc < 0.85 || !canParaphrase) return 2;
+  return 3;
+}
+
+function drawUnitInterval(rand: () => number): number {
+  const value = rand();
+  if (!Number.isFinite(value) || value < 0 || value >= 1) {
+    throw new Error("retrieval policy random draw must be in [0, 1)");
+  }
+  return value;
+}
+
+/**
+ * Return the chosen task type and a complete server-side decision record.
+ * Persist the record with the receipt/review, rather than attempting to
+ * reconstruct random exploration from later history.
+ */
+export function decideTaskType(item: ItemContext, session: SessionContext): TaskTypeDecision {
+  const heuristicRetrievalType = heuristicTaskType(item, session);
+  const epsilon = session.epsilonExplore ? DART_EXPLORATION_EPSILON : 0;
+  if (epsilon === 0) {
+    return { retrievalType: heuristicRetrievalType, heuristicRetrievalType, epsilon, explorationSelected: false };
+  }
+  const rand = session.rand ?? Math.random;
+  const epsilonDraw = drawUnitInterval(rand);
+  if (epsilonDraw >= epsilon) {
+    return { retrievalType: heuristicRetrievalType, heuristicRetrievalType, epsilon, epsilonDraw, explorationSelected: false };
+  }
+  const explorationEligibleTypes = eligibleTypes(session);
+  const explorationSelectionDraw = drawUnitInterval(rand);
+  const retrievalType = explorationEligibleTypes[Math.floor(explorationSelectionDraw * explorationEligibleTypes.length)];
+  return {
+    retrievalType,
+    heuristicRetrievalType,
+    epsilon,
+    epsilonDraw,
+    explorationSelected: true,
+    explorationEligibleTypes,
+    explorationSelectionDraw,
+  };
+}
+
 /**
  * SM-2 always serves MCQ (that's what SM-2 is). HLR and DART pick d based on
  * user proficiency and word familiarity.
@@ -62,28 +128,7 @@ export function pickTaskType(item: ItemContext, session: SessionContext): Retrie
   // ~5-6% floor per type; combined with the mastery-driven baseline flow,
   // long-form pilots project to ≥15% each. LLT reviewers of the RQ1 α claim
   // will otherwise reject on "unidentifiable" grounds.
-  const EPSILON = 0.20;
-  if (session.epsilonExplore) {
-    const rand = session.rand ?? Math.random;
-    if (rand() < EPSILON) {
-      const eligible: RetrievalType[] =
-        session.participantCefr === "A2" ? [0, 1, 2] : [0, 1, 2, 3];
-      return eligible[Math.floor(rand() * eligible.length)];
-    }
-  }
-
-  if (session.scheduler === "sm2") return 0;
-
-  // HLR / DART policy: escalate d as the learner shows mastery.
-  const acc = item.userAvgAccuracy;
-  const reps = item.timesReviewed;
-  const canParaphrase = session.participantCefr !== "A2";
-
-  if (reps === 0) return 0;                    // first exposure — MCQ
-  if (acc < 0.5) return 0;                     // struggling — back to MCQ
-  if (acc < 0.7) return 1;                     // ok — cloze
-  if (acc < 0.85 || !canParaphrase) return 2;  // good — constrained gen
-  return 3;                                    // strong — paraphrase (B1+)
+  return decideTaskType(item, session).retrievalType;
 }
 
 // ---------- Build ----------
@@ -137,3 +182,4 @@ export function scoreSubmission(
     case 3: return scoreParaphrase(task, submission.answer);
   }
 }
+
