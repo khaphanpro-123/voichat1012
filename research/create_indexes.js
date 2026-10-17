@@ -12,6 +12,7 @@
 
 const path = require("path");
 const fs = require("fs");
+const { INDEXES } = require("./index_specs");
 
 // Load .env.research
 const envPath = path.join(__dirname, "..", ".env.research");
@@ -35,56 +36,6 @@ const uri = env.RESEARCH_MONGO_URI || env.MONGO_URI;
 const dbName = env.RESEARCH_MONGO_DB || env.MONGO_DB || "viettalk_research";
 if (!uri) { console.error("❌ MONGO_URI (or RESEARCH_MONGO_URI) missing in .env.research"); process.exit(1); }
 if (dbName === "viettalk") { console.error("❌ Refusing to run on production DB (dbName=viettalk)"); process.exit(1); }
-
-// Spec: mỗi collection → mảng { keys, options }
-// Bám theo schema hiện có: app/models/ReviewLog.ts, Participant, TestResult, JudgeScore
-const INDEXES = {
-  reviewlogs: [
-    { keys: { userId: 1, vocabularyId: 1, createdAt: -1 }, options: { name: "user_word_time" } },
-    { keys: { clientEventId: 1 }, options: { name: "clientEventId_unique", unique: true, sparse: true } },
-    { keys: { sessionId: 1 }, options: { name: "sessionId" } },
-    { keys: { condition: 1, createdAt: -1 }, options: { name: "condition_time" } },
-    { keys: { weightsVersion: 1 }, options: { name: "weightsVersion" } },
-  ],
-  participants: [
-    { keys: { participantCode: 1 }, options: { name: "participantCode_unique", unique: true } },
-    { keys: { hashedUserId: 1 }, options: { name: "hashedUserId_unique", unique: true, sparse: true } },
-    { keys: { armLabel: 1, cefrBand: 1 }, options: { name: "arm_cefr" } },
-    { keys: { enrolledAt: -1 }, options: { name: "enrolledAt" } },
-  ],
-  testresults: [
-    { keys: { participantCode: 1, testType: 1 }, options: { name: "participant_test_unique", unique: true } },
-    { keys: { submittedAt: -1 }, options: { name: "submittedAt" } },
-  ],
-  judgescores: [
-    { keys: { testResultId: 1, itemId: 1, judgeId: 1 }, options: { name: "score_unique", unique: true } },
-    { keys: { judgeId: 1, createdAt: -1 }, options: { name: "judge_time" } },
-  ],
-  familiarityresponses: [
-    { keys: { screenerId: 1 }, options: { name: "screenerId_unique", unique: true } },
-  ],
-  researchsm2states: [
-    { keys: { participantCode: 1, vocabularyId: 1 }, options: { name: "participant_word_unique", unique: true } },
-    { keys: { participantCode: 1, nextReviewDate: 1 }, options: { name: "participant_due" } },
-  ],
-  researchtimingstates: [
-    { keys: { participantCode: 1, vocabularyId: 1, condition: 1 }, options: { name: "participant_word_condition_unique", unique: true } },
-    { keys: { participantCode: 1, condition: 1, nextReviewDate: 1 }, options: { name: "participant_condition_due" } },
-  ],
-  researchdecisionreceipts: [
-    { keys: { receiptId: 1 }, options: { name: "receiptId_unique", unique: true } },
-    { keys: { participantCode: 1, vocabularyId: 1, consumedAt: 1 }, options: { name: "participant_word_consumed" } },
-    { keys: { expiresAt: 1, consumedAt: 1 }, options: { name: "expiry_consumed" } },
-    {
-      keys: { participantCode: 1, vocabularyId: 1, isActive: 1 },
-      options: {
-        name: "one_active_task_per_word",
-        unique: true,
-        partialFilterExpression: { isActive: true },
-      },
-    },
-  ],
-};
 
 (async () => {
   let mongoose;
