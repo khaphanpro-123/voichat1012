@@ -14,6 +14,13 @@ export interface IReviewLog extends Document {
   word: string;
   deltaDays: number;                 // Δ_i: elapsed days since last review
   retrievalType: 0 | 1 | 2 | 3;      // d_i
+  taskPolicyVersion?: string;         // immutable server-side retrieval-policy version
+  heuristicRetrievalType?: 0 | 1 | 2 | 3;
+  explorationEpsilon?: number;       // 0 outside the DART exploration policy
+  explorationDraw?: number;          // server PRNG draw used for epsilon branch
+  explorationSelected?: boolean;
+  explorationEligibleTypes?: Array<0 | 1 | 2 | 3>;
+  explorationSelectionDraw?: number;
   featureVector: number[];           // x_i
   contextId?: string;                // c_i for CARTS
   recall: 0 | 1;                     // r_i
@@ -52,6 +59,13 @@ const ReviewLogSchema = new Schema<IReviewLog>({
   word: { type: String, required: true },
   deltaDays: { type: Number, required: true },
   retrievalType: { type: Number, min: 0, max: 3, required: true },
+  taskPolicyVersion: { type: String },
+  heuristicRetrievalType: { type: Number, min: 0, max: 3 },
+  explorationEpsilon: { type: Number, min: 0, max: 1 },
+  explorationDraw: { type: Number, min: 0, max: 1 },
+  explorationSelected: { type: Boolean },
+  explorationEligibleTypes: { type: [Number], default: undefined },
+  explorationSelectionDraw: { type: Number, min: 0, max: 1 },
   featureVector: { type: [Number], default: [] },
   contextId: { type: String },
   recall: { type: Number, enum: [0, 1], required: true },
