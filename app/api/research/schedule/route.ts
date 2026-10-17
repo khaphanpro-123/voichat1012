@@ -4,6 +4,7 @@ import Participant from "@/app/models/Participant";
 import ReviewLog from "@/app/models/ReviewLog";
 import ResearchDecisionReceipt from "@/app/models/ResearchDecisionReceipt";
 import ResearchSm2State from "@/app/models/ResearchSm2State";
+import ResearchTimingState from "@/app/models/ResearchTimingState";
 import { verifyRequest } from "@/lib/participantAuth";
 import { getWordById } from "@/lib/wordBank";
 import { buildFeatureVector } from "@/lib/dart";
@@ -74,12 +75,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // The SM-2 control must respect its persisted due date. HLR/DART timing
-    // state has not yet been implemented, so this endpoint deliberately does
-    // not pretend they use the same due-date policy.
+    // Every live arm must respect a server-persisted due date. SM-2 has a
+    // dedicated state machine; HLR/DART share a separate timing-state schema.
     if (condition === "sm2") {
       const sm2State = await ResearchSm2State.findOne({ participantCode, vocabularyId: word.id }).lean();
       if (sm2State && new Date((sm2State as any).nextReviewDate) > now) {
+        return NextResponse.json(
+          { success: false, code: "not_due", message: "This study word is not due yet" },
+          { status: 409 },
+        );
+      }
+    } else {
+      const timingState = await ResearchTimingState.findOne({
+        participantCode,
+        vocabularyId: word.id,
+        condition,
+      }).lean();
+      if (timingState && new Date((timingState as any).nextReviewDate) > now) {
         return NextResponse.json(
           { success: false, code: "not_due", message: "This study word is not due yet" },
           { status: 409 },
