@@ -165,6 +165,13 @@ export async function POST(req: NextRequest) {
         : 0;
       const recall = scoreResearchAnswer({
         retrievalType: (receipt as any).retrievalType,
+        taskPolicyVersion: (receipt as any).taskPolicyVersion,
+        heuristicRetrievalType: (receipt as any).heuristicRetrievalType,
+        explorationEpsilon: (receipt as any).explorationEpsilon,
+        explorationDraw: (receipt as any).explorationDraw,
+        explorationSelected: (receipt as any).explorationSelected,
+        explorationEligibleTypes: (receipt as any).explorationEligibleTypes,
+        explorationSelectionDraw: (receipt as any).explorationSelectionDraw,
         expectedAnswer: (receipt as any).expectedAnswer,
         word: (receipt as any).word,
         answerText: body.answerText,
