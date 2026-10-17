@@ -7,9 +7,9 @@ Two jobs, both required by the pre-registration:
      often the boundary-corrected LRT rejects. Report the smallest N reaching
      80% power. Run this BEFORE recruiting anyone.
 
-  B) TYPE-I ERROR. Simulate under alpha_true = 0 and confirm the rejection rate
-     sits near 0.05. If it is much higher, the test is miscalibrated and every
-     "significant" result you later obtain would be an artefact.
+  B) TYPE-I ERROR DIAGNOSTIC. Simulate under alpha_true = 0 to expose
+     miscalibration in the legacy IID LRT. This does not establish power for a
+     primary clustered RQ1 procedure.
 
 Runtime warning: each replicate fits two models. Start with --reps 20 to gauge
 the speed on your machine, then raise it. --reps 200 is publication grade.
@@ -96,7 +96,7 @@ def main():
         row = {
             "n_learners": n,
             "reps": len(reps),
-            "reject_rate": rate,
+            "reject_rate_iid_diagnostic": rate,
             "mean_alpha": float(np.mean([r["alpha"] for r in reps])),
             "mean_rows": float(np.mean([r["n_rows"] for r in reps])),
             "seconds": round(time.time() - t0, 1),
@@ -107,26 +107,31 @@ def main():
 
     print()
     if args.alpha_true == 0:
-        worst = max((r["reject_rate"] for r in results), default=0)
+        worst = max((r["reject_rate_iid_diagnostic"] for r in results), default=0)
         print(f"Nominal alpha = 0.05. Highest observed rejection rate = {worst:.3f}")
         if worst > 0.10:
             print("!! Test is ANTI-CONSERVATIVE. Do not trust p-values until this is fixed.")
         else:
-            print("Type-I error looks acceptable.")
+            print("Legacy IID diagnostic did not exceed the heuristic threshold.")
+        print("!! Diagnostic-only: do not use this result to select confirmatory RQ1 sample size.")
     else:
-        ok = [r["n_learners"] for r in results if r["reject_rate"] >= 0.80]
+        ok = [r["n_learners"] for r in results if r["reject_rate_iid_diagnostic"] >= 0.80]
         if ok:
-            print(f"Smallest N reaching 80% power: {min(ok)} learners")
+            print(f"Smallest N reaching 80% power under the legacy IID diagnostic: {min(ok)} learners")
         else:
             print("No tested N reached 80% power. Increase learners, weeks, or words —")
             print("or accept that the study is powered only for a larger effect.")
 
+    print("!! All power/type-I output from this script is diagnostic-only until a clustered-null primary test is implemented and calibrated.")
+
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump({"mode": mode, "alpha_true": args.alpha_true, "weeks": args.weeks,
-                   "reps": args.reps, "results": results}, f, indent=2)
+                   "reps": args.reps, "confirmatory_status": "BLOCKED_PENDING_CLUSTERED_NULL_TEST",
+                   "results": results}, f, indent=2)
     print(f"wrote {args.out}")
 
 
 if __name__ == "__main__":
     main()
+
