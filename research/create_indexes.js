@@ -67,6 +67,10 @@ const INDEXES = {
     { keys: { participantCode: 1, vocabularyId: 1 }, options: { name: "participant_word_unique", unique: true } },
     { keys: { participantCode: 1, nextReviewDate: 1 }, options: { name: "participant_due" } },
   ],
+  researchtimingstates: [
+    { keys: { participantCode: 1, vocabularyId: 1, condition: 1 }, options: { name: "participant_word_condition_unique", unique: true } },
+    { keys: { participantCode: 1, condition: 1, nextReviewDate: 1 }, options: { name: "participant_condition_due" } },
+  ],
   researchdecisionreceipts: [
     { keys: { receiptId: 1 }, options: { name: "receiptId_unique", unique: true } },
     { keys: { participantCode: 1, vocabularyId: 1, consumedAt: 1 }, options: { name: "participant_word_consumed" } },
