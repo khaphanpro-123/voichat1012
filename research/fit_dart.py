@@ -6,8 +6,8 @@ python-api/train_dart.py did not:
 
   1. LEARNER-LEVEL cross-validation. Splitting by row leaks a learner's own
      history into their test fold and inflates AUC. Reviewers check this.
-  2. Likelihood-ratio test of alpha = 0 with the boundary correction, plus a
-     bootstrap CI for alpha clustered by learner.
+  2. A diagnostic likelihood-ratio comparison plus a bootstrap CI for alpha
+     clustered by learner. The IID LRT is not confirmatory RQ1 inference.
   3. Calibration (Brier, ECE, reliability table) — a scheduler needs correct
      probabilities, not just correct ranking.
   4. DeLong test on the held-out AUC difference between DART and HLR.
@@ -174,8 +174,10 @@ def main():
     print(f"mean loglik  DART   = {ll_full:.5f}")
     print(f"mean loglik  HLR    = {ll_rest:.5f}")
     print(f"LR statistic        = {lr:.3f}")
-    print(f"p (boundary-correct)= {p_boundary:.3e}   <-- report THIS one")
-    print(f"p (naive chi2_1)    = {p_naive:.3e}")
+    print(f"p (boundary-correct, IID diagnostic only) = {p_boundary:.3e}")
+    print(f"p (naive chi2_1, diagnostic only)         = {p_naive:.3e}")
+    print("!! PRIMARY RQ1 INFERENCE BLOCKED: no statistician-approved clustered-null test is wired here.")
+    print("!! Do not report either LRT p-value as confirmatory evidence.")
     print(f"theta_hat           = {np.round(theta_d, 4).tolist()}")
     print(f"  feature names     = {FEATURE_NAMES[:f]}")
 
@@ -244,6 +246,7 @@ def main():
             "converged": bool(res_d.success),
             "source": args.source,
             "condition": args.condition,
+            "primaryRq1Inference": "BLOCKED_PENDING_CLUSTERED_NULL_TEST",
         },
     }
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
@@ -256,7 +259,16 @@ def main():
         "alpha_ci95": [float(lo), float(hi)],
         "alpha_boot_share_zero": share_zero,
         "loglik_dart": ll_full, "loglik_hlr": ll_rest,
-        "lr_stat": lr, "p_boundary": p_boundary, "p_naive_chi2_1": p_naive,
+        "asymptotic_lrt_diagnostic": {
+            "lr_stat": lr,
+            "p_boundary": p_boundary,
+            "p_naive_chi2_1": p_naive,
+            "not_for_confirmatory_rq1": True,
+        },
+        "primary_rq1_inference": {
+            "status": "BLOCKED",
+            "reason": "No statistician-approved clustered-null test is implemented in fit_dart.py.",
+        },
         "cv": per_fold,
         "pooled": {
             "auc_dart": a1, "auc_hlr": a2, "delong_z": z, "delong_p": p_delong,
@@ -275,3 +287,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
