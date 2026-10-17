@@ -15,6 +15,7 @@ export interface IResearchSm2State extends Document {
   repetitions: number;
   nextReviewDate: Date;
   lastReceiptId?: string;
+  revision: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,7 @@ const ResearchSm2StateSchema = new Schema<IResearchSm2State>({
   repetitions: { type: Number, required: true, min: 0 },
   nextReviewDate: { type: Date, required: true, index: true },
   lastReceiptId: { type: String },
+  revision: { type: Number, required: true, default: 0, min: 0 },
 }, { timestamps: true });
 
 ResearchSm2StateSchema.index({ participantCode: 1, vocabularyId: 1 }, { unique: true });
