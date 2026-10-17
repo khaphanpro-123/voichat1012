@@ -8,6 +8,13 @@ export interface IResearchDecisionReceipt extends Document {
   word: string;
   condition: "sm2" | "hlr" | "dart";
   retrievalType: 0 | 1 | 2 | 3;
+  taskPolicyVersion: string;
+  heuristicRetrievalType: 0 | 1 | 2 | 3;
+  explorationEpsilon: number;
+  explorationDraw?: number;
+  explorationSelected: boolean;
+  explorationEligibleTypes?: Array<0 | 1 | 2 | 3>;
+  explorationSelectionDraw?: number;
   featureVector: number[];
   schedulerVersion: string;
   weightsVersion: string;
@@ -29,6 +36,13 @@ const ResearchDecisionReceiptSchema = new Schema<IResearchDecisionReceipt>({
   word: { type: String, required: true },
   condition: { type: String, enum: ["sm2", "hlr", "dart"], required: true },
   retrievalType: { type: Number, required: true, min: 0, max: 3 },
+  taskPolicyVersion: { type: String, required: true },
+  heuristicRetrievalType: { type: Number, required: true, min: 0, max: 3 },
+  explorationEpsilon: { type: Number, required: true, min: 0, max: 1 },
+  explorationDraw: { type: Number, min: 0, max: 1 },
+  explorationSelected: { type: Boolean, required: true },
+  explorationEligibleTypes: { type: [Number], default: undefined },
+  explorationSelectionDraw: { type: Number, min: 0, max: 1 },
   featureVector: { type: [Number], required: true },
   schedulerVersion: { type: String, required: true },
   weightsVersion: { type: String, required: true },
