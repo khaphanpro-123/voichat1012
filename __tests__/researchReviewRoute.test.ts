@@ -21,12 +21,18 @@ const reviewLogs: any[] = [];
 const consumedReceipts = new Set<string>();
 
 jest.mock("@/lib/db", () => ({
-  connectDB: jest.fn(async () => {}),
+  connectDB: jest.fn(async () => ({
+    startSession: async () => ({
+      withTransaction: async (work: any) => work(),
+      endSession: async () => {},
+    }),
+  })),
 }));
 
 jest.mock("@/lib/participantAuth", () => ({
   verifyRequest: jest.fn((header: string | null) => {
     if (header === "Bearer VALID") return "P0042";
+    if (header === "Bearer SM2") return "P0043";
     if (header === "Bearer DROPPED") return "P0099";
     return null;
   }),
@@ -42,19 +48,24 @@ jest.mock("@/lib/researchDecisionReceipt", () => ({
 }));
 
 jest.mock("@/app/models/ResearchDecisionReceipt", () => {
-  const chain = (val: any) => ({ lean: async () => val });
+  const chain = (val: any) => ({
+    select: () => chain(val),
+    session: () => chain(val),
+    lean: async () => val,
+  });
   const record = (receiptId: string) => ({
     _id: receiptId,
     receiptId,
-    participantCode: "P0042",
+    participantCode: receiptId === "receipt-sm2" ? "P0043" : "P0042",
     vocabularyId: "v1",
     word: "ubiquitous",
-    condition: "dart",
-    retrievalType: 1,
+    condition: receiptId === "receipt-sm2" ? "sm2" : "dart",
+    retrievalType: receiptId === "receipt-sm2" ? 0 : 1,
     featureVector: [0.1, 0.2, 0.3],
     schedulerVersion: "dart@test",
     weightsVersion: "default",
     taskPromptHash: "h(16)",
+    expectedAnswer: "correct choice",
     issuedAt: new Date("2026-08-11T08:00:00Z"),
     expiresAt: new Date("2099-01-01T00:00:00Z"),
   });
@@ -76,6 +87,7 @@ jest.mock("@/app/models/ReviewLog", () => {
   const chain = (val: any) => ({
     sort: () => chain(val),
     select: () => chain(val),
+    session: () => chain(val),
     lean: async () => val,
   });
   return {
@@ -98,10 +110,10 @@ jest.mock("@/app/models/ReviewLog", () => {
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
         return chain(prev ?? null);
       }),
-      create: jest.fn(async (doc: any) => {
-        const row = { ...doc, _id: `id_${reviewLogs.length + 1}`, createdAt: new Date() };
+      create: jest.fn(async (docs: any[]) => {
+        const row = { ...docs[0], _id: `id_${reviewLogs.length + 1}`, createdAt: new Date() };
         reviewLogs.push(row);
-        return row;
+        return [row];
       }),
     },
   };
@@ -116,6 +128,9 @@ jest.mock("@/app/models/Participant", () => {
         if (filter.participantCode === "P0042") {
           return chain({ participantCode: "P0042", condition: "dart", dropoutAt: null });
         }
+        if (filter.participantCode === "P0043") {
+          return chain({ participantCode: "P0043", condition: "sm2", dropoutAt: null });
+        }
         if (filter.participantCode === "P0099") {
           return chain({
             participantCode: "P0099",
@@ -125,12 +140,25 @@ jest.mock("@/app/models/Participant", () => {
         }
         return chain(null);
       }),
-      updateOne: jest.fn(() => ({ catch: (_: any) => undefined })),
+      updateOne: jest.fn(async () => ({})),
+    },
+  };
+});
+
+jest.mock("@/app/models/ResearchSm2State", () => {
+  const chain = (val: any) => ({ session: () => chain(val), lean: async () => val });
+  return {
+    __esModule: true,
+    default: {
+      findOne: jest.fn(() => chain(null)),
+      findOneAndUpdate: jest.fn(() => chain({ _id: "sm2" })),
+      create: jest.fn(async () => []),
     },
   };
 });
 
 import { POST } from "@/app/api/research/review/route";
+import ResearchSm2State from "@/app/models/ResearchSm2State";
 
 function makeReq(body: any, authorization?: string): any {
   return {
@@ -157,6 +185,7 @@ function goodBody(overrides: Partial<any> = {}): any {
     recall: 1,
     responseTimeMs: 3800,
     quality: 4,
+    answerText: "correct choice",
     ...overrides,
   };
   return { ...body, decisionReceipt: overrides.decisionReceipt ?? `receipt-${body.clientEventId}` };
@@ -166,6 +195,7 @@ describe("POST /api/research/review", () => {
   beforeEach(() => {
     reviewLogs.length = 0;
     consumedReceipts.clear();
+    (ResearchSm2State.create as jest.Mock).mockClear();
   });
 
   it("401 with no Authorization header", async () => {
@@ -242,6 +272,23 @@ describe("POST /api/research/review", () => {
     expect(reviewLogs[0].schedulerVersion).toBe("dart@test");
     expect(reviewLogs[0].weightsVersion).toBe("default");
     expect(reviewLogs[0]).toMatchObject({ vocabularyId: "v1", word: "ubiquitous", retrievalType: 1, featureVector: [0.1, 0.2, 0.3], condition: "dart" });
+  });
+
+  it("derives recall on the server instead of trusting a client-provided value", async () => {
+    const res = await POST(makeReq(goodBody({ clientEventId: "evt-server-score", recall: 0, answerText: "correct choice" }), "Bearer VALID"));
+    expect(res.status).toBe(200);
+    expect(reviewLogs[0].recall).toBe(1);
+  });
+
+  it("commits a first SM-2 state with the receipt and log write", async () => {
+    const res = await POST(makeReq(goodBody({
+      clientEventId: "evt-sm2", decisionReceipt: "receipt-sm2", answerText: "correct choice",
+    }), "Bearer SM2"));
+    expect(res.status).toBe(200);
+    expect(ResearchSm2State.create).toHaveBeenCalledWith(
+      [expect.objectContaining({ participantCode: "P0043", vocabularyId: "v1", lastReceiptId: "receipt-sm2", revision: 0 })],
+      expect.objectContaining({ session: expect.anything() }),
+    );
   });
 
   it("computes serverDeltaDays from the previous review, ignoring client-supplied deltas", async () => {
