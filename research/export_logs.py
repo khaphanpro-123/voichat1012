@@ -35,6 +35,9 @@ from datetime import datetime
 REVIEW_FIELDS = [
     "participant", "word", "condition", "schedulerVersion", "weightsVersion",
     "sessionId", "deltaDays", "serverDeltaDays", "retrievalType", "recall",
+    "taskPolicyVersion", "heuristicRetrievalType", "explorationEpsilon",
+    "explorationDraw", "explorationSelected", "explorationEligibleTypes",
+    "explorationSelectionDraw",
     "responseTimeMs", "elapsedMs", "quality", "contextId", "isCatchUp",
     "scheduledAt", "servedAt", "createdAt", "dayIndex",
 ]
@@ -97,6 +100,13 @@ def main():
             "deltaDays": r.get("deltaDays"),
             "serverDeltaDays": r.get("serverDeltaDays"),
             "retrievalType": r.get("retrievalType"),
+            "taskPolicyVersion": r.get("taskPolicyVersion"),
+            "heuristicRetrievalType": r.get("heuristicRetrievalType"),
+            "explorationEpsilon": r.get("explorationEpsilon"),
+            "explorationDraw": r.get("explorationDraw"),
+            "explorationSelected": r.get("explorationSelected"),
+            "explorationEligibleTypes": r.get("explorationEligibleTypes"),
+            "explorationSelectionDraw": r.get("explorationSelectionDraw"),
             "recall": r.get("recall"),
             "responseTimeMs": r.get("responseTimeMs"),
             "elapsedMs": r.get("elapsedMs"),
@@ -197,3 +207,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
