@@ -53,21 +53,26 @@ python fit_dart.py --source jsonl --path data/synth.jsonl --boot 100
 
 Mục tiêu: mọi thứ chạy trơn, không lỗi. **Không đọc con số như một kết quả.**
 
-### Bước 2 — Kiểm tra sai lầm loại I (bắt buộc trước khi pre-register)
+### Bước 2 — Diagnostic sai lầm loại I của LRT IID cũ
 
 ```bash
 python power_analysis.py --grid 60,180 --alpha-true 0 --reps 200
 ```
 
-Tỷ lệ bác bỏ phải quanh 0.05. Nếu > 0.10 → kiểm định bị sai, dừng lại sửa.
+Kết quả này chỉ dùng để phát hiện lỗi của LRT IID cũ. `fit_dart.py` và
+`power_analysis.py` hiện không được phép dùng p-value/"power" này làm bằng
+chứng confirmatory cho RQ1, vì log lặp lại theo học viên. Cần một kiểm định
+clustered-null được nhà thống kê phê duyệt và có test Type-I tương ứng trước
+khi khóa preregistration hoặc chọn N cho RQ1.
 
-### Bước 3 — Tính power, chốt cỡ mẫu
+### Bước 3 — Tính power (chỉ sau khi kiểm định clustered-null được phê duyệt)
 
 ```bash
 python power_analysis.py --grid 30,60,90,120,180,240 --weeks 8 --reps 100
 ```
 
-Lấy N nhỏ nhất đạt power ≥ 0.80. Ghi số này vào bản pre-registration.
+Chỉ lấy N nhỏ nhất đạt power ≥ 0.80 sau khi script dùng kiểm định primary đã
+được kiểm tra Type-I. Không ghi kết quả power hiện tại vào preregistration.
 
 ### Bước 4 — Sau khi thu dữ liệu thật
 
@@ -137,3 +142,4 @@ và α theo từng fold nhảy từ 0.17 đến 0.80. Đây chính là bức tra
 nghiên cứu **thiếu power**: kiểm định trong mẫu bắt được nhiễu, còn dự đoán
 ngoài mẫu thì không cải thiện gì. Đừng nộp bài trong tình trạng đó — chạy
 `power_analysis.py` trước và tuyển đủ người.
+
