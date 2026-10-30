@@ -34,4 +34,3 @@ Consolidated on 2026-10-30 (Asia/Bangkok). This file records the provenance of i
 1. Resolve or remove the five `TBD` citations and verify the remaining bibliography against original publications.
 2. Configure the isolated research database without exposing credentials, then run the documented environment, index, transaction, and authenticated staging checks.
 3. Resolve the clustered-null RQ1 inference procedure and the real human-calibration gate for RQ3 before confirmatory claims.
-
